@@ -4,9 +4,10 @@ version = "0.1.0"
 description = "CLI tool to fetch URLs and convert to markdown"
 dependencies = [
     "firecrawl",
-    "click",
+    "click", 
     "python-dotenv",
-    "anthropic"
+    "anthropic",
+    "pytest"
 ]
 
 [build-system]
