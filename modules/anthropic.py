@@ -3,6 +3,10 @@ from anthropic import Anthropic
 from anthropic.types import TextBlock
 from dotenv import load_dotenv
 
+# Cost constants (USD per million tokens)
+INPUT_TOKEN_COST_PER_MILLION = 3.0
+OUTPUT_TOKEN_COST_PER_MILLION = 15.0
+
 SUMMARIZE_PROMPT = """
 Please provide a clear and concise summary of the following markdown content, starting directly with the content summary WITHOUT any introductory phrases or sentences.
 Focus on the main points and key takeaways while maintaining the essential information, code snippets and examples.
@@ -21,6 +25,11 @@ class AnthropicClient:
             raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
         self.client = Anthropic(api_key=api_key)
 
+    def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
+        input_cost = (input_tokens / 1_000_000) * INPUT_TOKEN_COST_PER_MILLION
+        output_cost = (output_tokens / 1_000_000) * OUTPUT_TOKEN_COST_PER_MILLION
+        return input_cost + output_cost
+
     def summarize_content(self, content: str) -> str:
         try:
             message = self.client.messages.create(
@@ -33,11 +42,24 @@ class AnthropicClient:
                     }
                 ],
             )
+
             content_block = message.content[0]
-            if isinstance(content_block, TextBlock):
-                return content_block.text
-            raise ValueError(
-                "Unexpected response type: message content is not a TextBlock"
-            )
+            if not isinstance(content_block, TextBlock):
+                raise ValueError(
+                    "Unexpected response type: message content is not a TextBlock"
+                )
+
+            # Calculate and log token usage and cost
+            input_tokens = message.usage.input_tokens
+            output_tokens = message.usage.output_tokens
+            total_cost = self.calculate_cost(input_tokens, output_tokens)
+
+            print(f"\nToken Usage Statistics:")
+            print(f"Input tokens: {input_tokens:,}")
+            print(f"Output tokens: {output_tokens:,}")
+            print(f"Total tokens: {input_tokens + output_tokens:,}")
+            print(f"Estimated cost: ${total_cost:.4f}")
+
+            return content_block.text
         except Exception as e:
             raise Exception(f"Failed to summarize content: {str(e)}")

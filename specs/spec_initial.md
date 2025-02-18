@@ -1,6 +1,6 @@
 # Build a command line application to fetch a url and convert to markdown file
 
-> Ingest the information from this file, implement the Low-level Tasks, and generate the code that will satify Objectives
+> Ingest the information from this file, implement the Low-level Tasks, and generate the code that will satisfy Objectives
 
 ## Objective
 
