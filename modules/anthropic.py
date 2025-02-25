@@ -7,6 +7,15 @@ from dotenv import load_dotenv
 INPUT_TOKEN_COST_PER_MILLION = 3.0
 OUTPUT_TOKEN_COST_PER_MILLION = 15.0
 
+EXPLAIN_PROMPT = """
+Please explain the following markdown content in a way that helps non-experts understand it better.
+Break down complex concepts and provide clear explanations.
+At the end, add a "Key Takeaways" section that highlights the most important points.
+
+Content to explain:
+{content}
+"""
+
 SUMMARIZE_PROMPT = """
 Please provide a clear and concise summary of the following markdown content, starting directly with the content summary WITHOUT any introductory phrases or sentences.
 Focus on the main points and key takeaways while maintaining the essential information, code snippets and examples.
@@ -33,8 +42,8 @@ class AnthropicClient:
     def summarize_content(self, content: str) -> str:
         try:
             message = self.client.messages.create(
-                model="claude-3-5-sonnet-latest",
-                max_tokens=1000,
+                model="claude-3-7-sonnet-20250219",
+                max_tokens=2048,
                 messages=[
                     {
                         "role": "user",
@@ -63,3 +72,37 @@ class AnthropicClient:
             return content_block.text
         except Exception as e:
             raise Exception(f"Failed to summarize content: {str(e)}")
+
+    def explain_content(self, content: str) -> str:
+        try:
+            message = self.client.messages.create(
+                model="claude-3-5-sonnet-latest",
+                max_tokens=1500,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": EXPLAIN_PROMPT.format(content=content),
+                    }
+                ],
+            )
+
+            content_block = message.content[0]
+            if not isinstance(content_block, TextBlock):
+                raise ValueError(
+                    "Unexpected response type: message content is not a TextBlock"
+                )
+
+            # Calculate and log token usage and cost
+            input_tokens = message.usage.input_tokens
+            output_tokens = message.usage.output_tokens
+            total_cost = self.calculate_cost(input_tokens, output_tokens)
+
+            print(f"\nToken Usage Statistics:")
+            print(f"Input tokens: {input_tokens:,}")
+            print(f"Output tokens: {output_tokens:,}")
+            print(f"Total tokens: {input_tokens + output_tokens:,}")
+            print(f"Estimated cost: ${total_cost:.4f}")
+
+            return content_block.text
+        except Exception as e:
+            raise Exception(f"Failed to explain content: {str(e)}")
