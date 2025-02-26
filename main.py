@@ -5,7 +5,7 @@ from modules.anthropic import AnthropicClient
 
 @click.group()
 def cli():
-    """URL to Markdown conversion tool"""
+    """URL to Markdown conversion tool with Claude AI integration"""
     pass
 
 
@@ -45,6 +45,18 @@ def get_url(url: str, output_file: str, summarize: bool, explain: bool):
         click.echo(
             f"✅ Successfully saved {operation + ' ' if operation else ''}markdown to {output_file}"
         )
+    except Exception as e:
+        click.echo(f"❌ Error: {str(e)}", err=True)
+
+
+@cli.command()
+@click.option("--message", help="Initial message to start the chat")
+@click.option("--files", multiple=True, help="Files to include in the initial message")
+def chat(message, files):
+    """Start an interactive chat session with Claude"""
+    try:
+        anthropic_client = AnthropicClient()
+        anthropic_client.interactive_chat(initial_content=message, files=files)
     except Exception as e:
         click.echo(f"❌ Error: {str(e)}", err=True)
 
