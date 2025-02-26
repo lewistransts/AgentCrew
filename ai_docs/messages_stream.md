@@ -458,3 +458,4 @@ On this page
 - [Basic streaming request](https://docs.anthropic.com/en/api/messages-streaming#basic-streaming-request)
 - [Streaming request with tool use](https://docs.anthropic.com/en/api/messages-streaming#streaming-request-with-tool-use)
 - [Streaming request with extended thinking](https://docs.anthropic.com/en/api/messages-streaming#streaming-request-with-extended-thinking)
+
