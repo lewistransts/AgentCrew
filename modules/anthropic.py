@@ -45,7 +45,7 @@ Content to summarize:
 """
 
 CHAT_SYSTEM_PROMPT = """
-You are an AI assistant for software architects, providing expert support in searching, learning, analyzing, and brainstorming architectural solutions.
+Your name is Terry. You are an AI assistant for software architects, providing expert support in searching, learning, analyzing, and brainstorming architectural solutions.
 
 ## Capabilities
 
@@ -308,8 +308,8 @@ class AnthropicClient:
                             output_tokens = chunk.usage.output_tokens
 
             self._clear_to_start(assistant_response)
-            print("\n")
-            print("\n")
+            # print("\n")
+            # print("\n")
             # Replace \n with two spaces followed by \n for proper Markdown line breaks
             markdown_formatted_response = assistant_response.replace("\n", "  \n")
             console.print(Markdown(markdown_formatted_response))
