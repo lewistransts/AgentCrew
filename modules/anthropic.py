@@ -7,6 +7,8 @@ import shutil
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
+from rich.console import Console
+from rich.markdown import Markdown
 
 # Cost constants (USD per million tokens)
 INPUT_TOKEN_COST_PER_MILLION = 3.0
@@ -131,6 +133,9 @@ class AnthropicClient:
         messages = []
         import base64
         import mimetypes
+        
+        # Initialize Rich console
+        console = Console()
 
         # Get terminal width for dividers
         terminal_width = shutil.get_terminal_size().columns
@@ -350,6 +355,12 @@ class AnthropicClient:
                             # Get output token usage when available in the message_delta
                             if hasattr(chunk.usage, "output_tokens"):
                                 output_tokens = chunk.usage.output_tokens
+
+                # Clear the raw output
+                print("\n")
+                
+                # Render the response with Rich markdown
+                console.print(Markdown(assistant_response))
 
                 # Add assistant's response to message history
                 messages.append({"role": "assistant", "content": assistant_response})

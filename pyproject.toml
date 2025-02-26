@@ -9,6 +9,7 @@ dependencies = [
     "anthropic",
     "pytest",
     "prompt-toolkit>=3.0.50",
+    "rich>=13.9.4",
 ]
 
 [build-system]
