@@ -24,11 +24,11 @@ class InteractiveChat:
     def __init__(self, llm_service: BaseLLMService):
         """
         Initialize the interactive chat with a LLM service.
-        
+
         Args:
             llm_service: An implementation of BaseLLMService
         """
-        self.service = llm_service
+        self.llm = llm_service
         self.console = Console()
 
     def _setup_key_bindings(self):
@@ -64,7 +64,7 @@ class InteractiveChat:
         output_tokens = 0
 
         try:
-            with self.service.stream_assistant_response(messages) as stream:
+            with self.llm.stream_assistant_response(messages) as stream:
                 for chunk in stream:
                     if chunk.type == "content_block_delta" and hasattr(
                         chunk.delta, "text"
@@ -154,7 +154,7 @@ class InteractiveChat:
         # Handle file command
         elif user_input.startswith("/file "):
             file_path = user_input[6:].strip()
-            file_message = self.service.handle_file_command(file_path)
+            file_message = self.llm.handle_file_command(file_path)
             if file_message:
                 messages.append({"role": "user", "content": file_message})
         else:
@@ -180,7 +180,7 @@ class InteractiveChat:
         if files:
             message_content = []
             for file_path in files:
-                file_content = self.service.process_file_for_message(file_path)
+                file_content = self.llm.process_file_for_message(file_path)
                 if file_content:
                     message_content.append(file_content)
 
@@ -233,7 +233,7 @@ class InteractiveChat:
                 messages.append({"role": "assistant", "content": assistant_response})
 
                 # Display token usage and cost
-                total_cost = self.service.calculate_cost(input_tokens, output_tokens)
+                total_cost = self.llm.calculate_cost(input_tokens, output_tokens)
                 print("\n")
                 print(divider)
                 print(
