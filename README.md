@@ -1,13 +1,61 @@
-# URL Scraper with Claude AI Integration
+# Claude AI Interactive Chat Tool
 
-A command-line tool that scrapes web content and integrates with Claude AI to summarize, explain, or chat about the content.
+A command-line tool that provides an enhanced interactive chat experience with Claude AI, featuring file integration, web scraping capabilities, and convenient keyboard shortcuts.
 
-## Features
+## Key Features
 
-- **Web Scraping**: Fetch content from any URL and save it as markdown
-- **AI Summarization**: Use Claude AI to create concise summaries of web content
-- **AI Explanation**: Have Claude AI explain complex content in simpler terms
-- **Interactive Chat**: Start a conversation with Claude AI, with the ability to include files
+- **Interactive Chat**: Rich conversation interface with Claude AI
+- **File Integration**: Include PDFs and text files directly in your conversation
+- **Web Scraping**: Ask Claude to fetch and analyze web content in real-time
+- **Keyboard Shortcuts**: Efficient message editing and response management
+- **Multiline Input**: Write complex messages with proper formatting
+- **Response Copying**: Easily copy Claude's responses to your clipboard
+
+## Additional Capabilities
+
+- **Web Content Processing**: Fetch content from any URL and save it as markdown
+- **AI Summarization**: Create concise summaries of web content
+- **AI Explanation**: Explain complex content in simpler terms
+
+## Chat Features
+
+- **File Integration**: Include files in your conversation
+- **URL Scraping**: Ask Claude to scrape and analyze web content directly in chat
+- **Copy Responses**: Easily copy Claude's responses to your clipboard with Alt+C
+- **Multiline Input**: Write complex messages with proper formatting
+
+## Chat Commands
+
+During an interactive chat session, you can use these commands:
+
+- `/file <file_path>` - Include a file in your message
+- `/clear` - Clear the conversation history
+- `exit` or `quit` - End the chat session
+- Press `Enter` for a new line, `Ctrl+S` to submit your message
+- Press `Alt+C` to copy the latest assistant response to clipboard
+
+## Roadmap
+
+The following features are planned for future releases:
+
+### Enhanced Assistant Capabilities
+- **Web Search Integration**: Allow Claude to search the web for real-time information
+- **Bash Command Execution**: Enable running system commands directly from the chat
+- **File Manipulation**: Create, edit, and manage files through chat commands
+
+### Advanced Personalization
+- **Multiple Personalities**: Switch between different assistant personas tailored for specific tasks
+- **Custom Instructions**: Save and load different instruction sets for various use cases
+
+### Technical Improvements
+- **Model Context Protocol (MCP) Support**: Implement MCP for improved context management
+- **Streaming Optimizations**: Enhance response speed and token efficiency
+- **Local Model Support**: Add compatibility with locally-hosted models
+
+### User Experience
+- **Session Management**: Save, resume, and manage multiple conversation threads
+- **UI Improvements**: Enhanced terminal interface with better visualization options
+- **Configuration Profiles**: Create and switch between different tool configurations
 
 ## Installation
 
@@ -42,24 +90,6 @@ A command-line tool that scrapes web content and integrates with Claude AI to su
 
 ## Usage
 
-### Scrape a URL and Save as Markdown
-
-```bash
-uv run main.py get-url https://example.com output.md
-```
-
-### Scrape and Summarize Content
-
-```bash
-uv run main.py get-url https://example.com output.md --summarize
-```
-
-### Scrape and Explain Content
-
-```bash
-uv run main.py get-url https://example.com output.md --explain
-```
-
 ### Start an Interactive Chat with Claude
 
 ```bash
@@ -78,14 +108,23 @@ uv run main.py chat --message "Hello, I need help with software architecture"
 uv run main.py chat --files document.pdf --files code.py
 ```
 
-## Chat Commands
+### Scrape a URL and Save as Markdown
 
-During an interactive chat session, you can use these commands:
+```bash
+uv run main.py get-url https://example.com output.md
+```
 
-- `/file <file_path>` - Include a file in your message
-- `/clear` - Clear the conversation history
-- `exit` or `quit` - End the chat session
-- Press `Enter` for a new line, `Ctrl+S` to submit your message
+### Scrape and Summarize Content
+
+```bash
+uv run main.py get-url https://example.com output.md --summarize
+```
+
+### Scrape and Explain Content
+
+```bash
+uv run main.py get-url https://example.com output.md --explain
+```
 
 ## License
 
