@@ -1,5 +1,9 @@
 import click
-from modules.scraping import ScrapingService, get_scraping_tool_handler
+from modules.scraping import (
+    ScrapingService,
+    get_scraping_tool_handler,
+    scraping_tool_definition,
+)
 from modules.anthropic import AnthropicService
 from modules.chat import InteractiveChat
 
@@ -68,20 +72,6 @@ def chat(message, files):
         scraping_service = ScrapingService()
 
         # Register scraping tool
-        scraping_tool_definition = {
-            "name": "scrap_url",
-            "description": "Scrap the content on given URL",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "url": {
-                        "type": "string",
-                        "description": "the url that will be scraped",
-                    }
-                },
-                "required": ["url"],
-            },
-        }
 
         # Register the tool with the LLM service
         llm_service.register_tool(

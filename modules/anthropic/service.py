@@ -191,12 +191,9 @@ class AnthropicService(BaseLLMService):
         if tool_name not in self.tool_handlers:
             return {"error": f"Tool '{tool_name}' not found"}
 
-        try:
-            handler = self.tool_handlers[tool_name]
-            result = handler(**tool_params)
-            return result
-        except Exception as e:
-            return {"error": f"Error executing tool '{tool_name}': {str(e)}"}
+        handler = self.tool_handlers[tool_name]
+        result = handler(**tool_params)
+        return result
 
     def stream_assistant_response(self, messages):
         """Stream the assistant's response with tool support."""

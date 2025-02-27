@@ -130,9 +130,9 @@ class InteractiveChat:
                 self.console.print(Markdown(markdown_formatted_response))
 
                 print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
+                print(tool_use)
 
                 # Execute the tool
-                tool_result = self.llm.execute_tool(tool_use["name"], tool_use["input"])
 
                 # Add tool result to messages
                 # Format assistant response as array of content blocks
@@ -146,19 +146,36 @@ class InteractiveChat:
                     assistant_message["content"].append(tool_use_response)
 
                 messages.append(assistant_message)
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": tool_use["id"],
-                                "content": tool_result,
-                            }
-                        ],
-                    }
-                )
-
+                try:
+                    tool_result = self.llm.execute_tool(
+                        tool_use["name"], tool_use["input"]
+                    )
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "tool_result",
+                                    "tool_use_id": tool_use["id"],
+                                    "content": tool_result,
+                                }
+                            ],
+                        }
+                    )
+                except Exception as e:
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "tool_result",
+                                    "tool_use_id": tool_use["id"],
+                                    "content": str(e),
+                                    "is_error": True,
+                                }
+                            ],
+                        }
+                    )
                 # Get a new response with the tool result
                 print(f"\n{GREEN}{BOLD}🤖 ASSISTANT (continued):{RESET}")
                 return self._stream_assistant_response(messages)

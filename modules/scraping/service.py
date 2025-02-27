@@ -44,24 +44,3 @@ class ScrapingService:
                 return scrape_result.get("markdown", "")
         except Exception as e:
             raise Exception(f"Failed to scrape URL: {str(e)}")
-
-
-@staticmethod
-def get_scraping_tool_handler(scraping_service):
-    """
-    Returns a handler function for the scraping tool.
-
-    Args:
-        scraping_service: An instance of ScrapingService
-
-    Returns:
-        function: A handler function that can be registered with the LLM service
-    """
-
-    def scraping_handler(url):
-        print(f"\n🌐 Scraping content from: {url}")
-        content = scraping_service.scrape_url(url)
-        print("✅ Content successfully scraped")
-        return content
-
-    return scraping_handler
