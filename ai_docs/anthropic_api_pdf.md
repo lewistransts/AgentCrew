@@ -30,6 +30,7 @@ Best Practices:
 Scaling Options:
 
 1. Prompt Caching:
+
    - Cache PDFs for repeated queries
    - Use cache_control with "type": "ephemeral"
 
@@ -80,6 +81,7 @@ print(message.content)
 ```
 
 - Examples show basic requests, caching, and batch processing
+
   - prompt caching
 
   ```python
@@ -117,4 +119,3 @@ Sample Use Cases:
 - Legal document extraction
 - Document translation
 - Converting documents to structured formats
-

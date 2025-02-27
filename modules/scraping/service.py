@@ -3,7 +3,9 @@ from firecrawl import FirecrawlApp
 from dotenv import load_dotenv
 
 
-class Scraper:
+class ScrapingService:
+    """Web scraping service for fetching and converting web content to markdown."""
+    
     def __init__(self):
         load_dotenv()
         api_key = os.getenv("FC_API_KEY")
@@ -12,10 +14,23 @@ class Scraper:
         self.app = FirecrawlApp(api_key=api_key)
 
     def _is_file_url(self, url: str) -> bool:
+        """Check if the URL points to a raw file that should be fetched directly."""
         file_extensions = [".md", ".txt", ".json", ".yaml", ".yml"]
         return any(url.lower().endswith(ext) for ext in file_extensions)
 
     def scrape_url(self, url: str) -> str:
+        """
+        Scrape content from a URL and convert it to markdown.
+        
+        Args:
+            url: The URL to scrape
+            
+        Returns:
+            The scraped content as markdown text
+            
+        Raises:
+            Exception: If scraping fails
+        """
         try:
             if self._is_file_url(url):
                 # For file URLs, request raw format
