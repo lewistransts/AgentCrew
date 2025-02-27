@@ -1,5 +1,6 @@
 import sys
 import shutil
+import pyperclip
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
@@ -30,6 +31,7 @@ class InteractiveChat:
         """
         self.llm = llm_service
         self.console = Console()
+        self.latest_assistant_response = ""
 
     def _setup_key_bindings(self):
         """Set up key bindings for multiline input."""
@@ -44,6 +46,19 @@ class InteractiveChat:
         def _(event):
             """Insert newline on Enter."""
             event.current_buffer.insert_text("\n")
+
+        @kb.add("escape", "c")  # Alt+C
+        def _(event):
+            """Copy latest assistant response to clipboard."""
+            if self.latest_assistant_response:
+                pyperclip.copy(self.latest_assistant_response)
+                print(
+                    f"\n{YELLOW}✓ Latest assistant response copied to clipboard!{RESET}"
+                )
+                print("> ", end="")
+            else:
+                print(f"\n{YELLOW}! No assistant response to copy.{RESET}")
+                print("> ", end="")
 
         return kb
 
@@ -91,6 +106,9 @@ class InteractiveChat:
             markdown_formatted_response = assistant_response.replace("\n", "  \n")
             self.console.print(Markdown(markdown_formatted_response))
 
+            # Store the latest response
+            self.latest_assistant_response = assistant_response
+
             return assistant_response, input_tokens, output_tokens
 
         except Exception as e:
@@ -105,6 +123,7 @@ class InteractiveChat:
             f"{YELLOW}Use '/file <file_path>' to include a file in your message.{RESET}"
         )
         print(f"{YELLOW}Use '/clear' to clear the conversation history.{RESET}")
+        print(f"{YELLOW}Press Alt/Meta+C to copy the latest assistant response.{RESET}")
         print(divider)
 
     def _get_user_input(self, divider):
