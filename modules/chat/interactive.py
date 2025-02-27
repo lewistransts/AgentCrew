@@ -75,8 +75,10 @@ class InteractiveChat:
     def _stream_assistant_response(self, messages):
         """Stream the assistant's response and return the response and token usage."""
         assistant_response = ""
+        tool_use_response = ""
         input_tokens = 0
         output_tokens = 0
+        tool_use = None
 
         try:
             with self.llm.stream_assistant_response(messages) as stream:
@@ -100,16 +102,76 @@ class InteractiveChat:
                     ):
                         if hasattr(chunk.usage, "output_tokens"):
                             output_tokens = chunk.usage.output_tokens
+                    elif chunk.type == "message_stop" and hasattr(chunk, "message"):
+                        if (
+                            hasattr(chunk.message, "stop_reason")
+                            and chunk.message.stop_reason == "tool_use"
+                            and hasattr(chunk.message, "content")
+                        ):
+                            # Extract tool use information
+                            for content_block in chunk.message.content:
+                                if (
+                                    hasattr(content_block, "type")
+                                    and content_block.type == "tool_use"
+                                ):
+                                    tool_use = {
+                                        "name": content_block.name,
+                                        "input": content_block.input,
+                                        "id": content_block.id,
+                                    }
+                                    tool_use_response = content_block
+                                    break
 
-            self._clear_to_start(assistant_response)
-            # Replace \n with two spaces followed by \n for proper Markdown line breaks
-            markdown_formatted_response = assistant_response.replace("\n", "  \n")
-            self.console.print(Markdown(markdown_formatted_response))
+            # Handle tool use if needed
+            if tool_use:
+                self._clear_to_start(assistant_response)
+                # Replace \n with two spaces followed by \n for proper Markdown line breaks
+                markdown_formatted_response = assistant_response.replace("\n", "  \n")
+                self.console.print(Markdown(markdown_formatted_response))
 
-            # Store the latest response
-            self.latest_assistant_response = assistant_response
+                print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
 
-            return assistant_response, input_tokens, output_tokens
+                # Execute the tool
+                tool_result = self.llm.execute_tool(tool_use["name"], tool_use["input"])
+
+                # Add tool result to messages
+                # Format assistant response as array of content blocks
+                assistant_message = {
+                    "role": "assistant",
+                    "content": [{"type": "text", "text": assistant_response}],
+                }
+
+                # If there's a tool use response, add it to the content array
+                if tool_use_response != "":
+                    assistant_message["content"].append(tool_use_response)
+
+                messages.append(assistant_message)
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": tool_use["id"],
+                                "content": tool_result,
+                            }
+                        ],
+                    }
+                )
+
+                # Get a new response with the tool result
+                print(f"\n{GREEN}{BOLD}🤖 ASSISTANT (continued):{RESET}")
+                return self._stream_assistant_response(messages)
+            else:
+                self._clear_to_start(assistant_response)
+                # Replace \n with two spaces followed by \n for proper Markdown line breaks
+                markdown_formatted_response = assistant_response.replace("\n", "  \n")
+                self.console.print(Markdown(markdown_formatted_response))
+
+                # Store the latest response
+                self.latest_assistant_response = assistant_response
+
+                return assistant_response, input_tokens, output_tokens
 
         except Exception as e:
             print(f"\n{YELLOW}❌ Error: {str(e)}{RESET}")

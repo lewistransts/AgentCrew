@@ -37,7 +37,7 @@ def read_binary_file(file_path):
 
 class AnthropicService(BaseLLMService):
     """Anthropic-specific implementation of the LLM service."""
-    
+
     def __init__(self):
         load_dotenv()
         api_key = os.getenv("ANTHROPIC_API_KEY")
@@ -45,6 +45,8 @@ class AnthropicService(BaseLLMService):
             raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
         self.client = Anthropic(api_key=api_key)
         self.model = "claude-3-7-sonnet-20250219"
+        self.tools = []  # Initialize empty tools list
+        self.tool_handlers = {}  # Map tool names to handler functions
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         input_cost = (input_tokens / 1_000_000) * INPUT_TOKEN_COST_PER_MILLION
@@ -163,11 +165,49 @@ class AnthropicService(BaseLLMService):
 
         return message_content
 
+    def register_tool(self, tool_definition, handler_function):
+        """
+        Register a tool with its handler function.
+
+        Args:
+            tool_definition (dict): The tool definition following Anthropic's schema
+            handler_function (callable): Function to call when tool is used
+        """
+        self.tools.append(tool_definition)
+        self.tool_handlers[tool_definition["name"]] = handler_function
+        print(f"🔧 Registered tool: {tool_definition['name']}")
+
+    def execute_tool(self, tool_name, tool_params):
+        """
+        Execute a registered tool with the given parameters.
+
+        Args:
+            tool_name (str): Name of the tool to execute
+            tool_params (dict): Parameters to pass to the tool
+
+        Returns:
+            dict: Result of the tool execution
+        """
+        if tool_name not in self.tool_handlers:
+            return {"error": f"Tool '{tool_name}' not found"}
+
+        try:
+            handler = self.tool_handlers[tool_name]
+            result = handler(**tool_params)
+            return result
+        except Exception as e:
+            return {"error": f"Error executing tool '{tool_name}': {str(e)}"}
+
     def stream_assistant_response(self, messages):
-        """Stream the assistant's response."""
-        return self.client.messages.stream(
-            model=self.model,
-            max_tokens=4096,
-            system=CHAT_SYSTEM_PROMPT,
-            messages=messages,
-        )
+        """Stream the assistant's response with tool support."""
+        stream_params = {
+            "model": self.model,
+            "max_tokens": 4096,
+            "system": CHAT_SYSTEM_PROMPT,
+            "messages": messages,
+        }
+
+        # Add tools if available
+        if self.tools:
+            stream_params["tools"] = self.tools
+        return self.client.messages.stream(**stream_params)
