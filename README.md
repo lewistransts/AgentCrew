@@ -39,23 +39,27 @@ During an interactive chat session, you can use these commands:
 The following features are planned for future releases:
 
 ### Enhanced Assistant Capabilities
-- **Web Search Integration**: Allow Claude to search the web for real-time information
-- **Bash Command Execution**: Enable running system commands directly from the chat
-- **File Manipulation**: Create, edit, and manage files through chat commands
+
+- [ ] **Web Search Integration**: Allow Claude to search the web for real-time information
+- [ ] **Bash Command Execution**: Enable running system commands directly from the chat
+- [ ] **File Manipulation**: Create, edit, and manage files through chat commands
 
 ### Advanced Personalization
-- **Multiple Personalities**: Switch between different assistant personas tailored for specific tasks
-- **Custom Instructions**: Save and load different instruction sets for various use cases
+
+- [ ] **Multiple Personalities**: Switch between different assistant personas tailored for specific tasks
+- [ ] **Custom Instructions**: Save and load different instruction sets for various use cases
 
 ### Technical Improvements
-- **Model Context Protocol (MCP) Support**: Implement MCP for improved context management
-- **Streaming Optimizations**: Enhance response speed and token efficiency
-- **Local Model Support**: Add compatibility with locally-hosted models
+
+- [ ] **Model Context Protocol (MCP) Support**: Implement MCP for improved context management
+- [ ] **Streaming Optimizations**: Enhance response speed and token efficiency
+- [ ] **Local Model Support**: Add compatibility with locally-hosted models
 
 ### User Experience
-- **Session Management**: Save, resume, and manage multiple conversation threads
-- **UI Improvements**: Enhanced terminal interface with better visualization options
-- **Configuration Profiles**: Create and switch between different tool configurations
+
+- [ ] **Session Management**: Save, resume, and manage multiple conversation threads
+- [ ] **UI Improvements**: Enhanced terminal interface with better visualization options
+- [ ] **Configuration Profiles**: Create and switch between different tool configurations
 
 ## Installation
 
