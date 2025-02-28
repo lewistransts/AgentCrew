@@ -14,6 +14,7 @@ from .constants import (
     YELLOW,
     RESET,
     BOLD,
+    GRAY,
 )
 
 
@@ -131,7 +132,7 @@ class InteractiveChat:
                 self.console.print(Markdown(markdown_formatted_response))
 
                 print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
-                print(tool_use)
+                print(f"\n{GRAY}{tool_use}{RESET}")
 
                 # Execute the tool
 
@@ -151,6 +152,7 @@ class InteractiveChat:
                     tool_result = self.llm.execute_tool(
                         tool_use["name"], tool_use["input"]
                     )
+                    print(tool_result)
                     messages.append(
                         {
                             "role": "user",
@@ -164,6 +166,7 @@ class InteractiveChat:
                         }
                     )
                 except Exception as e:
+                    print(e)
                     messages.append(
                         {
                             "role": "user",

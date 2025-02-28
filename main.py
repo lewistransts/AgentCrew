@@ -8,6 +8,15 @@ from modules.web_search import (
     TavilySearchService,
     get_web_search_tool_definition,
     get_web_search_tool_handler,
+    get_web_extract_tool_definition,
+    get_web_extract_tool_handler,
+)
+from modules.clipboard import (
+    ClipboardService,
+    get_clipboard_read_tool_definition,
+    get_clipboard_read_tool_handler,
+    get_clipboard_write_tool_definition,
+    get_clipboard_write_tool_handler,
 )
 from modules.anthropic import AnthropicService
 from modules.chat import InteractiveChat
@@ -74,20 +83,37 @@ def chat(message, files):
         llm_service = AnthropicService()
 
         # Create scraping service
-        scraping_service = ScrapingService()
-
-        # Register scraping tool
-
-        # Register the tool with the LLM service
-        llm_service.register_tool(
-            scraping_tool_definition, get_scraping_tool_handler(scraping_service)
-        )
+        # scraping_service = ScrapingService()
+        #
+        # # Register scraping tool
+        #
+        # # Register the tool with the LLM service
+        # llm_service.register_tool(
+        #     scraping_tool_definition, get_scraping_tool_handler(scraping_service)
+        # )
 
         search_service = TavilySearchService()
 
         llm_service.register_tool(
             get_web_search_tool_definition(),
             get_web_search_tool_handler(search_service),
+        )
+        llm_service.register_tool(
+            get_web_extract_tool_definition(),
+            get_web_extract_tool_handler(search_service),
+        )
+        
+        # Create clipboard service
+        clipboard_service = ClipboardService()
+        
+        # Register clipboard tools
+        llm_service.register_tool(
+            get_clipboard_read_tool_definition(),
+            get_clipboard_read_tool_handler(clipboard_service),
+        )
+        llm_service.register_tool(
+            get_clipboard_write_tool_definition(),
+            get_clipboard_write_tool_handler(clipboard_service),
         )
 
         # Create the chat interface with the LLM service injected

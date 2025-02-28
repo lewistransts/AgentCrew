@@ -3,13 +3,6 @@
 > Ingest the information from this file, implement the Low-level Tasks, and
 > generate the code that will satisfy Objectives
 
-## Overview
-
-This feature will add web search capability to Claude by integrating the Tavily
-search API as a tool. This will enable Claude to perform real-time web searches
-to gather information when responding to user queries, significantly enhancing
-Claude's ability to provide up-to-date information.
-
 ## Objectives
 
 - Implement Tavily API integration as a web search tool for Claude
@@ -53,7 +46,3 @@ Claude's ability to provide up-to-date information.
    - Process and structure the search and the extract results into a string or
      list of string format to pass to claude message
 
-## Additional Notes
-
-- Document the tool's capabilities and limitations for users
-- Be mindful of rate limits and implement appropriate throttling
