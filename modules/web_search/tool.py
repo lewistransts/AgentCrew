@@ -1,0 +1,105 @@
+from typing import Dict, Any
+from modules.web_search.service import TavilySearchService
+
+
+def get_web_search_tool_definition():
+    """Return the tool definition for web search."""
+    return {
+        "name": "web_search",
+        "description": "Search the web for current information on a topic or query.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The search query to look up on the web",
+                },
+                "search_depth": {
+                    "type": "string",
+                    "enum": ["basic", "advanced"],
+                    "description": "The depth of search to perform. 'basic' is faster, 'advanced' is more thorough.",
+                    "default": "basic",
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of results to return (1-10)",
+                    "default": 5,
+                    "minimum": 1,
+                    "maximum": 10,
+                },
+            },
+            "required": ["query"],
+        },
+    }
+
+
+def get_web_extract_tool_definition():
+    """Return the tool definition for web content extraction."""
+    return {
+        "name": "web_extract",
+        "description": "Extract and retrieve the content from a specific URL.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "The URL to extract content from",
+                }
+            },
+            "required": ["url"],
+        },
+    }
+
+
+def get_web_search_tool_handler(tavily_service: TavilySearchService):
+    """
+    Return a handler function for the web search tool.
+
+    Args:
+        tavily_service: An instance of TavilySearchService
+
+    Returns:
+        Function that handles web search tool calls
+    """
+
+    def web_search_handler(**params):
+        query = params.get("query")
+        search_depth = params.get("search_depth", "basic")
+        max_results = params.get("max_results", 5)
+
+        if not query:
+            return "Error: No search query provided."
+
+        print(f"🔍 Searching the web for: {query}")
+        results = tavily_service.search(
+            query=query, search_depth=search_depth, max_results=max_results
+        )
+
+        return tavily_service.format_search_results(results)
+
+    return web_search_handler
+
+
+def get_web_extract_tool_handler(tavily_service: TavilySearchService):
+    """
+    Return a handler function for the web extract tool.
+
+    Args:
+        tavily_service: An instance of TavilySearchService
+
+    Returns:
+        Function that handles web extract tool calls
+    """
+
+    def web_extract_handler(**params):
+        url = params.get("url")
+
+        if not url:
+            return "Error: No URL provided."
+
+        print(f"📄 Extracting content from URL: {url}")
+        results = tavily_service.extract(url=url)
+
+        return tavily_service.format_extract_results(results)
+
+    return web_extract_handler

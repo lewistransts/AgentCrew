@@ -13,7 +13,7 @@ TOOL_DEFINITION = {
             },
             "output_file": {
                 "type": "string",
-                "description": "if defined, the content will be save to this file",
+                "description": "if defined, the content will be save to this file, only save to file if explicit demand",
             },
         },
         "required": ["url"],

@@ -4,6 +4,11 @@ from modules.scraping import (
     get_scraping_tool_handler,
     scraping_tool_definition,
 )
+from modules.web_search import (
+    TavilySearchService,
+    get_web_search_tool_definition,
+    get_web_search_tool_handler,
+)
 from modules.anthropic import AnthropicService
 from modules.chat import InteractiveChat
 
@@ -76,6 +81,13 @@ def chat(message, files):
         # Register the tool with the LLM service
         llm_service.register_tool(
             scraping_tool_definition, get_scraping_tool_handler(scraping_service)
+        )
+
+        search_service = TavilySearchService()
+
+        llm_service.register_tool(
+            get_web_search_tool_definition(),
+            get_web_search_tool_handler(search_service),
         )
 
         # Create the chat interface with the LLM service injected
