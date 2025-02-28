@@ -16,6 +16,7 @@ from .constants import (
     BOLD,
     GRAY,
 )
+from .file_completer import DirectoryListingCompleter
 
 
 def get_terminal_width():
@@ -214,7 +215,7 @@ class InteractiveChat:
         print(f"{YELLOW}(Press Enter for new line, Ctrl+S to submit){RESET}")
 
         kb = self._setup_key_bindings()
-        session = PromptSession(key_bindings=kb)
+        session = PromptSession(key_bindings=kb, completer=DirectoryListingCompleter())
 
         try:
             user_input = session.prompt("> ")
