@@ -259,6 +259,7 @@ class InteractiveChat:
             file_message = self.llm.handle_file_command(file_path)
             if file_message:
                 messages.append({"role": "user", "content": file_message})
+                return messages, False, True
         else:
             # Add regular text message
             messages.append({"role": "user", "content": user_input})
