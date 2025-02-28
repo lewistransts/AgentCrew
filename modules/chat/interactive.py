@@ -152,7 +152,6 @@ class InteractiveChat:
                     tool_result = self.llm.execute_tool(
                         tool_use["name"], tool_use["input"]
                     )
-                    print(tool_result)
                     messages.append(
                         {
                             "role": "user",
@@ -166,7 +165,6 @@ class InteractiveChat:
                         }
                     )
                 except Exception as e:
-                    print(e)
                     messages.append(
                         {
                             "role": "user",
