@@ -84,14 +84,15 @@ def get_clipboard_write_tool_handler(clipboard_service: ClipboardService) -> Cal
         Function that handles clipboard write requests
     """
 
-    def handle_clipboard_write(params: Dict[str, Any]) -> Dict[str, Any]:
-        if "content" not in params:
-            return {
-                "success": False,
-                "error": "Missing required parameter: content",
-            }
+    def handle_clipboard_write(**params) -> str | list[Dict[str, Any]]:
+        content = params.get("content")
+        if not content:
+            raise Exception("Invalid Argument")
 
-        content = params["content"]
-        return clipboard_service.write(content)
+        result = clipboard_service.write(content)
+        if result["success"]:
+            return result["message"]
+        else:
+            raise Exception("Cannot write to clipboard")
 
     return handle_clipboard_write
