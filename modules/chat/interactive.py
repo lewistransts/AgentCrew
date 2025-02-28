@@ -1,6 +1,7 @@
 import sys
 import shutil
 import pyperclip
+import traceback
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
@@ -192,6 +193,7 @@ class InteractiveChat:
 
         except Exception as e:
             print(f"\n{YELLOW}❌ Error: {str(e)}{RESET}")
+            print(traceback.format_exc())
             return None, 0, 0
 
     def _print_welcome_message(self, divider):

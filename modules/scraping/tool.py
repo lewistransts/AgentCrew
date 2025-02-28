@@ -37,7 +37,7 @@ def get_scraping_tool_handler(scraping_service: ScrapingService):
     def scraping_handler(url: str, output_file: str):
         print(f"\n🌐 Scraping content from: {url}")
         content = scraping_service.scrape_url(url)
-        if output_file:
+        if output_file and output_file != "None":
             with open(output_file, "w", encoding="utf-8") as f:
                 f.write(content)
         print("✅ Content successfully scraped")
