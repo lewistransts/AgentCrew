@@ -6,7 +6,7 @@ A command-line tool that provides an enhanced interactive chat experience with C
 
 - **Interactive Chat**: Rich conversation interface with Claude AI
 - **File Integration**: Include PDFs and text files directly in your conversation
-- **Web Scraping**: Ask Claude to fetch and analyze web content in real-time
+- **Web Scraping & Search**: Ask Claude to fetch web content and search the internet in real-time
 - **Keyboard Shortcuts**: Efficient message editing and response management
 - **Multiline Input**: Write complex messages with proper formatting
 - **Response Copying**: Easily copy Claude's responses to your clipboard
@@ -14,13 +14,15 @@ A command-line tool that provides an enhanced interactive chat experience with C
 ## Additional Capabilities
 
 - **Web Content Processing**: Fetch content from any URL and save it as markdown
+- **Web Search**: Search the internet for current information on any topic
+- **Web Content Extraction**: Extract and analyze content from specific URLs
 - **AI Summarization**: Create concise summaries of web content
 - **AI Explanation**: Explain complex content in simpler terms
 
 ## Chat Features
 
 - **File Integration**: Include files in your conversation
-- **URL Scraping**: Ask Claude to scrape and analyze web content directly in chat
+- **Web Integration**: Ask Claude to scrape URLs or search the web directly in chat
 - **Copy Responses**: Easily copy Claude's responses to your clipboard with Alt+C
 - **Multiline Input**: Write complex messages with proper formatting
 
@@ -40,7 +42,7 @@ The following features are planned for future releases:
 
 ### Enhanced Assistant Capabilities
 
-- [ ] **Web Search Integration**: Allow Claude to search the web for real-time information
+- [x] **Web Search Integration**: Allow Claude to search the web for real-time information
 - [ ] **Bash Command Execution**: Enable running system commands directly from the chat
 - [ ] **File Manipulation**: Create, edit, and manage files through chat commands
 
@@ -90,6 +92,7 @@ The following features are planned for future releases:
    ```
    ANTHROPIC_API_KEY=your_anthropic_api_key
    FC_API_KEY=your_firecrawl_api_key
+   TAVILY_API_KEY=your_tavily_api_key
    ```
 
 ## Usage
