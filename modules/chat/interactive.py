@@ -118,45 +118,26 @@ class InteractiveChat:
 
                 # Add tool result to messages
                 # Format assistant response as array of content blocks
-                assistant_message = {
-                    "role": "assistant",
-                    "content": [{"type": "text", "text": assistant_response}],
-                }
+                # assistant_message = {
+                #     "role": "assistant",
+                #     "content": [{"type": "text", "text": assistant_response}],
+                # }
+                #
+                # # If there's a tool use response, add it to the content array
+                # if "response" in tool_use and tool_use["response"] != "":
+                #     assistant_message["content"].append(tool_use["response"])
 
-                # If there's a tool use response, add it to the content array
-                if "response" in tool_use and tool_use["response"] != "":
-                    assistant_message["content"].append(tool_use["response"])
-
-                messages.append(assistant_message)
+                messages.append(
+                    self.llm.format_assistant_message(assistant_response, tool_use)
+                )
                 try:
                     tool_result = self.llm.execute_tool(
                         tool_use["name"], tool_use["input"]
                     )
-                    messages.append(
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "tool_result",
-                                    "tool_use_id": tool_use["id"],
-                                    "content": tool_result,
-                                }
-                            ],
-                        }
-                    )
+                    messages.append(self.llm.format_tool_result(tool_use, tool_result))
                 except Exception as e:
                     messages.append(
-                        {
-                            "role": "user",
-                            "content": [
-                                {
-                                    "type": "tool_result",
-                                    "tool_use_id": tool_use["id"],
-                                    "content": str(e),
-                                    "is_error": True,
-                                }
-                            ],
-                        }
+                        self.llm.format_tool_result(tool_use, str(e), is_error=True)
                     )
                 # Get a new response with the tool result
                 print(f"\n{GREEN}{BOLD}🤖 ASSISTANT (continued):{RESET}")

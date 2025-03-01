@@ -1,28 +1,53 @@
 from .service import ScrapingService
 
 
-TOOL_DEFINITION = {
-    "name": "scrap_url",
-    "description": "Scrap the content on given URL and generated markdown output",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "url": {
-                "type": "string",
-                "description": "the url that will be scraped",
+def get_scraping_tool_definition(provider="claude"):
+    """Return the tool definition for web scraping based on provider."""
+    if provider == "claude":
+        return {
+            "name": "scrap_url",
+            "description": "Scrap the content on given URL and generated markdown output",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "the url that will be scraped",
+                    },
+                    "output_file": {
+                        "type": "string",
+                        "description": "if defined, the content will be save to this file, only save to file if explicit demand to",
+                        "default": "None",
+                    },
+                },
+                "required": ["url"],
             },
-            "output_file": {
-                "type": "string",
-                "description": "if defined, the content will be save to this file, only save to file if explicit demand to",
-                "default": "None",
+        }
+    else:  # provider == "groq"
+        return {
+            "type": "function",
+            "function": {
+                "name": "scrap_url",
+                "description": "Scrap the content on given URL and generated markdown output",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "the url that will be scraped",
+                        },
+                        "output_file": {
+                            "type": "string",
+                            "description": "if defined, the content will be save to this file, only save to file if explicit demand to",
+                            "default": "None",
+                        },
+                    },
+                    "required": ["url"],
+                },
             },
-        },
-        "required": ["url"],
-    },
-}
+        }
 
 
-@staticmethod
 def get_scraping_tool_handler(scraping_service: ScrapingService):
     """
     Returns a handler function for the scraping tool.

@@ -2,45 +2,84 @@ from typing import Dict, Any, Callable
 from .service import ClipboardService
 
 
-def get_clipboard_read_tool_definition() -> Dict[str, Any]:
+def get_clipboard_read_tool_definition(provider="claude") -> Dict[str, Any]:
     """
-    Get the tool definition for reading from clipboard.
+    Get the tool definition for reading from clipboard based on provider.
+
+    Args:
+        provider: The LLM provider ("claude" or "groq")
 
     Returns:
         Dict containing the tool definition
     """
-    return {
-        "name": "clipboard_read",
-        "description": "Read content from the system clipboard (automatically detects text or image)",
-        "input_schema": {
-            "type": "object",
-            "properties": {},
-            "required": [],
-        },
-    }
-
-
-def get_clipboard_write_tool_definition() -> Dict[str, Any]:
-    """
-    Get the tool definition for writing to clipboard.
-
-    Returns:
-        Dict containing the tool definition
-    """
-    return {
-        "name": "clipboard_write",
-        "description": "Write content to the system clipboard",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string",
-                    "description": "Content to write to the clipboard",
+    if provider == "claude":
+        return {
+            "name": "clipboard_read",
+            "description": "Read content from the system clipboard (automatically detects text or image)",
+            "input_schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        }
+    else:  # provider == "groq"
+        return {
+            "type": "function",
+            "function": {
+                "name": "clipboard_read",
+                "description": "Read content from the system clipboard (automatically detects text or image)",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
                 },
             },
-            "required": ["content"],
-        },
-    }
+        }
+
+
+def get_clipboard_write_tool_definition(provider="claude") -> Dict[str, Any]:
+    """
+    Get the tool definition for writing to clipboard based on provider.
+
+    Args:
+        provider: The LLM provider ("claude" or "groq")
+
+    Returns:
+        Dict containing the tool definition
+    """
+    if provider == "claude":
+        return {
+            "name": "clipboard_write",
+            "description": "Write content to the system clipboard",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "description": "Content to write to the clipboard",
+                    },
+                },
+                "required": ["content"],
+            },
+        }
+    else:  # provider == "groq"
+        return {
+            "type": "function",
+            "function": {
+                "name": "clipboard_write",
+                "description": "Write content to the system clipboard",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "content": {
+                            "type": "string",
+                            "description": "Content to write to the clipboard",
+                        },
+                    },
+                    "required": ["content"],
+                },
+            },
+        }
 
 
 def get_clipboard_read_tool_handler(clipboard_service: ClipboardService) -> Callable:

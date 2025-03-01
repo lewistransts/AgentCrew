@@ -2,7 +2,7 @@ import click
 from modules.scraping import (
     ScrapingService,
     get_scraping_tool_handler,
-    scraping_tool_definition,
+    get_scraping_tool_definition,
 )
 from modules.web_search import (
     TavilySearchService,
@@ -77,30 +77,38 @@ def get_url(url: str, output_file: str, summarize: bool, explain: bool):
 @cli.command()
 @click.option("--message", help="Initial message to start the chat")
 @click.option("--files", multiple=True, help="Files to include in the initial message")
-def chat(message, files):
+@click.option(
+    "--provider",
+    type=click.Choice(["claude", "groq"]),
+    default="claude",
+    help="LLM provider to use (claude or groq)",
+)
+def chat(message, files, provider):
     """Start an interactive chat session with LLM"""
     try:
-        # Create the LLM service
-        llm_service = AnthropicService()
+        # Create the LLM service based on provider choice
+        if provider == "claude":
+            llm_service = AnthropicService()
+        else:  # provider == "groq"
+            llm_service = GroqService()
 
         # Create scraping service
         # scraping_service = ScrapingService()
-        #
-        # # Register scraping tool
-        #
-        # # Register the tool with the LLM service
+
+        # Register the scraping tool with the LLM service
         # llm_service.register_tool(
-        #     scraping_tool_definition, get_scraping_tool_handler(scraping_service)
+        #     get_scraping_tool_definition(provider),
+        #     get_scraping_tool_handler(scraping_service),
         # )
 
         search_service = TavilySearchService()
 
         llm_service.register_tool(
-            get_web_search_tool_definition(),
+            get_web_search_tool_definition(provider),
             get_web_search_tool_handler(search_service),
         )
         llm_service.register_tool(
-            get_web_extract_tool_definition(),
+            get_web_extract_tool_definition(provider),
             get_web_extract_tool_handler(search_service),
         )
 
@@ -109,11 +117,11 @@ def chat(message, files):
 
         # Register clipboard tools
         llm_service.register_tool(
-            get_clipboard_read_tool_definition(),
+            get_clipboard_read_tool_definition(provider),
             get_clipboard_read_tool_handler(clipboard_service),
         )
         llm_service.register_tool(
-            get_clipboard_write_tool_definition(),
+            get_clipboard_write_tool_definition(provider),
             get_clipboard_write_tool_handler(clipboard_service),
         )
 

@@ -2,53 +2,104 @@ from typing import Dict, Any
 from modules.web_search.service import TavilySearchService
 
 
-def get_web_search_tool_definition():
-    """Return the tool definition for web search."""
-    return {
-        "name": "web_search",
-        "description": "Search the web for current information on a topic or query.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "The search query to look up on the web",
+def get_web_search_tool_definition(provider="claude"):
+    """Return the tool definition for web search based on provider."""
+    if provider == "claude":
+        return {
+            "name": "web_search",
+            "description": "Search the web for current information on a topic or query.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query to look up on the web",
+                    },
+                    "search_depth": {
+                        "type": "string",
+                        "enum": ["basic", "advanced"],
+                        "description": "The depth of search to perform. 'basic' is faster, 'advanced' is more thorough.",
+                        "default": "basic",
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "Maximum number of results to return (1-10)",
+                        "default": 5,
+                        "minimum": 1,
+                        "maximum": 10,
+                    },
                 },
-                "search_depth": {
-                    "type": "string",
-                    "enum": ["basic", "advanced"],
-                    "description": "The depth of search to perform. 'basic' is faster, 'advanced' is more thorough.",
-                    "default": "basic",
-                },
-                "max_results": {
-                    "type": "integer",
-                    "description": "Maximum number of results to return (1-10)",
-                    "default": 5,
-                    "minimum": 1,
-                    "maximum": 10,
+                "required": ["query"],
+            },
+        }
+    else:  # provider == "groq"
+        return {
+            "type": "function",
+            "function": {
+                "name": "web_search",
+                "description": "Search the web for current information on a topic or query.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query to look up on the web",
+                        },
+                        "search_depth": {
+                            "type": "string",
+                            "enum": ["basic", "advanced"],
+                            "description": "The depth of search to perform. 'basic' is faster, 'advanced' is more thorough.",
+                            "default": "basic",
+                        },
+                        "max_results": {
+                            "type": "integer",
+                            "description": "Maximum number of results to return (1-10)",
+                            "default": 5,
+                            "minimum": 1,
+                            "maximum": 10,
+                        },
+                    },
+                    "required": ["query"],
                 },
             },
-            "required": ["query"],
-        },
-    }
+        }
 
 
-def get_web_extract_tool_definition():
-    """Return the tool definition for web content extraction."""
-    return {
-        "name": "web_extract",
-        "description": "Extract and retrieve the content from a specific URL.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "url": {
-                    "type": "string",
-                    "description": "The URL to extract content from",
-                }
+def get_web_extract_tool_definition(provider="claude"):
+    """Return the tool definition for web content extraction based on provider."""
+    if provider == "claude":
+        return {
+            "name": "web_extract",
+            "description": "Extract and retrieve the content from a specific URL.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "The URL to extract content from",
+                    }
+                },
+                "required": ["url"],
             },
-            "required": ["url"],
-        },
-    }
+        }
+    else:  # provider == "groq"
+        return {
+            "type": "function",
+            "function": {
+                "name": "web_extract",
+                "description": "Extract and retrieve the content from a specific URL.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "The URL to extract content from",
+                        }
+                    },
+                    "required": ["url"],
+                },
+            },
+        }
 
 
 def get_web_search_tool_handler(tavily_service: TavilySearchService):

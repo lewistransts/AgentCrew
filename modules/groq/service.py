@@ -1,6 +1,7 @@
 import os
 import base64
-import mimetypes
+import contextlib
+from typing import Dict, Any
 from groq import Groq
 from dotenv import load_dotenv
 from modules.llm.base import BaseLLMService
@@ -165,8 +166,18 @@ class GroqService(BaseLLMService):
         # Add tools if available
         if self.tools:
             stream_params["tools"] = self.tools
+            # Use non-streaming mode for tool support
+            response = self.client.chat.completions.create(**stream_params)
 
-        return self.client.chat.completions.create(**stream_params, stream=True)
+            @contextlib.contextmanager
+            def simulate_stream(data):
+                yield data.choices
+
+            # Return a list containing the single response to simulate a stream
+            return simulate_stream(response)
+        else:
+            # Use actual streaming when no tools are needed
+            return self.client.chat.completions.create(**stream_params, stream=True)
 
     def process_stream_chunk(
         self, chunk, assistant_response, tool_use
@@ -188,25 +199,111 @@ class GroqService(BaseLLMService):
                 chunk_text (str or None) - text to print for this chunk
             )
         """
-        # Extract the content from the delta in the chunk
-        chunk_text = chunk.choices[0].delta.content or ""
+        # Check if this is a non-streaming response (for tool use)
+        print(chunk)
+        if hasattr(chunk, "message"):
+            # This is a complete response, not a streaming chunk
+            message = chunk.message
+            content = message.content or ""
+            print(message)
+            # Check for tool calls
+            if hasattr(message, "tool_calls") and message.tool_calls:
+                tool_call = message.tool_calls[0]
+                function = tool_call.function
 
-        # Update the assistant response with the new content
+                updated_tool_use = {
+                    "id": tool_call.id,
+                    "name": function.name,
+                    "input": function.arguments,
+                    "type": tool_call.type,
+                    "response": "",
+                }
+
+                # Return with tool use information and the full content
+                return (
+                    content,
+                    updated_tool_use,
+                    chunk.usage.prompt_tokens if hasattr(chunk, "usage") else 0,
+                    chunk.usage.completion_tokens if hasattr(chunk, "usage") else 0,
+                    content,  # Return the full content to be printed
+                )
+
+            # Regular response without tool calls
+            return (
+                content,
+                None,
+                chunk.usage.prompt_tokens if hasattr(chunk, "usage") else 0,
+                chunk.usage.completion_tokens if hasattr(chunk, "usage") else 0,
+                content,  # Return the full content to be printed
+            )
+
+        # Handle regular streaming chunk
+        chunk_text = chunk.choices[0].delta.content or ""
         updated_assistant_response = assistant_response + chunk_text
 
-        # For Groq, we don't have tool use in the streaming response yet
-        # so we'll keep tool_use as is
-        updated_tool_use = tool_use
-
-        # Groq doesn't provide token counts in streaming chunks
-        # We'll use placeholder values and update them at the end if needed
-        input_tokens = 0
-        output_tokens = 0
+        # Get token counts if available in the chunk
+        input_tokens = getattr(chunk, "usage", {}).get("prompt_tokens", 0)
+        output_tokens = getattr(chunk, "usage", {}).get("completion_tokens", 0)
 
         return (
             updated_assistant_response,
-            updated_tool_use,
+            tool_use,
             input_tokens,
             output_tokens,
             chunk_text,
         )
+
+    def format_tool_result(
+        self, tool_use: Dict, tool_result: Any, is_error: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Format a tool result for Groq API.
+
+        Args:
+            tool_use_id: The ID of the tool use
+            tool_result: The result from the tool execution
+            is_error: Whether the result is an error
+
+        Returns:
+            A formatted message that can be appended to the messages list
+        """
+        # Groq follows OpenAI format for tool responses
+        message = {
+            "role": "tool",
+            "tool_call_id": tool_use["id"],
+            "name": tool_use["name"],
+            "content": str(tool_result),  # Groq expects string content
+        }
+
+        # Note: OpenAI/Groq format doesn't have a standard way to indicate errors
+        # We could potentially prefix the content with "ERROR: " if needed
+        if is_error:
+            message["content"] = f"ERROR: {message['content']}"
+
+        return message
+
+    def format_assistant_message(
+        self, assistant_response: str, tool_use: Dict = None
+    ) -> Dict[str, Any]:
+        """Format the assistant's response for Groq API."""
+        # Groq uses a simpler format with just a string content
+        if tool_use:
+            return {
+                "role": "assistant",
+                "content": assistant_response,
+                "tool_calls": [
+                    {
+                        "id": tool_use["id"],
+                        "function": {
+                            "name": tool_use["name"],
+                            "arguments": tool_use["input"],
+                        },
+                        "type": tool_use["type"],
+                    }
+                ],
+            }
+        else:
+            return {
+                "role": "assistant",
+                "content": assistant_response,
+            }

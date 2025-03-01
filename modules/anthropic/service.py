@@ -1,6 +1,7 @@
 import os
 import base64
 import mimetypes
+from typing import Dict, Any
 from anthropic import Anthropic
 from anthropic.types import TextBlock
 from dotenv import load_dotenv
@@ -253,6 +254,50 @@ class AnthropicService(BaseLLMService):
                         break
 
         return assistant_response, tool_use, input_tokens, output_tokens, chunk_text
+
+    def format_tool_result(
+        self, tool_use: Dict, tool_result: Any, is_error: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Format a tool result for Claude API.
+
+        Args:
+            tool_use_id: The ID of the tool use
+            tool_result: The result from the tool execution
+            is_error: Whether the result is an error
+
+        Returns:
+            A formatted message that can be appended to the messages list
+        """
+        message = {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tool_use["id"],
+                    "content": tool_result,
+                }
+            ],
+        }
+
+        # Add is_error flag if this is an error
+        if is_error:
+            message["content"][0]["is_error"] = True
+
+        return message
+
+    def format_assistant_message(self, assistant_response: str, tool_use: Dict = None) -> Dict[str, Any]:
+        """Format the assistant's response for Anthropic API."""
+        assistant_message = {
+            "role": "assistant",
+            "content": [{"type": "text", "text": assistant_response}],
+        }
+        
+        # If there's a tool use response, add it to the content array
+        if tool_use and "response" in tool_use and tool_use["response"] != "":
+            assistant_message["content"].append(tool_use["response"])
+            
+        return assistant_message
 
     def stream_assistant_response(self, messages):
         """Stream the assistant's response with tool support."""

@@ -82,3 +82,34 @@ class BaseLLMService(ABC):
             )
         """
         pass
+
+    @abstractmethod
+    def format_tool_result(
+        self, tool_use: Dict, tool_result: Any, is_error: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Format a tool result into the appropriate message format for the LLM provider.
+
+        Args:
+            tool_use_id: The ID of the tool use
+            tool_result: The result from the tool execution
+            is_error: Whether the result is an error
+
+        Returns:
+            A formatted message that can be appended to the messages list
+        """
+        pass
+
+    @abstractmethod
+    def format_assistant_message(self, assistant_response: str, tool_use: Dict = None) -> Dict[str, Any]:
+        """
+        Format the assistant's response into the appropriate message format for the LLM provider.
+        
+        Args:
+            assistant_response (str): The text response from the assistant
+            tool_use (Dict, optional): Tool use information if a tool was used
+            
+        Returns:
+            Dict[str, Any]: A properly formatted message to append to the messages list
+        """
+        pass
