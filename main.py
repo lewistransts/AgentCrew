@@ -102,10 +102,10 @@ def chat(message, files):
             get_web_extract_tool_definition(),
             get_web_extract_tool_handler(search_service),
         )
-        
+
         # Create clipboard service
         clipboard_service = ClipboardService()
-        
+
         # Register clipboard tools
         llm_service.register_tool(
             get_clipboard_read_tool_definition(),

@@ -195,6 +195,63 @@ class AnthropicService(BaseLLMService):
         result = handler(**tool_params)
         return result
 
+    def process_stream_chunk(self, chunk, assistant_response, tool_use):
+        """
+        Process a single chunk from the Anthropic streaming response.
+
+        Args:
+            chunk: The chunk from the stream
+            assistant_response: Current accumulated assistant response
+            tool_use: Current tool use information
+
+        Returns:
+            tuple: (
+                updated_assistant_response (str),
+                updated_tool_use (dict or None),
+                input_tokens (int),
+                output_tokens (int),
+                chunk_text (str or None) - text to print for this chunk
+            )
+        """
+        chunk_text = None
+        input_tokens = 0
+        output_tokens = 0
+
+        if chunk.type == "content_block_delta" and hasattr(chunk.delta, "text"):
+            chunk_text = chunk.delta.text
+            assistant_response += chunk_text
+        elif (
+            chunk.type == "message_start"
+            and hasattr(chunk, "message")
+            and hasattr(chunk.message, "usage")
+        ):
+            if hasattr(chunk.message.usage, "input_tokens"):
+                input_tokens = chunk.message.usage.input_tokens
+        elif chunk.type == "message_delta" and hasattr(chunk, "usage") and chunk.usage:
+            if hasattr(chunk.usage, "output_tokens"):
+                output_tokens = chunk.usage.output_tokens
+        elif chunk.type == "message_stop" and hasattr(chunk, "message"):
+            if (
+                hasattr(chunk.message, "stop_reason")
+                and chunk.message.stop_reason == "tool_use"
+                and hasattr(chunk.message, "content")
+            ):
+                # Extract tool use information
+                for content_block in chunk.message.content:
+                    if (
+                        hasattr(content_block, "type")
+                        and content_block.type == "tool_use"
+                    ):
+                        tool_use = {
+                            "name": content_block.name,
+                            "input": content_block.input,
+                            "id": content_block.id,
+                            "response": content_block,
+                        }
+                        break
+
+        return assistant_response, tool_use, input_tokens, output_tokens, chunk_text
+
     def stream_assistant_response(self, messages):
         """Stream the assistant's response with tool support."""
         stream_params = {

@@ -78,7 +78,6 @@ class InteractiveChat:
     def _stream_assistant_response(self, messages):
         """Stream the assistant's response and return the response and token usage."""
         assistant_response = ""
-        tool_use_response = ""
         input_tokens = 0
         output_tokens = 0
         tool_use = None
@@ -86,44 +85,26 @@ class InteractiveChat:
         try:
             with self.llm.stream_assistant_response(messages) as stream:
                 for chunk in stream:
-                    if chunk.type == "content_block_delta" and hasattr(
-                        chunk.delta, "text"
-                    ):
-                        print(chunk.delta.text, end="", flush=True)
-                        assistant_response += chunk.delta.text
-                    elif (
-                        chunk.type == "message_start"
-                        and hasattr(chunk, "message")
-                        and hasattr(chunk.message, "usage")
-                    ):
-                        if hasattr(chunk.message.usage, "input_tokens"):
-                            input_tokens = chunk.message.usage.input_tokens
-                    elif (
-                        chunk.type == "message_delta"
-                        and hasattr(chunk, "usage")
-                        and chunk.usage
-                    ):
-                        if hasattr(chunk.usage, "output_tokens"):
-                            output_tokens = chunk.usage.output_tokens
-                    elif chunk.type == "message_stop" and hasattr(chunk, "message"):
-                        if (
-                            hasattr(chunk.message, "stop_reason")
-                            and chunk.message.stop_reason == "tool_use"
-                            and hasattr(chunk.message, "content")
-                        ):
-                            # Extract tool use information
-                            for content_block in chunk.message.content:
-                                if (
-                                    hasattr(content_block, "type")
-                                    and content_block.type == "tool_use"
-                                ):
-                                    tool_use = {
-                                        "name": content_block.name,
-                                        "input": content_block.input,
-                                        "id": content_block.id,
-                                    }
-                                    tool_use_response = content_block
-                                    break
+                    # Process the chunk using the LLM service
+                    (
+                        assistant_response,
+                        tool_use,
+                        chunk_input_tokens,
+                        chunk_output_tokens,
+                        chunk_text,
+                    ) = self.llm.process_stream_chunk(
+                        chunk, assistant_response, tool_use
+                    )
+
+                    # Update token counts
+                    if chunk_input_tokens > 0:
+                        input_tokens = chunk_input_tokens
+                    if chunk_output_tokens > 0:
+                        output_tokens = chunk_output_tokens
+
+                    # Print chunk text if available
+                    if chunk_text:
+                        print(chunk_text, end="", flush=True)
 
             # Handle tool use if needed
             if tool_use:
@@ -135,8 +116,6 @@ class InteractiveChat:
                 print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
                 print(f"\n{GRAY}{tool_use}{RESET}")
 
-                # Execute the tool
-
                 # Add tool result to messages
                 # Format assistant response as array of content blocks
                 assistant_message = {
@@ -145,8 +124,8 @@ class InteractiveChat:
                 }
 
                 # If there's a tool use response, add it to the content array
-                if tool_use_response != "":
-                    assistant_message["content"].append(tool_use_response)
+                if "response" in tool_use and tool_use["response"] != "":
+                    assistant_message["content"].append(tool_use["response"])
 
                 messages.append(assistant_message)
                 try:
