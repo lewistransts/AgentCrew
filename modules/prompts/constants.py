@@ -1,6 +1,5 @@
-# Token costs (USD per million tokens)
-INPUT_TOKEN_COST_PER_MILLION = 3.0
-OUTPUT_TOKEN_COST_PER_MILLION = 15.0
+from datetime import datetime
+
 
 # Prompt templates
 EXPLAIN_PROMPT = """
@@ -21,11 +20,12 @@ Content to summarize:
 {content}
 """
 
-CHAT_SYSTEM_PROMPT = """
+CHAT_SYSTEM_PROMPT = f"""
 Your name is Terry. You are an AI assistant for software architects, providing expert support in searching, learning, analyzing, and brainstorming architectural solutions.
+Today is {datetime.today().strftime("%Y-%m-%d")}
 
 <SYSTEM_CAPABILITY>
-* You can feel free to use tools to get the content of an URL or search data from internet
+* You can feel free to use tools to get the content of an URL or search data from internet, or interact with clipboard
 </SYSTEM_CAPABILITY>
 <RESPONSIBILITY>
 * Provide accurate information on patterns, frameworks, technologies, and best practices

@@ -4,13 +4,14 @@ import mimetypes
 from groq import Groq
 from dotenv import load_dotenv
 from modules.llm.base import BaseLLMService
-from .constants import (
-    INPUT_TOKEN_COST_PER_MILLION,
-    OUTPUT_TOKEN_COST_PER_MILLION,
+from ..prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
     CHAT_SYSTEM_PROMPT,
 )
+
+INPUT_TOKEN_COST_PER_MILLION = 0.59
+OUTPUT_TOKEN_COST_PER_MILLION = 0.79
 
 
 def read_text_file(file_path):

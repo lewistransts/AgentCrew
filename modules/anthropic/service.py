@@ -5,13 +5,15 @@ from anthropic import Anthropic
 from anthropic.types import TextBlock
 from dotenv import load_dotenv
 from modules.llm.base import BaseLLMService
-from .constants import (
-    INPUT_TOKEN_COST_PER_MILLION,
-    OUTPUT_TOKEN_COST_PER_MILLION,
+from ..prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
     CHAT_SYSTEM_PROMPT,
 )
+
+
+INPUT_TOKEN_COST_PER_MILLION = 3.0
+OUTPUT_TOKEN_COST_PER_MILLION = 15.0
 
 
 def read_text_file(file_path):
