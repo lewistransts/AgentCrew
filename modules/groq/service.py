@@ -69,8 +69,8 @@ class GroqService(BaseLLMService):
             )
 
             # Calculate and log token usage and cost
-            input_tokens = response.usage.prompt_tokens
-            output_tokens = response.usage.completion_tokens
+            input_tokens = response.usage.prompt_tokens if response.usage else 0
+            output_tokens = response.usage.completion_tokens if response.usage else 0
             total_cost = self.calculate_cost(input_tokens, output_tokens)
 
             print("\nToken Usage Statistics:")
@@ -167,3 +167,46 @@ class GroqService(BaseLLMService):
             stream_params["tools"] = self.tools
 
         return self.client.chat.completions.create(**stream_params, stream=True)
+
+    def process_stream_chunk(
+        self, chunk, assistant_response, tool_use
+    ) -> tuple[str, dict | None, int, int, str | None]:
+        """
+        Process a single chunk from the streaming response.
+
+        Args:
+            chunk: The chunk from the stream
+            assistant_response: Current accumulated assistant response
+            tool_use: Current tool use information
+
+        Returns:
+            tuple: (
+                updated_assistant_response (str),
+                updated_tool_use (dict or None),
+                input_tokens (int),
+                output_tokens (int),
+                chunk_text (str or None) - text to print for this chunk
+            )
+        """
+        # Extract the content from the delta in the chunk
+        chunk_text = chunk.choices[0].delta.content or ""
+
+        # Update the assistant response with the new content
+        updated_assistant_response = assistant_response + chunk_text
+
+        # For Groq, we don't have tool use in the streaming response yet
+        # so we'll keep tool_use as is
+        updated_tool_use = tool_use
+
+        # Groq doesn't provide token counts in streaming chunks
+        # We'll use placeholder values and update them at the end if needed
+        input_tokens = 0
+        output_tokens = 0
+
+        return (
+            updated_assistant_response,
+            updated_tool_use,
+            input_tokens,
+            output_tokens,
+            chunk_text,
+        )

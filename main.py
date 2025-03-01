@@ -19,6 +19,7 @@ from modules.clipboard import (
     get_clipboard_write_tool_handler,
 )
 from modules.anthropic import AnthropicService
+from modules.groq import GroqService
 from modules.chat import InteractiveChat
 
 
