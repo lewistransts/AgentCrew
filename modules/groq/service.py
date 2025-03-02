@@ -2,6 +2,10 @@ import os
 import base64
 import contextlib
 import json
+import time
+import threading
+import itertools
+import sys
 from typing import Dict, Any
 from groq import Groq
 from dotenv import load_dotenv
@@ -120,6 +124,38 @@ class GroqService(BaseLLMService):
         else:
             return None
 
+    def _loading_animation(self, stop_event):
+        """Display a loading animation in the terminal."""
+        spinner = itertools.cycle(["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"])
+        fun_words = [
+            "Pondering",
+            "Cogitating",
+            "Ruminating",
+            "Contemplating",
+            "Brainstorming",
+            "Calculating",
+            "Processing",
+            "Analyzing",
+            "Deciphering",
+            "Meditating",
+            "Daydreaming",
+            "Scheming",
+            "Brewing",
+            "Conjuring",
+            "Inventing",
+            "Imagining",
+        ]
+        import random
+
+        fun_word = random.choice(fun_words)
+        while not stop_event.is_set():
+            sys.stdout.write("\r" + f"{fun_word} {next(spinner)} ")
+            sys.stdout.flush()
+            time.sleep(0.1)
+        # Clear the spinner line when done
+        sys.stdout.write("\r" + " " * 30 + "\r")
+        sys.stdout.flush()
+
     def register_tool(self, tool_definition, handler_function):
         """
         Register a tool with its handler function.
@@ -166,8 +202,22 @@ class GroqService(BaseLLMService):
         # Add tools if available
         if self.tools:
             stream_params["tools"] = self.tools
-            # Use non-streaming mode for tool support
-            response = self.client.chat.completions.create(**stream_params)
+
+            # Start loading animation for tool-based requests
+            stop_animation = threading.Event()
+            animation_thread = threading.Thread(
+                target=self._loading_animation, args=(stop_animation,)
+            )
+            animation_thread.daemon = True
+            animation_thread.start()
+
+            try:
+                # Use non-streaming mode for tool support
+                response = self.client.chat.completions.create(**stream_params)
+            finally:
+                # Stop the animation when response is received
+                stop_animation.set()
+                animation_thread.join()
 
             @contextlib.contextmanager
             def simulate_stream(data):
