@@ -108,6 +108,9 @@ class InteractiveChat:
 
             # Handle tool use if needed
             if tool_uses and len(tool_uses) > 0:
+                messages.append(
+                    self.llm.format_assistant_message(assistant_response, tool_uses)
+                )
                 for tool_use in tool_uses:
                     self._clear_to_start(assistant_response)
                     # Replace \n with two spaces followed by \n for proper Markdown line breaks
@@ -119,9 +122,6 @@ class InteractiveChat:
                     print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
                     print(f"\n{GRAY}{tool_use}{RESET}")
 
-                    messages.append(
-                        self.llm.format_assistant_message(assistant_response, tool_use)
-                    )
                     try:
                         tool_result = self.llm.execute_tool(
                             tool_use["name"], tool_use["input"]

@@ -289,7 +289,7 @@ class AnthropicService(BaseLLMService):
         return message
 
     def format_assistant_message(
-        self, assistant_response: str, tool_use: Dict | None = None
+        self, assistant_response: str, tool_uses: list[Dict] | None = None
     ) -> Dict[str, Any]:
         """Format the assistant's response for Anthropic API."""
         assistant_message = {
@@ -298,8 +298,13 @@ class AnthropicService(BaseLLMService):
         }
 
         # If there's a tool use response, add it to the content array
-        if tool_use and "response" in tool_use and tool_use["response"] != "":
-            assistant_message["content"].append(tool_use["response"])
+        if (
+            tool_uses
+            and tool_uses[0]
+            and "response" in tool_uses[0]
+            and tool_uses[0]["response"] != ""
+        ):
+            assistant_message["content"].append(tool_uses[0]["response"])
 
         return assistant_message
 

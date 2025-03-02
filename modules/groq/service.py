@@ -333,11 +333,11 @@ class GroqService(BaseLLMService):
         return message
 
     def format_assistant_message(
-        self, assistant_response: str, tool_use: Dict | None = None
+        self, assistant_response: str, tool_uses: list[Dict] | None = None
     ) -> Dict[str, Any]:
         """Format the assistant's response for Groq API."""
         # Groq uses a simpler format with just a string content
-        if tool_use:
+        if tool_uses:
             return {
                 "role": "assistant",
                 "content": assistant_response,
@@ -350,6 +350,7 @@ class GroqService(BaseLLMService):
                         },
                         "type": tool_use["type"],
                     }
+                    for tool_use in tool_uses
                 ],
             }
         else:

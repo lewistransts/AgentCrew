@@ -102,7 +102,7 @@ class BaseLLMService(ABC):
 
     @abstractmethod
     def format_assistant_message(
-        self, assistant_response: str, tool_use: Dict | None = None
+        self, assistant_response: str, tool_uses: list[Dict] | None = None
     ) -> Dict[str, Any]:
         """
         Format the assistant's response into the appropriate message format for the LLM provider.
