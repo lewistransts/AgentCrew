@@ -99,8 +99,17 @@ class AnthropicService(BaseLLMService):
         """Explain the provided content using Claude."""
         return self._process_content(EXPLAIN_PROMPT, content, max_tokens=1500)
 
-    def process_file_for_message(self, file_path):
-        """Process a file and return the appropriate message content."""
+    def _process_file(self, file_path, for_command=False):
+        """
+        Process a file and return the appropriate message content.
+
+        Args:
+            file_path: Path to the file to process
+            for_command: If True, format for /file command with different text prefix
+
+        Returns:
+            Content object for the file or None if processing failed
+        """
         mime_type, _ = mimetypes.guess_type(file_path)
 
         if mime_type == "application/pdf":
@@ -115,58 +124,42 @@ class AnthropicService(BaseLLMService):
                         "data": pdf_data,
                     },
                 }
+        elif mime_type and mime_type.startswith("image/"):
+            image_data = read_binary_file(file_path)
+            if image_data:
+                print(f"🖼️ Including image: {file_path}")
+                return {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": mime_type,
+                        "data": image_data,
+                    },
+                }
         else:
             content = read_text_file(file_path)
             if content:
                 print(f"📄 Including text file: {file_path}")
+                text_prefix = (
+                    "I'm sharing this file with you:\n\n" if for_command else ""
+                )
                 return {
                     "type": "text",
-                    "text": f"Content of {file_path}:\n\n{content}",
+                    "text": f"{text_prefix}Content of {file_path}:\n\n{content}",
                 }
 
         return None
 
+    def process_file_for_message(self, file_path):
+        """Process a file and return the appropriate message content."""
+        return self._process_file(file_path, for_command=False)
+
     def handle_file_command(self, file_path):
         """Handle the /file command and return message content."""
-        mime_type, _ = mimetypes.guess_type(file_path)
-        message_content = []
-
-        if mime_type == "application/pdf":
-            pdf_data = read_binary_file(file_path)
-            if pdf_data:
-                message_content.append(
-                    {
-                        "type": "document",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "application/pdf",
-                            "data": pdf_data,
-                        },
-                    }
-                )
-                message_content.append(
-                    {
-                        "type": "text",
-                        "text": "I'm sharing this PDF file with you. Please analyze it.",
-                    }
-                )
-                print(f"📄 Including PDF document: {file_path}")
-            else:
-                return None
-        else:
-            content = read_text_file(file_path)
-            if content:
-                message_content = [
-                    {
-                        "type": "text",
-                        "text": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
-                    }
-                ]
-                print(f"📄 Including text file: {file_path}")
-            else:
-                return None
-
-        return message_content
+        content = self._process_file(file_path, for_command=True)
+        if content:
+            return [content]
+        return None
 
     def register_tool(self, tool_definition, handler_function):
         """
