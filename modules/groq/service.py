@@ -1,6 +1,7 @@
 import os
 import base64
 import contextlib
+import json
 from typing import Dict, Any
 from groq import Groq
 from dotenv import load_dotenv
@@ -162,7 +163,6 @@ class GroqService(BaseLLMService):
             stream_params["messages"] = [
                 {"role": "system", "content": CHAT_SYSTEM_PROMPT}
             ] + messages
-
         # Add tools if available
         if self.tools:
             stream_params["tools"] = self.tools
@@ -200,12 +200,10 @@ class GroqService(BaseLLMService):
             )
         """
         # Check if this is a non-streaming response (for tool use)
-        print(chunk)
         if hasattr(chunk, "message"):
             # This is a complete response, not a streaming chunk
             message = chunk.message
             content = message.content or ""
-            print(message)
             # Check for tool calls
             if hasattr(message, "tool_calls") and message.tool_calls:
                 tool_call = message.tool_calls[0]
@@ -214,7 +212,7 @@ class GroqService(BaseLLMService):
                 updated_tool_use = {
                     "id": tool_call.id,
                     "name": function.name,
-                    "input": function.arguments,
+                    "input": json.loads(function.arguments),
                     "type": tool_call.type,
                     "response": "",
                 }
@@ -283,7 +281,7 @@ class GroqService(BaseLLMService):
         return message
 
     def format_assistant_message(
-        self, assistant_response: str, tool_use: Dict = None
+        self, assistant_response: str, tool_use: Dict | None = None
     ) -> Dict[str, Any]:
         """Format the assistant's response for Groq API."""
         # Groq uses a simpler format with just a string content
@@ -296,7 +294,7 @@ class GroqService(BaseLLMService):
                         "id": tool_use["id"],
                         "function": {
                             "name": tool_use["name"],
-                            "arguments": tool_use["input"],
+                            "arguments": json.dumps(tool_use["input"]),
                         },
                         "type": tool_use["type"],
                     }

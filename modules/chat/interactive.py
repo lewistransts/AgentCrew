@@ -116,17 +116,6 @@ class InteractiveChat:
                 print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
                 print(f"\n{GRAY}{tool_use}{RESET}")
 
-                # Add tool result to messages
-                # Format assistant response as array of content blocks
-                # assistant_message = {
-                #     "role": "assistant",
-                #     "content": [{"type": "text", "text": assistant_response}],
-                # }
-                #
-                # # If there's a tool use response, add it to the content array
-                # if "response" in tool_use and tool_use["response"] != "":
-                #     assistant_message["content"].append(tool_use["response"])
-
                 messages.append(
                     self.llm.format_assistant_message(assistant_response, tool_use)
                 )
@@ -293,7 +282,7 @@ class InteractiveChat:
 
             if assistant_response:
                 # Add assistant's response to message history
-                messages.append({"role": "assistant", "content": assistant_response})
+                messages.append(self.llm.format_assistant_message(assistant_response))
 
                 # Display token usage and cost
                 total_cost = self.llm.calculate_cost(input_tokens, output_tokens)
