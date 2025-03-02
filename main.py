@@ -1,9 +1,12 @@
 import click
-from modules.scraping import (
-    ScrapingService,
-    get_scraping_tool_handler,
-    get_scraping_tool_definition,
+from modules.ytdlp import (
+    YtDlpService,
+    get_youtube_subtitles_tool_definition,
+    get_youtube_subtitles_tool_handler,
+    get_youtube_chapters_tool_definition,
+    get_youtube_chapters_tool_handler,
 )
+from modules.scraping import ScrapingService
 from modules.web_search import (
     TavilySearchService,
     get_web_search_tool_definition,
@@ -92,26 +95,6 @@ def chat(message, files, provider):
         else:  # provider == "groq"
             llm_service = GroqService()
 
-        # Create scraping service
-        # scraping_service = ScrapingService()
-
-        # Register the scraping tool with the LLM service
-        # llm_service.register_tool(
-        #     get_scraping_tool_definition(provider),
-        #     get_scraping_tool_handler(scraping_service),
-        # )
-
-        search_service = TavilySearchService()
-
-        llm_service.register_tool(
-            get_web_search_tool_definition(provider),
-            get_web_search_tool_handler(search_service),
-        )
-        llm_service.register_tool(
-            get_web_extract_tool_definition(provider),
-            get_web_extract_tool_handler(search_service),
-        )
-
         # Create clipboard service
         clipboard_service = ClipboardService()
 
@@ -123,6 +106,34 @@ def chat(message, files, provider):
         llm_service.register_tool(
             get_clipboard_write_tool_definition(provider),
             get_clipboard_write_tool_handler(clipboard_service),
+        )
+
+        # Try to create search service and register web search tools if API key is available
+        try:
+            search_service = TavilySearchService()
+            # If initialization succeeds, register the tools
+            llm_service.register_tool(
+                get_web_search_tool_definition(provider),
+                get_web_search_tool_handler(search_service),
+            )
+            llm_service.register_tool(
+                get_web_extract_tool_definition(provider),
+                get_web_extract_tool_handler(search_service),
+            )
+        except Exception as e:
+            click.echo(f"⚠️ Web search tools not available: {str(e)}")
+
+        youtube_service = YtDlpService()
+
+        llm_service.register_tool(
+            get_youtube_subtitles_tool_definition(provider),
+            get_youtube_subtitles_tool_handler(youtube_service),
+        )
+
+        # Register YouTube chapters tool
+        llm_service.register_tool(
+            get_youtube_chapters_tool_definition(provider),
+            get_youtube_chapters_tool_handler(youtube_service),
         )
 
         # Create the chat interface with the LLM service injected

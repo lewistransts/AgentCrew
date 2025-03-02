@@ -1,10 +1,11 @@
 # Claude AI Interactive Chat Tool
 
-A command-line tool that provides an enhanced interactive chat experience with Claude AI, featuring file integration, web scraping capabilities, and convenient keyboard shortcuts.
+A command-line tool that provides an enhanced interactive chat experience with Claude AI or Groq LLMs, featuring file integration, web scraping capabilities, and convenient keyboard shortcuts.
 
 ## Key Features
 
-- **Interactive Chat**: Rich conversation interface with Claude AI
+- **Interactive Chat**: Rich conversation interface with Claude AI or Groq LLMs
+- **Multiple LLM Providers**: Choose between Anthropic's Claude or Groq's models
 - **File Integration**: Include PDFs and text files directly in your conversation
 - **Web Scraping & Search**: Ask Claude to fetch web content and search the internet in real-time
 - **Keyboard Shortcuts**: Efficient message editing and response management
@@ -16,6 +17,8 @@ A command-line tool that provides an enhanced interactive chat experience with C
 - **Web Content Processing**: Fetch content from any URL and save it as markdown
 - **Web Search**: Search the internet for current information on any topic
 - **Web Content Extraction**: Extract and analyze content from specific URLs
+- **YouTube Subtitles**: Extract and analyze subtitles from YouTube videos
+- **YouTube Chapters**: Get chapter information from YouTube videos
 - **AI Summarization**: Create concise summaries of web content
 - **AI Explanation**: Explain complex content in simpler terms
 
@@ -23,6 +26,7 @@ A command-line tool that provides an enhanced interactive chat experience with C
 
 - **File Integration**: Include files in your conversation
 - **Web Integration**: Ask Claude to scrape URLs or search the web directly in chat
+- **YouTube Integration**: Extract subtitles and chapters from YouTube videos
 - **Copy Responses**: Easily copy Claude's responses to your clipboard with Alt+C
 - **Multiline Input**: Write complex messages with proper formatting
 
@@ -43,6 +47,7 @@ The following features are planned for future releases:
 ### Enhanced Assistant Capabilities
 
 - [x] **Web Search Integration**: Allow Claude to search the web for real-time information
+- [x] **YouTube Integration**: Extract subtitles and chapters from YouTube videos
 - [ ] **Bash Command Execution**: Enable running system commands directly from the chat
 - [ ] **File Manipulation**: Create, edit, and manage files through chat commands
 
@@ -70,6 +75,7 @@ The following features are planned for future releases:
 - Python 3.8 or higher
 - [uv](https://github.com/astral-sh/uv) for package manager
 - An Anthropic API key (for Claude AI features)
+- A Groq API key (optional, for Groq LLM features)
 - A Firecrawl API key (for web scraping features)
 
 ### Setup
@@ -91,6 +97,7 @@ The following features are planned for future releases:
 
    ```
    ANTHROPIC_API_KEY=your_anthropic_api_key
+   GROQ_API_KEY=your_groq_api_key
    FC_API_KEY=your_firecrawl_api_key
    TAVILY_API_KEY=your_tavily_api_key
    ```
@@ -113,6 +120,12 @@ uv run main.py chat --message "Hello, I need help with software architecture"
 
 ```bash
 uv run main.py chat --files document.pdf --files code.py
+```
+
+### Start a Chat with Groq Provider
+
+```bash
+uv run main.py chat --provider groq
 ```
 
 ### Scrape a URL and Save as Markdown
