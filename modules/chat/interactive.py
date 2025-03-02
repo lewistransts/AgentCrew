@@ -80,7 +80,7 @@ class InteractiveChat:
         assistant_response = ""
         input_tokens = 0
         output_tokens = 0
-        tool_use = None
+        tool_uses = []
 
         try:
             with self.llm.stream_assistant_response(messages) as stream:
@@ -88,12 +88,12 @@ class InteractiveChat:
                     # Process the chunk using the LLM service
                     (
                         assistant_response,
-                        tool_use,
+                        tool_uses,
                         chunk_input_tokens,
                         chunk_output_tokens,
                         chunk_text,
                     ) = self.llm.process_stream_chunk(
-                        chunk, assistant_response, tool_use
+                        chunk, assistant_response, tool_uses
                     )
 
                     # Update token counts
@@ -107,28 +107,33 @@ class InteractiveChat:
                         print(chunk_text, end="", flush=True)
 
             # Handle tool use if needed
-            if tool_use:
-                self._clear_to_start(assistant_response)
-                # Replace \n with two spaces followed by \n for proper Markdown line breaks
-                markdown_formatted_response = assistant_response.replace("\n", "  \n")
-                self.console.print(Markdown(markdown_formatted_response))
-
-                print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
-                print(f"\n{GRAY}{tool_use}{RESET}")
-
-                messages.append(
-                    self.llm.format_assistant_message(assistant_response, tool_use)
-                )
-                try:
-                    tool_result = self.llm.execute_tool(
-                        tool_use["name"], tool_use["input"]
+            if tool_uses and len(tool_uses) > 0:
+                for tool_use in tool_uses:
+                    self._clear_to_start(assistant_response)
+                    # Replace \n with two spaces followed by \n for proper Markdown line breaks
+                    markdown_formatted_response = assistant_response.replace(
+                        "\n", "  \n"
                     )
-                    messages.append(self.llm.format_tool_result(tool_use, tool_result))
-                except Exception as e:
+                    self.console.print(Markdown(markdown_formatted_response))
+
+                    print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
+                    print(f"\n{GRAY}{tool_use}{RESET}")
+
                     messages.append(
-                        self.llm.format_tool_result(tool_use, str(e), is_error=True)
+                        self.llm.format_assistant_message(assistant_response, tool_use)
                     )
-                # Get a new response with the tool result
+                    try:
+                        tool_result = self.llm.execute_tool(
+                            tool_use["name"], tool_use["input"]
+                        )
+                        messages.append(
+                            self.llm.format_tool_result(tool_use, tool_result)
+                        )
+                    except Exception as e:
+                        messages.append(
+                            self.llm.format_tool_result(tool_use, str(e), is_error=True)
+                        )
+                    # Get a new response with the tool result
                 print(f"\n{GREEN}{BOLD}🤖 ASSISTANT (continued):{RESET}")
                 return self._stream_assistant_response(messages)
             else:

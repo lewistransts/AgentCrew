@@ -62,20 +62,20 @@ class BaseLLMService(ABC):
 
     @abstractmethod
     def process_stream_chunk(
-        self, chunk, assistant_response, tool_use
-    ) -> tuple[str, Dict | None, int, int, str | None]:
+        self, chunk, assistant_response, tool_uses
+    ) -> tuple[str, list[Dict] | None, int, int, str | None]:
         """
         Process a single chunk from the streaming response.
 
         Args:
             chunk: The chunk from the stream
             assistant_response: Current accumulated assistant response
-            tool_use: Current tool use information
+            tool_uses: Current tool use information
 
         Returns:
             tuple: (
                 updated_assistant_response (str),
-                updated_tool_use (dict or None),
+                updated_tool_uses (List of dict or empty),
                 input_tokens (int),
                 output_tokens (int),
                 chunk_text (str or None) - text to print for this chunk

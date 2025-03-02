@@ -51,7 +51,7 @@ class GroqService(BaseLLMService):
             raise ValueError("GROQ_API_KEY not found in environment variables")
         self.client = Groq(api_key=api_key)
         # Set default model - can be updated based on Groq's available models
-        self.model = "llama-3.2-90b-vision-preview"
+        self.model = "deepseek-r1-distill-llama-70b"
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
 
@@ -230,8 +230,8 @@ class GroqService(BaseLLMService):
             return self.client.chat.completions.create(**stream_params, stream=True)
 
     def process_stream_chunk(
-        self, chunk, assistant_response, tool_use
-    ) -> tuple[str, dict | None, int, int, str | None]:
+        self, chunk, assistant_response, tool_uses
+    ) -> tuple[str, list[dict] | None, int, int, str | None]:
         """
         Process a single chunk from the streaming response.
 
@@ -256,21 +256,23 @@ class GroqService(BaseLLMService):
             content = message.content or ""
             # Check for tool calls
             if hasattr(message, "tool_calls") and message.tool_calls:
-                tool_call = message.tool_calls[0]
-                function = tool_call.function
+                for tool_call in message.tool_calls:
+                    function = tool_call.function
 
-                updated_tool_use = {
-                    "id": tool_call.id,
-                    "name": function.name,
-                    "input": json.loads(function.arguments),
-                    "type": tool_call.type,
-                    "response": "",
-                }
+                    tool_uses.append(
+                        {
+                            "id": tool_call.id,
+                            "name": function.name,
+                            "input": json.loads(function.arguments),
+                            "type": tool_call.type,
+                            "response": "",
+                        }
+                    )
 
                 # Return with tool use information and the full content
                 return (
                     content,
-                    updated_tool_use,
+                    tool_uses,
                     chunk.usage.prompt_tokens if hasattr(chunk, "usage") else 0,
                     chunk.usage.completion_tokens if hasattr(chunk, "usage") else 0,
                     content,  # Return the full content to be printed
@@ -279,7 +281,7 @@ class GroqService(BaseLLMService):
             # Regular response without tool calls
             return (
                 content,
-                None,
+                [],
                 chunk.usage.prompt_tokens if hasattr(chunk, "usage") else 0,
                 chunk.usage.completion_tokens if hasattr(chunk, "usage") else 0,
                 content,  # Return the full content to be printed
@@ -295,7 +297,7 @@ class GroqService(BaseLLMService):
 
         return (
             updated_assistant_response,
-            tool_use,
+            tool_uses,
             input_tokens,
             output_tokens,
             chunk_text,

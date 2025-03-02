@@ -198,7 +198,7 @@ class AnthropicService(BaseLLMService):
         result = handler(**tool_params)
         return result
 
-    def process_stream_chunk(self, chunk, assistant_response, tool_use):
+    def process_stream_chunk(self, chunk, assistant_response, tool_uses):
         """
         Process a single chunk from the Anthropic streaming response.
 
@@ -245,15 +245,17 @@ class AnthropicService(BaseLLMService):
                         hasattr(content_block, "type")
                         and content_block.type == "tool_use"
                     ):
-                        tool_use = {
-                            "name": content_block.name,
-                            "input": content_block.input,
-                            "id": content_block.id,
-                            "response": content_block,
-                        }
+                        tool_uses = [
+                            {
+                                "name": content_block.name,
+                                "input": content_block.input,
+                                "id": content_block.id,
+                                "response": content_block,
+                            }
+                        ]
                         break
 
-        return assistant_response, tool_use, input_tokens, output_tokens, chunk_text
+        return assistant_response, tool_uses, input_tokens, output_tokens, chunk_text
 
     def format_tool_result(
         self, tool_use: Dict, tool_result: Any, is_error: bool = False
