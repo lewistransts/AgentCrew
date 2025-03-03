@@ -150,7 +150,6 @@ def get_web_extract_tool_handler(tavily_service: TavilySearchService):
 
         print(f"📄 Extracting content from URL: {url}")
         results = tavily_service.extract(url=url)
-
         return tavily_service.format_extract_results(results)
 
     return web_extract_handler

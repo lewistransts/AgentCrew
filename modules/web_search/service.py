@@ -76,13 +76,13 @@ class TavilySearchService:
         if "error" in results:
             return f"Search error: {results['error']}"
 
-        formatted_text = f"Search Results:\n\n"
+        formatted_text = f"**Search Results**:  \n\n"
 
         if "results" in results:
             for i, result in enumerate(results["results"], 1):
-                formatted_text += f"{i}. {result.get('title', 'No title')}\n"
-                formatted_text += f"   URL: {result.get('url', 'No URL')}\n"
-                formatted_text += f"   {result.get('content', 'No content')}\n\n"
+                formatted_text += f"{i}. {result.get('title', 'No title')}  \n"
+                formatted_text += f"   URL: {result.get('url', 'No URL')}  \n"
+                formatted_text += f"   {result.get('content', 'No content')}  \n\n"
         else:
             formatted_text += "No results found."
 
@@ -90,10 +90,15 @@ class TavilySearchService:
 
     def format_extract_results(self, results: Dict[str, Any]) -> str:
         """Format extract results into a readable string."""
-        if "error" in results:
-            return f"Extract error: {results['error']}"
 
-        if "content" in results:
-            return f"Extracted content from {results.get('url', 'URL')}:\n\n{results['content']}"
+        if "failed_results" in results and results["failed_results"]:
+            result = results["failed_results"][0]
+            return f"Extract failed: {result.get('error', 'Unknown error')}"
+
+        if "results" in results and results["results"]:
+            result = results["results"][0]
+            url = result.get("url", "Unknown URL")
+            content = result.get("raw_content", "No content available")
+            return f"Extracted content from {url}:\n\n{content}"
         else:
             return "No content could be extracted."
