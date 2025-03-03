@@ -51,7 +51,7 @@ class GroqService(BaseLLMService):
             raise ValueError("GROQ_API_KEY not found in environment variables")
         self.client = Groq(api_key=api_key)
         # Set default model - can be updated based on Groq's available models
-        self.model = "llama-3.3-70b-versatile"
+        self.model = "deepseek-r1-distill-qwen-32b"
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
 
