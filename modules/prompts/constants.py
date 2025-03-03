@@ -39,7 +39,7 @@ Today is {datetime.today().strftime("%Y-%m-%d")}
 * Generate diverse solution alternatives
 * Challenge assumptions constructively
 * Help structure and organize architectural thinking
-* Always prioritize simple solutions that solve the problem
+* Always keep solutions as simple as possible
 </RESPONSIBILITY>
 
 <INTERACTIVE_APPROACH>

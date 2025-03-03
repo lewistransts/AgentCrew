@@ -285,6 +285,9 @@ class AnthropicService(BaseLLMService):
         self, assistant_response: str, tool_uses: list[Dict] | None = None
     ) -> Dict[str, Any]:
         """Format the assistant's response for Anthropic API."""
+        # Fix the issue with assistant message return empty
+        if assistant_response == "":
+            assistant_response = " "
         assistant_message = {
             "role": "assistant",
             "content": [{"type": "text", "text": assistant_response}],
