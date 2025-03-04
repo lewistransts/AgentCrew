@@ -11,6 +11,7 @@ A command-line tool that provides an enhanced interactive chat experience with C
 - **Keyboard Shortcuts**: Efficient message editing and response management
 - **Multiline Input**: Write complex messages with proper formatting
 - **Response Copying**: Easily copy Claude's responses to your clipboard
+- **Conversation Memory**: Persistent memory of past conversations that can be retrieved by the AI
 
 ## Additional Capabilities
 
@@ -21,6 +22,7 @@ A command-line tool that provides an enhanced interactive chat experience with C
 - **YouTube Chapters**: Get chapter information from YouTube videos
 - **AI Summarization**: Create concise summaries of web content
 - **AI Explanation**: Explain complex content in simpler terms
+- **Memory Retrieval**: Access relevant past conversations based on keywords
 
 ## Chat Features
 
@@ -29,6 +31,7 @@ A command-line tool that provides an enhanced interactive chat experience with C
 - **YouTube Integration**: Extract subtitles and chapters from YouTube videos
 - **Copy Responses**: Easily copy Claude's responses to your clipboard with Alt+C
 - **Multiline Input**: Write complex messages with proper formatting
+- **Conversation Memory**: The AI can recall and reference past conversations
 
 ## Chat Commands
 
@@ -40,6 +43,15 @@ During an interactive chat session, you can use these commands:
 - Press `Enter` for a new line, `Ctrl+S` to submit your message
 - Press `Alt+C` to copy the latest assistant response to clipboard
 
+## Memory System
+
+The tool includes a persistent memory system that:
+
+- Automatically stores all conversations
+- Allows the AI to retrieve relevant past conversations using the `retrieve_memory` tool
+- Automatically cleans up conversations older than one month
+- Intelligently chunks and stores conversations for efficient retrieval
+
 ## Roadmap
 
 The following features are planned for future releases:
@@ -48,6 +60,7 @@ The following features are planned for future releases:
 
 - [x] **Web Search Integration**: Allow Claude to search the web for real-time information
 - [x] **YouTube Integration**: Extract subtitles and chapters from YouTube videos
+- [x] **Conversation Memory**: Store and retrieve past conversations
 - [ ] **Bash Command Execution**: Enable running system commands directly from the chat
 - [ ] **File Manipulation**: Create, edit, and manage files through chat commands
 
@@ -55,18 +68,21 @@ The following features are planned for future releases:
 
 - [ ] **Multiple Personalities**: Switch between different assistant personas tailored for specific tasks
 - [ ] **Custom Instructions**: Save and load different instruction sets for various use cases
+- [ ] **Enhanced Memory Management**: Configure memory retention periods and retrieval preferences
 
 ### Technical Improvements
 
 - [ ] **Model Context Protocol (MCP) Support**: Implement MCP for improved context management
 - [ ] **Streaming Optimizations**: Enhance response speed and token efficiency
 - [ ] **Local Model Support**: Add compatibility with locally-hosted models
+- [ ] **Advanced Memory Indexing**: Improve memory retrieval accuracy and performance
 
 ### User Experience
 
 - [ ] **Session Management**: Save, resume, and manage multiple conversation threads
 - [ ] **UI Improvements**: Enhanced terminal interface with better visualization options
 - [ ] **Configuration Profiles**: Create and switch between different tool configurations
+- [ ] **Memory Visualization**: Browse and manage stored conversations
 
 ## Installation
 
@@ -77,6 +93,7 @@ The following features are planned for future releases:
 - An Anthropic API key (for Claude AI features)
 - A Groq API key (optional, for Groq LLM features)
 - A Firecrawl API key (for web scraping features)
+- A Tavily API key (for web search features)
 
 ### Setup
 

@@ -25,16 +25,18 @@ def get_terminal_width():
 
 
 class InteractiveChat:
-    def __init__(self, llm_service: BaseLLMService):
+    def __init__(self, llm_service: BaseLLMService, memory_service=None):
         """
         Initialize the interactive chat with a LLM service.
 
         Args:
             llm_service: An implementation of BaseLLMService
+            memory_service: Optional memory service for storing conversations
         """
         self.llm = llm_service
         self.console = Console()
         self.latest_assistant_response = ""
+        self.memory_service = memory_service
 
     def _setup_key_bindings(self):
         """Set up key bindings for multiline input."""
@@ -287,6 +289,13 @@ class InteractiveChat:
             if assistant_response:
                 # Add assistant's response to message history
                 messages.append(self.llm.format_assistant_message(assistant_response))
+
+                # Store conversation in memory if memory service is available
+                if self.memory_service and user_input and assistant_response:
+                    try:
+                        self.memory_service.store_conversation(user_input, assistant_response)
+                    except Exception as e:
+                        print(f"\n{YELLOW}⚠️ Failed to store conversation in memory: {str(e)}{RESET}")
 
                 # Display token usage and cost
                 total_cost = self.llm.calculate_cost(input_tokens, output_tokens)

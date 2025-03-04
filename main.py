@@ -21,6 +21,11 @@ from modules.clipboard import (
     get_clipboard_write_tool_definition,
     get_clipboard_write_tool_handler,
 )
+from modules.memory import (
+    MemoryService,
+    get_memory_retrieve_tool_definition,
+    get_memory_retrieve_tool_handler,
+)
 from modules.anthropic import AnthropicService
 from modules.groq import GroqService
 from modules.chat import InteractiveChat
@@ -95,6 +100,23 @@ def chat(message, files, provider):
         else:  # provider == "groq"
             llm_service = GroqService()
 
+        # Initialize memory service
+        memory_service = MemoryService()
+        
+        # Clean up old memories (older than 1 month)
+        try:
+            removed_count = memory_service.cleanup_old_memories(months=1)
+            if removed_count > 0:
+                click.echo(f"🧹 Cleaned up {removed_count} old conversation memories")
+        except Exception as e:
+            click.echo(f"⚠️ Memory cleanup failed: {str(e)}")
+
+        # Register memory tool
+        llm_service.register_tool(
+            get_memory_retrieve_tool_definition(provider),
+            get_memory_retrieve_tool_handler(memory_service),
+        )
+
         # Create clipboard service
         clipboard_service = ClipboardService()
 
@@ -137,7 +159,7 @@ def chat(message, files, provider):
         )
 
         # Create the chat interface with the LLM service injected
-        chat_interface = InteractiveChat(llm_service)
+        chat_interface = InteractiveChat(llm_service, memory_service)
 
         # Start the chat
         chat_interface.start_chat(initial_content=message, files=files)

@@ -15,6 +15,7 @@ dependencies = [
     "pillow>=11.1.0",
     "groq>=0.18.0",
     "yt-dlp>=2025.2.19",
+    "chromadb>=0.6.3",
 ]
 
 [build-system]
