@@ -23,6 +23,7 @@ A command-line tool that provides an enhanced interactive chat experience with C
 - **AI Summarization**: Create concise summaries of web content
 - **AI Explanation**: Explain complex content in simpler terms
 - **Memory Retrieval**: Access relevant past conversations based on keywords
+- **Memory Forgetting**: Remove specific topics or conversations from memory
 
 ## Chat Features
 

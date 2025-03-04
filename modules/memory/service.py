@@ -198,3 +198,58 @@ class MemoryService:
             self.collection.delete(ids=ids_to_remove)
 
         return len(ids_to_remove)
+
+    def forget_topic(self, topic: str) -> Dict[str, Any]:
+        """
+        Remove memories related to a specific topic based on keyword search.
+
+        Args:
+            topic: Keywords describing the topic to forget
+
+        Returns:
+            Dict with success status and information about the operation
+        """
+        try:
+            # Query for memories related to the topic
+            results = self.collection.query(query_texts=[topic], n_results=100)
+
+            if not results["documents"] or not results["documents"][0]:
+                return {
+                    "success": False,
+                    "message": f"No memories found related to '{topic}'",
+                    "count": 0,
+                }
+
+            # Collect all conversation IDs related to the topic
+            conversation_ids = set()
+            for metadata in results["metadatas"][0]:
+                conv_id = metadata.get("conversation_id")
+                if conv_id:
+                    conversation_ids.add(conv_id)
+
+            # Get all memories to find those with matching conversation IDs
+            all_memories = self.collection.get()
+
+            # Find IDs to remove
+            ids_to_remove = []
+            for i, metadata in enumerate(all_memories["metadatas"]):
+                if metadata.get("conversation_id") in conversation_ids:
+                    ids_to_remove.append(all_memories["ids"][i])
+
+            # Remove the memories
+            if ids_to_remove:
+                self.collection.delete(ids=ids_to_remove)
+
+            return {
+                "success": True,
+                "message": f"Successfully removed {len(ids_to_remove)} memory chunks related to '{topic}'",
+                "count": len(ids_to_remove),
+                "conversations_affected": len(conversation_ids),
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Error forgetting topic: {str(e)}",
+                "count": 0,
+            }

@@ -25,6 +25,8 @@ from modules.memory import (
     MemoryService,
     get_memory_retrieve_tool_definition,
     get_memory_retrieve_tool_handler,
+    get_memory_forget_tool_definition,
+    get_memory_forget_tool_handler,
 )
 from modules.anthropic import AnthropicService
 from modules.groq import GroqService
@@ -111,10 +113,16 @@ def chat(message, files, provider):
         except Exception as e:
             click.echo(f"⚠️ Memory cleanup failed: {str(e)}")
 
-        # Register memory tool
+        # Register memory tools
         llm_service.register_tool(
             get_memory_retrieve_tool_definition(provider),
             get_memory_retrieve_tool_handler(memory_service),
+        )
+        
+        # Register memory forget tool
+        llm_service.register_tool(
+            get_memory_forget_tool_definition(provider),
+            get_memory_forget_tool_handler(memory_service),
         )
 
         # Create clipboard service
