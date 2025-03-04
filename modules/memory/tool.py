@@ -23,10 +23,6 @@ def get_memory_retrieve_tool_definition(provider="claude") -> Dict[str, Any]:
                         "type": "string",
                         "description": "Keywords to search for in past conversations",
                     },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum number of memories to retrieve (default: 5)",
-                    },
                 },
                 "required": ["keywords"],
             },
@@ -43,10 +39,6 @@ def get_memory_retrieve_tool_definition(provider="claude") -> Dict[str, Any]:
                         "keywords": {
                             "type": "string",
                             "description": "Keywords to search for in past conversations",
-                        },
-                        "limit": {
-                            "type": "integer",
-                            "description": "Maximum number of memories to retrieve (default: 5)",
                         },
                     },
                     "required": ["keywords"],
@@ -68,14 +60,13 @@ def get_memory_retrieve_tool_handler(memory_service: MemoryService) -> Callable:
 
     def handle_memory_retrieve(**params) -> str:
         keywords = params.get("keywords")
-        limit = params.get("limit", 5)
+        limit = params.get("limit", 20)
 
         if not keywords:
             return "Error: Keywords are required for memory retrieval."
 
         try:
             result = memory_service.retrieve_memory(keywords, limit)
-            print(result)
             return result
         except Exception as e:
             return f"Error retrieving memories: {str(e)}"
