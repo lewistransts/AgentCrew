@@ -18,6 +18,7 @@ capabilities, and convenient keyboard shortcuts.
 - **Response Copying**: Easily copy Claude's responses to your clipboard
 - **Conversation Memory**: Persistent memory of past conversations that can be
   retrieved by the AI
+- **Code Analysis**: Analyze code structure in git repositories to understand classes, functions, and methods
 
 ## Additional Capabilities
 
@@ -30,6 +31,7 @@ capabilities, and convenient keyboard shortcuts.
 - **AI Explanation**: Explain complex content in simpler terms
 - **Memory Retrieval**: Access relevant past conversations based on keywords
 - **Memory Forgetting**: Remove specific topics or conversations from memory
+- **Code Structure Analysis**: Generate structural maps of source code in git repositories
 
 ## Chat Features
 
@@ -41,6 +43,7 @@ capabilities, and convenient keyboard shortcuts.
   Alt+C
 - **Multiline Input**: Write complex messages with proper formatting
 - **Conversation Memory**: The AI can recall and reference past conversations
+- **Code Analysis**: Analyze and understand the structure of code repositories
 
 ## Extended Thinking Mode
 
@@ -91,6 +94,7 @@ The following features are planned for future releases:
 - [x] **YouTube Integration**: Extract subtitles and chapters from YouTube
       videos
 - [x] **Conversation Memory**: Store and retrieve past conversations
+- [x] **Code Analysis**: Analyze code structure in git repositories
 - [ ] **Bash Command Execution**: Enable running system commands directly from
       the chat
 - [ ] **File Manipulation**: Create, edit, and manage files through chat
