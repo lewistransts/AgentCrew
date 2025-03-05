@@ -1,17 +1,23 @@
 # Claude AI Interactive Chat Tool
 
-A command-line tool that provides an enhanced interactive chat experience with Claude AI or Groq LLMs, featuring file integration, web scraping capabilities, and convenient keyboard shortcuts.
+A command-line tool that provides an enhanced interactive chat experience with
+Claude AI, OpenAI or Groq LLMs, featuring file integration, web scraping
+capabilities, and convenient keyboard shortcuts.
 
 ## Key Features
 
 - **Interactive Chat**: Rich conversation interface with Claude AI or Groq LLMs
-- **Multiple LLM Providers**: Choose between Anthropic's Claude or Groq's models
-- **File Integration**: Include PDFs and text files directly in your conversation
-- **Web Scraping & Search**: Ask Claude to fetch web content and search the internet in real-time
+- **Multiple LLM Providers**: Choose between Anthropic's Claude, Groq's models,
+  or OpenAI's GPT models
+- **File Integration**: Include PDFs and text files directly in your
+  conversation
+- **Web Scraping & Search**: Ask Claude to fetch web content and search the
+  internet in real-time
 - **Keyboard Shortcuts**: Efficient message editing and response management
 - **Multiline Input**: Write complex messages with proper formatting
 - **Response Copying**: Easily copy Claude's responses to your clipboard
-- **Conversation Memory**: Persistent memory of past conversations that can be retrieved by the AI
+- **Conversation Memory**: Persistent memory of past conversations that can be
+  retrieved by the AI
 
 ## Additional Capabilities
 
@@ -28,11 +34,28 @@ A command-line tool that provides an enhanced interactive chat experience with C
 ## Chat Features
 
 - **File Integration**: Include files in your conversation
-- **Web Integration**: Ask Claude to scrape URLs or search the web directly in chat
+- **Web Integration**: Ask Claude to scrape URLs or search the web directly in
+  chat
 - **YouTube Integration**: Extract subtitles and chapters from YouTube videos
-- **Copy Responses**: Easily copy Claude's responses to your clipboard with Alt+C
+- **Copy Responses**: Easily copy Claude's responses to your clipboard with
+  Alt+C
 - **Multiline Input**: Write complex messages with proper formatting
 - **Conversation Memory**: The AI can recall and reference past conversations
+
+## Extended Thinking Mode
+
+The tool supports extended thinking capability (currently only with Claude),
+which allows the AI to:
+
+- Work through complex problems step-by-step
+- Show its reasoning process before providing a final answer
+- Allocate a specific token budget for the thinking process
+
+Currently, extended thinking mode is only supported when using Claude as the
+provider. Other providers (OpenAI, Groq) do not yet support this feature.
+
+You can enable thinking mode during chat by using the `/think <budget>` command,
+where budget is the token allocation (minimum 1024 tokens).
 
 ## Chat Commands
 
@@ -40,6 +63,9 @@ During an interactive chat session, you can use these commands:
 
 - `/file <file_path>` - Include a file in your message
 - `/clear` - Clear the conversation history
+- `/think <budget>` - Enable extended thinking mode with specified token budget
+  (min 1024)
+- `/think 0` - Disable thinking mode
 - `exit` or `quit` - End the chat session
 - Press `Enter` for a new line, `Ctrl+S` to submit your message
 - Press `Alt+C` to copy the latest assistant response to clipboard
@@ -49,7 +75,8 @@ During an interactive chat session, you can use these commands:
 The tool includes a persistent memory system that:
 
 - Automatically stores all conversations
-- Allows the AI to retrieve relevant past conversations using the `retrieve_memory` tool
+- Allows the AI to retrieve relevant past conversations using the
+  `retrieve_memory` tool
 - Automatically cleans up conversations older than one month
 - Intelligently chunks and stores conversations for efficient retrieval
 
@@ -59,30 +86,44 @@ The following features are planned for future releases:
 
 ### Enhanced Assistant Capabilities
 
-- [x] **Web Search Integration**: Allow Claude to search the web for real-time information
-- [x] **YouTube Integration**: Extract subtitles and chapters from YouTube videos
+- [x] **Web Search Integration**: Allow Claude to search the web for real-time
+      information
+- [x] **YouTube Integration**: Extract subtitles and chapters from YouTube
+      videos
 - [x] **Conversation Memory**: Store and retrieve past conversations
-- [ ] **Bash Command Execution**: Enable running system commands directly from the chat
-- [ ] **File Manipulation**: Create, edit, and manage files through chat commands
+- [ ] **Bash Command Execution**: Enable running system commands directly from
+      the chat
+- [ ] **File Manipulation**: Create, edit, and manage files through chat
+      commands
 
 ### Advanced Personalization
 
-- [ ] **Multiple Personalities**: Switch between different assistant personas tailored for specific tasks
-- [ ] **Custom Instructions**: Save and load different instruction sets for various use cases
-- [ ] **Enhanced Memory Management**: Configure memory retention periods and retrieval preferences
+- [ ] **Multiple Personalities**: Switch between different assistant personas
+      tailored for specific tasks
+- [ ] **Custom Instructions**: Save and load different instruction sets for
+      various use cases
+- [ ] **Enhanced Memory Management**: Configure memory retention periods and
+      retrieval preferences
 
 ### Technical Improvements
 
-- [ ] **Model Context Protocol (MCP) Support**: Implement MCP for improved context management
+- [ ] **Model Context Protocol (MCP) Support**: Implement MCP for improved
+      context management
+- [x] **Command-line Thinking Mode Options**: Enable and configure thinking mode
+      with the `/think` command
 - [ ] **Streaming Optimizations**: Enhance response speed and token efficiency
 - [ ] **Local Model Support**: Add compatibility with locally-hosted models
-- [ ] **Advanced Memory Indexing**: Improve memory retrieval accuracy and performance
+- [ ] **Advanced Memory Indexing**: Improve memory retrieval accuracy and
+      performance
 
 ### User Experience
 
-- [ ] **Session Management**: Save, resume, and manage multiple conversation threads
-- [ ] **UI Improvements**: Enhanced terminal interface with better visualization options
-- [ ] **Configuration Profiles**: Create and switch between different tool configurations
+- [ ] **Session Management**: Save, resume, and manage multiple conversation
+      threads
+- [ ] **UI Improvements**: Enhanced terminal interface with better visualization
+      options
+- [ ] **Configuration Profiles**: Create and switch between different tool
+      configurations
 - [ ] **Memory Visualization**: Browse and manage stored conversations
 
 ## Installation
@@ -115,7 +156,8 @@ The following features are planned for future releases:
 
    ```
    ANTHROPIC_API_KEY=your_anthropic_api_key
-   GROQ_API_KEY=your_groq_api_key
+   OPENAI_API_KEY=your_openai_api_key(optional)
+   GROQ_API_KEY=your_groq_api_key(optional)
    FC_API_KEY=your_firecrawl_api_key
    TAVILY_API_KEY=your_tavily_api_key
    ```
@@ -140,10 +182,12 @@ uv run main.py chat --message "Hello, I need help with software architecture"
 uv run main.py chat --files document.pdf --files code.py
 ```
 
-### Start a Chat with Groq Provider
+### Start a Chat with Different Providers
 
 ```bash
 uv run main.py chat --provider groq
+# or
+uv run main.py chat --provider openai
 ```
 
 ### Scrape a URL and Save as Markdown
