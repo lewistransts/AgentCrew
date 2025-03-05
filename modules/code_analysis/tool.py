@@ -1,4 +1,4 @@
-from os import error
+from os import error, path as os_path
 from typing import Dict, Any, Callable
 from .service import CodeAnalysisService
 
@@ -65,6 +65,7 @@ def get_code_analysis_tool_handler(
 
     def handler(**params) -> str:
         path = params.get("path", ".")
+        path = os_path.expanduser(path)
         result = code_analysis_service.analyze_code_structure(path)
 
         if isinstance(result, dict) and "error" in result:
