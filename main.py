@@ -28,6 +28,11 @@ from modules.memory import (
     get_memory_forget_tool_definition,
     get_memory_forget_tool_handler,
 )
+from modules.code_analysis import (
+    CodeAnalysisService,
+    get_code_analysis_tool_definition,
+    get_code_analysis_tool_handler,
+)
 from modules.anthropic import AnthropicService
 from modules.groq import GroqService
 from modules.openai import OpenAIService
@@ -168,6 +173,16 @@ def chat(message, files, provider):
             get_youtube_chapters_tool_definition(provider),
             get_youtube_chapters_tool_handler(youtube_service),
         )
+
+        # Create code analysis service and register tool
+        try:
+            code_analysis_service = CodeAnalysisService()
+            llm_service.register_tool(
+                get_code_analysis_tool_definition(provider),
+                get_code_analysis_tool_handler(code_analysis_service),
+            )
+        except Exception as e:
+            click.echo(f"⚠️ Code analysis tool not available: {str(e)}")
 
         # Create the chat interface with the LLM service injected
         chat_interface = InteractiveChat(llm_service, memory_service)
