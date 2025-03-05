@@ -2,12 +2,13 @@ import os
 from typing import Dict, Any, Optional, List
 from dotenv import load_dotenv
 from tavily import TavilyClient
+from ..llm import BaseLLMService
 
 
 class TavilySearchService:
     """Service for interacting with the Tavily Search API using the official SDK."""
 
-    def __init__(self):
+    def __init__(self, llm: Optional[BaseLLMService] = None):
         """Initialize the Tavily search service with API key from environment."""
         load_dotenv()
         self.api_key = os.getenv("TAVILY_API_KEY")
@@ -15,6 +16,7 @@ class TavilySearchService:
             raise ValueError("TAVILY_API_KEY not found in environment variables")
 
         self.client = TavilyClient(api_key=self.api_key)
+        self.llm = llm
 
     def search(
         self,
@@ -99,6 +101,8 @@ class TavilySearchService:
             result = results["results"][0]
             url = result.get("url", "Unknown URL")
             content = result.get("raw_content", "No content available")
+            if self.llm:
+                content = self.llm.summarize_content(content)
             return f"Extracted content from {url}:\n\n{content}"
         else:
             return "No content could be extracted."

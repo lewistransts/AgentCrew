@@ -148,7 +148,7 @@ def chat(message, files, provider):
 
         # Try to create search service and register web search tools if API key is available
         try:
-            search_service = TavilySearchService()
+            search_service = TavilySearchService(llm=llm_service)
             # If initialization succeeds, register the tools
             llm_service.register_tool(
                 get_web_search_tool_definition(provider),
