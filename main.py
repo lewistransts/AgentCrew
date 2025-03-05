@@ -30,6 +30,7 @@ from modules.memory import (
 )
 from modules.anthropic import AnthropicService
 from modules.groq import GroqService
+from modules.openai import OpenAIService
 from modules.chat import InteractiveChat
 
 
@@ -89,7 +90,7 @@ def get_url(url: str, output_file: str, summarize: bool, explain: bool):
 @click.option("--files", multiple=True, help="Files to include in the initial message")
 @click.option(
     "--provider",
-    type=click.Choice(["claude", "groq"]),
+    type=click.Choice(["claude", "groq", "openai"]),
     default="claude",
     help="LLM provider to use (claude or groq)",
 )
@@ -99,12 +100,14 @@ def chat(message, files, provider):
         # Create the LLM service based on provider choice
         if provider == "claude":
             llm_service = AnthropicService()
-        else:  # provider == "groq"
+        elif provider == "groq":
             llm_service = GroqService()
+        else:
+            llm_service = OpenAIService()
 
         # Initialize memory service
         memory_service = MemoryService()
-        
+
         # Clean up old memories (older than 1 month)
         try:
             removed_count = memory_service.cleanup_old_memories(months=1)
@@ -118,7 +121,7 @@ def chat(message, files, provider):
             get_memory_retrieve_tool_definition(provider),
             get_memory_retrieve_tool_handler(memory_service),
         )
-        
+
         # Register memory forget tool
         llm_service.register_tool(
             get_memory_forget_tool_definition(provider),

@@ -16,6 +16,7 @@ dependencies = [
     "groq>=0.18.0",
     "yt-dlp>=2025.2.19",
     "chromadb>=0.6.3",
+    "openai>=1.65.2",
 ]
 
 [build-system]

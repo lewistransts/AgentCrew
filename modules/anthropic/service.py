@@ -16,6 +16,9 @@ from ..prompts.constants import (
 INPUT_TOKEN_COST_PER_MILLION = 3.0
 OUTPUT_TOKEN_COST_PER_MILLION = 15.0
 
+# INPUT_TOKEN_COST_PER_MILLION = 0.8
+# OUTPUT_TOKEN_COST_PER_MILLION = 4.0
+
 
 def read_text_file(file_path):
     """Read and return the contents of a text file."""
@@ -48,6 +51,7 @@ class AnthropicService(BaseLLMService):
             raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
         self.client = Anthropic(api_key=api_key)
         self.model = "claude-3-7-sonnet-20250219"
+        # self.model = "claude-3-5-haiku-latest"
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
 
@@ -81,7 +85,7 @@ class AnthropicService(BaseLLMService):
             output_tokens = message.usage.output_tokens
             total_cost = self.calculate_cost(input_tokens, output_tokens)
 
-            print(f"\nToken Usage Statistics:")
+            print("\nToken Usage Statistics:")
             print(f"Input tokens: {input_tokens:,}")
             print(f"Output tokens: {output_tokens:,}")
             print(f"Total tokens: {input_tokens + output_tokens:,}")

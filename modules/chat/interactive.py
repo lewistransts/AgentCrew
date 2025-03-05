@@ -151,6 +151,7 @@ class InteractiveChat:
 
         except Exception as e:
             print(f"\n{YELLOW}❌ Error: {str(e)}{RESET}")
+            traceback.print_stack()
             return None, 0, 0
 
     def _print_welcome_message(self, divider):
@@ -293,9 +294,13 @@ class InteractiveChat:
                 # Store conversation in memory if memory service is available
                 if self.memory_service and user_input and assistant_response:
                     try:
-                        self.memory_service.store_conversation(user_input, assistant_response)
+                        self.memory_service.store_conversation(
+                            user_input, assistant_response
+                        )
                     except Exception as e:
-                        print(f"\n{YELLOW}⚠️ Failed to store conversation in memory: {str(e)}{RESET}")
+                        print(
+                            f"\n{YELLOW}⚠️ Failed to store conversation in memory: {str(e)}{RESET}"
+                        )
 
                 # Display token usage and cost
                 total_cost = self.llm.calculate_cost(input_tokens, output_tokens)
