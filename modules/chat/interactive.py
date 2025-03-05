@@ -83,6 +83,9 @@ class InteractiveChat:
         input_tokens = 0
         output_tokens = 0
         tool_uses = []
+        thinking_content = ""  # Reset thinking content for new response
+        thinking_signature = ""  # Store the signature
+        start_thinking = True
 
         try:
             with self.llm.stream_assistant_response(messages) as stream:
@@ -94,6 +97,7 @@ class InteractiveChat:
                         chunk_input_tokens,
                         chunk_output_tokens,
                         chunk_text,
+                        thinking_chunk,
                     ) = self.llm.process_stream_chunk(
                         chunk, assistant_response, tool_uses
                     )
@@ -104,23 +108,51 @@ class InteractiveChat:
                     if chunk_output_tokens > 0:
                         output_tokens = chunk_output_tokens
 
+                    # Accumulate thinking content if available
+                    if thinking_chunk:
+                        thinking_chunk, signature = thinking_chunk
+                        if thinking_chunk:
+                            thinking_content += thinking_chunk
+                        if signature:
+                            thinking_signature += signature
+                        # if signature:
+                        #     thinking_signature = signature
+                        # Print thinking content with a special format
+                        if start_thinking:
+                            print(f"\n{YELLOW}💭 Claude's thinking process:{RESET}")
+                            start_thinking = False
+                        print(f"{GRAY}{thinking_chunk}{RESET}", end="", flush=True)
+
                     # Print chunk text if available
                     if chunk_text:
                         print(chunk_text, end="", flush=True)
 
             # Handle tool use if needed
             if tool_uses and len(tool_uses) > 0:
-                messages.append(
-                    self.llm.format_assistant_message(assistant_response, tool_uses)
-                )
-                for tool_use in tool_uses:
-                    self._clear_to_start(assistant_response)
-                    # Replace \n with two spaces followed by \n for proper Markdown line breaks
-                    markdown_formatted_response = assistant_response.replace(
-                        "\n", "  \n"
-                    )
-                    self.console.print(Markdown(markdown_formatted_response))
+                # Add thinking content as a separate message if available
+                if thinking_content:
+                    self._clear_to_start(thinking_content)
+                    print(f"{GRAY}{thinking_content}{RESET}", end="", flush=True)
+                    print("\n---\n")
 
+                thinking_data = (
+                    (thinking_content, thinking_signature) if thinking_content else None
+                )
+                thinking_message = self.llm.format_thinking_message(thinking_data)
+                if thinking_message:
+                    messages.append(thinking_message)
+
+                # Format assistant message with the response and tool uses
+                assistant_message = self.llm.format_assistant_message(
+                    assistant_response, tool_uses
+                )
+                messages.append(assistant_message)
+
+                self._clear_to_start(assistant_response)
+                # Replace \n with two spaces followed by \n for proper Markdown line breaks
+                markdown_formatted_response = assistant_response.replace("\n", "  \n")
+                self.console.print(Markdown(markdown_formatted_response))
+                for tool_use in tool_uses:
                     print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
                     print(f"\n{GRAY}{tool_use}{RESET}")
 
@@ -140,12 +172,30 @@ class InteractiveChat:
                 return self._stream_assistant_response(messages)
             else:
                 self._clear_to_start(assistant_response)
+
+                # # If we have thinking content, display it first in a collapsible section
+                # if thinking_content:
+                #     print(f"\n{YELLOW}💭 Claude's thinking process:{RESET}")
+                #     print(f"{GRAY}{thinking_content}{RESET}")
+                #     print("\n---\n")
+
                 # Replace \n with two spaces followed by \n for proper Markdown line breaks
                 markdown_formatted_response = assistant_response.replace("\n", "  \n")
                 self.console.print(Markdown(markdown_formatted_response))
 
                 # Store the latest response
                 self.latest_assistant_response = assistant_response
+
+                # # Add thinking content to the message if available
+                # thinking_data = (
+                #     (thinking_content, thinking_signature) if thinking_content else None
+                # )
+                # thinking_message = self.llm.format_thinking_message(thinking_data)
+                # if thinking_message:
+                #     messages.append(thinking_message)
+                #
+                # Add the assistant's response
+                messages.append(self.llm.format_assistant_message(assistant_response))
 
                 return assistant_response, input_tokens, output_tokens
 
@@ -162,6 +212,10 @@ class InteractiveChat:
             f"{YELLOW}Use '/file <file_path>' to include a file in your message.{RESET}"
         )
         print(f"{YELLOW}Use '/clear' to clear the conversation history.{RESET}")
+        print(
+            f"{YELLOW}Use '/think <budget>' to enable Claude's thinking mode (min 1024 tokens).{RESET}"
+        )
+        print(f"{YELLOW}Use '/think 0' to disable thinking mode.{RESET}")
         print(f"{YELLOW}Press Alt/Meta+C to copy the latest assistant response.{RESET}")
         print(divider)
 
@@ -203,6 +257,15 @@ class InteractiveChat:
         # Handle clear command
         if user_input.lower() == "/clear":
             return self._handle_clear_command(), False, True  # Add a clear flag
+
+        # Handle think command
+        if user_input.lower().startswith("/think "):
+            try:
+                budget = int(user_input[7:].strip())
+                self.llm.set_think(budget)
+            except ValueError:
+                print(f"{YELLOW}Invalid budget value. Please provide a number.{RESET}")
+            return messages, False, True  # Skip to next iteration
 
         # Handle files that were loaded but not yet sent
         if files and not messages:

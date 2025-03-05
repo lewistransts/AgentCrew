@@ -54,6 +54,8 @@ class AnthropicService(BaseLLMService):
         # self.model = "claude-3-5-haiku-latest"
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
+        self.thinking_enabled = False
+        self.thinking_budget = 0
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         input_cost = (input_tokens / 1_000_000) * INPUT_TOKEN_COST_PER_MILLION
@@ -210,16 +212,25 @@ class AnthropicService(BaseLLMService):
                 updated_tool_use (dict or None),
                 input_tokens (int),
                 output_tokens (int),
-                chunk_text (str or None) - text to print for this chunk
+                chunk_text (str or None) - text to print for this chunk,
+                thinking_data (tuple or None) - thinking content from this chunk
             )
         """
         chunk_text = None
+        thinking_content = None
+        thinking_signature = None
         input_tokens = 0
         output_tokens = 0
 
         if chunk.type == "content_block_delta" and hasattr(chunk.delta, "text"):
             chunk_text = chunk.delta.text
             assistant_response += chunk_text
+        elif chunk.type == "content_block_delta" and hasattr(chunk.delta, "thinking"):
+            # Process thinking content
+            thinking_content = chunk.delta.thinking
+        elif chunk.type == "content_block_delta" and hasattr(chunk.delta, "signature"):
+            # Capture thinking signature
+            thinking_signature = chunk.delta.signature
         elif (
             chunk.type == "message_start"
             and hasattr(chunk, "message")
@@ -251,8 +262,29 @@ class AnthropicService(BaseLLMService):
                             }
                         ]
                         break
+                    # elif (
+                    #     hasattr(content_block, "type")
+                    #     and content_block.type == "thinking"
+                    # ):
+                    #     # Store thinking content and signature from final message
+                    #     thinking_content = content_block.thinking
+                    #     if hasattr(content_block, "signature"):
+                    #         thinking_signature = content_block.signature
 
-        return assistant_response, tool_uses, input_tokens, output_tokens, chunk_text
+        # Return thinking_signature as part of the thinking_content
+        # We'll use a tuple to return both thinking content and signature
+        thinking_data = None
+        if thinking_content is not None or thinking_signature is not None:
+            thinking_data = (thinking_content, thinking_signature)
+
+        return (
+            assistant_response,
+            tool_uses,
+            input_tokens,
+            output_tokens,
+            chunk_text,
+            thinking_data,
+        )
 
     def format_tool_result(
         self, tool_use: Dict, tool_result: Any, is_error: bool = False
@@ -308,6 +340,60 @@ class AnthropicService(BaseLLMService):
 
         return assistant_message
 
+    def format_thinking_message(self, thinking_data) -> Dict[str, Any]:
+        """
+        Format thinking content into the appropriate message format for Claude.
+
+        Args:
+            thinking_data: Tuple containing (thinking_content, thinking_signature)
+                or None if no thinking data is available
+
+        Returns:
+            Dict[str, Any]: A properly formatted message containing thinking blocks
+        """
+        if not thinking_data:
+            return None
+
+        thinking_content, thinking_signature = thinking_data
+
+        if not thinking_content:
+            return None
+
+        # For Claude, thinking blocks need to be preserved in the assistant's message
+        thinking_block = {"type": "thinking", "thinking": thinking_content}
+
+        # Add signature if available
+        if thinking_signature:
+            thinking_block["signature"] = thinking_signature
+
+        return {"role": "assistant", "content": [thinking_block]}
+
+    def set_think(self, budget_tokens: int) -> bool:
+        """
+        Enable or disable thinking mode with the specified token budget.
+
+        Args:
+            budget_tokens (int): Token budget for thinking. 0 to disable thinking mode.
+
+        Returns:
+            bool: True if thinking mode is supported and successfully set, False otherwise.
+        """
+        if budget_tokens == 0:
+            self.thinking_enabled = False
+            self.thinking_budget = 0
+            print("Thinking mode disabled.")
+            return True
+
+        # Ensure minimum budget is 1024 tokens
+        if budget_tokens < 1024:
+            print("Warning: Minimum thinking budget is 1024 tokens. Setting to 1024.")
+            budget_tokens = 1024
+
+        self.thinking_enabled = True
+        self.thinking_budget = budget_tokens
+        print(f"Thinking mode enabled with budget of {budget_tokens} tokens.")
+        return True
+
     def stream_assistant_response(self, messages):
         """Stream the assistant's response with tool support."""
         stream_params = {
@@ -316,6 +402,13 @@ class AnthropicService(BaseLLMService):
             "system": CHAT_SYSTEM_PROMPT,
             "messages": messages,
         }
+
+        # Add thinking configuration if enabled
+        if self.thinking_enabled:
+            stream_params["thinking"] = {
+                "type": "enabled",
+                "budget_tokens": self.thinking_budget,
+            }
 
         # Add tools if available
         if self.tools:

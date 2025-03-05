@@ -55,6 +55,19 @@ class OpenAIService(BaseLLMService):
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
 
+    def set_think(self, budget_tokens: int) -> bool:
+        """
+        Enable or disable thinking mode with the specified token budget.
+
+        Args:
+            budget_tokens (int): Token budget for thinking. 0 to disable thinking mode.
+
+        Returns:
+            bool: True if thinking mode is supported and successfully set, False otherwise.
+        """
+        print("Thinking mode is not supported for OpenAI models.")
+        return False
+
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         """Calculate the cost based on token usage."""
         input_cost = (input_tokens / 1_000_000) * INPUT_TOKEN_COST_PER_MILLION
@@ -212,7 +225,7 @@ class OpenAIService(BaseLLMService):
 
     def process_stream_chunk(
         self, chunk, assistant_response: str, tool_uses: List[Dict]
-    ) -> Tuple[str, List[Dict], int, int, Optional[str]]:
+    ) -> Tuple[str, List[Dict], int, int, Optional[str], Optional[tuple]]:
         """
         Process a single chunk from the streaming response.
 
@@ -227,12 +240,14 @@ class OpenAIService(BaseLLMService):
                 updated_tool_uses,
                 input_tokens,
                 output_tokens,
-                chunk_text
+                chunk_text,
+                thinking_data
             )
         """
         chunk_text = None
         input_tokens = 0
         output_tokens = 0
+        thinking_content = None  # OpenAI doesn't support thinking mode
 
         # Handle tool call chunks
         if len(chunk.choices) > 0 and hasattr(chunk.choices[0].delta, "tool_calls"):
@@ -296,7 +311,14 @@ class OpenAIService(BaseLLMService):
                                 pass
 
                 # For tool calls, we don't append to assistant_response as it's handled separately
-                return assistant_response, tool_uses, input_tokens, output_tokens, ""
+                return (
+                    assistant_response,
+                    tool_uses,
+                    input_tokens,
+                    output_tokens,
+                    "",
+                    (thinking_content, None),
+                )
 
         # Handle regular content chunks
         if (
@@ -314,7 +336,14 @@ class OpenAIService(BaseLLMService):
             if hasattr(chunk.usage, "completion_tokens"):
                 output_tokens = chunk.usage.completion_tokens
 
-        return assistant_response, tool_uses, input_tokens, output_tokens, chunk_text
+        return (
+            assistant_response,
+            tool_uses,
+            input_tokens,
+            output_tokens,
+            chunk_text,
+            (thinking_content, None),
+        )
 
     def format_tool_result(
         self, tool_use: Dict, tool_result: Any, is_error: bool = False
@@ -378,3 +407,17 @@ class OpenAIService(BaseLLMService):
                 "role": "assistant",
                 "content": assistant_response,
             }
+
+    def format_thinking_message(self, thinking_data) -> Dict[str, Any]:
+        """
+        Format thinking content into the appropriate message format for OpenAI.
+
+        Args:
+            thinking_data: Tuple containing (thinking_content, thinking_signature)
+                or None if no thinking data is available
+
+        Returns:
+            Dict[str, Any]: A properly formatted message containing thinking blocks
+        """
+        # OpenAI doesn't support thinking blocks, so we return None
+        return None

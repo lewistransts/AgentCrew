@@ -61,9 +61,22 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
+    def set_think(self, budget_tokens: int) -> bool:
+        """
+        Enable or disable thinking mode with the specified token budget.
+
+        Args:
+            budget_tokens (int): Token budget for thinking. 0 to disable thinking mode.
+
+        Returns:
+            bool: True if thinking mode is supported and successfully set, False otherwise.
+        """
+        pass
+
+    @abstractmethod
     def process_stream_chunk(
         self, chunk, assistant_response, tool_uses
-    ) -> tuple[str, list[Dict] | None, int, int, str | None]:
+    ) -> tuple[str, list[Dict] | None, int, int, str | None, tuple | None]:
         """
         Process a single chunk from the streaming response.
 
@@ -78,7 +91,8 @@ class BaseLLMService(ABC):
                 updated_tool_uses (List of dict or empty),
                 input_tokens (int),
                 output_tokens (int),
-                chunk_text (str or None) - text to print for this chunk
+                chunk_text (str or None) - text to print for this chunk,
+                thinking_content (tuple or None) - thinking content from this chunk
             )
         """
         pass
@@ -113,5 +127,19 @@ class BaseLLMService(ABC):
 
         Returns:
             Dict[str, Any]: A properly formatted message to append to the messages list
+        """
+        pass
+
+    @abstractmethod
+    def format_thinking_message(self, thinking_data) -> Dict[str, Any]:
+        """
+        Format thinking content into the appropriate message format for the LLM provider.
+
+        Args:
+            thinking_data: Tuple containing (thinking_content, thinking_signature)
+                or None if no thinking data is available
+
+        Returns:
+            Dict[str, Any]: A properly formatted message containing thinking blocks
         """
         pass

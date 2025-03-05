@@ -54,6 +54,19 @@ class GroqService(BaseLLMService):
         self.model = "deepseek-r1-distill-llama-70b"
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
+        
+    def set_think(self, budget_tokens: int) -> bool:
+        """
+        Enable or disable thinking mode with the specified token budget.
+        
+        Args:
+            budget_tokens (int): Token budget for thinking. 0 to disable thinking mode.
+            
+        Returns:
+            bool: True if thinking mode is supported and successfully set, False otherwise.
+        """
+        print(f"Thinking mode is not supported for Groq models.")
+        return False
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         input_cost = (input_tokens / 1_000_000) * INPUT_TOKEN_COST_PER_MILLION
@@ -231,7 +244,7 @@ class GroqService(BaseLLMService):
 
     def process_stream_chunk(
         self, chunk, assistant_response, tool_uses
-    ) -> tuple[str, list[dict] | None, int, int, str | None]:
+    ) -> tuple[str, list[dict] | None, int, int, str | None, str | None]:
         """
         Process a single chunk from the streaming response.
 
@@ -246,10 +259,13 @@ class GroqService(BaseLLMService):
                 updated_tool_use (dict or None),
                 input_tokens (int),
                 output_tokens (int),
-                chunk_text (str or None) - text to print for this chunk
+                chunk_text (str or None) - text to print for this chunk,
+                thinking_content (str or None) - thinking content from this chunk
             )
         """
         # Check if this is a non-streaming response (for tool use)
+        thinking_content = None  # Groq doesn't support thinking mode
+        
         if hasattr(chunk, "message"):
             # This is a complete response, not a streaming chunk
             message = chunk.message
@@ -276,6 +292,7 @@ class GroqService(BaseLLMService):
                     chunk.usage.prompt_tokens if hasattr(chunk, "usage") else 0,
                     chunk.usage.completion_tokens if hasattr(chunk, "usage") else 0,
                     content,  # Return the full content to be printed
+                    thinking_content,
                 )
 
             # Regular response without tool calls
@@ -285,6 +302,7 @@ class GroqService(BaseLLMService):
                 chunk.usage.prompt_tokens if hasattr(chunk, "usage") else 0,
                 chunk.usage.completion_tokens if hasattr(chunk, "usage") else 0,
                 content,  # Return the full content to be printed
+                thinking_content,
             )
 
         # Handle regular streaming chunk
@@ -301,6 +319,7 @@ class GroqService(BaseLLMService):
             input_tokens,
             output_tokens,
             chunk_text,
+            thinking_content,
         )
 
     def format_tool_result(
@@ -358,3 +377,17 @@ class GroqService(BaseLLMService):
                 "role": "assistant",
                 "content": assistant_response,
             }
+            
+    def format_thinking_message(self, thinking_data) -> Dict[str, Any]:
+        """
+        Format thinking content into the appropriate message format for Groq.
+        
+        Args:
+            thinking_data: Tuple containing (thinking_content, thinking_signature)
+                or None if no thinking data is available
+            
+        Returns:
+            Dict[str, Any]: A properly formatted message containing thinking blocks
+        """
+        # Groq doesn't support thinking blocks, so we return None
+        return None
