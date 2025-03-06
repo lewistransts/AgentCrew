@@ -299,7 +299,7 @@ class InteractiveChat:
         message_content = []
         terminal_width = get_terminal_width()
         divider = "─" * terminal_width
-
+        session_cost = 0.0
         # Process files if provided
         if files:
             message_content = []
@@ -369,11 +369,12 @@ class InteractiveChat:
 
                 # Display token usage and cost
                 total_cost = self.llm.calculate_cost(input_tokens, output_tokens)
+                session_cost += total_cost
                 print("\n")
                 print(divider)
                 print(
                     f"{YELLOW}📊 Token Usage: Input: {input_tokens:,} | Output: {output_tokens:,} | "
-                    f"Total: {input_tokens + output_tokens:,} | Cost: ${total_cost:.4f}{RESET}"
+                    f"Total: {input_tokens + output_tokens:,} | Cost: ${total_cost:.4f} | Total: {session_cost:.4f}{RESET}"
                 )
                 print(divider)
             else:
