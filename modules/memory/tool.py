@@ -146,3 +146,18 @@ def get_memory_retrieve_tool_handler(memory_service: MemoryService) -> Callable:
             return f"Error retrieving memories: {str(e)}"
 
     return handle_memory_retrieve
+
+
+def register(service_instance=None):
+    """Register this tool with the central registry"""
+    from modules.tools.registration import register_tool
+    register_tool(
+        get_memory_retrieve_tool_definition,
+        get_memory_retrieve_tool_handler,
+        service_instance
+    )
+    register_tool(
+        get_memory_forget_tool_definition,
+        get_memory_forget_tool_handler,
+        service_instance
+    )

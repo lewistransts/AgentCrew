@@ -61,6 +61,7 @@ class AnthropicService(BaseLLMService):
         self.tool_handlers = {}  # Map tool names to handler functions
         self.thinking_enabled = False
         self.thinking_budget = 0
+        self.provider_name = "claude"
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         input_cost = (input_tokens / 1_000_000) * INPUT_TOKEN_COST_PER_MILLION

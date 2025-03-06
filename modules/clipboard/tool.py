@@ -135,3 +135,18 @@ def get_clipboard_write_tool_handler(clipboard_service: ClipboardService) -> Cal
             raise Exception("Cannot write to clipboard")
 
     return handle_clipboard_write
+
+
+def register(service_instance=None):
+    """Register this tool with the central registry"""
+    from modules.tools.registration import register_tool
+    register_tool(
+        get_clipboard_read_tool_definition,
+        get_clipboard_read_tool_handler,
+        service_instance
+    )
+    register_tool(
+        get_clipboard_write_tool_definition,
+        get_clipboard_write_tool_handler,
+        service_instance
+    )

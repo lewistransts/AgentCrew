@@ -74,3 +74,13 @@ def get_code_analysis_tool_handler(
         return result
 
     return handler
+
+
+def register(service_instance=None):
+    """Register this tool with the central registry"""
+    from modules.tools.registration import register_tool
+    register_tool(
+        get_code_analysis_tool_definition, 
+        get_code_analysis_tool_handler,
+        service_instance
+    )

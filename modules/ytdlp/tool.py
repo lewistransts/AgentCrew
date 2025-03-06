@@ -182,3 +182,18 @@ def get_youtube_subtitles_tool_handler(yt_dlp_service: YtDlpService) -> Callable
             raise Exception(f"Failed to extract subtitles: {error_message}")
 
     return handle_youtube_subtitles
+
+
+def register(service_instance=None):
+    """Register this tool with the central registry"""
+    from modules.tools.registration import register_tool
+    register_tool(
+        get_youtube_chapters_tool_definition,
+        get_youtube_chapters_tool_handler,
+        service_instance
+    )
+    register_tool(
+        get_youtube_subtitles_tool_definition,
+        get_youtube_subtitles_tool_handler,
+        service_instance
+    )

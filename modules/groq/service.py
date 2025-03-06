@@ -54,6 +54,7 @@ class GroqService(BaseLLMService):
         self.model = "deepseek-r1-distill-llama-70b"
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
+        self.provider_name = "groq"
         
     def set_think(self, budget_tokens: int) -> bool:
         """

@@ -153,3 +153,18 @@ def get_web_extract_tool_handler(tavily_service: TavilySearchService):
         return tavily_service.format_extract_results(results)
 
     return web_extract_handler
+
+
+def register(service_instance=None):
+    """Register this tool with the central registry"""
+    from modules.tools.registration import register_tool
+    register_tool(
+        get_web_search_tool_definition,
+        get_web_search_tool_handler,
+        service_instance
+    )
+    register_tool(
+        get_web_extract_tool_definition,
+        get_web_extract_tool_handler,
+        service_instance
+    )

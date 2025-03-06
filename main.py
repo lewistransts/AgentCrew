@@ -1,42 +1,17 @@
 import click
-from modules.ytdlp import (
-    YtDlpService,
-    get_youtube_subtitles_tool_definition,
-    get_youtube_subtitles_tool_handler,
-    get_youtube_chapters_tool_definition,
-    get_youtube_chapters_tool_handler,
-)
+import importlib
+from modules import llm
+from modules.ytdlp import YtDlpService
 from modules.scraping import ScrapingService
-from modules.web_search import (
-    TavilySearchService,
-    get_web_search_tool_definition,
-    get_web_search_tool_handler,
-    get_web_extract_tool_definition,
-    get_web_extract_tool_handler,
-)
-from modules.clipboard import (
-    ClipboardService,
-    get_clipboard_read_tool_definition,
-    get_clipboard_read_tool_handler,
-    get_clipboard_write_tool_definition,
-    get_clipboard_write_tool_handler,
-)
-from modules.memory import (
-    MemoryService,
-    get_memory_retrieve_tool_definition,
-    get_memory_retrieve_tool_handler,
-    get_memory_forget_tool_definition,
-    get_memory_forget_tool_handler,
-)
-from modules.code_analysis import (
-    CodeAnalysisService,
-    get_code_analysis_tool_definition,
-    get_code_analysis_tool_handler,
-)
+from modules.web_search import TavilySearchService
+from modules.clipboard import ClipboardService
+from modules.memory import MemoryService
+from modules.code_analysis import CodeAnalysisService
 from modules.anthropic import AnthropicService
 from modules.groq import GroqService
 from modules.openai import OpenAIService
 from modules.chat import InteractiveChat
+from modules.tools.registry import ToolRegistry
 
 
 @click.group()
@@ -90,6 +65,92 @@ def get_url(url: str, output_file: str, summarize: bool, explain: bool):
         click.echo(f"❌ Error: {str(e)}", err=True)
 
 
+def services_load(provider):
+    # Create the LLM service based on provider choice
+    if provider == "claude":
+        llm_service = AnthropicService()
+    elif provider == "groq":
+        llm_service = GroqService()
+    else:
+        llm_service = OpenAIService()
+
+    # Initialize services
+    memory_service = MemoryService()
+    clipboard_service = ClipboardService()
+    youtube_service = YtDlpService()
+
+    # Try to create search service if API key is available
+    try:
+        search_service = TavilySearchService(llm=llm_service)
+    except Exception as e:
+        click.echo(f"⚠️ Web search tools not available: {str(e)}")
+        search_service = None
+
+    # Initialize code analysis service
+    try:
+        code_analysis_service = CodeAnalysisService()
+    except Exception as e:
+        click.echo(f"⚠️ Code analysis tool not available: {str(e)}")
+        code_analysis_service = None
+
+    # try:
+    #     scraping_service = ScrapingService()
+    # except Exception as e:
+    #     click.echo(f"⚠️ Scraping service not available: {str(e)}")
+    #     scraping_service = None
+
+    # Clean up old memories (older than 1 month)
+    try:
+        removed_count = memory_service.cleanup_old_memories(months=1)
+        if removed_count > 0:
+            click.echo(f"🧹 Cleaned up {removed_count} old conversation memories")
+    except Exception as e:
+        click.echo(f"⚠️ Memory cleanup failed: {str(e)}")
+
+    # Register all tools with their respective services
+    services = {
+        "llm": llm_service,
+        "memory": memory_service,
+        "clipboard": clipboard_service,
+        "ytdlp": youtube_service,
+        "code_analysis": code_analysis_service,
+        "web_search": search_service,
+        # "scraping": scraping_service,
+    }
+    return services
+
+
+def discover_and_register_tools(services=None):
+    """
+    Discover and register all tools
+
+    Args:
+        services: Dictionary mapping service names to service instances
+    """
+    if services is None:
+        services = {}
+
+    # List of tool modules and their corresponding service keys
+    tool_modules = [
+        ("modules.web_search.tool", "web_search"),
+        ("modules.clipboard.tool", "clipboard"),
+        ("modules.code_analysis.tool", "code_analysis"),
+        ("modules.ytdlp.tool", "ytdlp"),
+        ("modules.memory.tool", "memory"),
+        # ("modules.scraping.tool", "scraping"),
+    ]
+
+    for module_name, service_key in tool_modules:
+        try:
+            module = importlib.import_module(module_name)
+            if hasattr(module, "register"):
+                service_instance = services.get(service_key)
+                module.register(service_instance)
+                # print(f"✅ Registered tools from {module_name}")
+        except ImportError as e:
+            print(f"⚠️ Error importing tool module {module_name}: {e}")
+
+
 @cli.command()
 @click.option("--message", help="Initial message to start the chat")
 @click.option("--files", multiple=True, help="Files to include in the initial message")
@@ -97,95 +158,20 @@ def get_url(url: str, output_file: str, summarize: bool, explain: bool):
     "--provider",
     type=click.Choice(["claude", "groq", "openai"]),
     default="claude",
-    help="LLM provider to use (claude or groq)",
+    help="LLM provider to use (claude, groq, or openai)",
 )
 def chat(message, files, provider):
     """Start an interactive chat session with LLM"""
     try:
-        # Create the LLM service based on provider choice
-        if provider == "claude":
-            llm_service = AnthropicService()
-        elif provider == "groq":
-            llm_service = GroqService()
-        else:
-            llm_service = OpenAIService()
+        services = services_load(provider)
+        discover_and_register_tools(services)
 
-        # Initialize memory service
-        memory_service = MemoryService()
-
-        # Clean up old memories (older than 1 month)
-        try:
-            removed_count = memory_service.cleanup_old_memories(months=1)
-            if removed_count > 0:
-                click.echo(f"🧹 Cleaned up {removed_count} old conversation memories")
-        except Exception as e:
-            click.echo(f"⚠️ Memory cleanup failed: {str(e)}")
-
-        # Register memory tools
-        llm_service.register_tool(
-            get_memory_retrieve_tool_definition(provider),
-            get_memory_retrieve_tool_handler(memory_service),
-        )
-
-        # Register memory forget tool
-        llm_service.register_tool(
-            get_memory_forget_tool_definition(provider),
-            get_memory_forget_tool_handler(memory_service),
-        )
-
-        # Create clipboard service
-        clipboard_service = ClipboardService()
-
-        # Register clipboard tools
-        llm_service.register_tool(
-            get_clipboard_read_tool_definition(provider),
-            get_clipboard_read_tool_handler(clipboard_service),
-        )
-        llm_service.register_tool(
-            get_clipboard_write_tool_definition(provider),
-            get_clipboard_write_tool_handler(clipboard_service),
-        )
-
-        # Try to create search service and register web search tools if API key is available
-        try:
-            search_service = TavilySearchService(llm=llm_service)
-            # If initialization succeeds, register the tools
-            llm_service.register_tool(
-                get_web_search_tool_definition(provider),
-                get_web_search_tool_handler(search_service),
-            )
-            llm_service.register_tool(
-                get_web_extract_tool_definition(provider),
-                get_web_extract_tool_handler(search_service),
-            )
-        except Exception as e:
-            click.echo(f"⚠️ Web search tools not available: {str(e)}")
-
-        youtube_service = YtDlpService()
-
-        llm_service.register_tool(
-            get_youtube_subtitles_tool_definition(provider),
-            get_youtube_subtitles_tool_handler(youtube_service),
-        )
-
-        # Register YouTube chapters tool
-        llm_service.register_tool(
-            get_youtube_chapters_tool_definition(provider),
-            get_youtube_chapters_tool_handler(youtube_service),
-        )
-
-        # Create code analysis service and register tool
-        try:
-            code_analysis_service = CodeAnalysisService()
-            llm_service.register_tool(
-                get_code_analysis_tool_definition(provider),
-                get_code_analysis_tool_handler(code_analysis_service),
-            )
-        except Exception as e:
-            click.echo(f"⚠️ Code analysis tool not available: {str(e)}")
+        llm_service = services["llm"]
+        # Register all tools with the LLM service
+        llm_service.register_all_tools()
 
         # Create the chat interface with the LLM service injected
-        chat_interface = InteractiveChat(llm_service, memory_service)
+        chat_interface = InteractiveChat(llm_service, services["memory"])
 
         # Start the chat
         chat_interface.start_chat(initial_content=message, files=files)

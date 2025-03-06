@@ -1,9 +1,29 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Tuple, Optional, Generator
+from modules.tools.registry import ToolRegistry
 
 
 class BaseLLMService(ABC):
     """Base interface for LLM services."""
+    
+    def register_all_tools(self):
+        """Register all available tools with this LLM service"""
+        registry = ToolRegistry.get_instance()
+        tool_definitions = registry.get_tool_definitions(self.provider_name)
+        for tool_def in tool_definitions:
+            tool_name = self._extract_tool_name(tool_def)
+            handler = registry.get_tool_handler(tool_name)
+            if handler:
+                self.register_tool(tool_def, handler)
+    
+    def _extract_tool_name(self, tool_def):
+        """Extract tool name from definition regardless of format"""
+        if "name" in tool_def:
+            return tool_def["name"]
+        elif "function" in tool_def and "name" in tool_def["function"]:
+            return tool_def["function"]["name"]
+        else:
+            raise ValueError("Could not extract tool name from definition")
 
     @abstractmethod
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
