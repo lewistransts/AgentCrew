@@ -1,4 +1,5 @@
 import sys
+import os
 import shutil
 import pyperclip
 import traceback
@@ -275,6 +276,7 @@ class InteractiveChat:
         # Handle file command
         elif user_input.startswith("/file "):
             file_path = user_input[6:].strip()
+            file_path = os.path.expanduser(file_path)
             file_message = self.llm.handle_file_command(file_path)
             if file_message:
                 messages.append({"role": "user", "content": file_message})

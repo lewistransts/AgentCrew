@@ -26,8 +26,13 @@ def read_text_file(file_path):
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
     except Exception as e:
-        print(f"❌ Error reading file {file_path}: {str(e)}")
-        return None
+        # try again with cp1252 encoding
+        try:
+            with open(file_path, "r", encoding="cp1252") as f:
+                return f.read()
+        except Exception as e:
+            print(f"❌ Error reading file {file_path}: {str(e)}")
+            return None
 
 
 def read_binary_file(file_path):
