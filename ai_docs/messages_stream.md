@@ -1,461 +1,368 @@
-[Anthropic home page![light logo](https://mintlify.s3.us-west-1.amazonaws.com/anthropic/logo/light.svg)![dark logo](https://mintlify.s3.us-west-1.amazonaws.com/anthropic/logo/dark.svg)](https://docs.anthropic.com/)
+## IMPLEMENTATION NOTES AND BEST PRACTICES
 
-English
+""" IMPLEMENTATION NOTES
 
-Search...
+1. EXTENDED THINKING MODE
 
-Ctrl K
+   - Claude 3.7 Sonnet's extended thinking gives the model enhanced reasoning
+     capabilities
+   - Creates 'thinking' content blocks with step-by-step reasoning before
+     responding
+   - Thinking blocks are cryptographically signed to verify authenticity
+   - Occasionally, some thinking may be redacted for safety (as
+     'redacted_thinking' blocks)
+   - Budget control: Set 'budget_tokens' parameter to control thinking depth
+     (1,024 to 32K+)
+   - The thinking budget is a target rather than a strict limit
 
-Search...
+2. STREAM HANDLING
 
-Navigation
+   - Each streaming event has a specific type that must be handled differently
+   - Main event types: message_start, content_block_start, content_block_delta,
+     content_block_stop, message_delta, message_stop
+   - Delta types include: thinking_delta, text_delta, tool_use_delta,
+     signature_delta
+   - Thinking content may arrive in "chunky" delivery patterns (alternating
+     large chunks with smaller, token-by-token delivery)
+   - Stream processing should be robust to connection issues and timeout
+     considerations
 
-Messages
+3. TOOL USE WITH THINKING
 
-Streaming Messages
+   - The first user request will typically result in thinking blocks followed by
+     tool use
+   - Tool results must be sent back with the original thinking blocks preserved
+   - After receiving tool results, Claude won't generate new thinking blocks in
+     that turn
+   - Claude will not output another thinking block until after the next
+     non-tool_result user turn
+   - Preserving thinking blocks during tool use is CRITICAL for maintaining
+     reasoning flow
 
-[Welcome](https://docs.anthropic.com/en/home) [User Guides](https://docs.anthropic.com/en/docs/welcome) [API Reference](https://docs.anthropic.com/en/api/getting-started) [Prompt Library](https://docs.anthropic.com/en/prompt-library/library) [Release Notes](https://docs.anthropic.com/en/release-notes/overview) [Developer Newsletter](https://docs.anthropic.com/en/developer-newsletter/overview)
+4. REDACTED THINKING
 
-When creating a Message, you can set `"stream": true` to incrementally stream the response using [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent%5Fevents/Using%5Fserver-sent%5Fevents) (SSE).
+   - When Claude's internal reasoning is flagged by safety systems, some
+     thinking may be encrypted
+   - These appear as 'redacted_thinking' blocks with a 'data' field containing
+     encrypted content
+   - Must be passed back unchanged to Claude in multi-turn conversations
+   - Your application should handle these blocks gracefully without breaking the
+     UI
 
-## [​](https://docs.anthropic.com/en/api/messages-streaming\#streaming-with-sdks)  Streaming with SDKs
+5. TOKEN MANAGEMENT
+   - Extended thinking tokens count towards output tokens and are billed
+     accordingly
+   - Previous thinking blocks from earlier turns don't count toward input token
+     limits
+   - The API automatically strips thinking blocks from previous turns when
+     calculating context usage
+   - max_tokens (which includes thinking budget) is enforced as a strict limit
+     in Claude 3.7
 
-Our [Python](https://github.com/anthropics/anthropic-sdk-python) and [TypeScript](https://github.com/anthropics/anthropic-sdk-typescript) SDKs offer multiple ways of streaming. The Python SDK allows both sync and async streams. See the documentation in each SDK for details.
+## BEST PRACTICES
 
-Python
+1. THINKING BUDGET OPTIMIZATION
 
-TypeScript
+   - Start with minimum budget (1,024 tokens) and increase incrementally based
+     on task complexity
+   - For complex reasoning tasks, consider budgets of 8K-16K tokens
+   - For very complex problems (math, coding, analysis), consider 16K-32K
+     budgets
+   - For budgets above 32K, use batch processing to avoid networking issues
+   - Be mindful that higher budgets increase response time and token usage
 
-Copy
+2. TOOL DEFINITION QUALITY
 
-```Python
-import anthropic
+   - Provide detailed descriptions for each tool to help Claude decide when to
+     use it
+   - Include clear parameter descriptions and proper JSON schema validation
+   - Consider Claude 3.7 Sonnet or Claude 3 Opus for complex tools and ambiguous
+     queries
+   - For Sonnet, explicit prompting for step-by-step reasoning can improve tool
+     selection
 
-client = anthropic.Anthropic()
+3. ERROR HANDLING
 
-with client.messages.stream(
-    max_tokens=1024,
-    messages=[{"role": "user", "content": "Hello"}],
-    model="claude-3-7-sonnet-20250219",
-) as stream:
-  for text in stream.text_stream:
-      print(text, end="", flush=True)
+   - Implement robust error handling for network issues and API errors
+   - Handle partial JSON in streaming tool arguments by accumulating fragments
+   - Handle redacted thinking blocks gracefully in your UI
+   - Consider implementing timeouts and retries for long-running operations
+   - Add proper error handling for tool execution failures
 
+4. USER EXPERIENCE
+
+   - Consider showing thinking content in a collapsible UI element
+   - Provide clear indications when Claude is "thinking" vs. using tools
+   - For redacted thinking blocks, display a simple explanation: "Some reasoning
+     has been automatically encrypted for safety reasons"
+   - Implement proper loading states during tool execution
+   - Consider connection keep-alive for multiple requests
+
+5. PERFORMANCE CONSIDERATIONS
+
+   - For tasks requiring large thinking budgets (>32K), use batch processing
+   - Be aware that streaming with thinking enabled may result in "chunky"
+     delivery patterns
+   - Consider using a connection pool for high-volume applications
+   - Implement backpressure handling for slow consumers
+   - Buffer output appropriately for smooth UI rendering
+
+6. TOKEN EFFICIENCY
+
+   - Only enable extended thinking when needed for complex tasks
+   - Use the token counting API to monitor usage
+   - Consider caching frequent responses
+   - Be aware that tool definitions add to input token counts
+   - System prompts with extended thinking have an additional ~28-29 token
+     overhead
+
+7. SECURITY CONSIDERATIONS
+
+   - Never modify thinking or redacted_thinking blocks
+   - Always pass cryptographic signatures back unchanged
+   - Validate tool inputs before execution to prevent injection attacks
+   - Consider implementing rate limiting for tool calls
+   - Add proper authentication and authorization for sensitive tools
+
+8. TESTING AND MONITORING
+   - Implement comprehensive logging for debugging
+   - Test with a variety of thinking budgets to find optimal settings
+   - Monitor token usage and costs
+   - Consider implementing A/B testing for different thinking budget
+     configurations
+   - Create test cases for different types of queries and tool combinations """
+
+## Implementations Example
+
+```python
+import json
+import asyncio
+from anthropic import Anthropic
+
+# Create Anthropic client
+client = Anthropic()
+
+# Tool definitions
+tools = [
+    {
+        "name": "get_weather",
+        "description": "Get current weather for a location",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "location": {"type": "string", "description": "City name or location"},
+                "unit": {
+                    "type": "string",
+                    "enum": ["celsius", "fahrenheit"],
+                    "description": "Temperature unit"
+                }
+            },
+            "required": ["location"]
+        }
+    }
+]
+
+# Tool implementations
+async def get_weather(location, unit="celsius"):
+    # In a real app, this would call a weather API
+    weather_data = {
+        "Paris": {"temp": 22, "condition": "Sunny"},
+        "London": {"temp": 18, "condition": "Cloudy"},
+        "New York": {"temp": 25, "condition": "Partly cloudy"}
+    }
+
+    if location not in weather_data:
+        return f"Weather data for {location} not available"
+
+    temp = weather_data[location]["temp"]
+    if unit == "fahrenheit":
+        temp = (temp * 9/5) + 32
+
+    return f"{temp}° {unit}, {weather_data[location]['condition']}"
+
+async def process_streaming_with_thinking_and_tools():
+    # Initial request
+    response = client.messages.create(
+        model="claude-3-7-sonnet-20250219",
+        max_tokens=20000,
+        stream=True,
+        thinking={
+            "type": "enabled",
+            "budget_tokens": 16000
+        },
+        tools=tools,
+        messages=[
+            {"role": "user", "content": "What's the weather in Paris and London?"}
+        ]
+    )
+
+    # Process the streaming response
+    thinking_blocks = []
+    tool_use_blocks = []
+    text_blocks = []
+    current_block = None
+    current_block_index = None
+    current_block_type = None
+
+    thinking_content = ""
+    assistant_response = ""
+    tool_calls = []
+
+    for event in response:
+        event_type = getattr(event, 'type', None)
+
+        # Handle message start
+        if event_type == 'message_start':
+            print("Assistant is responding...")
+
+        # Handle content block start
+        elif event_type == 'content_block_start':
+            current_block_index = event.index
+            current_block_type = event.content_block.type
+
+            if current_block_type == 'thinking':
+                current_block = {"type": "thinking", "thinking": "", "signature": ""}
+                print("\n[Thinking started]")
+            elif current_block_type == 'redacted_thinking':
+                current_block = {"type": "redacted_thinking", "data": event.content_block.data}
+                thinking_blocks.append(current_block)
+                current_block = None
+                print("\n[Redacted thinking block received]")
+            elif current_block_type == 'tool_use':
+                current_block = {
+                    "type": "tool_use",
+                    "id": getattr(event.content_block, 'id', None),
+                    "name": getattr(event.content_block, 'name', None),
+                    "input": {}
+                }
+                print("\n[Tool use started]")
+            elif current_block_type == 'text':
+                current_block = {"type": "text", "text": ""}
+                print("\n[Response started]")
+
+        # Handle content deltas
+        elif event_type == 'content_block_delta':
+            delta_type = getattr(event.delta, 'type', None)
+
+            if delta_type == 'thinking_delta' and current_block and current_block_type == 'thinking':
+                thinking_part = event.delta.thinking
+                current_block["thinking"] += thinking_part
+                thinking_content += thinking_part
+                print(f"{thinking_part}", end="")
+
+            elif delta_type == 'signature_delta' and current_block and current_block_type == 'thinking':
+                current_block["signature"] = event.delta.signature
+
+            elif delta_type == 'tool_use_delta' and current_block and current_block_type == 'tool_use':
+                if hasattr(event.delta, 'id') and event.delta.id:
+                    current_block["id"] = event.delta.id
+                if hasattr(event.delta, 'name') and event.delta.name:
+                    current_block["name"] = event.delta.name
+                if hasattr(event.delta, 'input') and event.delta.input:
+                    # Handle potentially partial JSON
+                    for key, value in event.delta.input.items():
+                        if key in current_block["input"]:
+                            current_block["input"][key] += value
+                        else:
+                            current_block["input"][key] = value
+
+            elif delta_type == 'text_delta' and current_block and current_block_type == 'text':
+                content = event.delta.text
+                current_block["text"] += content
+                assistant_response += content
+                print(f"{content}", end="")
+
+        # Handle block stop - finalize current block
+        elif event_type == 'content_block_stop':
+            if current_block:
+                if current_block_type == 'thinking':
+                    thinking_blocks.append(current_block)
+                    print("\n[Thinking complete]")
+                elif current_block_type == 'tool_use':
+                    tool_use_blocks.append(current_block)
+                    tool_calls.append({
+                        "id": current_block["id"],
+                        "name": current_block["name"],
+                        "input": current_block["input"]
+                    })
+                    print(f"\n[Tool call completed: {current_block['name']}]")
+                elif current_block_type == 'text':
+                    text_blocks.append(current_block)
+                    print("\n[Response block complete]")
+
+                current_block = None
+                current_block_type = None
+
+        # Handle message completion
+        elif event_type == 'message_stop':
+            print("\n\n[Response complete]")
+
+    # Execute any tool calls
+    if tool_calls:
+        print(f"\nExecuting {len(tool_calls)} tool call(s)...")
+        tool_results = []
+
+        for tool_call in tool_calls:
+            try:
+                if tool_call["name"] == "get_weather":
+                    result = await get_weather(**tool_call["input"])
+                else:
+                    result = f"Unknown tool: {tool_call['name']}"
+
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": tool_call["id"],
+                    "content": result
+                })
+                print(f"Tool result for {tool_call['name']}: {result}")
+            except Exception as e:
+                error_message = f"Error executing tool {tool_call['name']}: {str(e)}"
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": tool_call["id"],
+                    "content": error_message,
+                    "is_error": True
+                })
+                print(error_message)
+
+        # Continue conversation with tool results
+        # CRITICAL: Include original thinking blocks when providing tool results
+        print("\nContinuing conversation with tool results...")
+        continuation = client.messages.create(
+            model="claude-3-7-sonnet-20250219",
+            max_tokens=20000,
+            stream=True,
+            thinking={
+                "type": "enabled",
+                "budget_tokens": 16000
+            },
+            tools=tools,
+            messages=[
+                {"role": "user", "content": "What's the weather in Paris and London?"},
+                {"role": "assistant", "content": thinking_blocks + tool_use_blocks},
+                {"role": "user", "content": tool_results}
+            ]
+        )
+
+        # Process continuation response
+        final_response = ""
+        for chunk in continuation:
+            if hasattr(chunk, 'type') and chunk.type == 'content_block_delta':
+                if chunk.delta.type == 'text_delta':
+                    content = chunk.delta.text
+                    final_response += content
+                    print(content, end="")
+
+        print("\n\n[Final response complete]")
+        return final_response
+
+    return assistant_response
+
+# Run the example
+async def main():
+    result = await process_streaming_with_thinking_and_tools()
+    print(f"\nFinal result: {result}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
-
-## [​](https://docs.anthropic.com/en/api/messages-streaming\#event-types)  Event types
-
-Each server-sent event includes a named event type and associated JSON data. Each event will use an SSE event name (e.g. `event: message_stop`), and include the matching event `type` in its data.
-
-Each stream uses the following event flow:
-
-1. `message_start`: contains a `Message` object with empty `content`.
-2. A series of content blocks, each of which have a `content_block_start`, one or more `content_block_delta` events, and a `content_block_stop` event. Each content block will have an `index` that corresponds to its index in the final Message `content` array.
-3. One or more `message_delta` events, indicating top-level changes to the final `Message` object.
-4. A final `message_stop` event.
-
-### [​](https://docs.anthropic.com/en/api/messages-streaming\#ping-events)  Ping events
-
-Event streams may also include any number of `ping` events.
-
-### [​](https://docs.anthropic.com/en/api/messages-streaming\#error-events)  Error events
-
-We may occasionally send [errors](https://docs.anthropic.com/en/api/errors) in the event stream. For example, during periods of high usage, you may receive an `overloaded_error`, which would normally correspond to an HTTP 529 in a non-streaming context:
-
-Example error
-
-Copy
-
-```json
-event: error
-data: {"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}
-
-```
-
-### [​](https://docs.anthropic.com/en/api/messages-streaming\#other-events)  Other events
-
-In accordance with our [versioning policy](https://docs.anthropic.com/en/api/versioning), we may add new event types, and your code should handle unknown event types gracefully.
-
-## [​](https://docs.anthropic.com/en/api/messages-streaming\#delta-types)  Delta types
-
-Each `content_block_delta` event contains a `delta` of a type that updates the `content` block at a given `index`.
-
-### [​](https://docs.anthropic.com/en/api/messages-streaming\#text-delta)  Text delta
-
-A `text` content block delta looks like:
-
-Text delta
-
-Copy
-
-```JSON
-event: content_block_delta
-data: {"type": "content_block_delta","index": 0,"delta": {"type": "text_delta", "text": "ello frien"}}
-
-```
-
-### [​](https://docs.anthropic.com/en/api/messages-streaming\#input-json-delta)  Input JSON delta
-
-The deltas for `tool_use` content blocks correspond to updates for the `input` field of the block. To support maximum granularity, the deltas are _partial JSON strings_, whereas the final `tool_use.input` is always an _object_.
-
-You can accumulate the string deltas and parse the JSON once you receive a `content_block_stop` event, by using a library like [Pydantic](https://docs.pydantic.dev/latest/concepts/json/#partial-json-parsing) to do partial JSON parsing, or by using our [SDKs](https://docs.anthropic.com/en/api/client-sdks), which provide helpers to access parsed incremental values.
-
-A `tool_use` content block delta looks like:
-
-Input JSON delta
-
-Copy
-
-```JSON
-event: content_block_delta
-data: {"type": "content_block_delta","index": 1,"delta": {"type": "input_json_delta","partial_json": "{\"location\": \"San Fra"}}}
-
-```
-
-Note: Our current models only support emitting one complete key and value property from `input` at a time. As such, when using tools, there may be delays between streaming events while the model is working. Once an `input` key and value are accumulated, we emit them as multiple `content_block_delta` events with chunked partial json so that the format can automatically support finer granularity in future models.
-
-### [​](https://docs.anthropic.com/en/api/messages-streaming\#thinking-delta)  Thinking delta
-
-When using [extended thinking](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking#streaming-extended-thinking) with streaming enabled, you’ll receive thinking content via `thinking_delta` events. These deltas correspond to the `thinking` field of the `thinking` content blocks.
-
-For thinking content, a special `signature_delta` event is sent just before the `content_block_stop` event. This signature is used to verify the integrity of the thinking block.
-
-A typical thinking delta looks like:
-
-Thinking delta
-
-Copy
-
-```JSON
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "thinking_delta", "thinking": "Let me solve this step by step:\n\n1. First break down 27 * 453"}}
-
-```
-
-The signature delta looks like:
-
-Signature delta
-
-Copy
-
-```JSON
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "signature_delta", "signature": "EqQBCgIYAhIM1gbcDa9GJwZA2b3hGgxBdjrkzLoky3dl1pkiMOYds..."}}
-
-```
-
-## [​](https://docs.anthropic.com/en/api/messages-streaming\#raw-http-stream-response)  Raw HTTP Stream response
-
-We strongly recommend that use our [client SDKs](https://docs.anthropic.com/en/api/client-sdks) when using streaming mode. However, if you are building a direct API integration, you will need to handle these events yourself.
-
-A stream response is comprised of:
-
-1. A `message_start` event
-2. Potentially multiple content blocks, each of which contains:
-a. A `content_block_start` event
-b. Potentially multiple `content_block_delta` events
-c. A `content_block_stop` event
-3. A `message_delta` event
-4. A `message_stop` event
-
-There may be `ping` events dispersed throughout the response as well. See [Event types](https://docs.anthropic.com/en/api/messages-streaming#event-types) for more details on the format.
-
-### [​](https://docs.anthropic.com/en/api/messages-streaming\#basic-streaming-request)  Basic streaming request
-
-Request
-
-Copy
-
-```bash
-curl https://api.anthropic.com/v1/messages \
-     --header "anthropic-version: 2023-06-01" \
-     --header "content-type: application/json" \
-     --header "x-api-key: $ANTHROPIC_API_KEY" \
-     --data \
-'{
-  "model": "claude-3-7-sonnet-20250219",
-  "messages": [{"role": "user", "content": "Hello"}],
-  "max_tokens": 256,
-  "stream": true
-}'
-
-```
-
-Response
-
-Copy
-
-```json
-event: message_start
-data: {"type": "message_start", "message": {"id": "msg_1nZdL29xx5MUA1yADyHTEsnR8uuvGzszyY", "type": "message", "role": "assistant", "content": [], "model": "claude-3-7-sonnet-20250219", "stop_reason": null, "stop_sequence": null, "usage": {"input_tokens": 25, "output_tokens": 1}}}
-
-event: content_block_start
-data: {"type": "content_block_start", "index": 0, "content_block": {"type": "text", "text": ""}}
-
-event: ping
-data: {"type": "ping"}
-
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Hello"}}
-
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "!"}}
-
-event: content_block_stop
-data: {"type": "content_block_stop", "index": 0}
-
-event: message_delta
-data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_sequence":null}, "usage": {"output_tokens": 15}}
-
-event: message_stop
-data: {"type": "message_stop"}
-
-```
-
-### [​](https://docs.anthropic.com/en/api/messages-streaming\#streaming-request-with-tool-use)  Streaming request with tool use
-
-In this request, we ask Claude to use a tool to tell us the weather.
-
-Request
-
-Copy
-
-```bash
-  curl https://api.anthropic.com/v1/messages \
-    -H "content-type: application/json" \
-    -H "x-api-key: $ANTHROPIC_API_KEY" \
-    -H "anthropic-version: 2023-06-01" \
-    -d '{
-      "model": "claude-3-7-sonnet-20250219",
-      "max_tokens": 1024,
-      "tools": [\
-        {\
-          "name": "get_weather",\
-          "description": "Get the current weather in a given location",\
-          "input_schema": {\
-            "type": "object",\
-            "properties": {\
-              "location": {\
-                "type": "string",\
-                "description": "The city and state, e.g. San Francisco, CA"\
-              }\
-            },\
-            "required": ["location"]\
-          }\
-        }\
-      ],
-      "tool_choice": {"type": "any"},
-      "messages": [\
-        {\
-          "role": "user",\
-          "content": "What is the weather like in San Francisco?"\
-        }\
-      ],
-      "stream": true
-    }'
-
-```
-
-Response
-
-Copy
-
-```json
-event: message_start
-data: {"type":"message_start","message":{"id":"msg_014p7gG3wDgGV9EUtLvnow3U","type":"message","role":"assistant","model":"claude-3-haiku-20240307","stop_sequence":null,"usage":{"input_tokens":472,"output_tokens":2},"content":[],"stop_reason":null}}
-
-event: content_block_start
-data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}
-
-event: ping
-data: {"type": "ping"}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Okay"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":","}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" let"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"'s"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" check"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" the"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" weather"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" for"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" San"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" Francisco"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":","}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" CA"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":":"}}
-
-event: content_block_stop
-data: {"type":"content_block_stop","index":0}
-
-event: content_block_start
-data: {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"toolu_01T1x1fJ34qAmk2tNTrN7Up6","name":"get_weather","input":{}}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":""}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"location\":"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":" \"San"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":" Francisc"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"o,"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":" CA\""}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":", "}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"\"unit\": \"fah"}}
-
-event: content_block_delta
-data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"renheit\"}"}}
-
-event: content_block_stop
-data: {"type":"content_block_stop","index":1}
-
-event: message_delta
-data: {"type":"message_delta","delta":{"stop_reason":"tool_use","stop_sequence":null},"usage":{"output_tokens":89}}
-
-event: message_stop
-data: {"type":"message_stop"}
-
-```
-
-### [​](https://docs.anthropic.com/en/api/messages-streaming\#streaming-request-with-extended-thinking)  Streaming request with extended thinking
-
-In this request, we enable extended thinking with streaming to see Claude’s step-by-step reasoning.
-
-Request
-
-Copy
-
-```bash
-curl https://api.anthropic.com/v1/messages \
-     --header "x-api-key: $ANTHROPIC_API_KEY" \
-     --header "anthropic-version: 2023-06-01" \
-     --header "content-type: application/json" \
-     --data \
-'{
-    "model": "claude-3-7-sonnet-20250219",
-    "max_tokens": 20000,
-    "stream": true,
-    "thinking": {
-        "type": "enabled",
-        "budget_tokens": 16000
-    },
-    "messages": [\
-        {\
-            "role": "user",\
-            "content": "What is 27 * 453?"\
-        }\
-    ]
-}'
-
-```
-
-Response
-
-Copy
-
-```json
-event: message_start
-data: {"type": "message_start", "message": {"id": "msg_01...", "type": "message", "role": "assistant", "content": [], "model": "claude-3-7-sonnet-20250219", "stop_reason": null, "stop_sequence": null}}
-
-event: content_block_start
-data: {"type": "content_block_start", "index": 0, "content_block": {"type": "thinking", "thinking": ""}}
-
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "thinking_delta", "thinking": "Let me solve this step by step:\n\n1. First break down 27 * 453"}}
-
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "thinking_delta", "thinking": "\n2. 453 = 400 + 50 + 3"}}
-
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "thinking_delta", "thinking": "\n3. 27 * 400 = 10,800"}}
-
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "thinking_delta", "thinking": "\n4. 27 * 50 = 1,350"}}
-
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "thinking_delta", "thinking": "\n5. 27 * 3 = 81"}}
-
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "thinking_delta", "thinking": "\n6. 10,800 + 1,350 + 81 = 12,231"}}
-
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 0, "delta": {"type": "signature_delta", "signature": "EqQBCgIYAhIM1gbcDa9GJwZA2b3hGgxBdjrkzLoky3dl1pkiMOYds..."}}
-
-event: content_block_stop
-data: {"type": "content_block_stop", "index": 0}
-
-event: content_block_start
-data: {"type": "content_block_start", "index": 1, "content_block": {"type": "text", "text": ""}}
-
-event: content_block_delta
-data: {"type": "content_block_delta", "index": 1, "delta": {"type": "text_delta", "text": "27 * 453 = 12,231"}}
-
-event: content_block_stop
-data: {"type": "content_block_stop", "index": 1}
-
-event: message_delta
-data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_sequence": null}}
-
-event: message_stop
-data: {"type": "message_stop"}
-
-```
-
-Was this page helpful?
-
-YesNo
-
-[Count Message tokens](https://docs.anthropic.com/en/api/messages-count-tokens) [Migrating from Text Completions](https://docs.anthropic.com/en/api/migrating-from-text-completions-to-messages)
-
-On this page
-
-- [Streaming with SDKs](https://docs.anthropic.com/en/api/messages-streaming#streaming-with-sdks)
-- [Event types](https://docs.anthropic.com/en/api/messages-streaming#event-types)
-- [Ping events](https://docs.anthropic.com/en/api/messages-streaming#ping-events)
-- [Error events](https://docs.anthropic.com/en/api/messages-streaming#error-events)
-- [Other events](https://docs.anthropic.com/en/api/messages-streaming#other-events)
-- [Delta types](https://docs.anthropic.com/en/api/messages-streaming#delta-types)
-- [Text delta](https://docs.anthropic.com/en/api/messages-streaming#text-delta)
-- [Input JSON delta](https://docs.anthropic.com/en/api/messages-streaming#input-json-delta)
-- [Thinking delta](https://docs.anthropic.com/en/api/messages-streaming#thinking-delta)
-- [Raw HTTP Stream response](https://docs.anthropic.com/en/api/messages-streaming#raw-http-stream-response)
-- [Basic streaming request](https://docs.anthropic.com/en/api/messages-streaming#basic-streaming-request)
-- [Streaming request with tool use](https://docs.anthropic.com/en/api/messages-streaming#streaming-request-with-tool-use)
-- [Streaming request with extended thinking](https://docs.anthropic.com/en/api/messages-streaming#streaming-request-with-extended-thinking)
-
