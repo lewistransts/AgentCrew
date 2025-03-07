@@ -87,7 +87,7 @@ def get_file_content_tool_definition(provider="claude"):
     Returns:
         Dict containing the tool definition
     """
-    description = "Get the content of a file or a specific class/function within the file, Only get content of smallest scope that you required"
+    description = "Get the content of a specific class/function within the file, Only get content of smallest scope that you need"
 
     properties = {
         "file_path": {
@@ -111,7 +111,7 @@ def get_file_content_tool_definition(provider="claude"):
 
     if provider == "claude":
         return {
-            "name": "get_file_content",
+            "name": "get_code_symbol_content",
             "description": description,
             "input_schema": {
                 "type": "object",
@@ -123,7 +123,7 @@ def get_file_content_tool_definition(provider="claude"):
         return {
             "type": "function",
             "function": {
-                "name": "get_file_content",
+                "name": "get_code_symbol_content",
                 "description": description,
                 "parameters": {
                     "type": "object",

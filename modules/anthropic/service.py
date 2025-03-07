@@ -404,7 +404,7 @@ class AnthropicService(BaseLLMService):
         """Stream the assistant's response with tool support."""
         stream_params = {
             "model": self.model,
-            "max_tokens": 4096,
+            "max_tokens": 8192,
             "system": CHAT_SYSTEM_PROMPT,
             "messages": messages,
         }
