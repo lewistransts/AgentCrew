@@ -116,7 +116,7 @@ def get_file_content_tool_definition(provider="claude"):
             "input_schema": {
                 "type": "object",
                 "properties": properties,
-                "required": ["file_path", "element_type", "element_name"],
+                "required": ["file_path"],
             },
         }
     else:  # provider == "openai"

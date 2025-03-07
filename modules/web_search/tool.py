@@ -70,7 +70,7 @@ def get_web_extract_tool_definition(provider="claude"):
     if provider == "claude":
         return {
             "name": "web_extract",
-            "description": "Extract and retrieve the content from a specific URL.",
+            "description": "Extract and retrieve the content from a specific http/https URL.",
             "input_schema": {
                 "type": "object",
                 "properties": {
@@ -87,7 +87,7 @@ def get_web_extract_tool_definition(provider="claude"):
             "type": "function",
             "function": {
                 "name": "web_extract",
-                "description": "Extract and retrieve the content from a specific URL.",
+                "description": "Extract and retrieve the content from a specific http/https URL.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -158,13 +158,10 @@ def get_web_extract_tool_handler(tavily_service: TavilySearchService):
 def register(service_instance=None):
     """Register this tool with the central registry"""
     from modules.tools.registration import register_tool
+
     register_tool(
-        get_web_search_tool_definition,
-        get_web_search_tool_handler,
-        service_instance
+        get_web_search_tool_definition, get_web_search_tool_handler, service_instance
     )
     register_tool(
-        get_web_extract_tool_definition,
-        get_web_extract_tool_handler,
-        service_instance
+        get_web_extract_tool_definition, get_web_extract_tool_handler, service_instance
     )
