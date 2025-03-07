@@ -1,4 +1,5 @@
 from os import error, path as os_path
+import re
 from typing import Dict, Any, Callable
 from .service import CodeAnalysisService
 
@@ -76,11 +77,118 @@ def get_code_analysis_tool_handler(
     return handler
 
 
+def get_file_content_tool_definition(provider="claude"):
+    """
+    Return the tool definition for retrieving file content based on provider.
+
+    Args:
+        provider: The LLM provider ("claude", "groq", or "openai")
+
+    Returns:
+        Dict containing the tool definition
+    """
+    description = "Get the content of a file or a specific class/function within the file, Only get content of smallest scope that you required"
+
+    properties = {
+        "file_path": {
+            "type": "string",
+            "description": "Path to the file to retrieve content from",
+        },
+        "element_type": {
+            "type": "string",
+            "description": "Type of code element to extract (class or function)",
+            "enum": ["class", "function"],
+        },
+        "element_name": {
+            "type": "string",
+            "description": "Name of the class or function to extract",
+        },
+        "scope_path": {
+            "type": "string",
+            "description": "Dot-separated path to resolve ambiguity (e.g., 'ClassName.method_name')",
+        },
+    }
+
+    if provider == "claude":
+        return {
+            "name": "get_file_content",
+            "description": description,
+            "input_schema": {
+                "type": "object",
+                "properties": properties,
+                "required": ["file_path", "element_type", "element_name"],
+            },
+        }
+    else:  # provider == "openai"
+        return {
+            "type": "function",
+            "function": {
+                "name": "get_file_content",
+                "description": description,
+                "parameters": {
+                    "type": "object",
+                    "properties": properties,
+                    "required": ["file_path", "element_type", "element_name"],
+                },
+            },
+        }
+
+
+def get_file_content_tool_handler(
+    code_analysis_service: CodeAnalysisService,
+):
+    """Returns a function that handles the get_file_content tool."""
+
+    def handler(**params) -> str:
+        file_path = params.get("file_path")
+        element_type = params.get("element_type")
+        element_name = params.get("element_name")
+        scope_path = params.get("scope_path")
+
+        if not file_path:
+            raise Exception("File path is required")
+
+        # Validate parameters
+        if element_type and element_type not in ["class", "function"]:
+            raise Exception("Element type must be 'class' or 'function'")
+
+        if (element_type and not element_name) or (element_name and not element_type):
+            raise Exception(
+                "Both element_type and element_name must be provided together"
+            )
+
+        results = code_analysis_service.get_file_content(
+            file_path, element_type, element_name, scope_path
+        )
+
+        content = ""
+
+        for path, code in results.items():
+            content += f"{path}: {code}\n"
+
+        # If we're getting a specific element, format the output accordingly
+        if element_type and element_name:
+            scope_info = f" in {scope_path}" if scope_path else ""
+            return f"CONTENT OF {element_name} {element_type}{scope_info}: {content}"
+        else:
+            # If we're getting the whole file content
+            return content
+
+    return handler
+
+
 def register(service_instance=None):
     """Register this tool with the central registry"""
     from modules.tools.registration import register_tool
+
     register_tool(
-        get_code_analysis_tool_definition, 
+        get_code_analysis_tool_definition,
         get_code_analysis_tool_handler,
-        service_instance
+        service_instance,
+    )
+
+    register_tool(
+        get_file_content_tool_definition,
+        get_file_content_tool_handler,
+        service_instance,
     )

@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import traceback
 from typing import Any, Dict, List, Optional, Callable
 
 import tree_sitter_c_sharp
@@ -12,9 +13,9 @@ import tree_sitter_kotlin
 import tree_sitter_python
 import tree_sitter_ruby
 import tree_sitter_rust
+import tree_sitter_typescript
+import tree_sitter_php
 from tree_sitter import Language, Parser
-from tree_sitter_php._binding import language_php
-from tree_sitter_typescript._binding import language_tsx, language_typescript
 
 
 class CodeAnalysisService:
@@ -53,14 +54,16 @@ class CodeAnalysisService:
             self._parser_cache = {
                 "python": Parser(Language(tree_sitter_python.language())),
                 "javascript": Parser(Language(tree_sitter_javascript.language())),
-                "typescript": Parser(Language(language_typescript())),
-                "tsx": Parser(Language(language_tsx())),
+                "typescript": Parser(
+                    Language(tree_sitter_typescript.language_typescript())
+                ),
+                "tsx": Parser(Language(tree_sitter_typescript.language_tsx())),
                 "java": Parser(Language(tree_sitter_java.language())),
                 "cpp": Parser(Language(tree_sitter_cpp.language())),
                 "ruby": Parser(Language(tree_sitter_ruby.language())),
                 "go": Parser(Language(tree_sitter_go.language())),
                 "rust": Parser(Language(tree_sitter_rust.language())),
-                "php": Parser(Language(language_php())),
+                "php": Parser(Language(tree_sitter_php.language_php())),
                 "c-sharp": Parser(Language(tree_sitter_c_sharp.language())),
                 "kotlin": Parser(Language(tree_sitter_kotlin.language())),
             }
@@ -94,20 +97,17 @@ class CodeAnalysisService:
         ext = os.path.splitext(file_path)[1].lower()
         return self.LANGUAGE_MAP.get(ext, "unknown")
 
-    def _get_language_parser(self, language: str):
+    def _get_language_parser(self, language: str) -> Parser:
         """Get the appropriate tree-sitter parser for a language."""
-        try:
-            if language not in self._parser_cache:
-                return {"error": f"Unsupported language: {language}"}
-            return self._parser_cache[language]
-        except Exception as e:
-            return {"error": f"Error loading language {language}: {str(e)}"}
+        if language not in self._parser_cache:
+            raise ValueError(f"Unsupported language: {language}")
+        return self._parser_cache[language]
 
     def _extract_node_text(self, node, source_code: bytes) -> str:
         """Extract text from a node."""
         return source_code[node.start_byte : node.end_byte].decode("utf-8")
 
-    def _analyze_file(self, file_path: str) -> Dict[str, Any]:
+    def _analyze_file(self, file_path: str) -> Optional[Dict[str, Any]]:
         """Analyze a single file using tree-sitter."""
         try:
             with open(file_path, "rb") as f:
@@ -130,7 +130,7 @@ class CodeAnalysisService:
             if not root_node:
                 return {"error": "Failed to parse file - no root node"}
 
-            def process_node(node) -> Dict[str, Any]:
+            def process_node(node) -> Optional[Dict[str, Any]]:
                 if not node:
                     return None
 
@@ -833,6 +833,140 @@ class CodeAnalysisService:
             if output_lines
             else "No significant code structure found."
         )
+
+    def get_file_content(
+        self, file_path, element_type=None, element_name=None, scope_path=None
+    ) -> Dict[str, str]:
+        """Return the content of a file, optionally extracting only a specific element."""
+        # First, read the whole file
+        with open(file_path, "rb") as file:
+            content = file.read()
+
+        # If no specific element requested, return the whole file
+        if not element_type or not element_name:
+            return {"file": content.decode("utf-8")}
+
+        # Use tree-sitter to parse and extract specific elements
+        language = self._detect_language(file_path)
+
+        if not language:
+            raise ValueError(f"Could not detect language for file: {file_path}")
+
+        parser = self._get_language_parser(language)
+
+        tree = parser.parse(content)
+        root_node = tree.root_node
+
+        # Find all matching elements
+        matches = []
+        self._find_matching_nodes(
+            content, root_node, element_type, element_name, scope_path, matches
+        )
+
+        if not matches:
+            raise ValueError(f"No {element_type} named '{element_name}' found")
+
+        # Format the results
+        results = {}
+        for idx, node in enumerate(matches):
+            # Generate a unique key for each match
+            if len(matches) > 1:
+                # If we have a scope path for this node, use it
+                if hasattr(node, "scope_path") and node.scope_path:
+                    key = f"{element_type}:{node.scope_path}"
+                else:
+                    key = f"{element_type}:{element_name}_{idx + 1}"
+            else:
+                key = f"{element_type}:{element_name}"
+
+            # Extract the text for this node
+            results[key] = self._extract_node_text(node, content)
+
+        return results
+
+    def _find_matching_nodes(
+        self,
+        source_code,
+        node,
+        element_type,
+        element_name,
+        scope_path=None,
+        matches=None,
+    ):
+        """Recursively find nodes matching the given type and name."""
+        if matches is None:
+            matches = []
+
+        # Check if this node is a class or function definition
+        is_target_type = False
+        if element_type == "class" and node.type in self.class_types:
+            is_target_type = True
+        elif element_type == "function" and node.type in self.function_types:
+            is_target_type = True
+
+        # If this is our target type, check if the name matches
+        if is_target_type:
+            # Find the identifier (name) node
+            name_node = None
+            for child in node.children:
+                if child.type == "identifier" or child.type == "name":
+                    name_node = child
+                    break
+
+            if name_node:
+                node_name = self._extract_node_text(name_node, source_code)
+                if node_name == element_name:
+                    # If scope_path provided, check if this node is in that scope
+                    if scope_path:
+                        # Calculate the scope path for this node
+                        current_scope_path = self._get_node_scope_path(
+                            source_code, node
+                        )
+                        if current_scope_path == scope_path:
+                            node.scope_path = current_scope_path
+                            matches.append(node)
+                    else:
+                        # No scope path specified, so include all matches
+                        matches.append(node)
+
+        # Recurse through child nodes
+        for child in node.children:
+            self._find_matching_nodes(
+                source_code, child, element_type, element_name, scope_path, matches
+            )
+
+        return matches
+
+    def _get_node_scope_path(self, source_code, node):
+        """Calculate the full scope path for a node."""
+        # Start with the node's name
+        name_node = None
+        for child in node.children:
+            if child.type == "identifier" or child.type == "name":
+                name_node = child
+                break
+
+        if not name_node:
+            return ""
+
+        node_name = self._extract_node_text(name_node, source_code)
+
+        # Find parent scope(s)
+        scope_parts = [node_name]
+        parent = node.parent
+
+        while parent:
+            if parent.type in ("class_definition", "class"):
+                # Found a class parent, add to path
+                for child in parent.children:
+                    if child.type == "identifier" or child.type == "name":
+                        parent_name = self._extract_node_text(child, source_code)
+                        scope_parts.insert(0, parent_name)
+                        break
+
+            parent = parent.parent
+
+        return ".".join(scope_parts)
 
     def _format_analysis_results(
         self,
