@@ -25,7 +25,7 @@ def get_code_analysis_tool_definition(provider="claude") -> Dict[str, Any]:
 
     if provider == "claude":
         return {
-            "name": "analyze_code",
+            "name": "analyze_repo",
             "description": description,
             "input_schema": {
                 "type": "object",
@@ -42,7 +42,7 @@ def get_code_analysis_tool_definition(provider="claude") -> Dict[str, Any]:
         return {
             "type": "function",
             "function": {
-                "name": "analyze_code",
+                "name": "analyze_repo",
                 "description": description,
                 "parameters": {
                     "type": "object",
@@ -87,31 +87,31 @@ def get_file_content_tool_definition(provider="claude"):
     Returns:
         Dict containing the tool definition
     """
-    description = "Get the content of a specific class/function within the file, Only get content of smallest scope that you need"
+    description = "Read content from local project files. Use this tool to examine any file in the current project workspace. Can retrieve either the entire file content or specific code elements (classes/functions) within the file. For complete files, only provide the file_path parameter."
 
     properties = {
         "file_path": {
             "type": "string",
-            "description": "Path to the file to retrieve content from",
+            "description": "Path to the local repo file (e.g., 'src/main.py', 'index.js')",
         },
         "element_type": {
             "type": "string",
-            "description": "Type of code element to extract (class or function)",
+            "description": "Optional: Type of code element to extract (Always use when only targeting a specific element)",
             "enum": ["class", "function"],
         },
         "element_name": {
             "type": "string",
-            "description": "Name of the class or function to extract",
+            "description": "Optional: Name of the class or function to extract (Always use when only targeting a specific element)",
         },
         "scope_path": {
             "type": "string",
-            "description": "Dot-separated path to resolve ambiguity (e.g., 'ClassName.method_name')",
+            "description": "Optional: Dot-separated path to resolve ambiguity (e.g., 'ClassName.method_name')",
         },
     }
 
     if provider == "claude":
         return {
-            "name": "get_code_symbol_content",
+            "name": "read_repo_file",
             "description": description,
             "input_schema": {
                 "type": "object",
@@ -123,7 +123,7 @@ def get_file_content_tool_definition(provider="claude"):
         return {
             "type": "function",
             "function": {
-                "name": "get_code_symbol_content",
+                "name": "read_repo_file",
                 "description": description,
                 "parameters": {
                     "type": "object",

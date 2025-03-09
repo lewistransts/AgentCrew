@@ -69,14 +69,14 @@ def get_web_extract_tool_definition(provider="claude"):
     """Return the tool definition for web content extraction based on provider."""
     if provider == "claude":
         return {
-            "name": "web_extract",
-            "description": "Extract and retrieve the content from a specific http/https URL.",
+            "name": "fetch_webpage",
+            "description": "Extract and retrieve the content from external web pages (HTTP/HTTPS URLs only). Use this tool exclusively for accessing online resources, not for reading local project files.",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "url": {
                         "type": "string",
-                        "description": "The URL to extract content from",
+                        "description": "The complete HTTP/HTTPS web address to extract content from (e.g., 'https://example.com/page')",
                     }
                 },
                 "required": ["url"],
@@ -86,14 +86,14 @@ def get_web_extract_tool_definition(provider="claude"):
         return {
             "type": "function",
             "function": {
-                "name": "web_extract",
-                "description": "Extract and retrieve the content from a specific http/https URL.",
+                "name": "fetch_webpage",
+                "description": "Extract and retrieve the content from external web pages (HTTP/HTTPS URLs only). Use this tool exclusively for accessing online resources, not for reading local project files.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "url": {
                             "type": "string",
-                            "description": "The URL to extract content from",
+                            "description": "The complete HTTP/HTTPS web address to extract content from (e.g., 'https://example.com/page')",
                         }
                     },
                     "required": ["url"],

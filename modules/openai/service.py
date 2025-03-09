@@ -248,7 +248,7 @@ class OpenAIService(BaseLLMService):
         chunk_text = None
         input_tokens = 0
         output_tokens = 0
-        thinking_content = None  # OpenAI doesn't support thinking mode
+        # thinking_content = None  # OpenAI doesn't support thinking mode
 
         # Handle tool call chunks
         if len(chunk.choices) > 0 and hasattr(chunk.choices[0].delta, "tool_calls"):
@@ -318,7 +318,7 @@ class OpenAIService(BaseLLMService):
                     input_tokens,
                     output_tokens,
                     "",
-                    (thinking_content, None),
+                    None,
                 )
 
         # Handle regular content chunks
@@ -343,7 +343,7 @@ class OpenAIService(BaseLLMService):
             input_tokens,
             output_tokens,
             chunk_text,
-            (thinking_content, None),
+            None,
         )
 
     def format_tool_result(

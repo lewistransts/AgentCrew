@@ -78,11 +78,9 @@ class InteractiveChat:
         # Clear from cursor to end of screen
         sys.stdout.write("\x1b[J")
 
-    def _stream_assistant_response(self, messages):
+    def _stream_assistant_response(self, messages, input_tokens=0, output_tokens=0):
         """Stream the assistant's response and return the response and token usage."""
         assistant_response = ""
-        input_tokens = 0
-        output_tokens = 0
         tool_uses = []
         thinking_content = ""  # Reset thinking content for new response
         thinking_signature = ""  # Store the signature
@@ -170,15 +168,11 @@ class InteractiveChat:
                         )
                     # Get a new response with the tool result
                 print(f"\n{GREEN}{BOLD}🤖 ASSISTANT (continued):{RESET}")
-                return self._stream_assistant_response(messages)
+                return self._stream_assistant_response(
+                    messages, input_tokens, output_tokens
+                )
             else:
                 self._clear_to_start(assistant_response)
-
-                # # If we have thinking content, display it first in a collapsible section
-                # if thinking_content:
-                #     print(f"\n{YELLOW}💭 Claude's thinking process:{RESET}")
-                #     print(f"{GRAY}{thinking_content}{RESET}")
-                #     print("\n---\n")
 
                 # Replace \n with two spaces followed by \n for proper Markdown line breaks
                 markdown_formatted_response = assistant_response.replace("\n", "  \n")
@@ -187,14 +181,6 @@ class InteractiveChat:
                 # Store the latest response
                 self.latest_assistant_response = assistant_response
 
-                # # Add thinking content to the message if available
-                # thinking_data = (
-                #     (thinking_content, thinking_signature) if thinking_content else None
-                # )
-                # thinking_message = self.llm.format_thinking_message(thinking_data)
-                # if thinking_message:
-                #     messages.append(thinking_message)
-                #
                 # Add the assistant's response
                 messages.append(self.llm.format_assistant_message(assistant_response))
 

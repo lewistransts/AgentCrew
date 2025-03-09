@@ -132,11 +132,11 @@ def discover_and_register_tools(services=None):
 
     # List of tool modules and their corresponding service keys
     tool_modules = [
-        ("modules.web_search.tool", "web_search"),
-        ("modules.clipboard.tool", "clipboard"),
-        ("modules.code_analysis.tool", "code_analysis"),
-        ("modules.ytdlp.tool", "ytdlp"),
         ("modules.memory.tool", "memory"),
+        ("modules.code_analysis.tool", "code_analysis"),
+        ("modules.clipboard.tool", "clipboard"),
+        ("modules.web_search.tool", "web_search"),
+        ("modules.ytdlp.tool", "ytdlp"),
         # ("modules.scraping.tool", "scraping"),
     ]
 
