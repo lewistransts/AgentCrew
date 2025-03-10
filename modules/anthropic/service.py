@@ -409,6 +409,11 @@ class AnthropicService(BaseLLMService):
 
     def stream_assistant_response(self, messages):
         """Stream the assistant's response with tool support."""
+        # first cache for system prompt and tool
+        if self.caching_blocks == 0:
+            print(messages)
+            messages[-1]["content"][-1]["cache_control"] = {"type": "ephemeral"}
+            self.caching_blocks += 1
         stream_params = {
             "model": self.model,
             "max_tokens": 8192,

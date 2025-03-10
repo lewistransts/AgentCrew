@@ -327,7 +327,9 @@ class InteractiveChat:
                 return messages, False, True
         else:
             # Add regular text message
-            messages.append({"role": "user", "content": user_input})
+            messages.append(
+                {"role": "user", "content": [{"type": "text", "text": user_input}]}
+            )
 
         return messages, False, False
 

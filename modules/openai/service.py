@@ -7,6 +7,7 @@ import itertools
 import time
 import contextlib
 from typing import Dict, Any, List, Optional, Tuple
+from httpx import stream
 from openai import OpenAI
 from dotenv import load_dotenv
 from modules.llm.base import BaseLLMService
@@ -207,11 +208,12 @@ class OpenAIService(BaseLLMService):
         """Stream the assistant's response with tool support."""
         stream_params = {
             "model": self.model,
-            "max_tokens": 4096,
             "messages": messages,
             "stream_options": {"include_usage": True},
-            "parallel_tool_calls": False,
         }
+        if not self.model.startswith("o3"):
+            stream_params["max_tokens"] = 4096
+            stream_params["parallel_tool_calls"] = False
 
         # Add system message if provided
         if CHAT_SYSTEM_PROMPT:
