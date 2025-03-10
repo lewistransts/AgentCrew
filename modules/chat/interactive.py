@@ -9,6 +9,9 @@ from prompt_toolkit.keys import Keys
 from rich.console import Console
 from rich.markdown import Markdown
 from modules.llm.base import BaseLLMService
+from modules.llm.service_manager import ServiceManager
+from modules.llm.models import ModelRegistry
+from modules.llm.message import MessageTransformer
 from .constants import (
     BLUE,
     GREEN,
@@ -203,6 +206,9 @@ class InteractiveChat:
             f"{YELLOW}Use '/think <budget>' to enable Claude's thinking mode (min 1024 tokens).{RESET}"
         )
         print(f"{YELLOW}Use '/think 0' to disable thinking mode.{RESET}")
+        print(
+            f"{YELLOW}Use '/model [model_id]' to switch models or list available models.{RESET}"
+        )
         print(f"{YELLOW}Press Alt/Meta+C to copy the latest assistant response.{RESET}")
         print(divider)
 
@@ -253,6 +259,60 @@ class InteractiveChat:
             except ValueError:
                 print(f"{YELLOW}Invalid budget value. Please provide a number.{RESET}")
             return messages, False, True  # Skip to next iteration
+
+        # Handle model command
+        if user_input.lower().startswith("/model "):
+            model_id = user_input[7:].strip()
+            registry = ModelRegistry.get_instance()
+            manager = ServiceManager.get_instance()
+
+            # If no model ID is provided, list available models
+            if not model_id:
+                print(f"{YELLOW}Available models:{RESET}")
+                for provider in ["claude", "openai", "groq"]:
+                    print(f"\n{YELLOW}{provider.capitalize()} models:{RESET}")
+                    for model in registry.get_models_by_provider(provider):
+                        current = (
+                            " (current)"
+                            if registry.current_model
+                            and registry.current_model.id == model.id
+                            else ""
+                        )
+                        print(f"  - {model.id}: {model.name}{current}")
+                        print(f"    {model.description}")
+                        print(f"    Capabilities: {', '.join(model.capabilities)}")
+                return messages, False, True
+
+            # Try to switch to the specified model
+            if registry.set_current_model(model_id):
+                model = registry.get_current_model()
+                if model:
+                    # Get the current provider
+                    current_provider = self.llm.provider_name
+
+                    # If we're switching providers, convert messages
+                    if current_provider != model.provider:
+                        # Standardize messages from current provider
+                        std_messages = MessageTransformer.standardize_messages(
+                            messages, current_provider
+                        )
+                        # Convert to new provider format
+                        messages = MessageTransformer.convert_messages(
+                            std_messages, model.provider
+                        )
+                        print(messages)
+
+                    # Update the LLM service
+                    self.llm = manager.get_service(model.provider)
+                    manager.set_model(model.provider, model.id)
+
+                    print(f"{YELLOW}Switched to {model.name} ({model.id}){RESET}")
+                else:
+                    print(f"{YELLOW}Failed to switch model.{RESET}")
+            else:
+                print(f"{YELLOW}Unknown model: {model_id}{RESET}")
+
+            return messages, False, True
 
         # Handle files that were loaded but not yet sent
         if files and not messages:

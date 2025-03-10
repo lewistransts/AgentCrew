@@ -6,6 +6,16 @@ from modules.tools.registry import ToolRegistry
 class BaseLLMService(ABC):
     """Base interface for LLM services."""
     
+    @property
+    def provider_name(self) -> str:
+        """Get the provider name for this service."""
+        return getattr(self, "_provider_name", "unknown")
+
+    @provider_name.setter
+    def provider_name(self, value: str):
+        """Set the provider name for this service."""
+        self._provider_name = value
+    
     def register_all_tools(self):
         """Register all available tools with this LLM service"""
         registry = ToolRegistry.get_instance()

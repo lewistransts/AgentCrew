@@ -1,14 +1,14 @@
 # Claude AI Interactive Chat Tool
 
 A command-line tool that provides an enhanced interactive chat experience with
-Claude AI, OpenAI or Groq LLMs, featuring file integration, web scraping
+multiple AI models including Claude, GPT, and Groq LLMs, featuring file integration, web scraping
 capabilities, and convenient keyboard shortcuts.
 
 ## Key Features
 
 - **Interactive Chat**: Rich conversation interface with Claude AI or Groq LLMs
-- **Multiple LLM Providers**: Choose between Anthropic's Claude, Groq's models,
-  or OpenAI's GPT models
+- **Multiple LLM Providers**: Choose between Anthropic's Claude, OpenAI's GPT models, 
+  or Groq's LLMs, with the ability to select specific model versions from each provider
 - **File Integration**: Include PDFs and text files directly in your
   conversation
 - **Web Scraping & Search**: Ask Claude to fetch web content and search the
@@ -70,6 +70,8 @@ During an interactive chat session, you can use these commands:
 - `/think <budget>` - Enable extended thinking mode with specified token budget
   (min 1024)
 - `/think 0` - Disable thinking mode
+- `/model <model_id>` - Switch to a different AI model during your chat session
+- `/models` - List all available models you can switch to
 - `exit` or `quit` - End the chat session
 - Press `Enter` for a new line, `Ctrl+S` to submit your message
 - Press `Alt+C` to copy the latest assistant response to clipboard
@@ -190,8 +192,13 @@ uv run main.py chat --files document.pdf --files code.py
 ### Start a Chat with Different Providers
 
 ```bash
+# Use Claude models from Anthropic
+uv run main.py chat --provider claude
+
+# Use LLM models from Groq
 uv run main.py chat --provider groq
-# or
+
+# Use GPT models from OpenAI
 uv run main.py chat --provider openai
 ```
 

@@ -54,7 +54,7 @@ class OpenAIService(BaseLLMService):
         self.model = "gpt-4o"
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
-        self.provider_name = "openai"
+        self._provider_name = "openai"
 
     def set_think(self, budget_tokens: int) -> bool:
         """

@@ -12,6 +12,8 @@ from modules.groq import GroqService
 from modules.openai import OpenAIService
 from modules.chat import InteractiveChat
 from modules.tools.registry import ToolRegistry
+from modules.llm.service_manager import ServiceManager
+from modules.llm.models import ModelRegistry
 
 
 @click.group()
@@ -66,14 +68,20 @@ def get_url(url: str, output_file: str, summarize: bool, explain: bool):
 
 
 def services_load(provider):
-    # Create the LLM service based on provider choice
-    if provider == "claude":
-        llm_service = AnthropicService()
-    elif provider == "groq":
-        llm_service = GroqService()
-    else:
-        llm_service = OpenAIService()
-
+    # Initialize the model registry and service manager
+    registry = ModelRegistry.get_instance()
+    manager = ServiceManager.get_instance()
+    
+    # Set the current model based on provider
+    models = registry.get_models_by_provider(provider)
+    if models:
+        # Find default model for this provider
+        default_model = next((m for m in models if m.default), models[0])
+        registry.set_current_model(default_model.id)
+    
+    # Get the LLM service from the manager
+    llm_service = manager.get_service(provider)
+    
     # Initialize services
     memory_service = MemoryService()
     clipboard_service = ClipboardService()
@@ -182,6 +190,13 @@ def chat(message, files, provider):
         chat_interface.start_chat(initial_content=message, files=files)
     except Exception as e:
         click.echo(f"❌ Error: {str(e)}", err=True)
+    finally:
+        # Clean up service manager
+        try:
+            manager = ServiceManager.get_instance()
+            manager.cleanup()
+        except Exception as e:
+            click.echo(f"⚠️ Error during cleanup: {str(e)}", err=True)
 
 
 if __name__ == "__main__":
