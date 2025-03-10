@@ -42,6 +42,16 @@ class InteractiveChat:
         self.latest_assistant_response = ""
         self.memory_service = memory_service
 
+    def _copy_to_clipboard(self):
+        """Copy the latest assistant response to clipboard and show confirmation."""
+        if self.latest_assistant_response:
+            pyperclip.copy(self.latest_assistant_response)
+            print(f"\n{YELLOW}✓ Latest assistant response copied to clipboard!{RESET}")
+            return True
+        else:
+            print(f"\n{YELLOW}! No assistant response to copy.{RESET}")
+            return False
+
     def _setup_key_bindings(self):
         """Set up key bindings for multiline input."""
         kb = KeyBindings()
@@ -59,15 +69,8 @@ class InteractiveChat:
         @kb.add("escape", "c")  # Alt+C
         def _(event):
             """Copy latest assistant response to clipboard."""
-            if self.latest_assistant_response:
-                pyperclip.copy(self.latest_assistant_response)
-                print(
-                    f"\n{YELLOW}✓ Latest assistant response copied to clipboard!{RESET}"
-                )
-                print("> ", end="")
-            else:
-                print(f"\n{YELLOW}! No assistant response to copy.{RESET}")
-                print("> ", end="")
+            self._copy_to_clipboard()
+            print("> ", end="")
 
         return kb
 
@@ -208,6 +211,9 @@ class InteractiveChat:
         print(
             f"{YELLOW}Use '/model [model_id]' to switch models or list available models.{RESET}"
         )
+        print(
+            f"{YELLOW}Use '/copy' to copy the latest assistant response to clipboard.{RESET}"
+        )
         print(f"{YELLOW}Press Alt/Meta+C to copy the latest assistant response.{RESET}")
         print(divider)
 
@@ -249,6 +255,11 @@ class InteractiveChat:
         # Handle clear command
         if user_input.lower() == "/clear":
             return self._handle_clear_command(), False, True  # Add a clear flag
+
+        # Handle copy command
+        if user_input.lower() == "/copy":
+            self._copy_to_clipboard()
+            return messages, False, True  # Skip to next iteration
 
         # Handle think command
         if user_input.lower().startswith("/think "):
