@@ -70,7 +70,7 @@ class ModelRegistry:
                 capabilities=["tool_use", "vision"],
             ),
             Model(
-                id="gpt-4o-min",
+                id="gpt-4o-mini",
                 provider="openai",
                 name="GPT-4o Mini",
                 description="Fast, affordable small model for focused tasks",

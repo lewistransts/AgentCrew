@@ -393,6 +393,9 @@ class AnthropicService(BaseLLMService):
             self.thinking_budget = 0
             print("Thinking mode disabled.")
             return True
+        if not self.model.startswith("claude-3-7-sonnet"):
+            print("Thinking mode is disabled for this model.")
+            return False
 
         # Ensure minimum budget is 1024 tokens
         if budget_tokens < 1024:
