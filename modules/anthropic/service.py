@@ -55,7 +55,7 @@ class AnthropicService(BaseLLMService):
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
         self.client = Anthropic(api_key=api_key)
-        self.model = "claude-3-7-sonnet-20250219"
+        self.model = "claude-3-5-sonnet-latest"
         # self.model = "claude-3-5-haiku-latest"
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
@@ -321,6 +321,8 @@ class AnthropicService(BaseLLMService):
         if is_error:
             message["content"][0]["is_error"] = True
 
+        if len(str(tool_result)) > 800:
+            message["content"][0]["cache_control"] = {"type": "ephemeral"}
         return message
 
     def format_assistant_message(

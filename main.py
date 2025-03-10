@@ -150,6 +150,10 @@ def discover_and_register_tools(services=None):
         except ImportError as e:
             print(f"⚠️ Error importing tool module {module_name}: {e}")
 
+    from modules.mcpclient.tool import register as mcp_register
+
+    mcp_register()
+
 
 @cli.command()
 @click.option("--message", help="Initial message to start the chat")
@@ -164,6 +168,7 @@ def chat(message, files, provider):
     """Start an interactive chat session with LLM"""
     try:
         services = services_load(provider)
+
         discover_and_register_tools(services)
 
         llm_service = services["llm"]

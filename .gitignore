@@ -63,3 +63,4 @@ dmypy.json
 # Logs
 *.log
 memory_db/
+mcp_servers.json

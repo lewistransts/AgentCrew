@@ -1,0 +1,11 @@
+{
+    "server_id": {
+        "name": "string",
+        "command": "string",
+        "args": ["string"],
+        "env": {
+            "key": "value"
+        },
+        "enabled": boolean
+    }
+}

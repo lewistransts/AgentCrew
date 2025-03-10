@@ -27,6 +27,7 @@ capabilities, and convenient keyboard shortcuts.
 - **Web Content Extraction**: Extract and analyze content from specific URLs
 - **YouTube Subtitles**: Extract and analyze subtitles from YouTube videos
 - **YouTube Chapters**: Get chapter information from YouTube videos
+- **Model Context Protocol (MCP)**: Connect to MCP-compatible servers to extend AI capabilities
 - **AI Summarization**: Create concise summaries of web content
 - **AI Explanation**: Explain complex content in simpler terms
 - **Memory Retrieval**: Access relevant past conversations based on keywords
@@ -111,7 +112,7 @@ The following features are planned for future releases:
 
 ### Technical Improvements
 
-- [ ] **Model Context Protocol (MCP) Support**: Implement MCP for improved
+- [x] **Model Context Protocol (MCP) Support**: Implement MCP for improved
       context management
 - [x] **Command-line Thinking Mode Options**: Enable and configure thinking mode
       with the `/think` command
