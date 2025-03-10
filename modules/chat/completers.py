@@ -1,7 +1,56 @@
 from prompt_toolkit.completion import Completer, PathCompleter
 from prompt_toolkit.document import Document
+from prompt_toolkit.completion import Completer, Completion
+from modules.llm.models import ModelRegistry
 import os
 import re
+
+
+class ModelCompleter(Completer):
+    """Completer that shows available models when typing /model command."""
+
+    def __init__(self):
+        self.registry = ModelRegistry.get_instance()
+
+    def get_completions(self, document, complete_event):
+        text = document.text
+
+        # Only provide completions for the /model command
+        if text.startswith("/model "):
+            word_before_cursor = document.get_word_before_cursor()
+
+            # Get all available models from the registry
+            all_models = []
+            for provider in ["claude", "openai", "groq"]:
+                for model in self.registry.get_models_by_provider(provider):
+                    all_models.append((model.id, model.name, provider))
+
+            # Filter models based on what the user has typed so far
+            for model_id, model_name, provider in all_models:
+                if model_id.startswith(word_before_cursor):
+                    display = f"{model_id} - {model_name} ({provider})"
+                    yield Completion(
+                        model_id,
+                        start_position=-len(word_before_cursor),
+                        display=display,
+                    )
+
+
+class ChatCompleter(Completer):
+    """Combined completer for chat commands."""
+
+    def __init__(self):
+        self.file_completer = DirectoryListingCompleter()
+        self.model_completer = ModelCompleter()
+
+    def get_completions(self, document, complete_event):
+        text = document.text
+
+        if text.startswith("/model "):
+            # Use model completer for /model command
+            yield from self.model_completer.get_completions(document, complete_event)
+        else:
+            yield from self.file_completer.get_completions(document, complete_event)
 
 
 class DirectoryListingCompleter(Completer):

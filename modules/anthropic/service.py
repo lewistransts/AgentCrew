@@ -61,6 +61,7 @@ class AnthropicService(BaseLLMService):
         self.tool_handlers = {}  # Map tool names to handler functions
         self.thinking_enabled = False
         self.thinking_budget = 0
+        self.caching_blocks = 0
         self._provider_name = "claude"
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
@@ -321,8 +322,9 @@ class AnthropicService(BaseLLMService):
         if is_error:
             message["content"][0]["is_error"] = True
 
-        if len(str(tool_result)) > 800:
+        if len(str(tool_result)) > 1024 and self.caching_blocks < 5:
             message["content"][0]["cache_control"] = {"type": "ephemeral"}
+            self.caching_blocks += 1
         return message
 
     def format_assistant_message(

@@ -210,6 +210,7 @@ class OpenAIService(BaseLLMService):
             "max_tokens": 4096,
             "messages": messages,
             "stream_options": {"include_usage": True},
+            "parallel_tool_calls": False,
         }
 
         # Add system message if provided

@@ -20,7 +20,7 @@ from .constants import (
     BOLD,
     GRAY,
 )
-from .file_completer import DirectoryListingCompleter
+from .completers import ChatCompleter
 
 
 def get_terminal_width():
@@ -191,7 +191,6 @@ class InteractiveChat:
 
         except Exception as e:
             print(f"\n{YELLOW}❌ Error: {str(e)}{RESET}")
-            traceback.print_stack()
             return None, 0, 0
 
     def _print_welcome_message(self, divider):
@@ -218,7 +217,7 @@ class InteractiveChat:
         print(f"{YELLOW}(Press Enter for new line, Ctrl+S to submit){RESET}")
 
         kb = self._setup_key_bindings()
-        session = PromptSession(key_bindings=kb, completer=DirectoryListingCompleter())
+        session = PromptSession(key_bindings=kb, completer=ChatCompleter())
 
         try:
             user_input = session.prompt("> ")
@@ -261,7 +260,7 @@ class InteractiveChat:
             return messages, False, True  # Skip to next iteration
 
         # Handle model command
-        if user_input.lower().startswith("/model "):
+        if user_input.lower().startswith("/model"):
             model_id = user_input[7:].strip()
             registry = ModelRegistry.get_instance()
             manager = ServiceManager.get_instance()
@@ -300,7 +299,6 @@ class InteractiveChat:
                         messages = MessageTransformer.convert_messages(
                             std_messages, model.provider
                         )
-                        print(messages)
 
                     # Update the LLM service
                     self.llm = manager.get_service(model.provider)
@@ -426,4 +424,4 @@ class InteractiveChat:
             else:
                 # Error occurred
                 print(divider)
-                break
+                continue
