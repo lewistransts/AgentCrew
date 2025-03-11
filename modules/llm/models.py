@@ -98,10 +98,10 @@ class ModelRegistry:
                 capabilities=["tool_use"],
             ),
             Model(
-                id="mixtral-8x7b-32768",
+                id="qwen-qwq-32b",
                 provider="groq",
-                name="Mixtral 8x7B",
-                description="Mistral AI's mixture of experts model optimized for Groq",
+                name="QwQ 32B",
+                description="SLM from Alibaba",
                 capabilities=["tool_use"],
             ),
         ]

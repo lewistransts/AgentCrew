@@ -200,7 +200,12 @@ class MessageTransformer:
                         claude_msg["content"].append(tool_use)
                 else:
                     # Regular content
-                    claude_msg["content"] = [{"type": "text", "text": msg["content"]}]
+                    if msg["content"] is str:
+                        claude_msg["content"] = [
+                            {"type": "text", "text": msg["content"]}
+                        ]
+                    else:
+                        claude_msg["content"] = msg["content"]
 
             # Handle tool results
             if "tool_result" in msg:

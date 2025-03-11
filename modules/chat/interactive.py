@@ -187,13 +187,11 @@ class InteractiveChat:
                 # Store the latest response
                 self.latest_assistant_response = assistant_response
 
-                # Add the assistant's response
-                messages.append(self.llm.format_assistant_message(assistant_response))
-
                 return assistant_response, input_tokens, output_tokens
 
         except Exception as e:
             print(f"\n{YELLOW}❌ Error: {str(e)}{RESET}")
+            print(messages)
             return None, 0, 0
 
     def _print_welcome_message(self, divider):
