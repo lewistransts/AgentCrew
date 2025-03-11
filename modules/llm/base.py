@@ -173,3 +173,16 @@ class BaseLLMService(ABC):
             Dict[str, Any]: A properly formatted message containing thinking blocks
         """
         pass
+        
+    @abstractmethod
+    def validate_spec(self, prompt: str) -> str:
+        """
+        Validate a specification prompt using the LLM.
+        
+        Args:
+            prompt: The specification prompt to validate
+            
+        Returns:
+            Validation result as a string (typically JSON)
+        """
+        pass

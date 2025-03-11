@@ -322,7 +322,7 @@ class AnthropicService(BaseLLMService):
         if is_error:
             message["content"][0]["is_error"] = True
 
-        if len(str(tool_result)) > 1024 and self.caching_blocks < 5:
+        if len(str(tool_result)) > 1024 and self.caching_blocks < 4:
             message["content"][0]["cache_control"] = {"type": "ephemeral"}
             self.caching_blocks += 1
         return message
@@ -377,6 +377,50 @@ class AnthropicService(BaseLLMService):
             thinking_block["signature"] = thinking_signature
 
         return {"role": "assistant", "content": [thinking_block]}
+
+    def validate_spec(self, prompt: str) -> str:
+        """
+        Validate a specification prompt using Anthropic Claude.
+
+        Args:
+            prompt: The specification prompt to validate
+
+        Returns:
+            Validation result as a JSON string
+        """
+
+        try:
+            message = self.client.messages.create(
+                model=self.model,
+                max_tokens=4096,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+            )
+
+            content_block = message.content[0]
+            if not isinstance(content_block, TextBlock):
+                raise ValueError(
+                    "Unexpected response type: message content is not a TextBlock"
+                )
+
+            # Calculate and log token usage and cost
+            input_tokens = message.usage.input_tokens
+            output_tokens = message.usage.output_tokens
+            total_cost = self.calculate_cost(input_tokens, output_tokens)
+
+            print("\nSpec Validation Token Usage:")
+            print(f"Input tokens: {input_tokens:,}")
+            print(f"Output tokens: {output_tokens:,}")
+            print(f"Total tokens: {input_tokens + output_tokens:,}")
+            print(f"Estimated cost: ${total_cost:.4f}")
+
+            return content_block.text
+        except Exception as e:
+            raise Exception(f"Failed to validate specification: {str(e)}")
 
     def set_think(self, budget_tokens: int) -> bool:
         """

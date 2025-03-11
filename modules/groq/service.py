@@ -6,7 +6,7 @@ import time
 import threading
 import itertools
 import sys
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional, Tuple
 from groq import Groq
 from dotenv import load_dotenv
 from modules.llm.base import BaseLLMService
@@ -51,18 +51,18 @@ class GroqService(BaseLLMService):
             raise ValueError("GROQ_API_KEY not found in environment variables")
         self.client = Groq(api_key=api_key)
         # Set default model - can be updated based on Groq's available models
-        self.model = "deepseek-r1-distill-llama-70b"
+        self.model = "qwen-qwq-32b"
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
         self._provider_name = "groq"
-        
+
     def set_think(self, budget_tokens: int) -> bool:
         """
         Enable or disable thinking mode with the specified token budget.
-        
+
         Args:
             budget_tokens (int): Token budget for thinking. 0 to disable thinking mode.
-            
+
         Returns:
             bool: True if thinking mode is supported and successfully set, False otherwise.
         """
@@ -245,28 +245,28 @@ class GroqService(BaseLLMService):
 
     def process_stream_chunk(
         self, chunk, assistant_response, tool_uses
-    ) -> tuple[str, list[dict] | None, int, int, str | None, str | None]:
+    ) -> Tuple[str, List[Dict], int, int, Optional[str], Optional[tuple]]:
         """
         Process a single chunk from the streaming response.
 
         Args:
             chunk: The chunk from the stream
             assistant_response: Current accumulated assistant response
-            tool_use: Current tool use information
+            tool_uses: Current tool use information
 
         Returns:
             tuple: (
-                updated_assistant_response (str),
-                updated_tool_use (dict or None),
-                input_tokens (int),
-                output_tokens (int),
-                chunk_text (str or None) - text to print for this chunk,
-                thinking_content (str or None) - thinking content from this chunk
+                updated_assistant_response,
+                updated_tool_uses,
+                input_tokens,
+                output_tokens,
+                chunk_text,
+                thinking_data
             )
         """
         # Check if this is a non-streaming response (for tool use)
         thinking_content = None  # Groq doesn't support thinking mode
-        
+
         if hasattr(chunk, "message"):
             # This is a complete response, not a streaming chunk
             message = chunk.message
@@ -378,17 +378,69 @@ class GroqService(BaseLLMService):
                 "role": "assistant",
                 "content": assistant_response,
             }
-            
+
     def format_thinking_message(self, thinking_data) -> Dict[str, Any]:
         """
         Format thinking content into the appropriate message format for Groq.
-        
+
         Args:
             thinking_data: Tuple containing (thinking_content, thinking_signature)
                 or None if no thinking data is available
-            
+
         Returns:
             Dict[str, Any]: A properly formatted message containing thinking blocks
         """
         # Groq doesn't support thinking blocks, so we return None
         return None
+
+    def validate_spec(self, prompt: str) -> str:
+        """
+        Validate a specification prompt using Groq.
+
+        Args:
+            prompt: The specification prompt to validate
+
+        Returns:
+            Validation result as a JSON string
+        """
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+                # Groq doesn't support response_format, so we rely on the prompt
+            )
+
+            # Calculate and log token usage and cost
+            input_tokens = response.usage.prompt_tokens if response.usage else 0
+            output_tokens = response.usage.completion_tokens if response.usage else 0
+            total_cost = self.calculate_cost(input_tokens, output_tokens)
+
+            print("\nSpec Validation Token Usage:")
+            print(f"Input tokens: {input_tokens:,}")
+            print(f"Output tokens: {output_tokens:,}")
+            print(f"Total tokens: {input_tokens + output_tokens:,}")
+            print(f"Estimated cost: ${total_cost:.4f}")
+
+            text = response.choices[0].message.content
+            if text is None:
+                raise ValueError("Cannot validate this spec")
+            think_tag = "<think>"
+            end_think_tag = "</think>"
+            think_start_idx = text.index(think_tag)
+            think_end_idx = text.rindex(end_think_tag) + len(end_think_tag)
+            text = text[:think_start_idx] + text[think_end_idx:]
+            start_tag = "<SpecificationReview>"
+            end_tag = "</SpecificationReview>"
+            start_idx = text.rindex(start_tag)
+            end_idx = text.rindex(end_tag) + len(end_tag)
+            result = text[start_idx:end_idx].strip()
+            return result
+
+        except Exception as e:
+            raise Exception(f"Failed to validate specification: {str(e)}")

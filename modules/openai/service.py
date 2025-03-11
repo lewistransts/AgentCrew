@@ -425,3 +425,41 @@ class OpenAIService(BaseLLMService):
         """
         # OpenAI doesn't support thinking blocks, so we return None
         return None
+
+    def validate_spec(self, prompt: str) -> str:
+        """
+        Validate a specification prompt using OpenAI.
+
+        Args:
+            prompt: The specification prompt to validate
+
+        Returns:
+            Validation result as a JSON string
+        """
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+                response_format={"type": "json_object"},
+            )
+
+            # Calculate and log token usage and cost
+            input_tokens = response.usage.prompt_tokens if response.usage else 0
+            output_tokens = response.usage.completion_tokens if response.usage else 0
+            total_cost = self.calculate_cost(input_tokens, output_tokens)
+
+            print("\nSpec Validation Token Usage:")
+            print(f"Input tokens: {input_tokens:,}")
+            print(f"Output tokens: {output_tokens:,}")
+            print(f"Total tokens: {input_tokens + output_tokens:,}")
+            print(f"Estimated cost: ${total_cost:.4f}")
+
+            return response.choices[0].message.content
+        except Exception as e:
+            raise Exception(f"Failed to validate specification: {str(e)}")

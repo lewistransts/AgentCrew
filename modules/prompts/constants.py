@@ -202,6 +202,7 @@ mentation level}}
     - Create function example(arg1,arg2)
     - Modify function exaplme2(arg1,args2)
 ```
+Always run this through the spec_validation tools, STOP when it's usable
 </SPEC_PROMPT_INSTRUCTION>
 
 Always support the architect's decision-making process rather than replacing it. Enhance their capabilities through knowledge, perspective, and analytical support.

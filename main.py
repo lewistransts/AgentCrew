@@ -1,6 +1,5 @@
 import click
 import importlib
-from modules import llm
 from modules.ytdlp import YtDlpService
 from modules.scraping import ScrapingService
 from modules.web_search import TavilySearchService
@@ -8,12 +7,10 @@ from modules.clipboard import ClipboardService
 from modules.memory import MemoryService
 from modules.code_analysis import CodeAnalysisService
 from modules.anthropic import AnthropicService
-from modules.groq import GroqService
-from modules.openai import OpenAIService
 from modules.chat import InteractiveChat
-from modules.tools.registry import ToolRegistry
 from modules.llm.service_manager import ServiceManager
 from modules.llm.models import ModelRegistry
+from modules.coder import SpecPromptValidationService
 
 
 @click.group()
@@ -71,22 +68,22 @@ def services_load(provider):
     # Initialize the model registry and service manager
     registry = ModelRegistry.get_instance()
     manager = ServiceManager.get_instance()
-    
+
     # Set the current model based on provider
     models = registry.get_models_by_provider(provider)
     if models:
         # Find default model for this provider
         default_model = next((m for m in models if m.default), models[0])
         registry.set_current_model(default_model.id)
-    
+
     # Get the LLM service from the manager
     llm_service = manager.get_service(provider)
-    
+
     # Initialize services
     memory_service = MemoryService()
     clipboard_service = ClipboardService()
     youtube_service = YtDlpService()
-
+    spec_validator = SpecPromptValidationService("groq")
     # Try to create search service if API key is available
     try:
         search_service = TavilySearchService(llm=llm_service)
@@ -123,6 +120,7 @@ def services_load(provider):
         "ytdlp": youtube_service,
         "code_analysis": code_analysis_service,
         "web_search": search_service,
+        "spec_validator": spec_validator,
         # "scraping": scraping_service,
     }
     return services
@@ -145,6 +143,10 @@ def discover_and_register_tools(services=None):
         ("modules.clipboard.tool", "clipboard"),
         ("modules.web_search.tool", "web_search"),
         ("modules.ytdlp.tool", "ytdlp"),
+        (
+            "modules.coder.tool",
+            "spec_validator",
+        ),  # Add this line - no service instance needed
         # ("modules.scraping.tool", "scraping"),
     ]
 
