@@ -68,7 +68,6 @@ def get_code_analysis_tool_handler(
         path = params.get("path", ".")
         path = os_path.expanduser(path)
         result = code_analysis_service.analyze_code_structure(path)
-
         if isinstance(result, dict) and "error" in result:
             raise Exception(f"Failed to analyze code: {result['error']}")
 
@@ -92,7 +91,7 @@ def get_file_content_tool_definition(provider="claude"):
     properties = {
         "file_path": {
             "type": "string",
-            "description": "Path to the local repo file (e.g., 'src/main.py', 'index.js')",
+            "description": "Relative path from current directory of agent to the local repo file.",
         },
         "element_type": {
             "type": "string",

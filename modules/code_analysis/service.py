@@ -45,6 +45,9 @@ class CodeAnalysisService:
         ".cs": "c-sharp",
         ".kt": "kotlin",
         ".kts": "kotlin",
+        ".json": "config",
+        ".toml": "config",
+        ".yaml": "config",
         # Add more languages as needed
     }
 
@@ -556,7 +559,6 @@ class CodeAnalysisService:
                         supported_files.append(os.path.join(abs_path, file_path))
 
             # Analyze each file
-            results = {}
             analysis_results = []
             errors = []
             for file_path in supported_files:
@@ -564,21 +566,24 @@ class CodeAnalysisService:
                 if not file_path:
                     continue
 
-                rel_path = os.path.relpath(file_path, abs_path)
-                language = self._detect_language(file_path)
-
-                if language != "unknown":
-                    result = self._analyze_file(file_path)
-                    results[rel_path] = {"language": language, "analysis": result}
+                rel_path = os.path.join(path, os.path.relpath(file_path, abs_path))
                 try:
-                    result = self._analyze_file(file_path)
+                    language = self._detect_language(file_path)
+
+                    if language == "config":
+                        # Skip problematic file
+                        if os.path.basename(file_path) == "package-lock.json":
+                            continue
+                        result = {"type": "config", "name": os.path.basename(file_path)}
+                    else:
+                        result = self._analyze_file(file_path)
 
                     if result and isinstance(result, dict) and "error" not in result:
                         # Successfully analyzed file
                         analysis_results.append(
                             {
                                 "path": rel_path,
-                                "language": self._detect_language(rel_path),
+                                "language": language,
                                 "structure": result,
                             }
                         )
@@ -589,7 +594,6 @@ class CodeAnalysisService:
 
             if not analysis_results:
                 return "Analysis completed but no valid results"
-
             return self._format_analysis_results(
                 analysis_results, supported_files, errors
             )
@@ -771,7 +775,11 @@ class CodeAnalysisService:
             if not result.get("structure") or not result.get("structure", {}).get(
                 "children"
             ):
-                continue
+                if not result.get("structure"):
+                    output_lines.append(
+                        f"\n{result['path']}: {result['structure']['type']}"
+                    )
+                    continue
 
             # Add file header
             output_lines.append(f"\n{result['path']}")
