@@ -142,12 +142,10 @@ def discover_and_register_tools(services=None):
         ("modules.code_analysis.tool", "code_analysis"),
         ("modules.clipboard.tool", "clipboard"),
         ("modules.web_search.tool", "web_search"),
-        ("modules.ytdlp.tool", "ytdlp"),
         (
             "modules.coder.tool",
             "spec_validator",
-        ),  # Add this line - no service instance needed
-        # ("modules.scraping.tool", "scraping"),
+        ),
     ]
 
     for module_name, service_key in tool_modules:

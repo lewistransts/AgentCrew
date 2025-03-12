@@ -1,7 +1,7 @@
 [project]
-name = "url-to-markdown"
+name = "swissknife"
 version = "0.1.0"
-description = "CLI tool to fetch URLs and convert to markdown"
+description = "Claude AI Interactive Chat Tool"
 dependencies = [
   "firecrawl",
   "click",

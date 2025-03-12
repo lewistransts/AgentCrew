@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.12"
 
 [[package]]
@@ -237,7 +236,7 @@ name = "click"
 version = "8.1.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "platform_system == 'Windows'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b9/2e/0090cbf739cee7d23781ad4b89a9894a41538e4fcf4c31dcdd705b78eb8b/click-8.1.8.tar.gz", hash = "sha256:ed53c9d8990d83c2a27deae68e4ee337473f6330c040a31d4225c9574d16096a", size = 226593 }
 wheels = [
@@ -1426,6 +1425,71 @@ wheels = [
 ]
 
 [[package]]
+name = "swissknife"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "anthropic" },
+    { name = "chromadb" },
+    { name = "click" },
+    { name = "firecrawl" },
+    { name = "groq" },
+    { name = "mcp" },
+    { name = "openai" },
+    { name = "pillow" },
+    { name = "prompt-toolkit" },
+    { name = "pyperclip" },
+    { name = "pytest" },
+    { name = "python-dotenv" },
+    { name = "rich" },
+    { name = "tavily-python" },
+    { name = "tree-sitter" },
+    { name = "tree-sitter-c-sharp" },
+    { name = "tree-sitter-cpp" },
+    { name = "tree-sitter-go" },
+    { name = "tree-sitter-java" },
+    { name = "tree-sitter-javascript" },
+    { name = "tree-sitter-kotlin" },
+    { name = "tree-sitter-php" },
+    { name = "tree-sitter-python" },
+    { name = "tree-sitter-ruby" },
+    { name = "tree-sitter-rust" },
+    { name = "tree-sitter-typescript" },
+    { name = "yt-dlp" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anthropic" },
+    { name = "chromadb", specifier = ">=0.6.3" },
+    { name = "click" },
+    { name = "firecrawl" },
+    { name = "groq", specifier = ">=0.18.0" },
+    { name = "mcp", specifier = ">=1.3.0" },
+    { name = "openai", specifier = ">=1.65.2" },
+    { name = "pillow", specifier = ">=11.1.0" },
+    { name = "prompt-toolkit", specifier = ">=3.0.50" },
+    { name = "pyperclip", specifier = ">=1.9.0" },
+    { name = "pytest" },
+    { name = "python-dotenv" },
+    { name = "rich", specifier = ">=13.9.4" },
+    { name = "tavily-python", specifier = ">=0.5.1" },
+    { name = "tree-sitter", specifier = ">=0.23.2" },
+    { name = "tree-sitter-c-sharp", specifier = ">=0.23.1" },
+    { name = "tree-sitter-cpp", specifier = ">=0.23.4" },
+    { name = "tree-sitter-go", specifier = ">=0.23.4" },
+    { name = "tree-sitter-java", specifier = ">=0.23.5" },
+    { name = "tree-sitter-javascript", specifier = ">=0.23.1" },
+    { name = "tree-sitter-kotlin", specifier = ">=1.0.1" },
+    { name = "tree-sitter-php", specifier = ">=0.23.11" },
+    { name = "tree-sitter-python", specifier = ">=0.23.6" },
+    { name = "tree-sitter-ruby", specifier = ">=0.23.1" },
+    { name = "tree-sitter-rust", specifier = ">=0.23.2" },
+    { name = "tree-sitter-typescript", specifier = ">=0.23.2" },
+    { name = "yt-dlp", specifier = ">=2025.2.19" },
+]
+
+[[package]]
 name = "sympy"
 version = "1.13.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1514,7 +1578,7 @@ name = "tqdm"
 version = "4.67.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "platform_system == 'Windows'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2", size = 169737 }
 wheels = [
@@ -1730,71 +1794,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/df/db/f35a00659bc03fec321ba8bce9420de607a1d37f8342eee1863174c69557/typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8", size = 85321 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d", size = 37438 },
-]
-
-[[package]]
-name = "url-to-markdown"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "anthropic" },
-    { name = "chromadb" },
-    { name = "click" },
-    { name = "firecrawl" },
-    { name = "groq" },
-    { name = "mcp" },
-    { name = "openai" },
-    { name = "pillow" },
-    { name = "prompt-toolkit" },
-    { name = "pyperclip" },
-    { name = "pytest" },
-    { name = "python-dotenv" },
-    { name = "rich" },
-    { name = "tavily-python" },
-    { name = "tree-sitter" },
-    { name = "tree-sitter-c-sharp" },
-    { name = "tree-sitter-cpp" },
-    { name = "tree-sitter-go" },
-    { name = "tree-sitter-java" },
-    { name = "tree-sitter-javascript" },
-    { name = "tree-sitter-kotlin" },
-    { name = "tree-sitter-php" },
-    { name = "tree-sitter-python" },
-    { name = "tree-sitter-ruby" },
-    { name = "tree-sitter-rust" },
-    { name = "tree-sitter-typescript" },
-    { name = "yt-dlp" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "anthropic" },
-    { name = "chromadb", specifier = ">=0.6.3" },
-    { name = "click" },
-    { name = "firecrawl" },
-    { name = "groq", specifier = ">=0.18.0" },
-    { name = "mcp", specifier = ">=1.3.0" },
-    { name = "openai", specifier = ">=1.65.2" },
-    { name = "pillow", specifier = ">=11.1.0" },
-    { name = "prompt-toolkit", specifier = ">=3.0.50" },
-    { name = "pyperclip", specifier = ">=1.9.0" },
-    { name = "pytest" },
-    { name = "python-dotenv" },
-    { name = "rich", specifier = ">=13.9.4" },
-    { name = "tavily-python", specifier = ">=0.5.1" },
-    { name = "tree-sitter", specifier = ">=0.23.2" },
-    { name = "tree-sitter-c-sharp", specifier = ">=0.23.1" },
-    { name = "tree-sitter-cpp", specifier = ">=0.23.4" },
-    { name = "tree-sitter-go", specifier = ">=0.23.4" },
-    { name = "tree-sitter-java", specifier = ">=0.23.5" },
-    { name = "tree-sitter-javascript", specifier = ">=0.23.1" },
-    { name = "tree-sitter-kotlin", specifier = ">=1.0.1" },
-    { name = "tree-sitter-php", specifier = ">=0.23.11" },
-    { name = "tree-sitter-python", specifier = ">=0.23.6" },
-    { name = "tree-sitter-ruby", specifier = ">=0.23.1" },
-    { name = "tree-sitter-rust", specifier = ">=0.23.2" },
-    { name = "tree-sitter-typescript", specifier = ">=0.23.2" },
-    { name = "yt-dlp", specifier = ">=2025.2.19" },
 ]
 
 [[package]]
