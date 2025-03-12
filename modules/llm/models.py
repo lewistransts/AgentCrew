@@ -52,7 +52,7 @@ class ModelRegistry:
                 provider="claude",
                 name="Claude 3.5 Sonnet",
                 description="Anthropic's Claude 3.5 Sonnet model - balanced performance and capabilities",
-                capabilities=["thinking", "tool_use", "vision"],
+                capabilities=["tool_use", "vision"],
                 default=True,
             ),
             Model(
@@ -60,7 +60,7 @@ class ModelRegistry:
                 provider="claude",
                 name="Claude 3.5 Haiku",
                 description="Anthropic's fastest model",
-                capabilities=["thinking", "tool_use", "vision"],
+                capabilities=["tool_use", "vision"],
             ),
             Model(
                 id="gpt-4o",
@@ -81,7 +81,7 @@ class ModelRegistry:
                 provider="openai",
                 name="GPT o3 mini",
                 description="Fast, flexible, intelligent reasoning model",
-                capabilities=["tool_use"],
+                capabilities=["thinking"],
             ),
             Model(
                 id="deepseek-r1-distill-llama-70b",
@@ -102,7 +102,7 @@ class ModelRegistry:
                 provider="groq",
                 name="QwQ 32B",
                 description="SLM from Alibaba",
-                capabilities=["tool_use"],
+                capabilities=["thinking", "tool_use"],
             ),
         ]
 

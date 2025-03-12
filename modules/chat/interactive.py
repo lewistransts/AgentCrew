@@ -2,10 +2,10 @@ import sys
 import os
 import shutil
 import pyperclip
-import traceback
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
+import rich
 from rich.console import Console
 from rich.markdown import Markdown
 from modules.llm.base import BaseLLMService
@@ -76,13 +76,10 @@ class InteractiveChat:
 
     def _clear_to_start(self, text):
         # Count how many lines were printed
-        lines = text.count("\n") + 1
-
-        # Move cursor to beginning of first line of output
-        sys.stdout.write(f"\x1b[{lines}A\r")
-
-        # Clear from cursor to end of screen
-        sys.stdout.write("\x1b[J")
+        self.console.clear(home=False)
+        terminal_width = get_terminal_width()
+        divider = "─" * terminal_width
+        self.console.print(f"\n{divider}")
 
     def _stream_assistant_response(self, messages, input_tokens=0, output_tokens=0):
         """Stream the assistant's response and return the response and token usage."""
@@ -124,21 +121,27 @@ class InteractiveChat:
                         #     thinking_signature = signature
                         # Print thinking content with a special format
                         if start_thinking:
-                            print(f"\n{YELLOW}💭 Claude's thinking process:{RESET}")
+                            self.console.print(
+                                f"\n{YELLOW}💭 Claude's thinking process:{RESET}"
+                            )
                             start_thinking = False
-                        print(f"{GRAY}{thinking_chunk}{RESET}", end="", flush=True)
+                        self.console.print(
+                            f"{GRAY}{thinking_chunk}{RESET}", end="", soft_wrap=True
+                        )
 
                     # Print chunk text if available
                     if chunk_text:
-                        print(chunk_text, end="", flush=True)
+                        self.console.print(chunk_text, end="", soft_wrap=True)
 
             # Handle tool use if needed
             if tool_uses and len(tool_uses) > 0:
                 # Add thinking content as a separate message if available
                 if thinking_content:
-                    self._clear_to_start(thinking_content)
-                    print(f"{GRAY}{thinking_content}{RESET}", end="", flush=True)
-                    print("\n---\n")
+                    # self._clear_to_start(thinking_content)
+                    self.console.print(
+                        f"{GRAY}{thinking_content}{RESET}", end="", soft_wrap=True
+                    )
+                    self.console.print("\n---\n")
 
                 thinking_data = (
                     (thinking_content, thinking_signature) if thinking_content else None

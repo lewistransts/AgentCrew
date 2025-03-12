@@ -204,8 +204,11 @@ class GroqService(BaseLLMService):
         """Stream the assistant's response with tool support."""
         stream_params = {
             "model": self.model,
-            "max_tokens": 4096,
+            "max_completion_tokens": 8192,
             "messages": messages,
+            "reasoning_format": "parsed",
+            "temperature": 0.6,
+            "top_p": 0.95,
         }
 
         # Add system message if provided
@@ -407,12 +410,17 @@ class GroqService(BaseLLMService):
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
+                max_completion_tokens=8192,
+                temperature=0.6,
+                top_p=0.95,
                 messages=[
                     {
                         "role": "user",
                         "content": prompt,
-                    }
+                    },
+                    {"role": "assistant", "content": "```xml"},
                 ],
+                stop="```",
                 # Groq doesn't support response_format, so we rely on the prompt
             )
 
@@ -432,9 +440,12 @@ class GroqService(BaseLLMService):
                 raise ValueError("Cannot validate this spec")
             think_tag = "<think>"
             end_think_tag = "</think>"
-            think_start_idx = text.index(think_tag)
-            think_end_idx = text.rindex(end_think_tag) + len(end_think_tag)
-            text = text[:think_start_idx] + text[think_end_idx:]
+            think_start_idx = text.find(think_tag)
+            think_end_idx = text.rfind(end_think_tag)
+            if think_start_idx > -1 and think_end_idx > -1:
+                text = (
+                    text[:think_start_idx] + text[think_end_idx + len(end_think_tag) :]
+                )
             start_tag = "<SpecificationReview>"
             end_tag = "</SpecificationReview>"
             start_idx = text.rindex(start_tag)
