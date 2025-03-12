@@ -29,7 +29,7 @@ class MemoryService:
 
         # Configuration for chunking
         self.chunk_size = 200  # words per chunk
-        self.chunk_overlap = 30  # words overlap between chunks
+        self.chunk_overlap = 40  # words overlap between chunks
 
     def _create_chunks(self, text: str) -> List[str]:
         """

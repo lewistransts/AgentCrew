@@ -134,7 +134,7 @@ def get_memory_retrieve_tool_handler(memory_service: MemoryService) -> Callable:
 
     def handle_memory_retrieve(**params) -> str:
         keywords = params.get("keywords")
-        limit = params.get("limit", 20)
+        limit = params.get("limit", 10)
 
         if not keywords:
             return "Error: Keywords are required for memory retrieval."
@@ -151,13 +151,14 @@ def get_memory_retrieve_tool_handler(memory_service: MemoryService) -> Callable:
 def register(service_instance=None):
     """Register this tool with the central registry"""
     from modules.tools.registration import register_tool
+
     register_tool(
         get_memory_retrieve_tool_definition,
         get_memory_retrieve_tool_handler,
-        service_instance
+        service_instance,
     )
     register_tool(
         get_memory_forget_tool_definition,
         get_memory_forget_tool_handler,
-        service_instance
+        service_instance,
     )

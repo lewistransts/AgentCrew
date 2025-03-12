@@ -470,6 +470,9 @@ class AnthropicService(BaseLLMService):
                 "type": "enabled",
                 "budget_tokens": self.thinking_budget,
             }
+        else:
+            stream_params["temperature"] = 0.2
+            stream_params["top_p"] = 0.1
 
         # Add tools if available
         if self.tools:
