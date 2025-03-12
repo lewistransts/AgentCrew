@@ -1,6 +1,5 @@
 import click
 import importlib
-from modules.ytdlp import YtDlpService
 from modules.scraping import ScrapingService
 from modules.web_search import TavilySearchService
 from modules.clipboard import ClipboardService
@@ -82,7 +81,6 @@ def services_load(provider):
     # Initialize services
     memory_service = MemoryService()
     clipboard_service = ClipboardService()
-    youtube_service = YtDlpService()
     spec_validator = SpecPromptValidationService("groq")
     # Try to create search service if API key is available
     try:
@@ -117,7 +115,6 @@ def services_load(provider):
         "llm": llm_service,
         "memory": memory_service,
         "clipboard": clipboard_service,
-        "ytdlp": youtube_service,
         "code_analysis": code_analysis_service,
         "web_search": search_service,
         "spec_validator": spec_validator,
