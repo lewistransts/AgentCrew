@@ -13,14 +13,7 @@ from modules.llm.base import BaseLLMService
 from modules.llm.service_manager import ServiceManager
 from modules.llm.models import ModelRegistry
 from modules.llm.message import MessageTransformer
-from .constants import (
-    BLUE,
-    GREEN,
-    YELLOW,
-    RESET,
-    BOLD,
-    GRAY,
-)
+from .constants import BLUE, GREEN, YELLOW, RESET, BOLD, GRAY, RICH_YELLOW, RICH_GRAY
 from .completers import ChatCompleter
 from .history import ChatHistoryManager
 
@@ -182,11 +175,13 @@ class InteractiveChat:
                         # Print thinking content with a special format
                         if start_thinking:
                             self.console.print(
-                                Text("\n💭 Claude's thinking process:", style="yellow")
+                                Text(
+                                    "\n💭 Claude's thinking process:", style=RICH_YELLOW
+                                )
                             )
                             start_thinking = False
                         self.console.print(
-                            Text(f"{thinking_chunk}", style="gray"),
+                            Text(f"{thinking_chunk}", style=RICH_GRAY),
                             end="",
                             soft_wrap=True,
                         )
@@ -201,7 +196,7 @@ class InteractiveChat:
                 if thinking_content:
                     # self._clear_to_start(thinking_content)
                     self.console.print(
-                        Text(f"{thinking_content}", style="gray"),
+                        Text(f"{thinking_content}", style=RICH_GRAY),
                         end="",
                         soft_wrap=True,
                     )
