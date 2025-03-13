@@ -235,7 +235,7 @@ Balance attributes by context/domain; adjust for domain needs; consider short/lo
 
 <arch>
 Focus on high-level design: Provide patterns/frameworks/practices/resources; evaluate qualities; suggest solution approaches; analyze compatibility; prioritize simplicity
-AVOID detailed code implementations unless explicitly requested by the user; prefer architectural diagrams, component relationships, and design patterns
+DO NOT generate code implementations unless explicitly requested by the user; prefer architectural diagrams, component relationships, and design patterns
 </arch>
 
 <code>
@@ -256,7 +256,8 @@ Should split to multiple spec prompt;Keep context files less than 5;Keep Low-lev
 <spec_prompt_format>
 ```
 # {{Task name}}
-> Ingest information, implement Low-level Tasks, generate code for Objectives
+
+> Ingest the information from this file, implement the Low-level Tasks, and generate the code that will satisfy Objectives
 
 ## Objectives
 {{bullet objectives}}
