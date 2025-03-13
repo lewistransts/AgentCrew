@@ -17,14 +17,14 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
     """
     if provider == "claude":
         return {
-            "name": "validate_spec",
-            "description": "Validates a specification prompt for clarity, completeness, and feasibility",
+            "name": "validate_spec_prompt",
+            "description": "Validates a spec prompt for clarity, completeness, and feasibility",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "prompt": {
                         "type": "string",
-                        "description": "The specification prompt to validate",
+                        "description": "The spec prompt to validate",
                     },
                     "repo_path": {
                         "type": "string",
@@ -38,14 +38,14 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
         return {
             "type": "function",
             "function": {
-                "name": "validate_spec",
-                "description": "Validates a specification prompt for clarity, completeness, and feasibility",
+                "name": "validate_spec_prompt",
+                "description": "Validates a spec prompt for clarity, completeness, and feasibility",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "prompt": {
                             "type": "string",
-                            "description": "The specification prompt to validate",
+                            "description": "The spec prompt to validate",
                         },
                         "repo_path": {
                             "type": "string",
