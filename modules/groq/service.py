@@ -9,6 +9,7 @@ import sys
 from typing import Dict, Any, List, Optional, Tuple
 from groq import Groq
 from dotenv import load_dotenv
+from groq.types.chat import ChatCompletion
 from modules.llm.base import BaseLLMService
 from ..prompts.constants import (
     EXPLAIN_PROMPT,
@@ -55,6 +56,8 @@ class GroqService(BaseLLMService):
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
         self._provider_name = "groq"
+        self.current_input_tokens = 0
+        self.current_output_tokens = 0
 
     def set_think(self, budget_tokens: int) -> bool:
         """
@@ -206,10 +209,13 @@ class GroqService(BaseLLMService):
             "model": self.model,
             "max_completion_tokens": 8192,
             "messages": messages,
-            "reasoning_format": "parsed",
-            "temperature": 0.6,
-            "top_p": 0.95,
+            "temperature": 0.3,
+            "top_p": 0.1,
         }
+        if self.model == "qwen-qwq-32b":
+            stream_params["reasoning_format"] = "parsed"
+            stream_params["temperature"] = 0.6
+            stream_params["top_p"] = 0.95
 
         # Add system message if provided
         if CHAT_SYSTEM_PROMPT:
@@ -237,7 +243,9 @@ class GroqService(BaseLLMService):
                 animation_thread.join()
 
             @contextlib.contextmanager
-            def simulate_stream(data):
+            def simulate_stream(data: ChatCompletion):
+                self.current_input_tokens = data.usage.prompt_tokens
+                self.current_output_tokens = data.usage.completion_tokens
                 yield data.choices
 
             # Return a list containing the single response to simulate a stream
@@ -289,12 +297,16 @@ class GroqService(BaseLLMService):
                         }
                     )
 
+                input_tokens = self.current_input_tokens
+                self.current_input_tokens = 0
+                output_tokens = self.current_output_tokens
+                self.current_output_tokens = 0
                 # Return with tool use information and the full content
                 return (
                     content,
                     tool_uses,
-                    chunk.usage.prompt_tokens if hasattr(chunk, "usage") else 0,
-                    chunk.usage.completion_tokens if hasattr(chunk, "usage") else 0,
+                    input_tokens,
+                    output_tokens,
                     content,  # Return the full content to be printed
                     thinking_content,
                 )
@@ -314,8 +326,10 @@ class GroqService(BaseLLMService):
         updated_assistant_response = assistant_response + chunk_text
 
         # Get token counts if available in the chunk
-        input_tokens = getattr(chunk, "usage", {}).get("prompt_tokens", 0)
-        output_tokens = getattr(chunk, "usage", {}).get("completion_tokens", 0)
+        input_tokens = self.current_input_tokens
+        self.current_input_tokens = 0
+        output_tokens = self.current_output_tokens
+        self.current_output_tokens = 0
 
         return (
             updated_assistant_response,
