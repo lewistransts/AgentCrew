@@ -6,7 +6,6 @@ import pyperclip
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
-import rich
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.text import Text
@@ -23,6 +22,7 @@ from .constants import (
     GRAY,
 )
 from .completers import ChatCompleter
+from .history import ChatHistoryManager
 
 
 def get_terminal_width():
@@ -44,6 +44,7 @@ class InteractiveChat:
         self.latest_assistant_response = ""
         self.memory_service = memory_service
         self._last_ctrl_c_time = 0  # Initialize the last Ctrl+C time
+        self.history_manager = ChatHistoryManager()  # Initialize history manager
 
     def _copy_to_clipboard(self):
         """Copy the latest assistant response to clipboard and show confirmation."""
@@ -89,6 +90,47 @@ class InteractiveChat:
                 self._last_ctrl_c_time = current_time
                 print(f"\n{YELLOW}Press Ctrl+C again within 1 seconds to exit.{RESET}")
                 print("> ", end="")
+
+        @kb.add(Keys.Up)
+        def _(event):
+            """Navigate to previous history entry."""
+            buffer = event.current_buffer
+            document = buffer.document
+
+            # Check if cursor is at the first line's start
+            cursor_position = document.cursor_position
+            if document.cursor_position_row == 0 and cursor_position <= len(
+                document.current_line
+            ):
+                # Get previous history entry
+                prev_entry = self.history_manager.get_previous()
+                if prev_entry is not None:
+                    # Replace current text with history entry
+                    buffer.text = prev_entry
+                    # Move cursor to end of text
+                    buffer.cursor_position = len(prev_entry)
+            else:
+                # Regular up arrow behavior - move cursor up
+                buffer.cursor_up()
+
+        @kb.add(Keys.Down)
+        def _(event):
+            """Navigate to next history entry if cursor is at last line."""
+            buffer = event.current_buffer
+            document = buffer.document
+
+            # Check if cursor is at the last line
+            if document.cursor_position_row == document.line_count - 1:
+                # Get next history entry
+                next_entry = self.history_manager.get_next()
+                if next_entry is not None:
+                    # Replace current text with history entry
+                    buffer.text = next_entry
+                    # Move cursor to end of text
+                    buffer.cursor_position = len(next_entry)
+            else:
+                # Regular down arrow behavior - move cursor down
+                buffer.cursor_down()
 
         return kb
 
@@ -239,18 +281,25 @@ class InteractiveChat:
             f"{YELLOW}Use '/copy' to copy the latest assistant response to clipboard.{RESET}"
         )
         print(f"{YELLOW}Press Alt/Meta+C to copy the latest assistant response.{RESET}")
+        print(
+            f"{YELLOW}Use Up/Down arrow keys to navigate through command history.{RESET}"
+        )
         print(divider)
 
     def _get_user_input(self, divider):
         """Get multiline input from the user."""
         print(f"\n{BLUE}{BOLD}👤 YOU:{RESET}")
-        print(f"{YELLOW}(Press Enter for new line, Ctrl+S to submit){RESET}")
+        print(
+            f"{YELLOW}(Press Enter for new line, Ctrl+S to submit, Up/Down for history){RESET}"
+        )
 
         kb = self._setup_key_bindings()
         session = PromptSession(key_bindings=kb, completer=ChatCompleter())
 
         try:
             user_input = session.prompt("> ")
+            # Reset history position after submission
+            self.history_manager.reset_position()
             print(divider)
             return user_input
         except KeyboardInterrupt:
@@ -349,6 +398,10 @@ class InteractiveChat:
                 print(f"{YELLOW}Unknown model: {model_id}{RESET}")
 
             return messages, False, True
+
+        # Store non-command messages in history
+        if not user_input.startswith("/"):
+            self.history_manager.add_entry(user_input)
 
         # Handle files that were loaded but not yet sent
         if files and not messages:
