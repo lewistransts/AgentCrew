@@ -1,6 +1,7 @@
 import sys
 import os
 import shutil
+import time
 import pyperclip
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
@@ -41,6 +42,7 @@ class InteractiveChat:
         self.console = Console()
         self.latest_assistant_response = ""
         self.memory_service = memory_service
+        self._last_ctrl_c_time = 0  # Initialize the last Ctrl+C time
 
     def _copy_to_clipboard(self):
         """Copy the latest assistant response to clipboard and show confirmation."""
@@ -71,6 +73,21 @@ class InteractiveChat:
             """Copy latest assistant response to clipboard."""
             self._copy_to_clipboard()
             print("> ", end="")
+
+        @kb.add(Keys.ControlC)
+        def _(event):
+            """Handle Ctrl+C with confirmation for exit."""
+            current_time = time.time()
+            if (
+                hasattr(self, "_last_ctrl_c_time")
+                and current_time - self._last_ctrl_c_time < 1
+            ):
+                print(f"\n{YELLOW}{BOLD}🎮 Confirmed exit. Goodbye!{RESET}")
+                sys.exit(0)
+            else:
+                self._last_ctrl_c_time = current_time
+                print(f"\n{YELLOW}Press Ctrl+C again within 1 seconds to exit.{RESET}")
+                print("> ", end="")
 
         return kb
 
@@ -200,6 +217,7 @@ class InteractiveChat:
     def _print_welcome_message(self, divider):
         """Print the welcome message for the chat."""
         print(f"\n{YELLOW}{BOLD}🎮 Welcome to the interactive chat!{RESET}")
+        print(f"{YELLOW}Press Ctrl+C twice to exit.{RESET}")
         print(f"{YELLOW}Type 'exit' or 'quit' to end the session.{RESET}")
         print(
             f"{YELLOW}Use '/file <file_path>' to include a file in your message.{RESET}"
@@ -231,8 +249,11 @@ class InteractiveChat:
             print(divider)
             return user_input
         except KeyboardInterrupt:
-            print(f"{YELLOW}{BOLD}🎮 Chat interrupted. Goodbye!{RESET}")
-            return "exit"
+            # This should not be reached with our custom handler, but keep as fallback
+            print(
+                f"\n{YELLOW}{BOLD}🎮 Chat interrupted. Press Ctrl+C again to exit.{RESET}"
+            )
+            return ""  # Return empty string instead of "exit" to continue the chat
 
     def _handle_clear_command(self):
         """Handle the /clear command to reset conversation history."""
