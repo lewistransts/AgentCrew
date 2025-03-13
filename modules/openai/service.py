@@ -184,7 +184,7 @@ class OpenAIService(BaseLLMService):
             raise ValueError("Tool definition must contain a name")
 
         self.tool_handlers[tool_name] = handler_function
-        print(f"🔧 Registered tool: {tool_name}")
+        # print(f"🔧 Registered tool: {tool_name}")
 
     def execute_tool(self, tool_name, tool_params):
         """

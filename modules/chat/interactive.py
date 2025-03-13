@@ -9,6 +9,7 @@ from prompt_toolkit.keys import Keys
 import rich
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.text import Text
 from modules.llm.base import BaseLLMService
 from modules.llm.service_manager import ServiceManager
 from modules.llm.models import ModelRegistry
@@ -139,11 +140,13 @@ class InteractiveChat:
                         # Print thinking content with a special format
                         if start_thinking:
                             self.console.print(
-                                f"\n{YELLOW}💭 Claude's thinking process:{RESET}"
+                                Text("\n💭 Claude's thinking process:", style="yellow")
                             )
                             start_thinking = False
                         self.console.print(
-                            f"{GRAY}{thinking_chunk}{RESET}", end="", soft_wrap=True
+                            Text(f"{thinking_chunk}", style="gray"),
+                            end="",
+                            soft_wrap=True,
                         )
 
                     # Print chunk text if available
@@ -156,7 +159,9 @@ class InteractiveChat:
                 if thinking_content:
                     # self._clear_to_start(thinking_content)
                     self.console.print(
-                        f"{GRAY}{thinking_content}{RESET}", end="", soft_wrap=True
+                        Text(f"{thinking_content}", style="gray"),
+                        end="",
+                        soft_wrap=True,
                     )
                     self.console.print("\n---\n")
 

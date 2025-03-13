@@ -180,7 +180,7 @@ class GroqService(BaseLLMService):
         """
         self.tools.append(tool_definition)
         self.tool_handlers[tool_definition["function"]["name"]] = handler_function
-        print(f"🔧 Registered tool: {tool_definition['function']['name']}")
+        # print(f"🔧 Registered tool: {tool_definition['function']['name']}")
 
     def execute_tool(self, tool_name, tool_params):
         """

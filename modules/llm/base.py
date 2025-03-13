@@ -5,7 +5,7 @@ from modules.tools.registry import ToolRegistry
 
 class BaseLLMService(ABC):
     """Base interface for LLM services."""
-    
+
     @property
     def provider_name(self) -> str:
         """Get the provider name for this service."""
@@ -15,17 +15,21 @@ class BaseLLMService(ABC):
     def provider_name(self, value: str):
         """Set the provider name for this service."""
         self._provider_name = value
-    
+
     def register_all_tools(self):
         """Register all available tools with this LLM service"""
         registry = ToolRegistry.get_instance()
         tool_definitions = registry.get_tool_definitions(self.provider_name)
+        registered_tool = []
         for tool_def in tool_definitions:
             tool_name = self._extract_tool_name(tool_def)
             handler = registry.get_tool_handler(tool_name)
             if handler:
                 self.register_tool(tool_def, handler)
-    
+                registered_tool.append(tool_name)
+        if len(registered_tool) > 0:
+            print(f"🔧 Available tools: {', '.join(registered_tool)}")
+
     def _extract_tool_name(self, tool_def):
         """Extract tool name from definition regardless of format"""
         if "name" in tool_def:
@@ -173,15 +177,15 @@ class BaseLLMService(ABC):
             Dict[str, Any]: A properly formatted message containing thinking blocks
         """
         pass
-        
+
     @abstractmethod
     def validate_spec(self, prompt: str) -> str:
         """
         Validate a specification prompt using the LLM.
-        
+
         Args:
             prompt: The specification prompt to validate
-            
+
         Returns:
             Validation result as a string (typically JSON)
         """
