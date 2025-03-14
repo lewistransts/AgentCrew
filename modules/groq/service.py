@@ -278,6 +278,10 @@ class GroqService(BaseLLMService):
         # Check if this is a non-streaming response (for tool use)
         thinking_content = None  # Groq doesn't support thinking mode
 
+        input_tokens = self.current_input_tokens
+        self.current_input_tokens = 0
+        output_tokens = self.current_output_tokens
+        self.current_output_tokens = 0
         if hasattr(chunk, "message"):
             # This is a complete response, not a streaming chunk
             message = chunk.message
@@ -297,10 +301,6 @@ class GroqService(BaseLLMService):
                         }
                     )
 
-                input_tokens = self.current_input_tokens
-                self.current_input_tokens = 0
-                output_tokens = self.current_output_tokens
-                self.current_output_tokens = 0
                 # Return with tool use information and the full content
                 return (
                     content,
@@ -315,8 +315,8 @@ class GroqService(BaseLLMService):
             return (
                 content,
                 [],
-                chunk.usage.prompt_tokens if hasattr(chunk, "usage") else 0,
-                chunk.usage.completion_tokens if hasattr(chunk, "usage") else 0,
+                input_tokens,
+                output_tokens,
                 content,  # Return the full content to be printed
                 thinking_content,
             )
@@ -324,12 +324,6 @@ class GroqService(BaseLLMService):
         # Handle regular streaming chunk
         chunk_text = chunk.choices[0].delta.content or ""
         updated_assistant_response = assistant_response + chunk_text
-
-        # Get token counts if available in the chunk
-        input_tokens = self.current_input_tokens
-        self.current_input_tokens = 0
-        output_tokens = self.current_output_tokens
-        self.current_output_tokens = 0
 
         return (
             updated_assistant_response,
