@@ -1,9 +1,8 @@
 import json
 from typing import Dict, Any, List, Optional, Tuple
 
-from modules.groq.service import GroqService
 from .validation_config import validation_prompt_template
-from modules.anthropic import AnthropicService
+from modules.llm.service_manager import ServiceManager
 from modules.code_analysis import CodeAnalysisService
 
 
@@ -33,10 +32,8 @@ class SpecPromptValidationService:
         """
         try:
             # Get the LLM service for the preferred provider
-            if self.preferred_provider == "claude":
-                llm_service = AnthropicService()
-            else:
-                llm_service = GroqService()
+            service_manager = ServiceManager.get_instance()
+            llm_service = service_manager.get_service(self.preferred_provider)
 
             code_analyze = CodeAnalysisService()
 
