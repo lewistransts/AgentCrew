@@ -535,6 +535,7 @@ class InteractiveChat:
         terminal_width = get_terminal_width()
         divider = "─" * terminal_width
         session_cost = 0.0
+        user_input = None
         # Process files if provided
         if files:
             message_content = []

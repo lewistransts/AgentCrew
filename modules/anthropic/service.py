@@ -1,7 +1,7 @@
 import os
 import base64
 import mimetypes
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from anthropic import Anthropic
 from anthropic.types import TextBlock
 from dotenv import load_dotenv
@@ -25,7 +25,7 @@ def read_text_file(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
-    except Exception as e:
+    except Exception:
         # try again with cp1252 encoding
         try:
             with open(file_path, "r", encoding="cp1252") as f:
@@ -350,7 +350,7 @@ class AnthropicService(BaseLLMService):
 
         return assistant_message
 
-    def format_thinking_message(self, thinking_data) -> Dict[str, Any]:
+    def format_thinking_message(self, thinking_data) -> Optional[Dict[str, Any]]:
         """
         Format thinking content into the appropriate message format for Claude.
 

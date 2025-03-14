@@ -390,7 +390,7 @@ class GroqService(BaseLLMService):
                 "content": assistant_response,
             }
 
-    def format_thinking_message(self, thinking_data) -> Dict[str, Any]:
+    def format_thinking_message(self, thinking_data) -> Optional[Dict[str, Any]]:
         """
         Format thinking content into the appropriate message format for Groq.
 

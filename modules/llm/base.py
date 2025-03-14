@@ -165,7 +165,7 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
-    def format_thinking_message(self, thinking_data) -> Dict[str, Any]:
+    def format_thinking_message(self, thinking_data) -> Optional[Dict[str, Any]]:
         """
         Format thinking content into the appropriate message format for the LLM provider.
 

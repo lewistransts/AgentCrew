@@ -2,12 +2,9 @@ import os
 import base64
 import json
 import sys
-import threading
 import itertools
 import time
-import contextlib
 from typing import Dict, Any, List, Optional, Tuple
-from httpx import stream
 from openai import OpenAI
 from dotenv import load_dotenv
 from modules.llm.base import BaseLLMService
@@ -416,7 +413,7 @@ class OpenAIService(BaseLLMService):
                 "content": assistant_response,
             }
 
-    def format_thinking_message(self, thinking_data) -> Dict[str, Any]:
+    def format_thinking_message(self, thinking_data) -> Optional[Dict[str, Any]]:
         """
         Format thinking content into the appropriate message format for OpenAI.
 
@@ -464,6 +461,6 @@ class OpenAIService(BaseLLMService):
             print(f"Total tokens: {input_tokens + output_tokens:,}")
             print(f"Estimated cost: ${total_cost:.4f}")
 
-            return response.choices[0].message.content
+            return response.choices[0].message.content or ""
         except Exception as e:
             raise Exception(f"Failed to validate specification: {str(e)}")
