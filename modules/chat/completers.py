@@ -6,6 +6,33 @@ import os
 import re
 
 
+class JumpCompleter(Completer):
+    """Completer that shows available conversation turns when typing /jump command."""
+
+    def __init__(self, conversation_turns=None):
+        self.conversation_turns = conversation_turns or []
+
+    def get_completions(self, document, complete_event):
+        text = document.text
+
+        # Only provide completions for the /jump command
+        if text.startswith("/jump "):
+            word_before_cursor = document.get_word_before_cursor()
+            
+            # Get all available turn numbers
+            for i, turn in enumerate(self.conversation_turns, 1):
+                turn_str = str(i)
+                if turn_str.startswith(word_before_cursor):
+                    # Use the stored preview
+                    preview = turn.get_preview(40)
+                    display = f"{turn_str}: {preview}"
+                    yield Completion(
+                        turn_str,
+                        start_position=-len(word_before_cursor),
+                        display=display,
+                    )
+
+
 class ModelCompleter(Completer):
     """Completer that shows available models when typing /model command."""
 
@@ -39,9 +66,10 @@ class ModelCompleter(Completer):
 class ChatCompleter(Completer):
     """Combined completer for chat commands."""
 
-    def __init__(self):
+    def __init__(self, conversation_turns=None):
         self.file_completer = DirectoryListingCompleter()
         self.model_completer = ModelCompleter()
+        self.jump_completer = JumpCompleter(conversation_turns)
 
     def get_completions(self, document, complete_event):
         text = document.text
@@ -49,6 +77,9 @@ class ChatCompleter(Completer):
         if text.startswith("/model "):
             # Use model completer for /model command
             yield from self.model_completer.get_completions(document, complete_event)
+        elif text.startswith("/jump "):
+            # Use jump completer for /jump command
+            yield from self.jump_completer.get_completions(document, complete_event)
         else:
             yield from self.file_completer.get_completions(document, complete_event)
 

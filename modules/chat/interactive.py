@@ -18,6 +18,48 @@ from .completers import ChatCompleter
 from .history import ChatHistoryManager
 
 
+class ConversationTurn:
+    """Represents a single turn in the conversation."""
+
+    def __init__(self, user_message, message_index):
+        """
+        Initialize a conversation turn.
+
+        Args:
+            user_message: The user's message
+            assistant_response: The assistant's response
+            message_index: The index of the last message in this turn
+        """
+        self.user_message_preview = self._extract_preview(user_message)
+        self.message_index = message_index  # Store index instead of full message copy
+
+    def _extract_preview(self, message, max_length=50):
+        """Extract a preview of the message for display in completions."""
+        # Get the text content from the user message
+        if isinstance(message, dict) and "content" in message:
+            content = message["content"]
+            if isinstance(content, list):
+                for item in content:
+                    if item.get("type") == "text":
+                        text = item.get("text", "")
+                        break
+                else:
+                    text = str(content)
+            else:
+                text = str(content)
+        else:
+            text = str(message)
+
+        # Truncate and format the preview
+        if len(text) > max_length:
+            return text[:max_length] + "..."
+        return text
+
+    def get_preview(self, max_length=50):
+        """Get a preview of the user message for display in completions."""
+        return self.user_message_preview
+
+
 def get_terminal_width():
     """Get the current terminal width."""
     return shutil.get_terminal_size().columns
@@ -38,6 +80,9 @@ class InteractiveChat:
         self.memory_service = memory_service
         self._last_ctrl_c_time = 0  # Initialize the last Ctrl+C time
         self.history_manager = ChatHistoryManager()  # Initialize history manager
+        self.conversation_turns = []  # Track conversation turns
+        self.current_user_message = None  # Track the current user message
+        self.messages = []  # Store messages as an instance variable
 
     def _copy_to_clipboard(self):
         """Copy the latest assistant response to clipboard and show confirmation."""
@@ -273,6 +318,9 @@ class InteractiveChat:
             f"{YELLOW}Use '/model [model_id]' to switch models or list available models.{RESET}"
         )
         print(
+            f"{YELLOW}Use '/jump <turn_number>' to rewind the conversation to a previous turn.{RESET}"
+        )
+        print(
             f"{YELLOW}Use '/copy' to copy the latest assistant response to clipboard.{RESET}"
         )
         print(f"{YELLOW}Press Alt/Meta+C to copy the latest assistant response.{RESET}")
@@ -289,7 +337,9 @@ class InteractiveChat:
         )
 
         kb = self._setup_key_bindings()
-        session = PromptSession(key_bindings=kb, completer=ChatCompleter())
+        session = PromptSession(
+            key_bindings=kb, completer=ChatCompleter(self.conversation_turns)
+        )
 
         try:
             user_input = session.prompt("> ")
@@ -317,6 +367,43 @@ class InteractiveChat:
             return True
         return False
 
+    def _handle_jump_command(self, command):
+        """Handle the /jump command to rewind conversation to a previous turn."""
+        try:
+            # Extract the turn number from the command
+            parts = command.split()
+            if len(parts) != 2:
+                print(f"{YELLOW}Usage: /jump <turn_number>{RESET}")
+                return None, False
+
+            turn_number = int(parts[1])
+
+            # Validate the turn number
+            if turn_number < 1 or turn_number > len(self.conversation_turns):
+                print(
+                    f"{YELLOW}Invalid turn number. Available turns: 1-{len(self.conversation_turns)}{RESET}"
+                )
+                return None, False
+
+            # Get the selected turn
+            selected_turn = self.conversation_turns[turn_number - 1]
+
+            # Provide feedback
+            print(f"{YELLOW}{BOLD}🕰️ Jumping to turn {turn_number}...{RESET}")
+            print(
+                f"{YELLOW}Conversation rewound to: {selected_turn.get_preview(100)}{RESET}"
+            )
+
+            # Truncate messages to the index from the selected turn
+            truncated_messages = self.messages[: selected_turn.message_index + 1]
+
+            # Return the truncated messages
+            return truncated_messages, True
+
+        except ValueError:
+            print(f"{YELLOW}Invalid turn number. Please provide a number.{RESET}")
+            return None, False
+
     def _process_user_input(self, user_input, messages, message_content, files):
         """Process user input and update messages accordingly."""
         # Handle exit command
@@ -325,11 +412,20 @@ class InteractiveChat:
 
         # Handle clear command
         if user_input.lower() == "/clear":
+            self.conversation_turns = []  # Clear conversation turns as well
             return self._handle_clear_command(), False, True  # Add a clear flag
 
         # Handle copy command
         if user_input.lower() == "/copy":
             self._copy_to_clipboard()
+            return messages, False, True  # Skip to next iteration
+
+        # Handle debug command
+        if user_input.lower() == "/debug":
+            import json
+
+            print(f"{YELLOW}Current messages:{RESET}")
+            self.console.print(json.dumps(self.messages, indent=2))
             return messages, False, True  # Skip to next iteration
 
         # Handle think command
@@ -339,6 +435,13 @@ class InteractiveChat:
                 self.llm.set_think(budget)
             except ValueError:
                 print(f"{YELLOW}Invalid budget value. Please provide a number.{RESET}")
+            return messages, False, True  # Skip to next iteration
+
+        # Handle jump command
+        if user_input.lower().startswith("/jump "):
+            new_messages, jumped = self._handle_jump_command(user_input)
+            if jumped and new_messages:
+                return new_messages, False, True
             return messages, False, True  # Skip to next iteration
 
         # Handle model command
@@ -427,7 +530,7 @@ class InteractiveChat:
             initial_content (str, optional): Initial message to start the conversation
             files (list, optional): List of file paths to include in the initial message
         """
-        messages = []
+        self.messages = []  # Reset messages at the start of a new chat
         message_content = []
         terminal_width = get_terminal_width()
         divider = "─" * terminal_width
@@ -443,10 +546,10 @@ class InteractiveChat:
             # Add initial text if provided
             if initial_content:
                 message_content.append({"type": "text", "text": initial_content})
-                messages.append({"role": "user", "content": message_content})
+                self.messages.append({"role": "user", "content": message_content})
                 print(f"\n{BLUE}{BOLD}👤 YOU:{RESET} [Initial content with files]")
         elif initial_content:
-            messages.append({"role": "user", "content": initial_content})
+            self.messages.append({"role": "user", "content": initial_content})
             print(f"\n{BLUE}{BOLD}👤 YOU:{RESET} [Initial content]")
 
         # Print welcome message
@@ -455,12 +558,12 @@ class InteractiveChat:
         # Main chat loop
         while True:
             # Handle initial message or get user input
-            if not (messages and len(messages) == 1 and initial_content):
+            if not (self.messages and len(self.messages) == 1 and initial_content):
                 user_input = self._get_user_input(divider)
 
                 # Process the user input
-                messages, should_exit, was_cleared = self._process_user_input(
-                    user_input, messages, message_content, files
+                self.messages, should_exit, was_cleared = self._process_user_input(
+                    user_input, self.messages, message_content, files
                 )
 
                 # Exit if requested
@@ -473,7 +576,7 @@ class InteractiveChat:
                     continue
 
                 # Skip to next iteration if no messages to process
-                if not messages:
+                if not self.messages:
                     print(divider)
                     continue
 
@@ -481,12 +584,31 @@ class InteractiveChat:
             print(f"\n{GREEN}{BOLD}🤖 ASSISTANT:{RESET}")
 
             assistant_response, input_tokens, output_tokens = (
-                self._stream_assistant_response(messages)
+                self._stream_assistant_response(self.messages)
             )
 
             if assistant_response:
                 # Add assistant's response to message history
-                messages.append(self.llm.format_assistant_message(assistant_response))
+                self.messages.append(
+                    self.llm.format_assistant_message(assistant_response)
+                )
+
+                # Store the conversation turn if user initiated
+                if user_input:
+                    # Only store turns initiated by user input (not initial content)
+                    # Store the conversation turn with message index
+                    for i, message in reversed(list(enumerate(self.messages))):
+                        if (
+                            isinstance(message, dict)
+                            and "role" in message
+                            and message["role"] == "user"
+                        ):
+                            turn = ConversationTurn(
+                                message,  # User message for preview
+                                i,  # Index of the last message
+                            )
+                            self.conversation_turns.append(turn)
+                            break
 
                 # Store conversation in memory if memory service is available
                 if self.memory_service and user_input and assistant_response:
