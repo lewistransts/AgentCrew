@@ -127,7 +127,7 @@ class OpenAIService(BaseLLMService):
         if content:
             message_content = [
                 {
-                    "role": "user",
+                    "type": "text",
                     "content": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
                 }
             ]
@@ -207,9 +207,9 @@ class OpenAIService(BaseLLMService):
             "model": self.model,
             "messages": messages,
             "stream_options": {"include_usage": True},
+            "max_tokens": 4096,
         }
-        if not self.model.startswith("o3"):
-            stream_params["max_tokens"] = 4096
+        if self.model.startswith("o3"):
             stream_params["reasoning_effort"] = "high"
             stream_params["parallel_tool_calls"] = False
         else:

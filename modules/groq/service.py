@@ -132,8 +132,8 @@ class GroqService(BaseLLMService):
         if content:
             message_content = [
                 {
-                    "role": "user",
-                    "content": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
+                    "type": "text",
+                    "text": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
                 }
             ]
             print(f"📄 Including text file: {file_path}")
