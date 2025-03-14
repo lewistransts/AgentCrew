@@ -215,7 +215,7 @@ class GroqService(BaseLLMService):
         if self.model == "qwen-qwq-32b":
             stream_params["reasoning_format"] = "parsed"
             stream_params["temperature"] = 0.6
-            stream_params["top_p"] = 0.95
+            stream_params["top_p"] = 0.7
 
         # Add system message if provided
         if CHAT_SYSTEM_PROMPT:

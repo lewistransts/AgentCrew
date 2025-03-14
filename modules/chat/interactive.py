@@ -386,7 +386,7 @@ class InteractiveChat:
                 return None, False
 
             # Get the selected turn
-            selected_turn = self.conversation_turns[turn_number - 1]
+            selected_turn = self.conversation_turns[turn_number - 2]
 
             # Provide feedback
             print(f"{YELLOW}{BOLD}🕰️ Jumping to turn {turn_number}...{RESET}")
