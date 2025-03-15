@@ -190,3 +190,20 @@ class BaseLLMService(ABC):
             Validation result as a string (typically JSON)
         """
         pass
+        
+    @abstractmethod
+    def set_system_prompt(self, system_prompt: str):
+        """
+        Set the system prompt for the LLM service.
+        
+        Args:
+            system_prompt: The system prompt to use
+        """
+        pass
+        
+    @abstractmethod
+    def clear_tools(self):
+        """
+        Clear all registered tools from the LLM service.
+        """
+        pass

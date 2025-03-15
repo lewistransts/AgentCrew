@@ -66,15 +66,16 @@ def get_terminal_width():
 
 
 class InteractiveChat:
-    def __init__(self, llm_service: BaseLLMService, memory_service=None):
+    def __init__(self, agent_manager, memory_service=None):
         """
-        Initialize the interactive chat with a LLM service.
+        Initialize the interactive chat with an agent manager.
 
         Args:
-            llm_service: An implementation of BaseLLMService
+            agent_manager: The agent manager instance
             memory_service: Optional memory service for storing conversations
         """
-        self.llm = llm_service
+        self.agent_manager = agent_manager
+        self.llm = agent_manager.get_current_agent().llm
         self.console = Console()
         self.latest_assistant_response = ""
         self.memory_service = memory_service
@@ -186,6 +187,13 @@ class InteractiveChat:
         thinking_content = ""  # Reset thinking content for new response
         thinking_signature = ""  # Store the signature
         start_thinking = True
+
+        # Route messages through the current agent
+        # messages = self.agent_manager.route_message(messages)
+
+        # Get the current agent's LLM service
+        current_agent = self.agent_manager.get_current_agent()
+        self.llm = current_agent.llm
 
         try:
             with self.llm.stream_assistant_response(messages) as stream:
@@ -327,6 +335,9 @@ class InteractiveChat:
         print(
             f"{YELLOW}Use Up/Down arrow keys to navigate through command history.{RESET}"
         )
+        print(
+            f"{YELLOW}Use '/agent [agent_name]' to switch agents or list available agents.{RESET}"
+        )
         print(divider)
 
     def _get_user_input(self, divider):
@@ -386,7 +397,7 @@ class InteractiveChat:
                 return None, False
 
             # Get the selected turn
-            selected_turn = self.conversation_turns[turn_number - 2]
+            selected_turn = self.conversation_turns[turn_number - 1]
 
             # Provide feedback
             print(f"{YELLOW}{BOLD}🕰️ Jumping to turn {turn_number}...{RESET}")
@@ -403,6 +414,50 @@ class InteractiveChat:
         except ValueError:
             print(f"{YELLOW}Invalid turn number. Please provide a number.{RESET}")
             return None, False
+
+    def _handle_agent_command(self, command):
+        """
+        Handle the /agent command to switch agents or list available agents.
+
+        Args:
+            command: The agent command string
+
+        Returns:
+            Tuple of (success, message)
+        """
+        parts = command.split()
+
+        # If no agent name is provided, list available agents
+        if len(parts) == 1:
+            available_agents = list(self.agent_manager.agents.keys())
+            current_agent = self.agent_manager.get_current_agent()
+            current_agent_name = current_agent.name if current_agent else "None"
+
+            print(f"{YELLOW}Current agent: {current_agent_name}{RESET}")
+            print(f"{YELLOW}Available agents:{RESET}")
+
+            for agent_name, agent in self.agent_manager.agents.items():
+                current = (
+                    " (current)"
+                    if current_agent and current_agent.name == agent_name
+                    else ""
+                )
+                print(f"  - {agent_name}{current}: {agent.description}")
+
+            return True, "Listed available agents"
+
+        # If an agent name is provided, try to switch to that agent
+        agent_name = parts[1]
+        if self.agent_manager.select_agent(agent_name):
+            # Update the LLM reference to the new agent's LLM
+            self.llm = self.agent_manager.get_current_agent().llm
+            return True, f"Switched to {agent_name} agent"
+        else:
+            available_agents = ", ".join(self.agent_manager.agents.keys())
+            return (
+                False,
+                f"Unknown agent: {agent_name}. Available agents: {available_agents}",
+            )
 
     def _process_user_input(self, user_input, messages, message_content, files):
         """Process user input and update messages accordingly."""
@@ -442,6 +497,15 @@ class InteractiveChat:
             new_messages, jumped = self._handle_jump_command(user_input)
             if jumped and new_messages:
                 return new_messages, False, True
+            return messages, False, True  # Skip to next iteration
+
+        # Handle agent command
+        if user_input.lower().startswith("/agent"):
+            success, message = self._handle_agent_command(user_input)
+            if success:
+                print(f"{YELLOW}{message}{RESET}")
+            else:
+                print(f"{YELLOW}Error: {message}{RESET}")
             return messages, False, True  # Skip to next iteration
 
         # Handle model command
@@ -485,9 +549,25 @@ class InteractiveChat:
                             std_messages, model.provider
                         )
 
+                    # Get the current agent
+                    current_agent = self.agent_manager.get_current_agent()
+
+                    # Clear tools from the current LLM
+                    if current_agent:
+                        current_agent.clear_tools_from_llm()
+
                     # Update the LLM service
                     self.llm = manager.get_service(model.provider)
                     manager.set_model(model.provider, model.id)
+
+                    # Update the agent's LLM reference and re-register tools
+                    if current_agent:
+                        current_agent.llm = self.llm
+                        # Set the system prompt
+                        system_prompt = current_agent.get_system_prompt()
+                        self.llm.set_system_prompt(system_prompt)
+                        # Register the agent's tools with the new LLM
+                        current_agent.register_tools_with_llm()
 
                     print(f"{YELLOW}Switched to {model.name} ({model.id}){RESET}")
                 else:

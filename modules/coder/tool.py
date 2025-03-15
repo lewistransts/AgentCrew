@@ -19,18 +19,18 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
     """
     if provider == "claude":
         return {
-            "name": "refine_spec_prompt",
+            "name": "review_spec_prompt",
             "description": "Run through a checklist with spec prompt and return refine suggestions",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "prompt": {
                         "type": "string",
-                        "description": "The spec prompt to validate",
+                        "description": "The spec prompt to be reviewed",
                     },
                     "repo_path": {
                         "type": "string",
-                        "description": "The repo directory path to validate spec prompt against",
+                        "description": "The repo directory path to review spec prompt against",
                     },
                 },
                 "required": ["prompt", "repo_path"],
@@ -40,18 +40,18 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
         return {
             "type": "function",
             "function": {
-                "name": "refine_spec_prompt",
+                "name": "review_spec_prompt",
                 "description": "Run through a checklist with spec prompt and return refine suggestions",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "prompt": {
                             "type": "string",
-                            "description": "The spec prompt to validate",
+                            "description": "The spec prompt to be reviewed",
                         },
                         "repo_path": {
                             "type": "string",
-                            "description": "The repo directory path to validate spec prompt against",
+                            "description": "The repo directory path to review spec prompt against",
                         },
                     },
                     "required": ["prompt", "repo_path"],
@@ -104,7 +104,7 @@ def get_implement_spec_prompt_tool_definition(provider="claude") -> Dict[str, An
     if provider == "claude":
         return {
             "name": "implement_spec_prompt",
-            "description": "Generate code implementation via aider using a spec prompt",
+            "description": "NEVER run this without user request explicitly. Generate code implementation via aider using a spec prompt",
             "input_schema": {
                 "type": "object",
                 "properties": {
@@ -125,7 +125,7 @@ def get_implement_spec_prompt_tool_definition(provider="claude") -> Dict[str, An
             "type": "function",
             "function": {
                 "name": "implement_spec_prompt",
-                "description": "Generate code implementation via aider using a spec prompt",
+                "description": "NEVER run this without user request explicitly. Generate code implementation via aider using a spec prompt",
                 "parameters": {
                     "type": "object",
                     "properties": {

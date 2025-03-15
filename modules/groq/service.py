@@ -58,6 +58,7 @@ class GroqService(BaseLLMService):
         self._provider_name = "groq"
         self.current_input_tokens = 0
         self.current_output_tokens = 0
+        self.system_prompt = CHAT_SYSTEM_PROMPT
 
     def set_think(self, budget_tokens: int) -> bool:
         """
@@ -218,9 +219,9 @@ class GroqService(BaseLLMService):
             stream_params["top_p"] = 0.7
 
         # Add system message if provided
-        if CHAT_SYSTEM_PROMPT:
+        if self.system_prompt:
             stream_params["messages"] = [
-                {"role": "system", "content": CHAT_SYSTEM_PROMPT}
+                {"role": "system", "content": self.system_prompt}
             ] + messages
         # Add tools if available
         if self.tools:
@@ -463,3 +464,19 @@ class GroqService(BaseLLMService):
 
         except Exception as e:
             raise Exception(f"Failed to validate specification: {str(e)}")
+            
+    def set_system_prompt(self, system_prompt: str):
+        """
+        Set the system prompt for the LLM service.
+        
+        Args:
+            system_prompt: The system prompt to use
+        """
+        self.system_prompt = system_prompt
+        
+    def clear_tools(self):
+        """
+        Clear all registered tools from the LLM service.
+        """
+        self.tools = []
+        self.tool_handlers = {}

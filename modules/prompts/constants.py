@@ -249,7 +249,7 @@ Favor architectural diagrams, component relationships, and high-level structures
 </comm>
 
 <spec_prompt>
-Only when user asks; Used by code assistant; Require code analysis, plans; follow spec_prompt_format
+Only when user asks; Used by code assistant; Require code analysis, plans; follow spec_prompt_format and spec_prompt_example
 CRITICAL: Always splits medium-to-large task to multiple spec prompts;Keep context files less than 5;Keep Low-level tasks files less than 5
 </spec_prompt>
 

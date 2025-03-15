@@ -53,6 +53,7 @@ class OpenAIService(BaseLLMService):
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
         self._provider_name = "openai"
+        self.system_prompt = CHAT_SYSTEM_PROMPT
 
     def set_think(self, budget_tokens: int) -> bool:
         """
@@ -217,9 +218,9 @@ class OpenAIService(BaseLLMService):
             stream_params["temperature"] = 0.3
 
         # Add system message if provided
-        if CHAT_SYSTEM_PROMPT:
+        if self.system_prompt:
             stream_params["messages"] = [
-                {"role": "system", "content": CHAT_SYSTEM_PROMPT}
+                {"role": "system", "content": self.system_prompt}
             ] + messages
 
         # Add tools if available
@@ -464,3 +465,19 @@ class OpenAIService(BaseLLMService):
             return response.choices[0].message.content or ""
         except Exception as e:
             raise Exception(f"Failed to validate specification: {str(e)}")
+            
+    def set_system_prompt(self, system_prompt: str):
+        """
+        Set the system prompt for the LLM service.
+        
+        Args:
+            system_prompt: The system prompt to use
+        """
+        self.system_prompt = system_prompt
+        
+    def clear_tools(self):
+        """
+        Clear all registered tools from the LLM service.
+        """
+        self.tools = []
+        self.tool_handlers = {}

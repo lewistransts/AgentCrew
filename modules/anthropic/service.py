@@ -63,6 +63,7 @@ class AnthropicService(BaseLLMService):
         self.thinking_budget = 0
         self.caching_blocks = 0
         self._provider_name = "claude"
+        self.system_prompt = CHAT_SYSTEM_PROMPT
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         input_cost = (input_tokens / 1_000_000) * INPUT_TOKEN_COST_PER_MILLION
@@ -421,6 +422,22 @@ class AnthropicService(BaseLLMService):
             return content_block.text
         except Exception as e:
             raise Exception(f"Failed to validate specification: {str(e)}")
+            
+    def set_system_prompt(self, system_prompt: str):
+        """
+        Set the system prompt for the LLM service.
+        
+        Args:
+            system_prompt: The system prompt to use
+        """
+        self.system_prompt = system_prompt
+        
+    def clear_tools(self):
+        """
+        Clear all registered tools from the LLM service.
+        """
+        self.tools = []
+        self.tool_handlers = {}
 
     def set_think(self, budget_tokens: int) -> bool:
         """
@@ -460,7 +477,7 @@ class AnthropicService(BaseLLMService):
         stream_params = {
             "model": self.model,
             "max_tokens": 8192,
-            "system": CHAT_SYSTEM_PROMPT,
+            "system": self.system_prompt,
             "messages": messages,
         }
 

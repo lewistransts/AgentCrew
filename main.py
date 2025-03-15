@@ -10,6 +10,11 @@ from modules.chat import InteractiveChat
 from modules.llm.service_manager import ServiceManager
 from modules.llm.models import ModelRegistry
 from modules.coder import SpecPromptValidationService
+from modules.agents.manager import AgentManager
+from modules.agents.specialized.architect import ArchitectAgent
+from modules.agents.specialized.code_assistant import CodeAssistantAgent
+from modules.agents.specialized.documentation import DocumentationAgent
+from modules.agents.specialized.evaluation import EvaluationAgent
 
 
 @click.group()
@@ -61,6 +66,142 @@ def get_url(url: str, output_file: str, summarize: bool, explain: bool):
         )
     except Exception as e:
         click.echo(f"❌ Error: {str(e)}", err=True)
+
+
+def register_agent_tools(agent, services):
+    """
+    Register appropriate tools for each agent type.
+
+    Args:
+        agent: The agent to register tools for
+        services: Dictionary of available services
+    """
+    # Common tools for all agents
+    if services.get("clipboard"):
+        from modules.clipboard.tool import (
+            get_clipboard_write_tool_definition,
+            get_clipboard_write_tool_handler,
+        )
+
+        agent.register_tool(
+            get_clipboard_write_tool_definition(agent.llm.provider_name),
+            get_clipboard_write_tool_handler(services["clipboard"]),
+        )
+
+        from modules.clipboard.tool import (
+            get_clipboard_read_tool_definition,
+            get_clipboard_read_tool_handler,
+        )
+
+        agent.register_tool(
+            get_clipboard_read_tool_definition(agent.llm.provider_name),
+            get_clipboard_read_tool_handler(services["clipboard"]),
+        )
+
+    if services.get("memory"):
+        from modules.memory.tool import (
+            get_memory_retrieve_tool_definition,
+            get_memory_retrieve_tool_handler,
+        )
+
+        agent.register_tool(
+            get_memory_retrieve_tool_definition(agent.llm.provider_name),
+            get_memory_retrieve_tool_handler(services["memory"]),
+        )
+
+    if services.get("web_search"):
+        from modules.web_search.tool import (
+            get_web_search_tool_definition,
+            get_web_search_tool_handler,
+        )
+
+        agent.register_tool(
+            get_web_search_tool_definition(agent.llm.provider_name),
+            get_web_search_tool_handler(services["web_search"]),
+        )
+
+    # Agent-specific tools
+    if (
+        agent.name == "Architect"
+        or agent.name == "CodeAssistant"
+        or agent.name == "Evaluation"
+    ):
+        # Code analysis tools for technical agents
+        if services.get("code_analysis"):
+            from modules.code_analysis.tool import (
+                get_code_analysis_tool_definition,
+                get_code_analysis_tool_handler,
+            )
+
+            agent.register_tool(
+                get_code_analysis_tool_definition(agent.llm.provider_name),
+                get_code_analysis_tool_handler(services["code_analysis"]),
+            )
+
+            from modules.code_analysis.tool import (
+                get_file_content_tool_definition,
+                get_file_content_tool_handler,
+            )
+
+            agent.register_tool(
+                get_file_content_tool_definition(agent.llm.provider_name),
+                get_file_content_tool_handler(services["code_analysis"]),
+            )
+
+    if agent.name == "CodeAssistant":
+        # Spec validation for Code Assistant
+        if services.get("spec_validator"):
+            from modules.coder.tool import (
+                get_spec_validation_tool_definition,
+                get_spec_validation_tool_handler,
+            )
+
+            agent.register_tool(
+                get_spec_validation_tool_definition(agent.llm.provider_name),
+                get_spec_validation_tool_handler(services["spec_validator"]),
+            )
+
+
+def setup_agents(services):
+    """
+    Set up the agent system with specialized agents.
+
+    Args:
+        services: Dictionary of services
+
+    Returns:
+        The agent manager instance
+    """
+    # Create the agent manager
+    agent_manager = AgentManager()
+
+    # Get the LLM service
+    llm_service = services["llm"]
+
+    # Create specialized agents
+    architect = ArchitectAgent(llm_service)
+    code_assistant = CodeAssistantAgent(llm_service)
+    documentation = DocumentationAgent(llm_service)
+    evaluation = EvaluationAgent(llm_service)
+
+    # Register appropriate tools for each agent
+    register_agent_tools(architect, services)
+    register_agent_tools(code_assistant, services)
+    register_agent_tools(documentation, services)
+    register_agent_tools(evaluation, services)
+
+    # Register agents with the manager
+    agent_manager.register_agent(architect)
+    agent_manager.register_agent(code_assistant)
+    agent_manager.register_agent(documentation)
+    agent_manager.register_agent(evaluation)
+
+    # Register the handoff tool with all agents
+    from modules.agents.tools.handoff import register as register_handoff
+
+    register_handoff(agent_manager)
+
+    return agent_manager
 
 
 def services_load(provider):
@@ -166,7 +307,12 @@ def discover_and_register_tools(services=None):
     default="claude",
     help="LLM provider to use (claude, groq, or openai)",
 )
-def chat(message, files, provider):
+@click.option(
+    "--agent",
+    type=str,
+    help="Initial agent to use (Architect, CodeAssistant, Documentation, Evaluation)",
+)
+def chat(message, files, provider, agent):
     """Start an interactive chat session with LLM"""
     try:
         services = services_load(provider)
@@ -174,11 +320,19 @@ def chat(message, files, provider):
         discover_and_register_tools(services)
 
         llm_service = services["llm"]
-        # Register all tools with the LLM service
-        llm_service.register_all_tools()
+        # Set up the agent system
+        agent_manager = setup_agents(services)
 
-        # Create the chat interface with the LLM service injected
-        chat_interface = InteractiveChat(llm_service, services["memory"])
+        # Select the initial agent if specified
+        if agent:
+            if not agent_manager.select_agent(agent):
+                available_agents = ", ".join(agent_manager.agents.keys())
+                click.echo(
+                    f"⚠️ Unknown agent: {agent}. Using default agent. Available agents: {available_agents}"
+                )
+
+        # Create the chat interface with the agent manager injected
+        chat_interface = InteractiveChat(agent_manager, services["memory"])
 
         # Start the chat
         chat_interface.start_chat(initial_content=message, files=files)
