@@ -176,18 +176,26 @@ def get_file_content_tool_handler(
     return handler
 
 
-def register(service_instance=None):
-    """Register this tool with the central registry"""
+def register(service_instance=None, agent=None):
+    """
+    Register this tool with the central registry or directly with an agent
+    
+    Args:
+        service_instance: The code analysis service instance
+        agent: Agent instance to register with directly (optional)
+    """
     from modules.tools.registration import register_tool
 
     register_tool(
         get_code_analysis_tool_definition,
         get_code_analysis_tool_handler,
         service_instance,
+        agent
     )
 
     register_tool(
         get_file_content_tool_definition,
         get_file_content_tool_handler,
         service_instance,
+        agent
     )

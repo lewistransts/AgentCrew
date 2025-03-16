@@ -78,4 +78,8 @@ class ServiceManager:
         """Clean up all service instances."""
         for service in self.services.values():
             if hasattr(service, "cleanup") and callable(service.cleanup):
-                service.cleanup()
+                try:
+                    service.cleanup()
+                except Exception as e:
+                    import logging
+                    logging.error(f"Error cleaning up service: {str(e)}")

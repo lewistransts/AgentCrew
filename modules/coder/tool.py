@@ -172,24 +172,32 @@ def get_implement_spec_prompt_tool_handler(
     return handle_implement_spec_prompt
 
 
-def register(service_instance=None):
-    """Register all coder tools with the tool registry."""
+def register(service_instance=None, agent=None):
+    """
+    Register all coder tools with the tool registry or directly with an agent
+    
+    Args:
+        service_instance: The spec validation service instance (optional)
+        agent: Agent instance to register with directly (optional)
+    """
     if service_instance is None:
         service_instance = SpecPromptValidationService()
 
-    registry = ToolRegistry.get_instance()
-
+    from modules.tools.registration import register_tool
+    
     # Register spec validation tool
-    registry.register_tool(
+    register_tool(
         get_spec_validation_tool_definition,
         get_spec_validation_tool_handler,
         service_instance,
+        agent
     )
 
     code_assistant = CodeAssistant()
     # Register implement spec prompt tool
-    registry.register_tool(
+    register_tool(
         get_implement_spec_prompt_tool_definition,
         get_implement_spec_prompt_tool_handler,
         code_assistant,
+        agent
     )

@@ -188,9 +188,6 @@ class InteractiveChat:
         thinking_signature = ""  # Store the signature
         start_thinking = True
 
-        # Route messages through the current agent
-        # messages = self.agent_manager.route_message(messages)
-
         # Get the current agent's LLM service
         current_agent = self.agent_manager.get_current_agent()
         self.llm = current_agent.llm
@@ -415,6 +412,76 @@ class InteractiveChat:
             print(f"{YELLOW}Invalid turn number. Please provide a number.{RESET}")
             return None, False
 
+    def _handle_model_command(self, command, messages):
+        """
+        Handle the /model command to switch models or list available models.
+        
+        Args:
+            command: The model command string
+            messages: The current message history
+            
+        Returns:
+            Tuple of (messages, exit_flag, clear_flag)
+        """
+        model_id = command[7:].strip()
+        registry = ModelRegistry.get_instance()
+        manager = ServiceManager.get_instance()
+
+        # If no model ID is provided, list available models
+        if not model_id:
+            print(f"{YELLOW}Available models:{RESET}")
+            for provider in ["claude", "openai", "groq"]:
+                print(f"\n{YELLOW}{provider.capitalize()} models:{RESET}")
+                for model in registry.get_models_by_provider(provider):
+                    current = (
+                        " (current)"
+                        if registry.current_model
+                        and registry.current_model.id == model.id
+                        else ""
+                    )
+                    print(f"  - {model.id}: {model.name}{current}")
+                    print(f"    {model.description}")
+                    print(f"    Capabilities: {', '.join(model.capabilities)}")
+            return messages, False, True
+
+        # Try to switch to the specified model
+        if registry.set_current_model(model_id):
+            model = registry.get_current_model()
+            if model:
+                # Get the current provider
+                current_provider = self.llm.provider_name
+
+                # If we're switching providers, convert messages
+                if current_provider != model.provider:
+                    # Standardize messages from current provider
+                    std_messages = MessageTransformer.standardize_messages(
+                        messages, current_provider
+                    )
+                    # Convert to new provider format
+                    messages = MessageTransformer.convert_messages(
+                        std_messages, model.provider
+                    )
+
+                # Update the LLM service
+                manager.set_model(model.provider, model.id)
+                
+                # Get the new LLM service
+                new_llm_service = manager.get_service(model.provider)
+                
+                # Update the agent manager with the new LLM service
+                self.agent_manager.update_llm_service(new_llm_service)
+                
+                # Update our reference to the LLM
+                self.llm = self.agent_manager.get_current_agent().llm
+
+                print(f"{YELLOW}Switched to {model.name} ({model.id}){RESET}")
+            else:
+                print(f"{YELLOW}Failed to switch model.{RESET}")
+        else:
+            print(f"{YELLOW}Unknown model: {model_id}{RESET}")
+
+        return messages, False, True
+
     def _handle_agent_command(self, command):
         """
         Handle the /agent command to switch agents or list available agents.
@@ -510,72 +577,7 @@ class InteractiveChat:
 
         # Handle model command
         if user_input.lower().startswith("/model"):
-            model_id = user_input[7:].strip()
-            registry = ModelRegistry.get_instance()
-            manager = ServiceManager.get_instance()
-
-            # If no model ID is provided, list available models
-            if not model_id:
-                print(f"{YELLOW}Available models:{RESET}")
-                for provider in ["claude", "openai", "groq"]:
-                    print(f"\n{YELLOW}{provider.capitalize()} models:{RESET}")
-                    for model in registry.get_models_by_provider(provider):
-                        current = (
-                            " (current)"
-                            if registry.current_model
-                            and registry.current_model.id == model.id
-                            else ""
-                        )
-                        print(f"  - {model.id}: {model.name}{current}")
-                        print(f"    {model.description}")
-                        print(f"    Capabilities: {', '.join(model.capabilities)}")
-                return messages, False, True
-
-            # Try to switch to the specified model
-            if registry.set_current_model(model_id):
-                model = registry.get_current_model()
-                if model:
-                    # Get the current provider
-                    current_provider = self.llm.provider_name
-
-                    # If we're switching providers, convert messages
-                    if current_provider != model.provider:
-                        # Standardize messages from current provider
-                        std_messages = MessageTransformer.standardize_messages(
-                            messages, current_provider
-                        )
-                        # Convert to new provider format
-                        messages = MessageTransformer.convert_messages(
-                            std_messages, model.provider
-                        )
-
-                    # Get the current agent
-                    current_agent = self.agent_manager.get_current_agent()
-
-                    # Clear tools from the current LLM
-                    if current_agent:
-                        current_agent.clear_tools_from_llm()
-
-                    # Update the LLM service
-                    self.llm = manager.get_service(model.provider)
-                    manager.set_model(model.provider, model.id)
-
-                    # Update the agent's LLM reference and re-register tools
-                    if current_agent:
-                        current_agent.llm = self.llm
-                        # Set the system prompt
-                        system_prompt = current_agent.get_system_prompt()
-                        self.llm.set_system_prompt(system_prompt)
-                        # Register the agent's tools with the new LLM
-                        current_agent.register_tools_with_llm()
-
-                    print(f"{YELLOW}Switched to {model.name} ({model.id}){RESET}")
-                else:
-                    print(f"{YELLOW}Failed to switch model.{RESET}")
-            else:
-                print(f"{YELLOW}Unknown model: {model_id}{RESET}")
-
-            return messages, False, True
+            return self._handle_model_command(user_input, messages)
 
         # Store non-command messages in history
         if not user_input.startswith("/"):

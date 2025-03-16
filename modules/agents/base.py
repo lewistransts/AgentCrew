@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Callable
+from typing import Dict, Any, List, Optional, Callable, Tuple
 
 
 class Agent(ABC):
@@ -18,18 +18,79 @@ class Agent(ABC):
         self.description = description
         self.llm = llm_service
         self.system_prompt = None
-        self.tools = []
+        # Store tool definitions in the same format as ToolRegistry
+        self.tool_definitions = {}  # {tool_name: (definition_func, handler_factory, service_instance)}
+        self.registered_tools = (
+            set()
+        )  # Set of tool names that are registered with the LLM
+        self.is_active = False
 
-    def register_tool(self, tool_definition, handler_function):
+    def _extract_tool_name(self, tool_def: Dict) -> str:
+        """
+        Extract tool name from definition regardless of format.
+
+        Args:
+            tool_def: The tool definition
+
+        Returns:
+            The name of the tool
+
+        Raises:
+            ValueError: If the tool name cannot be extracted
+        """
+        if "name" in tool_def:
+            return tool_def["name"]
+        elif "function" in tool_def and "name" in tool_def["function"]:
+            return tool_def["function"]["name"]
+        else:
+            raise ValueError("Could not extract tool name from definition")
+
+    def register_tool(self, definition_func, handler_factory, service_instance=None):
         """
         Register a tool with this agent.
 
         Args:
-            tool_definition: The tool definition
-            handler_function: The function that handles the tool
+            definition_func: Function that returns tool definition given a provider or direct definition
+            handler_factory: Function that creates a handler function or direct handler
+            service_instance: Service instance needed by the handler (optional)
         """
-        # Store the tool definition and handler in the agent's tools list
-        self.tools.append((tool_definition, handler_function))
+        # Get the tool definition to extract the name
+        tool_def = definition_func() if callable(definition_func) else definition_func
+        tool_name = self._extract_tool_name(tool_def)
+
+        # Store the definition function, handler factory, and service instance
+        self.tool_definitions[tool_name] = (
+            definition_func,
+            handler_factory,
+            service_instance,
+        )
+
+        # If the agent is active, register the tool with the LLM immediately
+        if self.is_active and self.llm:
+            # Get provider-specific definition
+            provider = getattr(self.llm, "provider_name", None)
+            if callable(definition_func) and provider:
+                try:
+                    tool_def = definition_func(provider)
+                except TypeError:
+                    # If definition_func doesn't accept provider argument
+                    tool_def = definition_func()
+            else:
+                tool_def = definition_func
+
+            # Get handler function
+            if callable(handler_factory):
+                handler = (
+                    handler_factory(service_instance)
+                    if service_instance
+                    else handler_factory()
+                )
+            else:
+                handler = handler_factory
+
+            # Register with LLM
+            self.llm.register_tool(tool_def, handler)
+            self.registered_tools.add(tool_name)
 
     def set_system_prompt(self, prompt: str):
         """
@@ -49,23 +110,114 @@ class Agent(ABC):
         """
         return self.system_prompt
 
+    def activate(self):
+        """
+        Activate this agent by registering all tools with the LLM service.
+
+        Returns:
+            True if activation was successful, False otherwise
+        """
+        if not self.llm:
+            return False
+
+        self.register_tools_with_llm()
+        self.llm.set_system_prompt(self.get_system_prompt())
+        self.is_active = True
+        return True
+
+    def deactivate(self):
+        """
+        Deactivate this agent by clearing all tools from the LLM service.
+
+        Returns:
+            True if deactivation was successful, False otherwise
+        """
+        if not self.llm:
+            return False
+
+        self.clear_tools_from_llm()
+        self.is_active = False
+        return True
+
     def register_tools_with_llm(self):
         """
         Register all of this agent's tools with the LLM service.
         """
         if not self.llm:
             return
-            
-        for tool_definition, handler_function in self.tools:
-            self.llm.register_tool(tool_definition, handler_function)
-    
+
+        # Clear existing tools first to avoid duplicates
+        self.clear_tools_from_llm()
+
+        # Get the provider name if available
+        provider = getattr(self.llm, "provider_name", None)
+
+        for tool_name, (
+            definition_func,
+            handler_factory,
+            service_instance,
+        ) in self.tool_definitions.items():
+            try:
+                # Get provider-specific definition if possible
+                if callable(definition_func) and provider:
+                    try:
+                        tool_def = definition_func(provider)
+                    except TypeError:
+                        # If definition_func doesn't accept provider argument
+                        tool_def = definition_func()
+                else:
+                    tool_def = definition_func
+
+                # Get handler function
+                if callable(handler_factory):
+                    handler = (
+                        handler_factory(service_instance)
+                        if service_instance
+                        else handler_factory()
+                    )
+                else:
+                    handler = handler_factory
+
+                # Register with LLM
+                self.llm.register_tool(tool_def, handler)
+                self.registered_tools.add(tool_name)
+            except Exception as e:
+                print(f"Error registering tool {tool_name}: {e}")
+
     def clear_tools_from_llm(self):
         """
         Clear all tools from the LLM service.
         """
         if self.llm:
             self.llm.clear_tools()
-    
+            self.registered_tools.clear()
+            # Note: We don't clear self.tool_definitions as we want to keep the definitions
+
+    def update_llm_service(self, new_llm_service):
+        """
+        Update the LLM service used by this agent.
+
+        Args:
+            new_llm_service: The new LLM service to use
+
+        Returns:
+            True if the update was successful, False otherwise
+        """
+        was_active = self.is_active
+
+        # Deactivate with the current LLM if active
+        if was_active:
+            self.deactivate()
+
+        # Update the LLM service
+        self.llm = new_llm_service
+
+        # Reactivate with the new LLM if it was active before
+        if was_active:
+            self.activate()
+
+        return True
+
     def process_messages(self, messages: List[Dict[str, Any]]):
         """
         Process messages using this agent.

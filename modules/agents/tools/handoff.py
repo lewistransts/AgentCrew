@@ -107,24 +107,31 @@ def get_handoff_tool_handler(agent_manager) -> Callable:
     return handler
 
 
-def register(agent_manager):
+def register(agent_manager, agent=None):
     """
-    Register the handoff tool with all agents.
+    Register the handoff tool with all agents or a specific agent.
 
     Args:
         agent_manager: The agent manager instance
+        agent: Specific agent to register with (optional)
     """
-    from modules.tools.registry import ToolRegistry
-
-    registry = ToolRegistry.get_instance()
+    from modules.tools.registration import register_tool
     
     # Create the tool definition and handler
     definition_func = get_handoff_tool_definition
     handler_func = get_handoff_tool_handler(agent_manager)
     
-    # Register the tool with the registry
-    registry.register_tool(definition_func, lambda: handler_func)
-    
-    # Register the tool with each agent
-    for agent_name, agent in agent_manager.agents.items():
+    if agent:
+        # Register with specific agent
         agent.register_tool(definition_func(agent.llm.provider_name), handler_func)
+    else:
+        # Register with all agents
+        from modules.tools.registry import ToolRegistry
+        registry = ToolRegistry.get_instance()
+        
+        # Register the tool with the registry
+        registry.register_tool(definition_func, lambda: handler_func)
+        
+        # Register the tool with each agent
+        for agent_name, agent_instance in agent_manager.agents.items():
+            agent_instance.register_tool(definition_func(agent_instance.llm.provider_name), handler_func)

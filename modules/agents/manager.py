@@ -22,6 +22,9 @@ class AgentManager:
         # Set the first registered agent as the default
         if not self.current_agent:
             self.select_agent(agent.name)
+        else:
+            # Keep the agent in deactivated state until selected
+            agent.deactivate()
 
     def select_agent(self, agent_name: str) -> bool:
         """
@@ -37,21 +40,15 @@ class AgentManager:
             # Get the new agent
             new_agent = self.agents[agent_name]
 
-            # If there was a previous agent, clear its tools from the LLM
+            # If there was a previous agent, deactivate it
             if self.current_agent:
-                self.current_agent.clear_tools_from_llm()
+                self.current_agent.deactivate()
 
             # Set the new agent as current
             self.current_agent = new_agent
 
-            # Update the LLM service with the new agent's system prompt
-            if self.current_agent.llm:
-                # Set the system prompt
-                system_prompt = self.current_agent.get_system_prompt()
-                self.current_agent.llm.set_system_prompt(system_prompt)
-
-                # Register the new agent's tools with the LLM
-                self.current_agent.register_tools_with_llm()
+            # Activate the new agent
+            self.current_agent.activate()
 
             return True
         return False
@@ -114,6 +111,28 @@ class AgentManager:
         self.current_agent = target_agent
 
         return {"success": True, "handoff": handoff_record}
+
+    def update_llm_service(self, llm_service):
+        """
+        Update the LLM service for all agents.
+
+        Args:
+            llm_service: The new LLM service to use
+        """
+        if self.current_agent:
+            # Deactivate the current agent
+            self.current_agent.deactivate()
+            
+            # Update the LLM service for the current agent
+            self.current_agent.update_llm_service(llm_service)
+            
+            # Reactivate the agent with the new LLM service
+            self.current_agent.activate()
+            
+            # Update all other agents' LLM service but keep them deactivated
+            for name, agent in self.agents.items():
+                if agent != self.current_agent:
+                    agent.update_llm_service(llm_service)
 
     def route_message(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """

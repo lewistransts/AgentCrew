@@ -78,88 +78,35 @@ def register_agent_tools(agent, services):
     """
     # Common tools for all agents
     if services.get("clipboard"):
-        from modules.clipboard.tool import (
-            get_clipboard_write_tool_definition,
-            get_clipboard_write_tool_handler,
-        )
+        from modules.clipboard.tool import register as register_clipboard
 
-        agent.register_tool(
-            get_clipboard_write_tool_definition(agent.llm.provider_name),
-            get_clipboard_write_tool_handler(services["clipboard"]),
-        )
-
-        from modules.clipboard.tool import (
-            get_clipboard_read_tool_definition,
-            get_clipboard_read_tool_handler,
-        )
-
-        agent.register_tool(
-            get_clipboard_read_tool_definition(agent.llm.provider_name),
-            get_clipboard_read_tool_handler(services["clipboard"]),
-        )
+        register_clipboard(services["clipboard"], agent)
 
     if services.get("memory"):
-        from modules.memory.tool import (
-            get_memory_retrieve_tool_definition,
-            get_memory_retrieve_tool_handler,
-        )
+        from modules.memory.tool import register as register_memory
 
-        agent.register_tool(
-            get_memory_retrieve_tool_definition(agent.llm.provider_name),
-            get_memory_retrieve_tool_handler(services["memory"]),
-        )
+        register_memory(services["memory"], agent)
 
-    if services.get("web_search"):
-        from modules.web_search.tool import (
-            get_web_search_tool_definition,
-            get_web_search_tool_handler,
-        )
+    if agent.name == "Architect":
+        if services.get("web_search"):
+            from modules.web_search.tool import register as register_web_search
 
-        agent.register_tool(
-            get_web_search_tool_definition(agent.llm.provider_name),
-            get_web_search_tool_handler(services["web_search"]),
-        )
+            register_web_search(services["web_search"], agent)
 
     # Agent-specific tools
-    if (
-        agent.name == "Architect"
-        or agent.name == "CodeAssistant"
-        or agent.name == "Evaluation"
-    ):
+    if agent.name == "Architect" or agent.name == "CodeAssistant":
         # Code analysis tools for technical agents
         if services.get("code_analysis"):
-            from modules.code_analysis.tool import (
-                get_code_analysis_tool_definition,
-                get_code_analysis_tool_handler,
-            )
+            from modules.code_analysis.tool import register as register_code_analysis
 
-            agent.register_tool(
-                get_code_analysis_tool_definition(agent.llm.provider_name),
-                get_code_analysis_tool_handler(services["code_analysis"]),
-            )
-
-            from modules.code_analysis.tool import (
-                get_file_content_tool_definition,
-                get_file_content_tool_handler,
-            )
-
-            agent.register_tool(
-                get_file_content_tool_definition(agent.llm.provider_name),
-                get_file_content_tool_handler(services["code_analysis"]),
-            )
+            register_code_analysis(services["code_analysis"], agent)
 
     if agent.name == "CodeAssistant":
         # Spec validation for Code Assistant
         if services.get("spec_validator"):
-            from modules.coder.tool import (
-                get_spec_validation_tool_definition,
-                get_spec_validation_tool_handler,
-            )
+            from modules.coder.tool import register as register_spec_validator
 
-            agent.register_tool(
-                get_spec_validation_tool_definition(agent.llm.provider_name),
-                get_spec_validation_tool_handler(services["spec_validator"]),
-            )
+            register_spec_validator(services["spec_validator"], agent)
 
 
 def setup_agents(services):
@@ -174,6 +121,9 @@ def setup_agents(services):
     """
     # Create the agent manager
     agent_manager = AgentManager()
+
+    # Add agent_manager to services for tool registration
+    services["agent_manager"] = agent_manager
 
     # Get the LLM service
     llm_service = services["llm"]
@@ -190,16 +140,16 @@ def setup_agents(services):
     register_agent_tools(documentation, services)
     register_agent_tools(evaluation, services)
 
-    # Register agents with the manager
-    agent_manager.register_agent(architect)
-    agent_manager.register_agent(code_assistant)
-    agent_manager.register_agent(documentation)
-    agent_manager.register_agent(evaluation)
-
     # Register the handoff tool with all agents
     from modules.agents.tools.handoff import register as register_handoff
 
     register_handoff(agent_manager)
+
+    # Register agents with the manager - this will keep them deactivated until selected
+    agent_manager.register_agent(architect)
+    agent_manager.register_agent(code_assistant)
+    agent_manager.register_agent(documentation)
+    agent_manager.register_agent(evaluation)
 
     return agent_manager
 
@@ -317,9 +267,8 @@ def chat(message, files, provider, agent):
     try:
         services = services_load(provider)
 
-        discover_and_register_tools(services)
+        # discover_and_register_tools(services)
 
-        llm_service = services["llm"]
         # Set up the agent system
         agent_manager = setup_agents(services)
 
