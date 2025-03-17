@@ -73,13 +73,3 @@ class ServiceManager:
             service.model = model_id
             return True
         return False
-
-    def cleanup(self):
-        """Clean up all service instances."""
-        for service in self.services.values():
-            if hasattr(service, "cleanup") and callable(service.cleanup):
-                try:
-                    service.cleanup()
-                except Exception as e:
-                    import logging
-                    logging.error(f"Error cleaning up service: {str(e)}")

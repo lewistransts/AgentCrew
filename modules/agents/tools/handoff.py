@@ -13,7 +13,7 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
     """
     if provider == "claude":
         return {
-            "name": "handoff_to_agent",
+            "name": "handoff",
             "description": "Hands off the conversation to a specialized agent when the current task requires different expertise",
             "input_schema": {
                 "type": "object",
@@ -38,7 +38,7 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
         return {
             "type": "function",
             "function": {
-                "name": "handoff_to_agent",
+                "name": "handoff",
                 "description": "Hands off the conversation to a specialized agent when the current task requires different expertise",
                 "parameters": {
                     "type": "object",

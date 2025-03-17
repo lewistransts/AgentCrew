@@ -422,16 +422,16 @@ class AnthropicService(BaseLLMService):
             return content_block.text
         except Exception as e:
             raise Exception(f"Failed to validate specification: {str(e)}")
-            
+
     def set_system_prompt(self, system_prompt: str):
         """
         Set the system prompt for the LLM service.
-        
+
         Args:
             system_prompt: The system prompt to use
         """
         self.system_prompt = system_prompt
-        
+
     def clear_tools(self):
         """
         Clear all registered tools from the LLM service.

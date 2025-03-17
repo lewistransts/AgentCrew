@@ -11,10 +11,11 @@ from modules.llm.service_manager import ServiceManager
 from modules.llm.models import ModelRegistry
 from modules.coder import SpecPromptValidationService
 from modules.agents.manager import AgentManager
-from modules.agents.specialized.architect import ArchitectAgent
-from modules.agents.specialized.code_assistant import CodeAssistantAgent
-from modules.agents.specialized.documentation import DocumentationAgent
-from modules.agents.specialized.evaluation import EvaluationAgent
+from modules.agents.specialized import (
+    ArchitectAgent,
+    CodeAssistantAgent,
+    DocumentationAgent,
+)
 
 
 @click.group()
@@ -198,19 +199,16 @@ def setup_agents(services):
     architect = ArchitectAgent(llm_service)
     code_assistant = CodeAssistantAgent(llm_service)
     documentation = DocumentationAgent(llm_service)
-    evaluation = EvaluationAgent(llm_service)
 
     # Register appropriate tools for each agent
     register_agent_tools(architect, services)
     register_agent_tools(code_assistant, services)
     register_agent_tools(documentation, services)
-    register_agent_tools(evaluation, services)
 
     # Register agents with the manager - this will keep them deactivated until selected
     agent_manager.register_agent(architect)
     agent_manager.register_agent(code_assistant)
     agent_manager.register_agent(documentation)
-    agent_manager.register_agent(evaluation)
 
     return agent_manager
 
@@ -297,13 +295,6 @@ def chat(message, files, provider, agent):
         chat_interface.start_chat(initial_content=message, files=files)
     except Exception as e:
         click.echo(f"❌ Error: {str(e)}", err=True)
-    finally:
-        # Clean up service manager
-        try:
-            manager = ServiceManager.get_instance()
-            manager.cleanup()
-        except Exception as e:
-            click.echo(f"⚠️ Error during cleanup: {str(e)}", err=True)
 
 
 if __name__ == "__main__":

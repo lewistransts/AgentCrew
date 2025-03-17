@@ -46,6 +46,7 @@ class ModelRegistry:
                 name="Claude 3.7 Sonnet",
                 description="Anthropic's most powerful model with advanced reasoning",
                 capabilities=["thinking", "tool_use", "vision"],
+                default=True,
             ),
             Model(
                 id="claude-3-5-sonnet-latest",
@@ -53,7 +54,6 @@ class ModelRegistry:
                 name="Claude 3.5 Sonnet",
                 description="Anthropic's Claude 3.5 Sonnet model - balanced performance and capabilities",
                 capabilities=["tool_use", "vision"],
-                default=True,
             ),
             Model(
                 id="claude-3-5-haiku-latest",
@@ -103,6 +103,7 @@ class ModelRegistry:
                 name="QwQ 32B",
                 description="SLM from Alibaba",
                 capabilities=["thinking", "tool_use"],
+                default=True,
             ),
         ]
 

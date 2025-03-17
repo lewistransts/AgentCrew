@@ -15,49 +15,7 @@ from modules.llm.models import ModelRegistry
 from modules.llm.message import MessageTransformer
 from .constants import BLUE, GREEN, YELLOW, RESET, BOLD, GRAY, RICH_YELLOW, RICH_GRAY
 from .completers import ChatCompleter
-from .history import ChatHistoryManager
-
-
-class ConversationTurn:
-    """Represents a single turn in the conversation."""
-
-    def __init__(self, user_message, message_index):
-        """
-        Initialize a conversation turn.
-
-        Args:
-            user_message: The user's message
-            assistant_response: The assistant's response
-            message_index: The index of the last message in this turn
-        """
-        self.user_message_preview = self._extract_preview(user_message)
-        self.message_index = message_index  # Store index instead of full message copy
-
-    def _extract_preview(self, message, max_length=50):
-        """Extract a preview of the message for display in completions."""
-        # Get the text content from the user message
-        if isinstance(message, dict) and "content" in message:
-            content = message["content"]
-            if isinstance(content, list):
-                for item in content:
-                    if item.get("type") == "text":
-                        text = item.get("text", "")
-                        break
-                else:
-                    text = str(content)
-            else:
-                text = str(content)
-        else:
-            text = str(message)
-
-        # Truncate and format the preview
-        if len(text) > max_length:
-            return text[:max_length] + "..."
-        return text
-
-    def get_preview(self, max_length=50):
-        """Get a preview of the user message for display in completions."""
-        return self.user_message_preview
+from .history import ChatHistoryManager, ConversationTurn
 
 
 def get_terminal_width():
@@ -75,7 +33,7 @@ class InteractiveChat:
             memory_service: Optional memory service for storing conversations
         """
         self.agent_manager = agent_manager
-        self.llm = agent_manager.get_current_agent().llm
+        self.llm = self.agent_manager.get_current_agent().llm
         self.console = Console()
         self.latest_assistant_response = ""
         self.memory_service = memory_service
@@ -189,8 +147,8 @@ class InteractiveChat:
         start_thinking = True
 
         # Get the current agent's LLM service
-        current_agent = self.agent_manager.get_current_agent()
-        self.llm = current_agent.llm
+        # current_agent = self.agent_manager.get_current_agent()
+        # self.llm = current_agent.llm
 
         try:
             with self.llm.stream_assistant_response(messages) as stream:
@@ -280,6 +238,10 @@ class InteractiveChat:
                         messages.append(
                             self.llm.format_tool_result(tool_use, tool_result)
                         )
+                        # Update llm service when handoff agent
+                        if tool_use["name"] == "handoff_to_agent":
+                            self.llm = self.agent_manager.get_current_agent().llm
+
                     except Exception as e:
                         messages.append(
                             self.llm.format_tool_result(tool_use, str(e), is_error=True)
@@ -308,33 +270,24 @@ class InteractiveChat:
 
     def _print_welcome_message(self, divider):
         """Print the welcome message for the chat."""
-        print(f"\n{YELLOW}{BOLD}🎮 Welcome to the interactive chat!{RESET}")
-        print(f"{YELLOW}Press Ctrl+C twice to exit.{RESET}")
-        print(f"{YELLOW}Type 'exit' or 'quit' to end the session.{RESET}")
-        print(
-            f"{YELLOW}Use '/file <file_path>' to include a file in your message.{RESET}"
-        )
-        print(f"{YELLOW}Use '/clear' to clear the conversation history.{RESET}")
-        print(
-            f"{YELLOW}Use '/think <budget>' to enable Claude's thinking mode (min 1024 tokens).{RESET}"
-        )
-        print(f"{YELLOW}Use '/think 0' to disable thinking mode.{RESET}")
-        print(
-            f"{YELLOW}Use '/model [model_id]' to switch models or list available models.{RESET}"
-        )
-        print(
-            f"{YELLOW}Use '/jump <turn_number>' to rewind the conversation to a previous turn.{RESET}"
-        )
-        print(
-            f"{YELLOW}Use '/copy' to copy the latest assistant response to clipboard.{RESET}"
-        )
-        print(f"{YELLOW}Press Alt/Meta+C to copy the latest assistant response.{RESET}")
-        print(
-            f"{YELLOW}Use Up/Down arrow keys to navigate through command history.{RESET}"
-        )
-        print(
-            f"{YELLOW}Use '/agent [agent_name]' to switch agents or list available agents.{RESET}"
-        )
+        welcome_messages = [
+            f"\n{YELLOW}{BOLD}🎮 Welcome to the interactive chat!{RESET}",
+            f"{YELLOW}Press Ctrl+C twice to exit.{RESET}",
+            f"{YELLOW}Type 'exit' or 'quit' to end the session.{RESET}",
+            f"{YELLOW}Use '/file <file_path>' to include a file in your message.{RESET}",
+            f"{YELLOW}Use '/clear' to clear the conversation history.{RESET}",
+            f"{YELLOW}Use '/think <budget>' to enable Claude's thinking mode (min 1024 tokens).{RESET}",
+            f"{YELLOW}Use '/think 0' to disable thinking mode.{RESET}",
+            f"{YELLOW}Use '/model [model_id]' to switch models or list available models.{RESET}",
+            f"{YELLOW}Use '/jump <turn_number>' to rewind the conversation to a previous turn.{RESET}",
+            f"{YELLOW}Use '/copy' to copy the latest assistant response to clipboard.{RESET}",
+            f"{YELLOW}Press Alt/Meta+C to copy the latest assistant response.{RESET}",
+            f"{YELLOW}Use Up/Down arrow keys to navigate through command history.{RESET}",
+            f"{YELLOW}Use '/agent [agent_name]' to switch agents or list available agents.{RESET}",
+        ]
+
+        for message in welcome_messages:
+            print(message)
         print(divider)
 
     def _get_user_input(self, divider):
@@ -415,11 +368,11 @@ class InteractiveChat:
     def _handle_model_command(self, command, messages):
         """
         Handle the /model command to switch models or list available models.
-        
+
         Args:
             command: The model command string
             messages: The current message history
-            
+
         Returns:
             Tuple of (messages, exit_flag, clear_flag)
         """
@@ -464,13 +417,13 @@ class InteractiveChat:
 
                 # Update the LLM service
                 manager.set_model(model.provider, model.id)
-                
+
                 # Get the new LLM service
                 new_llm_service = manager.get_service(model.provider)
-                
+
                 # Update the agent manager with the new LLM service
                 self.agent_manager.update_llm_service(new_llm_service)
-                
+
                 # Update our reference to the LLM
                 self.llm = self.agent_manager.get_current_agent().llm
 
