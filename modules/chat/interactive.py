@@ -34,6 +34,7 @@ class InteractiveChat:
         """
         self.agent_manager = agent_manager
         self.llm = self.agent_manager.get_current_agent().llm
+        self.agent_name = self.agent_manager.get_current_agent().name
         self.console = Console()
         self.latest_assistant_response = ""
         self.memory_service = memory_service
@@ -184,7 +185,8 @@ class InteractiveChat:
                         if start_thinking:
                             self.console.print(
                                 Text(
-                                    "\n💭 Claude's thinking process:", style=RICH_YELLOW
+                                    f"\n💭 {self.agent_name.upper()}'s thinking process:",
+                                    style=RICH_YELLOW,
                                 )
                             )
                             start_thinking = False
@@ -239,15 +241,20 @@ class InteractiveChat:
                             self.llm.format_tool_result(tool_use, tool_result)
                         )
                         # Update llm service when handoff agent
-                        if tool_use["name"] == "handoff_to_agent":
+                        if tool_use["name"] == "handoff":
                             self.llm = self.agent_manager.get_current_agent().llm
+                            self.agent_name = (
+                                self.agent_manager.get_current_agent().name
+                            )
 
                     except Exception as e:
                         messages.append(
                             self.llm.format_tool_result(tool_use, str(e), is_error=True)
                         )
                     # Get a new response with the tool result
-                print(f"\n{GREEN}{BOLD}🤖 ASSISTANT (continued):{RESET}")
+                print(
+                    f"\n{GREEN}{BOLD}🤖 {self.agent_name.upper()} (continued):{RESET}"
+                )
                 return self._stream_assistant_response(
                     messages, input_tokens, output_tokens
                 )
@@ -471,6 +478,7 @@ class InteractiveChat:
         if self.agent_manager.select_agent(agent_name):
             # Update the LLM reference to the new agent's LLM
             self.llm = self.agent_manager.get_current_agent().llm
+            self.agent_name = agent_name
             return True, f"Switched to {agent_name} agent"
         else:
             available_agents = ", ".join(self.agent_manager.agents.keys())
@@ -620,7 +628,7 @@ class InteractiveChat:
                     continue
 
             # Get and display assistant response
-            print(f"\n{GREEN}{BOLD}🤖 ASSISTANT:{RESET}")
+            print(f"\n{GREEN}{BOLD}🤖 {self.agent_name.upper()}:{RESET}")
 
             assistant_response, input_tokens, output_tokens = (
                 self._stream_assistant_response(self.messages)
