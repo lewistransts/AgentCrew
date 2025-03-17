@@ -75,7 +75,7 @@ class AgentManager:
         return self.current_agent
 
     def perform_handoff(
-        self, target_agent_name: str, reason: str, context_summary: str = None
+        self, target_agent_name: str, task: str, context_summary: str = None
     ) -> Dict[str, Any]:
         """
         Perform a handoff to another agent.
@@ -96,19 +96,18 @@ class AgentManager:
             }
 
         source_agent = self.current_agent
-        target_agent = self.agents[target_agent_name]
 
         # Record the handoff
         handoff_record = {
             "from": source_agent.name if source_agent else "None",
-            "to": target_agent.name,
-            "reason": reason,
+            "to": target_agent_name,
+            "reason": task,
             "context_summary": context_summary,
         }
         self.handoff_history.append(handoff_record)
 
         # Set the new current agent
-        self.current_agent = target_agent
+        self.select_agent(target_agent_name)
 
         return {"success": True, "handoff": handoff_record}
 
@@ -122,13 +121,13 @@ class AgentManager:
         if self.current_agent:
             # Deactivate the current agent
             self.current_agent.deactivate()
-            
+
             # Update the LLM service for the current agent
             self.current_agent.update_llm_service(llm_service)
-            
+
             # Reactivate the agent with the new LLM service
             self.current_agent.activate()
-            
+
             # Update all other agents' LLM service but keep them deactivated
             for name, agent in self.agents.items():
                 if agent != self.current_agent:

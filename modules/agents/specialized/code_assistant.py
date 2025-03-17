@@ -32,7 +32,7 @@ class CodeAssistantAgent(Agent):
 
 Today is {datetime.today().strftime("%Y-%m-%d")}
 
-CRITICAL: Do not process if it's not your specialized. handoffs to other agents 
+CRITICAL: Handoff the request to other agents if it's not your speciality
 
 
 <code>

@@ -500,7 +500,10 @@ class InteractiveChat:
             import json
 
             print(f"{YELLOW}Current messages:{RESET}")
-            self.console.print(json.dumps(self.messages, indent=2))
+            try:
+                self.console.print(json.dumps(self.messages, indent=2))
+            except Exception:
+                print(self.messages)
             return messages, False, True  # Skip to next iteration
 
         # Handle think command
@@ -639,6 +642,14 @@ class InteractiveChat:
                             and "role" in message
                             and message["role"] == "user"
                         ):
+                            if (
+                                "content" in message
+                                and isinstance(message["content"], list)
+                                and len(message["content"]) > 0
+                                and "type" in message["content"][0]
+                                and message["content"][0]["type"] == "tool_result"
+                            ):
+                                continue
                             turn = ConversationTurn(
                                 message,  # User message for preview
                                 i,  # Index of the last message

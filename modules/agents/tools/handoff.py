@@ -22,16 +22,16 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                         "type": "string",
                         "description": "The name of the agent to hand off to",
                     },
-                    "reason": {
+                    "task": {
                         "type": "string",
-                        "description": "The reason for the handoff",
+                        "description": "The task for handoff agent to handle",
                     },
                     "context_summary": {
                         "type": "string",
                         "description": "A summary of the conversation context to provide to the new agent",
                     },
                 },
-                "required": ["target_agent", "reason"],
+                "required": ["target_agent", "task"],
             },
         }
     elif provider in ["openai", "groq"]:
@@ -47,16 +47,16 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                             "type": "string",
                             "description": "The name of the agent to hand off to",
                         },
-                        "reason": {
+                        "task": {
                             "type": "string",
-                            "description": "The reason for the handoff",
+                            "description": "The task for handoff agent to handle",
                         },
                         "context_summary": {
                             "type": "string",
                             "description": "A summary of the conversation context to provide to the new agent",
                         },
                     },
-                    "required": ["target_agent", "reason"],
+                    "required": ["target_agent", "task"],
                 },
             },
         }
@@ -88,19 +88,19 @@ def get_handoff_tool_handler(agent_manager) -> Callable:
             A string describing the result of the handoff
         """
         target_agent = params.get("target_agent")
-        reason = params.get("reason")
+        task = params.get("task")
         context_summary = params.get("context_summary", "")
 
         if not target_agent:
             return "Error: No target agent specified"
 
-        if not reason:
-            return "Error: No reason specified for the handoff"
+        if not task:
+            return "Error: No task specified for the handoff"
 
-        result = agent_manager.perform_handoff(target_agent, reason, context_summary)
+        result = agent_manager.perform_handoff(target_agent, task, context_summary)
 
         if result["success"]:
-            return f"Successfully handed off to {target_agent} with {context_summary}. Reason: {reason}. Continue the task"
+            return f"Successfully handed off to {target_agent} with {context_summary}. Continue to {task}"
         else:
             available_agents = ", ".join(result.get("available_agents", []))
             return f"Error: {result.get('error')}. Available agents: {available_agents}"
