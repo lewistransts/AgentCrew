@@ -100,7 +100,7 @@ def get_handoff_tool_handler(agent_manager) -> Callable:
         result = agent_manager.perform_handoff(target_agent, reason, context_summary)
 
         if result["success"]:
-            return f"Successfully handed off to {target_agent}. Reason: {reason}"
+            return f"Successfully handed off to {target_agent} with {context_summary}. Reason: {reason}. Continue the task"
         else:
             available_agents = ", ".join(result.get("available_agents", []))
             return f"Error: {result.get('error')}. Available agents: {available_agents}"

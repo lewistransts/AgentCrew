@@ -129,7 +129,7 @@ class OpenAIService(BaseLLMService):
             message_content = [
                 {
                     "type": "text",
-                    "content": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
+                    "text": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
                 }
             ]
             print(f"📄 Including text file: {file_path}")
@@ -465,16 +465,16 @@ class OpenAIService(BaseLLMService):
             return response.choices[0].message.content or ""
         except Exception as e:
             raise Exception(f"Failed to validate specification: {str(e)}")
-            
+
     def set_system_prompt(self, system_prompt: str):
         """
         Set the system prompt for the LLM service.
-        
+
         Args:
             system_prompt: The system prompt to use
         """
         self.system_prompt = system_prompt
-        
+
     def clear_tools(self):
         """
         Clear all registered tools from the LLM service.

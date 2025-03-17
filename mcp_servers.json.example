@@ -6,6 +6,5 @@
         "env": {
             "key": "value"
         },
-        "enabled": boolean
-    }
+        "enabledForAgents": ["string"]
 }
