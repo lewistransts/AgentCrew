@@ -20,7 +20,8 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                 "properties": {
                     "target_agent": {
                         "type": "string",
-                        "description": "The name of the agent to hand off to",
+                        "enum": ["Architect", "TechLead", "Documentation"],
+                        "description": "The name of the agent to hand off to.",
                     },
                     "task": {
                         "type": "string",
@@ -45,6 +46,7 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                     "properties": {
                         "target_agent": {
                             "type": "string",
+                            "enum": ["Architect", "TechLead", "Documentation"],
                             "description": "The name of the agent to hand off to",
                         },
                         "task": {
