@@ -1,5 +1,7 @@
 import click
 import importlib
+
+from httpx._transports import default
 from modules.scraping import ScrapingService
 from modules.web_search import TavilySearchService
 from modules.clipboard import ClipboardService
@@ -270,6 +272,7 @@ def discover_and_register_tools(services=None):
 @click.option(
     "--agent",
     type=str,
+    default="Architect",
     help="Initial agent to use (Architect, CodeAssistant, Documentation, Evaluation)",
 )
 def chat(message, files, provider, agent):
