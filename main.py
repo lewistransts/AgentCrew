@@ -68,6 +68,66 @@ def get_url(url: str, output_file: str, summarize: bool, explain: bool):
         click.echo(f"❌ Error: {str(e)}", err=True)
 
 
+def setup_services(provider):
+    # Initialize the model registry and service manager
+    registry = ModelRegistry.get_instance()
+    manager = ServiceManager.get_instance()
+
+    # Set the current model based on provider
+    models = registry.get_models_by_provider(provider)
+    if models:
+        # Find default model for this provider
+        default_model = next((m for m in models if m.default), models[0])
+        registry.set_current_model(default_model.id)
+
+    # Get the LLM service from the manager
+    llm_service = manager.get_service(provider)
+
+    # Initialize services
+    memory_service = MemoryService()
+    clipboard_service = ClipboardService()
+    spec_validator = SpecPromptValidationService("groq")
+    # Try to create search service if API key is available
+    try:
+        search_service = TavilySearchService(llm=llm_service)
+    except Exception as e:
+        click.echo(f"⚠️ Web search tools not available: {str(e)}")
+        search_service = None
+
+    # Initialize code analysis service
+    try:
+        code_analysis_service = CodeAnalysisService()
+    except Exception as e:
+        click.echo(f"⚠️ Code analysis tool not available: {str(e)}")
+        code_analysis_service = None
+
+    # try:
+    #     scraping_service = ScrapingService()
+    # except Exception as e:
+    #     click.echo(f"⚠️ Scraping service not available: {str(e)}")
+    #     scraping_service = None
+
+    # Clean up old memories (older than 1 month)
+    try:
+        removed_count = memory_service.cleanup_old_memories(months=1)
+        if removed_count > 0:
+            click.echo(f"🧹 Cleaned up {removed_count} old conversation memories")
+    except Exception as e:
+        click.echo(f"⚠️ Memory cleanup failed: {str(e)}")
+
+    # Register all tools with their respective services
+    services = {
+        "llm": llm_service,
+        "memory": memory_service,
+        "clipboard": clipboard_service,
+        "code_analysis": code_analysis_service,
+        "web_search": search_service,
+        "spec_validator": spec_validator,
+        # "scraping": scraping_service,
+    }
+    return services
+
+
 def register_agent_tools(agent, services):
     """
     Register appropriate tools for each agent type.
@@ -76,6 +136,12 @@ def register_agent_tools(agent, services):
         agent: The agent to register tools for
         services: Dictionary of available services
     """
+    # Register the handoff tool with all agents
+    if services.get("agent_manager"):
+        from modules.agents.tools.handoff import register as register_handoff
+
+        register_handoff(services["agent_manager"], agent)
+
     # Common tools for all agents
     if services.get("clipboard"):
         from modules.clipboard.tool import register as register_clipboard
@@ -140,11 +206,6 @@ def setup_agents(services):
     register_agent_tools(documentation, services)
     register_agent_tools(evaluation, services)
 
-    # Register the handoff tool with all agents
-    from modules.agents.tools.handoff import register as register_handoff
-
-    register_handoff(agent_manager)
-
     # Register agents with the manager - this will keep them deactivated until selected
     agent_manager.register_agent(architect)
     agent_manager.register_agent(code_assistant)
@@ -154,73 +215,24 @@ def setup_agents(services):
     return agent_manager
 
 
-def services_load(provider):
-    # Initialize the model registry and service manager
-    registry = ModelRegistry.get_instance()
-    manager = ServiceManager.get_instance()
-
-    # Set the current model based on provider
-    models = registry.get_models_by_provider(provider)
-    if models:
-        # Find default model for this provider
-        default_model = next((m for m in models if m.default), models[0])
-        registry.set_current_model(default_model.id)
-
-    # Get the LLM service from the manager
-    llm_service = manager.get_service(provider)
-
-    # Initialize services
-    memory_service = MemoryService()
-    clipboard_service = ClipboardService()
-    spec_validator = SpecPromptValidationService("groq")
-    # Try to create search service if API key is available
-    try:
-        search_service = TavilySearchService(llm=llm_service)
-    except Exception as e:
-        click.echo(f"⚠️ Web search tools not available: {str(e)}")
-        search_service = None
-
-    # Initialize code analysis service
-    try:
-        code_analysis_service = CodeAnalysisService()
-    except Exception as e:
-        click.echo(f"⚠️ Code analysis tool not available: {str(e)}")
-        code_analysis_service = None
-
-    # try:
-    #     scraping_service = ScrapingService()
-    # except Exception as e:
-    #     click.echo(f"⚠️ Scraping service not available: {str(e)}")
-    #     scraping_service = None
-
-    # Clean up old memories (older than 1 month)
-    try:
-        removed_count = memory_service.cleanup_old_memories(months=1)
-        if removed_count > 0:
-            click.echo(f"🧹 Cleaned up {removed_count} old conversation memories")
-    except Exception as e:
-        click.echo(f"⚠️ Memory cleanup failed: {str(e)}")
-
-    # Register all tools with their respective services
-    services = {
-        "llm": llm_service,
-        "memory": memory_service,
-        "clipboard": clipboard_service,
-        "code_analysis": code_analysis_service,
-        "web_search": search_service,
-        "spec_validator": spec_validator,
-        # "scraping": scraping_service,
-    }
-    return services
-
-
 def discover_and_register_tools(services=None):
     """
     Discover and register all tools
 
+    DEPRECATED: This function is deprecated and will be removed in a future version.
+    Use setup_agents() and register_agent_tools() instead.
+
     Args:
         services: Dictionary mapping service names to service instances
     """
+    import warnings
+
+    warnings.warn(
+        "discover_and_register_tools is deprecated. Use setup_agents() and register_agent_tools() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     if services is None:
         services = {}
 
@@ -265,9 +277,7 @@ def discover_and_register_tools(services=None):
 def chat(message, files, provider, agent):
     """Start an interactive chat session with LLM"""
     try:
-        services = services_load(provider)
-
-        # discover_and_register_tools(services)
+        services = setup_services(provider)
 
         # Set up the agent system
         agent_manager = setup_agents(services)

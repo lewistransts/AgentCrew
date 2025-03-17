@@ -20,19 +20,19 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                 "properties": {
                     "target_agent": {
                         "type": "string",
-                        "description": "The name of the agent to hand off to"
+                        "description": "The name of the agent to hand off to",
                     },
                     "reason": {
                         "type": "string",
-                        "description": "The reason for the handoff"
+                        "description": "The reason for the handoff",
                     },
                     "context_summary": {
                         "type": "string",
-                        "description": "A summary of the conversation context to provide to the new agent"
-                    }
+                        "description": "A summary of the conversation context to provide to the new agent",
+                    },
                 },
-                "required": ["target_agent", "reason"]
-            }
+                "required": ["target_agent", "reason"],
+            },
         }
     elif provider in ["openai", "groq"]:
         return {
@@ -45,20 +45,20 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                     "properties": {
                         "target_agent": {
                             "type": "string",
-                            "description": "The name of the agent to hand off to"
+                            "description": "The name of the agent to hand off to",
                         },
                         "reason": {
                             "type": "string",
-                            "description": "The reason for the handoff"
+                            "description": "The reason for the handoff",
                         },
                         "context_summary": {
                             "type": "string",
-                            "description": "A summary of the conversation context to provide to the new agent"
-                        }
+                            "description": "A summary of the conversation context to provide to the new agent",
+                        },
                     },
-                    "required": ["target_agent", "reason"]
-                }
-            }
+                    "required": ["target_agent", "reason"],
+                },
+            },
         }
     else:
         raise ValueError(f"Unsupported provider: {provider}")
@@ -74,6 +74,7 @@ def get_handoff_tool_handler(agent_manager) -> Callable:
     Returns:
         The handler function
     """
+
     def handler(**params) -> str:
         """
         Handle a handoff request.
@@ -115,23 +116,11 @@ def register(agent_manager, agent=None):
         agent_manager: The agent manager instance
         agent: Specific agent to register with (optional)
     """
-    from modules.tools.registration import register_tool
-    
+
     # Create the tool definition and handler
-    definition_func = get_handoff_tool_definition
-    handler_func = get_handoff_tool_handler(agent_manager)
-    
-    if agent:
-        # Register with specific agent
-        agent.register_tool(definition_func(agent.llm.provider_name), handler_func)
-    else:
-        # Register with all agents
-        from modules.tools.registry import ToolRegistry
-        registry = ToolRegistry.get_instance()
-        
-        # Register the tool with the registry
-        registry.register_tool(definition_func, lambda: handler_func)
-        
-        # Register the tool with each agent
-        for agent_name, agent_instance in agent_manager.agents.items():
-            agent_instance.register_tool(definition_func(agent_instance.llm.provider_name), handler_func)
+
+    from modules.tools.registration import register_tool
+
+    register_tool(
+        get_handoff_tool_definition, get_handoff_tool_handler, agent_manager, agent
+    )

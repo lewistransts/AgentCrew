@@ -181,6 +181,7 @@ class Agent(ABC):
                 # Register with LLM
                 self.llm.register_tool(tool_def, handler)
                 self.registered_tools.add(tool_name)
+                print(f"Resgitered tool {tool_name}")
             except Exception as e:
                 print(f"Error registering tool {tool_name}: {e}")
 
