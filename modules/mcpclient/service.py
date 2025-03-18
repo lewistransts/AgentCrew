@@ -3,6 +3,7 @@ from typing import Dict, Any, List, Optional, Callable
 from mcp import ClientSession, StdioServerParameters
 from mcp.types import EmbeddedResource, ImageContent, TextContent
 from mcp.client.stdio import stdio_client
+from modules.agents.manager import AgentManager
 from modules.tools.registry import ToolRegistry
 from .config import MCPServerConfig
 import asyncio
@@ -21,7 +22,9 @@ class MCPService:
         self.stdio_transports: Dict[str, tuple] = {}
         self.loop = asyncio.new_event_loop()
 
-    async def connect_to_server(self, server_config: MCPServerConfig) -> bool:
+    async def connect_to_server(
+        self, server_config: MCPServerConfig, agent=None
+    ) -> bool:
         """
         Connect to an MCP server.
 
@@ -58,7 +61,7 @@ class MCPService:
             self.connected_servers[server_id] = True
 
             # Cache available tools
-            await self.register_server_tools(server_id)
+            await self.register_server_tools(server_id, agent=None)
 
             return True
         except Exception as e:
@@ -66,7 +69,7 @@ class MCPService:
             self.connected_servers[server_id] = False
             return False
 
-    async def register_server_tools(self, server_id: str) -> None:
+    async def register_server_tools(self, server_id: str, agent=None) -> None:
         """
         Register all tools from a connected server.
 
@@ -84,8 +87,12 @@ class MCPService:
             # Cache tools
             self.tools_cache[server_id] = {tool.name: tool for tool in response.tools}
 
-            # Register each tool with the tool registry
-            registry = ToolRegistry.get_instance()
+            if agent:
+                agent_manager = AgentManager.get_instance()
+                registry = agent_manager.get_agent(agent)
+            else:
+                # Register each tool with the tool registry
+                registry = ToolRegistry.get_instance()
             for tool in response.tools:
                 # Create namespaced tool definition
                 def tool_definition_factory(tool_info=tool, srv_id=server_id):
@@ -98,7 +105,10 @@ class MCPService:
                 handler_factory = self._create_tool_handler(server_id, tool.name)
 
                 # Register the tool
-                registry.register_tool(tool_definition_factory(), handler_factory, self)
+                if registry:
+                    registry.register_tool(
+                        tool_definition_factory(), handler_factory, self
+                    )
         except Exception as e:
             print(f"Error registering tools from server '{server_id}': {str(e)}")
             self.connected_servers[server_id] = False

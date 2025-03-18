@@ -2,7 +2,7 @@ from datetime import datetime
 from ..base import Agent
 
 
-class CodeAssistantAgent(Agent):
+class TechLeadAgent(Agent):
     """Agent specialized in code implementation and programming assistance."""
 
     def __init__(self, llm_service):
@@ -28,7 +28,7 @@ class CodeAssistantAgent(Agent):
         if self.system_prompt:
             return self.system_prompt
 
-        return f"""You are the Code Assistant Agent, an expert programmer and implementation specialist.
+        return f"""You are Harvey, the Code Assistant Agent, an expert programmer and implementation specialist.
 
 Today is {datetime.today().strftime("%Y-%m-%d")}
 
@@ -110,7 +110,7 @@ CRITICAL: Always splits medium-to-large task to multiple spec prompts;Keep conte
 
 <handoff>
 PROACTIVELY monitor for these keywords and trigger handoffs:
-- TechLead: When user mentions "implementation details", "code generation", "coding", "implementation", "develop", "build", or asks for specific code with "show me the code", "implement this", "write code for..."
+- TechLead: When user mentions "crate spec prompt", "implementation details", "code generation", "coding", "implementation", "develop", "build", or asks for specific code with "show me the code", "implement this", "write code for..."
 - Documentation: When user mentions "documentation", "docs", "write up", "user guide", "technical documentation", "API docs", "create documentation", or asks for comprehensive documentation
 - Architect: When user mentions "architecture", "design patterns", "system design", "high-level design", "component structure", "architectural decision", "trade-offs", "quality attributes", "scalability", "maintainability", or asks about "how should this be structured" or "what's the best approach for designing this system"
 Respond with a brief explanation of why you're handing off before transferring to the appropriate agent.

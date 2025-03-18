@@ -5,11 +5,29 @@ from .base import Agent
 class AgentManager:
     """Manager for specialized agents."""
 
+    _instance = None
+
+    def __new__(cls):
+        """Ensure only one instance is created (singleton pattern)."""
+        if cls._instance is None:
+            cls._instance = super(AgentManager, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
     def __init__(self):
         """Initialize the agent manager."""
-        self.agents = {}
-        self.current_agent = None
-        self.handoff_history = []
+        if not self._initialized:
+            self.agents = {}
+            self.current_agent = None
+            self.handoff_history = []
+            self._initialized = True
+
+    @classmethod
+    def get_instance(cls):
+        """Get the singleton instance of AgentManager."""
+        if cls._instance is None:
+            cls._instance = AgentManager()
+        return cls._instance
 
     def register_agent(self, agent: Agent):
         """

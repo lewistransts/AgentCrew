@@ -10,7 +10,7 @@ This system implements a multi-agent architecture with specialized agents for di
 
 - **Documentation Agent**: Expert in creating clear technical documentation, user guides, and explanations
 - **Architect Agent**: Specializes in software architecture design, system planning, and technical decision-making
-- **Code Assistant Agent**: Focuses on code implementation, debugging, and programming tasks
+- **Tech Lead Agent**: Focuses on code implementation, debugging, and programming tasks
 
 The system intelligently routes tasks to the appropriate agent and features seamless **agent handoffs** when a conversation requires different expertise. This allows for:
 

@@ -15,6 +15,7 @@ from modules.llm.message import MessageTransformer
 from .constants import BLUE, GREEN, YELLOW, RESET, BOLD, GRAY, RICH_YELLOW, RICH_GRAY
 from .completers import ChatCompleter
 from .history import ChatHistoryManager, ConversationTurn
+from modules.agents.manager import AgentManager
 
 
 def get_terminal_width():
@@ -23,15 +24,14 @@ def get_terminal_width():
 
 
 class InteractiveChat:
-    def __init__(self, agent_manager, memory_service=None):
+    def __init__(self, memory_service=None):
         """
-        Initialize the interactive chat with an agent manager.
+        Initialize the interactive chat.
 
         Args:
-            agent_manager: The agent manager instance
             memory_service: Optional memory service for storing conversations
         """
-        self.agent_manager = agent_manager
+        self.agent_manager = AgentManager.get_instance()
         self.llm = self.agent_manager.get_current_agent().llm
         self.agent_name = self.agent_manager.get_current_agent().name
         self.console = Console()

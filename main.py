@@ -14,7 +14,7 @@ from modules.coder import SpecPromptValidationService
 from modules.agents.manager import AgentManager
 from modules.agents.specialized import (
     ArchitectAgent,
-    CodeAssistantAgent,
+    TechLeadAgent,
     DocumentationAgent,
 )
 
@@ -162,14 +162,14 @@ def register_agent_tools(agent, services):
             register_web_search(services["web_search"], agent)
 
     # Agent-specific tools
-    if agent.name == "Architect" or agent.name == "CodeAssistant":
+    if agent.name == "Architect" or agent.name == "TechLead":
         # Code analysis tools for technical agents
         if services.get("code_analysis"):
             from modules.code_analysis.tool import register as register_code_analysis
 
             register_code_analysis(services["code_analysis"], agent)
 
-    if agent.name == "CodeAssistant":
+    if agent.name == "TechLead":
         # Spec validation for Code Assistant
         if services.get("spec_validator"):
             from modules.coder.tool import register as register_spec_validator
@@ -183,12 +183,9 @@ def setup_agents(services):
 
     Args:
         services: Dictionary of services
-
-    Returns:
-        The agent manager instance
     """
-    # Create the agent manager
-    agent_manager = AgentManager()
+    # Get the singleton instance of agent manager
+    agent_manager = AgentManager.get_instance()
 
     # Add agent_manager to services for tool registration
     services["agent_manager"] = agent_manager
@@ -198,7 +195,7 @@ def setup_agents(services):
 
     # Create specialized agents
     architect = ArchitectAgent(llm_service)
-    code_assistant = CodeAssistantAgent(llm_service)
+    code_assistant = TechLeadAgent(llm_service)
     documentation = DocumentationAgent(llm_service)
 
     # Register appropriate tools for each agent
@@ -212,7 +209,6 @@ def setup_agents(services):
     agent_manager.register_agent(documentation)
 
     return agent_manager
-
 
 def discover_and_register_tools(services=None):
     """
@@ -272,7 +268,7 @@ def discover_and_register_tools(services=None):
     "--agent",
     type=str,
     default="Architect",
-    help="Initial agent to use (Architect, CodeAssistant, Documentation, Evaluation)",
+    help="Initial agent to use (Architect, TechLead, Documentation, Evaluation)",
 )
 def chat(message, files, provider, agent):
     """Start an interactive chat session with LLM"""
@@ -291,7 +287,7 @@ def chat(message, files, provider, agent):
                 )
 
         # Create the chat interface with the agent manager injected
-        chat_interface = InteractiveChat(agent_manager, services["memory"])
+        chat_interface = InteractiveChat(services["memory"])
 
         # Start the chat
         chat_interface.start_chat(initial_content=message, files=files)
