@@ -1,6 +1,6 @@
 import unittest
-from modules.clipboard.service import ClipboardService
-from modules.clipboard.tool import (
+from swissknife.modules.clipboard.service import ClipboardService
+from swissknife.modules.clipboard.tool import (
     get_clipboard_read_tool_handler,
     get_clipboard_write_tool_handler,
 )

@@ -1,4 +1,4 @@
-from modules.scraping import Scraper
+from swissknife.modules.scraping import Scraper
 
 
 def test_scrape_url():

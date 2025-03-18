@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from modules.chat.message_handler import MessageHandler
-from modules.llm.base import BaseLLMService
+from swissknife.modules.chat.message_handler import MessageHandler
+from swissknife.modules.llm.base import BaseLLMService
 from rich.console import Console
 
 

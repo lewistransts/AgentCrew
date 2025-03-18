@@ -1,9 +1,9 @@
 import pytest
 import json
 from unittest.mock import MagicMock, patch, AsyncMock
-from modules.mcpclient.config import MCPConfigManager, MCPServerConfig
-from modules.mcpclient.service import MCPService
-from modules.mcpclient.manager import MCPSessionManager
+from swissknife.modules.mcpclient.config import MCPConfigManager, MCPServerConfig
+from swissknife.modules.mcpclient.service import MCPService
+from swissknife.modules.mcpclient.manager import MCPSessionManager
 
 
 @pytest.fixture
@@ -257,7 +257,7 @@ class TestMCPTools:
 
     async def test_mcp_connect_tool(self, session_manager):
         """Test the MCP connect tool handler."""
-        from modules.mcpclient.tool import get_mcp_connect_tool_handler
+        from swissknife.modules.mcpclient.tool import get_mcp_connect_tool_handler
 
         with patch(
             "modules.mcpclient.tool.MCPSessionManager.get_instance",
@@ -275,7 +275,7 @@ class TestMCPTools:
 
     async def test_mcp_list_tools_tool(self, session_manager):
         """Test the MCP list tools tool handler."""
-        from modules.mcpclient.tool import get_mcp_list_tools_tool_handler
+        from swissknife.modules.mcpclient.tool import get_mcp_list_tools_tool_handler
 
         with patch(
             "modules.mcpclient.tool.MCPSessionManager.get_instance",
@@ -293,7 +293,7 @@ class TestMCPTools:
 
     async def test_mcp_call_tool_tool(self, session_manager):
         """Test the MCP call tool tool handler."""
-        from modules.mcpclient.tool import get_mcp_call_tool_tool_handler
+        from swissknife.modules.mcpclient.tool import get_mcp_call_tool_tool_handler
 
         with patch(
             "modules.mcpclient.tool.MCPSessionManager.get_instance",

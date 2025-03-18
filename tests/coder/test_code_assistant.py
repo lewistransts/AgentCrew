@@ -1,7 +1,7 @@
 import subprocess
 import pytest
 from unittest.mock import patch, MagicMock
-from modules.coder.service import CodeAssistant
+from swissknife.modules.coder.service import CodeAssistant
 
 
 class TestCodeAssistant:

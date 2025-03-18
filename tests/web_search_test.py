@@ -1,8 +1,8 @@
 import unittest
 import os
 from dotenv import load_dotenv
-from modules.web_search.service import TavilySearchService
-from modules.web_search.tool import (
+from swissknife.modules.web_search.service import TavilySearchService
+from swissknife.modules.web_search.tool import (
     get_web_search_tool_handler,
     get_web_extract_tool_handler,
 )

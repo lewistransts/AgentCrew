@@ -1,5 +1,5 @@
 import unittest
-from modules.ytdlp.service import YtDlpService
+from swissknife.modules.ytdlp.service import YtDlpService
 
 
 class YtDlpServiceTest(unittest.TestCase):

@@ -2,7 +2,7 @@ import os
 import pytest
 from unittest.mock import Mock, patch
 from anthropic.types import Message, TextBlock, ToolUseBlock
-from modules.anthropic import AnthropicClient, SUMMARIZE_PROMPT
+from swissknife.modules.anthropic import AnthropicClient, SUMMARIZE_PROMPT
 
 
 @pytest.fixture
