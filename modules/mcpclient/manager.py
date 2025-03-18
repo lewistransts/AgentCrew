@@ -22,7 +22,7 @@ class MCPSessionManager:
         self.mcp_service = MCPService()
         self.initialized = False
 
-    def initialize(self, agent=None) -> Dict[str, bool]:
+    def initialize(self) -> Dict[str, bool]:
         """Synchronous initialization method"""
         if self.initialized:
             return {}
@@ -31,9 +31,9 @@ class MCPSessionManager:
         self.mcp_service.start()
 
         # Initialize servers using the service's event loop
-        return self.mcp_service._run_async(self.initialize_servers(agent))
+        return self.mcp_service._run_async(self.initialize_servers())
 
-    async def initialize_servers(self, agent=None) -> Dict[str, bool]:
+    async def initialize_servers(self) -> Dict[str, bool]:
         """
         Initialize connections to all enabled MCP servers.
 
@@ -42,10 +42,7 @@ class MCPSessionManager:
         """
         # Load server configurations
         self.config_manager.load_config()
-        if agent:
-            enabled_servers = self.config_manager.get_enabled_servers_for_agents(agent)
-        else:
-            enabled_servers = self.config_manager.get_enabled_servers()
+        enabled_servers = self.config_manager.get_enabled_servers()
 
         if not enabled_servers:
             print("No enabled MCP servers found in configuration")
@@ -56,7 +53,7 @@ class MCPSessionManager:
         connection_tasks = []
 
         for server_id, config in enabled_servers.items():
-            connection_tasks.append(self._connect_to_server(server_id, config, agent))
+            connection_tasks.append(self._connect_to_server(server_id, config))
 
         # Wait for all connections to complete
         results = await asyncio.gather(*connection_tasks, return_exceptions=True)
@@ -73,9 +70,7 @@ class MCPSessionManager:
         self.initialized = True
         return connection_results
 
-    async def _connect_to_server(
-        self, server_id: str, config: MCPServerConfig, agent=None
-    ) -> bool:
+    async def _connect_to_server(self, server_id: str, config: MCPServerConfig) -> bool:
         """
         Connect to a single MCP server.
 
@@ -87,7 +82,7 @@ class MCPSessionManager:
             True if connection was successful, False otherwise
         """
         try:
-            return await self.mcp_service.connect_to_server(config, agent)
+            return await self.mcp_service.connect_to_server(config)
         except Exception as e:
             print(f"Error connecting to server '{server_id}': {str(e)}")
             return False

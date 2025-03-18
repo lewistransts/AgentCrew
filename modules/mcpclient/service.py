@@ -22,9 +22,7 @@ class MCPService:
         self.stdio_transports: Dict[str, tuple] = {}
         self.loop = asyncio.new_event_loop()
 
-    async def connect_to_server(
-        self, server_config: MCPServerConfig, agent=None
-    ) -> bool:
+    async def connect_to_server(self, server_config: MCPServerConfig) -> bool:
         """
         Connect to an MCP server.
 
@@ -59,9 +57,9 @@ class MCPService:
             # Store session
             self.sessions[server_id] = session
             self.connected_servers[server_id] = True
-
-            # Cache available tools
-            await self.register_server_tools(server_id, agent=None)
+            for agent in server_config.enabledForAgents:
+                # Cache available tools
+                await self.register_server_tools(server_id, agent)
 
             return True
         except Exception as e:

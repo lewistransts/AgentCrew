@@ -11,8 +11,8 @@ class MCPServerConfig:
     name: str
     command: str
     args: List[str]
+    enabledForAgents: List[str]
     env: Optional[Dict[str, str]] = None
-    enabledForAgents: List[str] = []
 
 
 class MCPConfigManager:
@@ -78,14 +78,5 @@ class MCPConfigManager:
         return {
             server_id: config
             for server_id, config in self.configs.items()
-            if config.enabledForAgents
-        }
-
-    def get_enabled_servers_for_agents(
-        self, agent_name: str
-    ) -> Dict[str, MCPServerConfig]:
-        return {
-            server_id: config
-            for server_id, config in self.configs.items()
-            if agent_name in config.enabledForAgents
+            if len(config.enabledForAgents) > 0
         }

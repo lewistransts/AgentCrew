@@ -208,7 +208,12 @@ def setup_agents(services):
     agent_manager.register_agent(code_assistant)
     agent_manager.register_agent(documentation)
 
+    from modules.mcpclient.tool import register as mcp_register
+
+    mcp_register()
+
     return agent_manager
+
 
 def discover_and_register_tools(services=None):
     """

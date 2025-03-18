@@ -166,7 +166,7 @@ def get_mcp_list_servers_tool_handler():
                 {
                     "id": server_id,
                     "name": config.name,
-                    "enabled": config.enabled,
+                    "enabled": config.enabledForAgents,
                     "connected": connected_servers.get(server_id, False),
                 }
             )
@@ -214,7 +214,7 @@ def get_mcp_call_tool_tool_handler():
     """Get the handler for the MCP call tool tool."""
 
     async def handle_mcp_call_tool(params: Dict[str, Any]) -> Dict[str, Any]:
-        tool_name = params.get("tool_name")
+        tool_name: str = str(params.get("tool_name"))
         tool_args = params.get("tool_args", {})
 
         # Parse server_id and tool_name from the full tool name
@@ -280,7 +280,7 @@ def get_mcp_disconnect_tool_handler():
     return handle_mcp_disconnect
 
 
-def register(service_instance=None, agent=None):
+def register(service_instance=None):
     """
     Register all MCP tools with the tool registry or directly with an agent.
 

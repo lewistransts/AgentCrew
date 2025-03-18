@@ -185,7 +185,7 @@ class AnthropicService(BaseLLMService):
         """
         self.tools.append(tool_definition)
         self.tool_handlers[tool_definition["name"]] = handler_function
-        # print(f"🔧 Registered tool: {tool_definition['name']}")
+        print(f"🔧 Registered tool: {tool_definition['name']}")
 
     def execute_tool(self, tool_name, tool_params):
         """

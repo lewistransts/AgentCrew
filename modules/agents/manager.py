@@ -38,11 +38,11 @@ class AgentManager:
         """
         self.agents[agent.name] = agent
         # Set the first registered agent as the default
-        if not self.current_agent:
-            self.select_agent(agent.name)
-        else:
-            # Keep the agent in deactivated state until selected
-            agent.deactivate()
+        # if not self.current_agent:
+        #     self.select_agent(agent.name)
+        # else:
+        #     # Keep the agent in deactivated state until selected
+        #     agent.deactivate()
 
     def select_agent(self, agent_name: str) -> bool:
         """
@@ -93,7 +93,7 @@ class AgentManager:
         return self.current_agent
 
     def perform_handoff(
-        self, target_agent_name: str, task: str, context_summary: str = None
+        self, target_agent_name: str, task: str, context_summary: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Perform a handoff to another agent.
