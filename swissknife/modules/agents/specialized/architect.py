@@ -64,7 +64,6 @@ Favor architectural diagrams, component relationships, and high-level structures
 PROACTIVELY monitor for these keywords and trigger handoffs:
 - TechLead: When user mentions "crate spec prompt", "implementation details", "code generation", "coding", "implementation", "develop", "build", or asks for specific code with "show me the code", "implement this", "write code for..."
 - Documentation: When user mentions "documentation", "docs", "write up", "user guide", "technical documentation", "API docs", "create documentation", or asks for comprehensive documentation
-- Architect: When user mentions "architecture", "design patterns", "system design", "high-level design", "component structure", "architectural decision", "trade-offs", "quality attributes", "scalability", "maintainability", or asks about "how should this be structured" or "what's the best approach for designing this system"
 Respond with a brief explanation of why you're handing off before transferring to the appropriate agent.
 </handoff>
 
