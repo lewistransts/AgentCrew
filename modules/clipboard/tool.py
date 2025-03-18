@@ -140,21 +140,22 @@ def get_clipboard_write_tool_handler(clipboard_service: ClipboardService) -> Cal
 def register(service_instance=None, agent=None):
     """
     Register this tool with the central registry or directly with an agent
-    
+
     Args:
         service_instance: The clipboard service instance
         agent: Agent instance to register with directly (optional)
     """
     from modules.tools.registration import register_tool
+
     register_tool(
         get_clipboard_read_tool_definition,
         get_clipboard_read_tool_handler,
         service_instance,
-        agent
+        agent,
     )
     register_tool(
         get_clipboard_write_tool_definition,
         get_clipboard_write_tool_handler,
         service_instance,
-        agent
+        agent,
     )

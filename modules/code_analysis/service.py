@@ -1,8 +1,6 @@
-import json
 import os
 import subprocess
-import traceback
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional
 
 import tree_sitter_c_sharp
 import tree_sitter_cpp

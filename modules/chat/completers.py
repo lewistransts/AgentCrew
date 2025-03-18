@@ -1,6 +1,6 @@
 from prompt_toolkit.completion import Completer, PathCompleter
 from prompt_toolkit.document import Document
-from prompt_toolkit.completion import Completer, Completion
+from prompt_toolkit.completion import Completion
 from modules.llm.models import ModelRegistry
 import os
 import re
@@ -18,7 +18,7 @@ class JumpCompleter(Completer):
         # Only provide completions for the /jump command
         if text.startswith("/jump "):
             word_before_cursor = document.get_word_before_cursor()
-            
+
             # Get all available turn numbers
             for i, turn in enumerate(self.conversation_turns, 1):
                 turn_str = str(i)

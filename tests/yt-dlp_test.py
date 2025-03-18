@@ -1,5 +1,4 @@
 import unittest
-import os
 from modules.ytdlp.service import YtDlpService
 
 
@@ -13,19 +12,19 @@ class YtDlpServiceTest(unittest.TestCase):
         """Test extracting chapters from a YouTube video."""
         # Use a video known to have chapters
         video_with_chapters = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # Rick Astley - Never Gonna Give You Up
-        
+
         result = self.service.extract_chapters(video_with_chapters)
-        
+
         # Check if extraction was successful
         self.assertTrue(result["success"])
         self.assertIn("message", result)
         self.assertIn("raw_chapters", result)
-        
+
         # Check if content is not empty
         self.assertIsNotNone(result["content"])
         self.assertIsInstance(result["content"], str)
         self.assertTrue(len(result["content"]) > 0)
-        
+
         # Print the chapters for manual verification
         print(f"Extracted chapters: \n{result['content']}")
 
@@ -33,65 +32,71 @@ class YtDlpServiceTest(unittest.TestCase):
         """Test extracting subtitles filtered by chapters."""
         # First get the chapters
         video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # Rick Astley - Never Gonna Give You Up
-        
+
         chapters_result = self.service.extract_chapters(video_url)
-        
+
         # If chapters were successfully extracted
         if chapters_result["success"] and chapters_result["raw_chapters"]:
             # Use the first chapter for testing
             test_chapters = [chapters_result["raw_chapters"][0]]
-            
+
             # Now extract subtitles for just that chapter
             result = self.service.extract_subtitles(video_url, "en", test_chapters)
-            
+
             # Check if extraction was successful
             self.assertTrue(result["success"])
             self.assertIn("message", result)
-            
+
             # Check if content is not empty
             self.assertIsNotNone(result["content"])
             self.assertIsInstance(result["content"], str)
             self.assertTrue(len(result["content"]) > 0)
-            
+
             # Verify the chapter title appears in the content
             self.assertIn(f"## {test_chapters[0]['title']}", result["content"])
-            
+
             # Print the first 200 characters of the subtitles for manual verification
             print(f"First 200 chars of chapter subtitles: {result['content'][:200]}...")
         else:
-            self.skipTest("Skipping test because no chapters were found in the test video")
+            self.skipTest(
+                "Skipping test because no chapters were found in the test video"
+            )
 
     def test_extract_subtitles_with_multiple_chapters(self):
         """Test extracting subtitles filtered by multiple chapters."""
         # First get the chapters
         video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # Rick Astley - Never Gonna Give You Up
-        
+
         chapters_result = self.service.extract_chapters(video_url)
-        
+
         # If chapters were successfully extracted and there are at least 2
         if chapters_result["success"] and len(chapters_result["raw_chapters"]) >= 2:
             # Use the first two chapters for testing
             test_chapters = chapters_result["raw_chapters"][:2]
-            
+
             # Now extract subtitles for those chapters
             result = self.service.extract_subtitles(video_url, "en", test_chapters)
-            
+
             # Check if extraction was successful
             self.assertTrue(result["success"])
-            
+
             # Check if content is not empty
             self.assertIsNotNone(result["content"])
             self.assertIsInstance(result["content"], str)
             self.assertTrue(len(result["content"]) > 0)
-            
+
             # Verify both chapter titles appear in the content
             for chapter in test_chapters:
                 self.assertIn(f"## {chapter['title']}", result["content"])
-            
+
             # Print the first 200 characters of the subtitles for manual verification
-            print(f"First 200 chars of multiple chapter subtitles: {result['content'][:200]}...")
+            print(
+                f"First 200 chars of multiple chapter subtitles: {result['content'][:200]}..."
+            )
         else:
-            self.skipTest("Skipping test because fewer than 2 chapters were found in the test video")
+            self.skipTest(
+                "Skipping test because fewer than 2 chapters were found in the test video"
+            )
 
     def test_extract_subtitles_success(self):
         """Test extracting subtitles from a YouTube video."""

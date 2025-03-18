@@ -151,7 +151,7 @@ def get_memory_retrieve_tool_handler(memory_service: MemoryService) -> Callable:
 def register(service_instance=None, agent=None):
     """
     Register this tool with the central registry or directly with an agent
-    
+
     Args:
         service_instance: The memory service instance
         agent: Agent instance to register with directly (optional)
@@ -162,11 +162,11 @@ def register(service_instance=None, agent=None):
         get_memory_retrieve_tool_definition,
         get_memory_retrieve_tool_handler,
         service_instance,
-        agent
+        agent,
     )
     register_tool(
         get_memory_forget_tool_definition,
         get_memory_forget_tool_handler,
         service_instance,
-        agent
+        agent,
     )

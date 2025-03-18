@@ -74,15 +74,13 @@ def get_scraping_tool_handler(scraping_service: ScrapingService):
 def register(service_instance=None, agent=None):
     """
     Register this tool with the central registry or directly with an agent
-    
+
     Args:
         service_instance: The scraping service instance
         agent: Agent instance to register with directly (optional)
     """
     from modules.tools.registration import register_tool
+
     register_tool(
-        get_scraping_tool_definition,
-        get_scraping_tool_handler,
-        service_instance,
-        agent
+        get_scraping_tool_definition, get_scraping_tool_handler, service_instance, agent
     )

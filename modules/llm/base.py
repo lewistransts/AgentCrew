@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Tuple, Optional, Generator
+from typing import List, Dict, Any, Optional
 from modules.tools.registry import ToolRegistry
 
 
@@ -190,17 +190,17 @@ class BaseLLMService(ABC):
             Validation result as a string (typically JSON)
         """
         pass
-        
+
     @abstractmethod
     def set_system_prompt(self, system_prompt: str):
         """
         Set the system prompt for the LLM service.
-        
+
         Args:
             system_prompt: The system prompt to use
         """
         pass
-        
+
     @abstractmethod
     def clear_tools(self):
         """

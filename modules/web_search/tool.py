@@ -1,4 +1,3 @@
-from typing import Dict, Any
 from modules.web_search.service import TavilySearchService
 
 
@@ -158,7 +157,7 @@ def get_web_extract_tool_handler(tavily_service: TavilySearchService):
 def register(service_instance=None, agent=None):
     """
     Register this tool with the central registry or directly with an agent
-    
+
     Args:
         service_instance: The web search service instance
         agent: Agent instance to register with directly (optional)
@@ -166,14 +165,14 @@ def register(service_instance=None, agent=None):
     from modules.tools.registration import register_tool
 
     register_tool(
-        get_web_search_tool_definition, 
-        get_web_search_tool_handler, 
+        get_web_search_tool_definition,
+        get_web_search_tool_handler,
         service_instance,
-        agent
+        agent,
     )
     register_tool(
-        get_web_extract_tool_definition, 
-        get_web_extract_tool_handler, 
+        get_web_extract_tool_definition,
+        get_web_extract_tool_handler,
         service_instance,
-        agent
+        agent,
     )

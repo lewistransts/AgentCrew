@@ -70,7 +70,7 @@ class GroqService(BaseLLMService):
         Returns:
             bool: True if thinking mode is supported and successfully set, False otherwise.
         """
-        print(f"Thinking mode is not supported for Groq models.")
+        print("Thinking mode is not supported for Groq models.")
         return False
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
@@ -464,16 +464,16 @@ class GroqService(BaseLLMService):
 
         except Exception as e:
             raise Exception(f"Failed to validate specification: {str(e)}")
-            
+
     def set_system_prompt(self, system_prompt: str):
         """
         Set the system prompt for the LLM service.
-        
+
         Args:
             system_prompt: The system prompt to use
         """
         self.system_prompt = system_prompt
-        
+
     def clear_tools(self):
         """
         Clear all registered tools from the LLM service.

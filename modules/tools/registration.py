@@ -1,5 +1,6 @@
 from .registry import ToolRegistry
 
+
 def register_tool(definition_func, handler_factory, service_instance=None, agent=None):
     """
     Register a tool with the central registry or directly with an agent

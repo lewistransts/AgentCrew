@@ -1,4 +1,5 @@
-from typing import Dict, Any, Callable, List, Optional, Tuple
+from typing import Dict, Any, Callable, List, Optional
+
 
 class ToolRegistry:
     _instance = None
@@ -12,7 +13,12 @@ class ToolRegistry:
     def __init__(self):
         self.tools = {}  # {tool_name: (definition_func, handler_factory, service_instance)}
 
-    def register_tool(self, definition_func: Callable, handler_factory: Callable, service_instance=None):
+    def register_tool(
+        self,
+        definition_func: Callable,
+        handler_factory: Callable,
+        service_instance=None,
+    ):
         """
         Register a tool with the registry
 
@@ -53,4 +59,6 @@ class ToolRegistry:
             return None
 
         _, handler_factory, service_instance = self.tools[tool_name]
-        return handler_factory(service_instance) if service_instance else handler_factory()
+        return (
+            handler_factory(service_instance) if service_instance else handler_factory()
+        )

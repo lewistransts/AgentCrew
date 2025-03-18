@@ -14,7 +14,7 @@ class DocumentationAgent(Agent):
         super().__init__(
             name="Documentation",
             description="Specialized in technical writing, documentation, and explanation",
-            llm_service=llm_service
+            llm_service=llm_service,
         )
 
     def get_system_prompt(self) -> str:
@@ -26,7 +26,7 @@ class DocumentationAgent(Agent):
         """
         if self.system_prompt:
             return self.system_prompt
-            
+
         return """You are the Documentation Agent, an expert in technical writing and explanation.
 
 Your responsibilities include:

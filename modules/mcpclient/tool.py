@@ -1,6 +1,5 @@
-import asyncio
 import json
-from typing import Dict, Any, Callable
+from typing import Dict, Any
 from .manager import MCPSessionManager
 
 
@@ -288,19 +287,30 @@ def register(service_instance=None, agent=None):
     Args:
         service_instance: Not used for MCP tools, but included for consistency
         agent: Agent instance to register with directly (optional)
-    
+
     This function should be called during application initialization.
     """
     from modules.tools.registration import register_tool
 
     # Register tool definitions and handlers
-    register_tool(get_mcp_connect_tool_definition, get_mcp_connect_tool_handler, None, agent)
     register_tool(
-        get_mcp_list_servers_tool_definition, get_mcp_list_servers_tool_handler, None, agent
+        get_mcp_connect_tool_definition, get_mcp_connect_tool_handler, None, agent
     )
-    register_tool(get_mcp_list_tools_tool_definition, get_mcp_list_tools_tool_handler, None, agent)
-    register_tool(get_mcp_call_tool_definition, get_mcp_call_tool_tool_handler, None, agent)
-    register_tool(get_mcp_disconnect_tool_definition, get_mcp_disconnect_tool_handler, None, agent)
+    register_tool(
+        get_mcp_list_servers_tool_definition,
+        get_mcp_list_servers_tool_handler,
+        None,
+        agent,
+    )
+    register_tool(
+        get_mcp_list_tools_tool_definition, get_mcp_list_tools_tool_handler, None, agent
+    )
+    register_tool(
+        get_mcp_call_tool_definition, get_mcp_call_tool_tool_handler, None, agent
+    )
+    register_tool(
+        get_mcp_disconnect_tool_definition, get_mcp_disconnect_tool_handler, None, agent
+    )
 
     # Initialize servers asynchronously
     MCPSessionManager.get_instance().initialize()

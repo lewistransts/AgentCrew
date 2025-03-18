@@ -9,7 +9,6 @@ from prompt_toolkit.keys import Keys
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.text import Text
-from modules.llm.base import BaseLLMService
 from modules.llm.service_manager import ServiceManager
 from modules.llm.models import ModelRegistry
 from modules.llm.message import MessageTransformer

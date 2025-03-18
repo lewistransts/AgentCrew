@@ -1,5 +1,4 @@
-from os import error, path as os_path
-import re
+from os import path as os_path
 from typing import Dict, Any, Callable
 from .service import CodeAnalysisService
 
@@ -179,7 +178,7 @@ def get_file_content_tool_handler(
 def register(service_instance=None, agent=None):
     """
     Register this tool with the central registry or directly with an agent
-    
+
     Args:
         service_instance: The code analysis service instance
         agent: Agent instance to register with directly (optional)
@@ -190,12 +189,12 @@ def register(service_instance=None, agent=None):
         get_code_analysis_tool_definition,
         get_code_analysis_tool_handler,
         service_instance,
-        agent
+        agent,
     )
 
     register_tool(
         get_file_content_tool_definition,
         get_file_content_tool_handler,
         service_instance,
-        agent
+        agent,
     )

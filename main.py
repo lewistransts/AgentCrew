@@ -1,7 +1,6 @@
 import click
 import importlib
 
-from httpx._transports import default
 from modules.scraping import ScrapingService
 from modules.web_search import TavilySearchService
 from modules.clipboard import ClipboardService

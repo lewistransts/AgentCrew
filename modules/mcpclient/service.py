@@ -1,7 +1,7 @@
 from contextlib import AsyncExitStack
 from typing import Dict, Any, List, Optional, Callable
 from mcp import ClientSession, StdioServerParameters
-from mcp.types import CallToolResult, EmbeddedResource, ImageContent, TextContent
+from mcp.types import EmbeddedResource, ImageContent, TextContent
 from mcp.client.stdio import stdio_client
 from modules.tools.registry import ToolRegistry
 from .config import MCPServerConfig

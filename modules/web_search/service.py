@@ -78,7 +78,7 @@ class TavilySearchService:
         if "error" in results:
             return f"Search error: {results['error']}"
 
-        formatted_text = f"**Search Results**:  \n\n"
+        formatted_text = "**Search Results**:  \n\n"
 
         if "results" in results:
             for i, result in enumerate(results["results"], 1):

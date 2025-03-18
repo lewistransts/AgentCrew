@@ -2,7 +2,7 @@ import pyperclip
 import base64
 import io
 from PIL import ImageGrab, Image
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any
 
 
 class ClipboardService:

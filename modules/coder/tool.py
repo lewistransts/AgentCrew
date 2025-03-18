@@ -1,10 +1,7 @@
 from typing import Dict, Any, Callable
 import os
-from pathlib import Path
-from modules import code_analysis
 from .spec_validation import SpecPromptValidationService
 from .service import CodeAssistant
-from modules.tools.registry import ToolRegistry
 
 
 def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
@@ -175,7 +172,7 @@ def get_implement_spec_prompt_tool_handler(
 def register(service_instance=None, agent=None):
     """
     Register all coder tools with the tool registry or directly with an agent
-    
+
     Args:
         service_instance: The spec validation service instance (optional)
         agent: Agent instance to register with directly (optional)
@@ -184,13 +181,13 @@ def register(service_instance=None, agent=None):
         service_instance = SpecPromptValidationService()
 
     from modules.tools.registration import register_tool
-    
+
     # Register spec validation tool
     register_tool(
         get_spec_validation_tool_definition,
         get_spec_validation_tool_handler,
         service_instance,
-        agent
+        agent,
     )
 
     code_assistant = CodeAssistant()
@@ -199,5 +196,5 @@ def register(service_instance=None, agent=None):
         get_implement_spec_prompt_tool_definition,
         get_implement_spec_prompt_tool_handler,
         code_assistant,
-        agent
+        agent,
     )

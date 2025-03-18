@@ -2,9 +2,7 @@ import os
 import chromadb
 import datetime
 import uuid
-import re
-from typing import List, Dict, Any, Optional
-from chromadb.config import Settings
+from typing import List, Dict, Any
 
 
 class MemoryService:
@@ -153,7 +151,7 @@ class MemoryService:
                 try:
                     dt = datetime.datetime.fromisoformat(conv_data["timestamp"])
                     timestamp = dt.strftime("%Y-%m-%d %H:%M")
-                except:
+                except Exception:
                     timestamp = conv_data["timestamp"]
 
             output.append(f"--- Memory from {timestamp} ---\n{conversation_text}")
@@ -172,7 +170,6 @@ class MemoryService:
         """
         # Calculate the cutoff date
         cutoff_date = datetime.datetime.now() - datetime.timedelta(days=30 * months)
-        cutoff_str = cutoff_date.isoformat()
 
         # Get all memories
         all_memories = self.collection.get()
