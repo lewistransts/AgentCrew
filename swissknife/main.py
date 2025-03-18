@@ -1,5 +1,6 @@
 import click
 import importlib
+import os
 
 from swissknife.modules.scraping import ScrapingService
 from swissknife.modules.web_search import TavilySearchService
@@ -23,6 +24,12 @@ from swissknife.modules.agents.specialized import (
 def cli():
     """URL to Markdown conversion tool with LLM integration"""
     pass
+
+
+def cli_prod():
+    os.environ["MEMORYDB_PATH"] = os.path.expanduser("~/.swissknife/memorydb")
+    os.environ["MCP_CONFIG_PATH"] = os.path.expanduser("~/.swissknife/mcp_server.json")
+    cli()  # Delegate to main CLI function
 
 
 @cli.command()
@@ -157,7 +164,9 @@ def register_agent_tools(agent, services):
 
     if agent.name == "Architect":
         if services.get("web_search"):
-            from swissknife.modules.web_search.tool import register as register_web_search
+            from swissknife.modules.web_search.tool import (
+                register as register_web_search,
+            )
 
             register_web_search(services["web_search"], agent)
 
@@ -165,14 +174,18 @@ def register_agent_tools(agent, services):
     if agent.name == "Architect" or agent.name == "TechLead":
         # Code analysis tools for technical agents
         if services.get("code_analysis"):
-            from swissknife.modules.code_analysis.tool import register as register_code_analysis
+            from swissknife.modules.code_analysis.tool import (
+                register as register_code_analysis,
+            )
 
             register_code_analysis(services["code_analysis"], agent)
 
     if agent.name == "TechLead":
         # Spec validation for Code Assistant
         if services.get("spec_validator"):
-            from swissknife.modules.coder.tool import register as register_spec_validator
+            from swissknife.modules.coder.tool import (
+                register as register_spec_validator,
+            )
 
             register_spec_validator(services["spec_validator"], agent)
 

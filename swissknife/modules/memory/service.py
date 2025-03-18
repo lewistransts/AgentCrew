@@ -8,7 +8,7 @@ from typing import List, Dict, Any
 class MemoryService:
     """Service for storing and retrieving conversation memory using ChromaDB."""
 
-    def __init__(self, collection_name="conversation", persist_directory="./memory_db"):
+    def __init__(self, collection_name="conversation", persist_directory=None):
         """
         Initialize the memory service with ChromaDB.
 
@@ -17,10 +17,11 @@ class MemoryService:
             persist_directory: Directory to persist the ChromaDB data
         """
         # Ensure the persist directory exists
-        os.makedirs(persist_directory, exist_ok=True)
+        self.db_path = os.getenv("MEMORYDB_PATH", "./memory_db")
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
         # Initialize ChromaDB client with persistence
-        self.client = chromadb.PersistentClient(path=persist_directory)
+        self.client = chromadb.PersistentClient(path=self.db_path)
 
         # Create or get collection for storing memories
         self.collection = self.client.get_or_create_collection(name=collection_name)

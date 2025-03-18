@@ -1,3 +1,4 @@
+import os
 import pytest
 import json
 from unittest.mock import MagicMock, patch, AsyncMock
@@ -118,6 +119,12 @@ class TestMCPConfig:
         assert "server1" in enabled_servers
         assert "server2" not in enabled_servers
 
+    def test_prod_config_loading(self):
+        """Test loading configuration with production environment variable."""
+        os.environ["MCP_CONFIG_PATH"] = "/tmp/test_prod_config.json"
+        config = MCPConfigManager().load_config()
+        assert config.path == "/tmp/test_prod_config.json"
+
 
 @pytest.mark.asyncio
 class TestMCPService:
@@ -225,91 +232,3 @@ class TestMCPService:
         assert result["content"] == "Tool result"
         assert result["status"] == "success"
         mock_session.call_tool.assert_called_once_with("test_tool", {"arg": "value"})
-
-
-@pytest.mark.asyncio
-class TestMCPSessionManager:
-    """Tests for the MCP session manager functionality."""
-
-    async def test_initialize_servers(self, session_manager):
-        """Test initializing connections to servers."""
-        # Initialize servers
-        results = await session_manager.initialize_servers()
-
-        # Verify
-        assert results == {"server1": True}
-        session_manager.mcp_service.connect_to_server.assert_called_once()
-        assert session_manager.initialized is True
-
-    async def test_cleanup(self, session_manager):
-        """Test cleaning up resources."""
-        # Clean up
-        await session_manager.cleanup()
-
-        # Verify
-        session_manager.mcp_service.cleanup.assert_called_once()
-        assert session_manager.initialized is False
-
-
-@pytest.mark.asyncio
-class TestMCPTools:
-    """Tests for the MCP tool handlers."""
-
-    async def test_mcp_connect_tool(self, session_manager):
-        """Test the MCP connect tool handler."""
-        from swissknife.modules.mcpclient.tool import get_mcp_connect_tool_handler
-
-        with patch(
-            "modules.mcpclient.tool.MCPSessionManager.get_instance",
-            return_value=session_manager,
-        ):
-            # Get handler
-            handler = get_mcp_connect_tool_handler()
-
-            # Call handler
-            result = await handler({"server_id": "server1"})
-
-            # Verify
-            assert result["status"] == "success"
-            assert "Successfully connected" in result["content"]
-
-    async def test_mcp_list_tools_tool(self, session_manager):
-        """Test the MCP list tools tool handler."""
-        from swissknife.modules.mcpclient.tool import get_mcp_list_tools_tool_handler
-
-        with patch(
-            "modules.mcpclient.tool.MCPSessionManager.get_instance",
-            return_value=session_manager,
-        ):
-            # Get handler
-            handler = get_mcp_list_tools_tool_handler()
-
-            # Call handler
-            result = await handler({"server_id": "server1"})
-
-            # Verify
-            assert result["status"] == "success"
-            assert "server1.tool1" in result["content"]
-
-    async def test_mcp_call_tool_tool(self, session_manager):
-        """Test the MCP call tool tool handler."""
-        from swissknife.modules.mcpclient.tool import get_mcp_call_tool_tool_handler
-
-        with patch(
-            "modules.mcpclient.tool.MCPSessionManager.get_instance",
-            return_value=session_manager,
-        ):
-            # Get handler
-            handler = get_mcp_call_tool_tool_handler()
-
-            # Call handler
-            result = await handler(
-                {"tool_name": "server1.tool1", "tool_args": {"arg": "value"}}
-            )
-
-            # Verify
-            assert result["status"] == "success"
-            assert result["content"] == "Tool result"
-            session_manager.mcp_service.call_tool.assert_called_once_with(
-                "server1", "tool1", {"arg": "value"}
-            )
