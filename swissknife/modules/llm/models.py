@@ -105,6 +105,13 @@ class ModelRegistry:
                 capabilities=["thinking", "tool_use"],
                 default=True,
             ),
+            Model(
+                id="gemini-2.0-flash-001",
+                provider="google",
+                name="Gemini 2.0 Flash",
+                description="Gemini 2.0 Flash is a powerful language model from Google, designed for both text and visual inputs.",
+                capabilities=["tool_use", "vision"],
+            ),
         ]
 
         for model in default_models:

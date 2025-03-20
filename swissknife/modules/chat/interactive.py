@@ -1,4 +1,5 @@
 import sys
+import traceback
 import os
 import shutil
 import time
@@ -271,6 +272,7 @@ class InteractiveChat:
 
         except Exception as e:
             print(f"\n{YELLOW}❌ Error: {str(e)}{RESET}")
+            print(traceback.format_exc())
             print(messages)
             return None, 0, 0
 
@@ -389,7 +391,7 @@ class InteractiveChat:
         # If no model ID is provided, list available models
         if not model_id:
             print(f"{YELLOW}Available models:{RESET}")
-            for provider in ["claude", "openai", "groq"]:
+            for provider in ["claude", "openai", "groq", "google"]:
                 print(f"\n{YELLOW}{provider.capitalize()} models:{RESET}")
                 for model in registry.get_models_by_provider(provider):
                     current = (

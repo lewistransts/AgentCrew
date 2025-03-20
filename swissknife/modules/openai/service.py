@@ -1,9 +1,6 @@
 import os
 import base64
 import json
-import sys
-import itertools
-import time
 from typing import Dict, Any, List, Optional, Tuple
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -42,12 +39,12 @@ def read_binary_file(file_path):
 class OpenAIService(BaseLLMService):
     """OpenAI-specific implementation of the LLM service."""
 
-    def __init__(self):
+    def __init__(self, api_key=None, base_url=None):
         load_dotenv()
-        api_key = os.getenv("OPENAI_API_KEY")
+        api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables")
-        self.client = OpenAI(api_key=api_key)
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
         # Set default model
         self.model = "gpt-4o"
         self.tools = []  # Initialize empty tools list
@@ -136,32 +133,6 @@ class OpenAIService(BaseLLMService):
             return message_content
         else:
             return None
-
-    def _loading_animation(self, stop_event):
-        """Display a loading animation in the terminal."""
-        spinner = itertools.cycle(["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"])
-        fun_words = [
-            "Pondering",
-            "Cogitating",
-            "Ruminating",
-            "Contemplating",
-            "Brainstorming",
-            "Calculating",
-            "Processing",
-            "Analyzing",
-            "Deciphering",
-            "Meditating",
-        ]
-        import random
-
-        fun_word = random.choice(fun_words)
-        while not stop_event.is_set():
-            sys.stdout.write("\r" + f"{fun_word} {next(spinner)} ")
-            sys.stdout.flush()
-            time.sleep(0.1)
-        # Clear the spinner line when done
-        sys.stdout.write("\r" + " " * 30 + "\r")
-        sys.stdout.flush()
 
     def register_tool(self, tool_definition, handler_function):
         """

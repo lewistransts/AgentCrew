@@ -3,6 +3,7 @@ from swissknife.modules.llm.base import BaseLLMService
 from swissknife.modules.anthropic import AnthropicService
 from swissknife.modules.groq import GroqService
 from swissknife.modules.openai import OpenAIService
+from swissknife.modules.google import GoogleAIService
 
 
 class ServiceManager:
@@ -29,6 +30,7 @@ class ServiceManager:
             "claude": AnthropicService,
             "groq": GroqService,
             "openai": OpenAIService,
+            "google": GoogleAIService,
         }
 
     def get_service(self, provider: str) -> BaseLLMService:

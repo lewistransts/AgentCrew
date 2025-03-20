@@ -1,4 +1,5 @@
 from ..base import Agent
+from datetime import datetime
 
 
 class DocumentationAgent(Agent):
@@ -27,7 +28,9 @@ class DocumentationAgent(Agent):
         if self.system_prompt:
             return self.system_prompt
 
-        return """You are the Documentation Agent, an expert in technical writing and explanation.
+        return f"""You are the Documentation Agent, an expert in technical writing and explanation.
+
+Today is {datetime.today().strftime("%Y-%m-%d")}
 
 Your responsibilities include:
 - Creating clear and comprehensive documentation

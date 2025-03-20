@@ -278,7 +278,7 @@ def discover_and_register_tools(services=None):
 @click.option("--files", multiple=True, help="Files to include in the initial message")
 @click.option(
     "--provider",
-    type=click.Choice(["claude", "groq", "openai"]),
+    type=click.Choice(["claude", "groq", "openai", "google"]),
     default="claude",
     help="LLM provider to use (claude, groq, or openai)",
 )

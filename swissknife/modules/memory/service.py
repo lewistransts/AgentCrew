@@ -69,7 +69,7 @@ class MemoryService:
             List of memory IDs created
         """
         # Create the memory document by combining user message and response
-        conversation_text = f"User: {user_message}\nAssistant: {assistant_response}"
+        conversation_text = f"Date: {datetime.datetime.today().strftime('%Y-%m-%d')} User: {user_message}\nAssistant: {assistant_response}"
 
         # Split into chunks
         chunks = self._create_chunks(conversation_text)

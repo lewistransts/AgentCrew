@@ -217,11 +217,16 @@ class GroqService(BaseLLMService):
             stream_params["reasoning_format"] = "parsed"
             stream_params["temperature"] = 0.6
             stream_params["top_p"] = 0.7
+            stream_params["max_completion_tokens"] = 16000
 
         # Add system message if provided
         if self.system_prompt:
             stream_params["messages"] = [
-                {"role": "system", "content": self.system_prompt}
+                {
+                    "role": "system",
+                    "content": """DO NOT generate Chinese characters. Always call tool using JSON format: {"role": "assistant", "tool_calls": [{"id": "call_d5wg", "type": "function", "function": {"name": "get_weather", "arguments": "{\"location\": \"New York, NY\"}"}}]}""",
+                },
+                {"role": "system", "content": self.system_prompt},
             ] + messages
         # Add tools if available
         if self.tools:
