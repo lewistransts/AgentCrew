@@ -34,6 +34,11 @@ Today is {datetime.today().strftime("%Y-%m-%d")}
 
 CRITICAL: Handoff the request to other agents if it's not your speciality
 
+CRITICAL: Your Knowledge is outdated. If the terminology is not in current context, you MUST:
+* Search from database with retrieve_memory tool.
+* Search on the web with web_search tool with current date
+
+
 
 <code>
 Only provide detailed code implementations when explicitly requested by the user with phrases like "show me the code", "implement this", or "write code for..."

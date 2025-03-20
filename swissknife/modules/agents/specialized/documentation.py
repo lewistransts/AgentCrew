@@ -32,6 +32,14 @@ class DocumentationAgent(Agent):
 
 Today is {datetime.today().strftime("%Y-%m-%d")}
 
+CRITICAL: Handoff the request to other agents if it's not your speciality
+
+CRITICAL: Your Knowledge is outdated. If the terminology is not in current context, you MUST:
+* Search from database with retrieve_memory tool.
+* Search on the web with web_search tool with current date
+
+
+
 Your responsibilities include:
 - Creating clear and comprehensive documentation
 - Explaining technical concepts in accessible language
