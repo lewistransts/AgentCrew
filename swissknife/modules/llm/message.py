@@ -21,7 +21,7 @@ class MessageTransformer:
         """
         if source_provider == "claude":
             return MessageTransformer._standardize_claude_messages(messages)
-        elif source_provider == "openai":
+        elif source_provider == "openai" or source_provider == "google":
             return MessageTransformer._standardize_openai_messages(messages)
         elif source_provider == "groq":
             return MessageTransformer._standardize_groq_messages(messages)
@@ -43,7 +43,7 @@ class MessageTransformer:
         """
         if target_provider == "claude":
             return MessageTransformer._convert_to_claude_format(messages)
-        elif target_provider == "openai":
+        elif target_provider == "openai" or target_provider == "google":
             return MessageTransformer._convert_to_openai_format(messages)
         elif target_provider == "groq":
             return MessageTransformer._convert_to_groq_format(messages)
