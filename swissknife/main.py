@@ -15,7 +15,7 @@ from swissknife.modules.coder import SpecPromptValidationService
 from swissknife.modules.agents.manager import AgentManager
 from swissknife.modules.agents.specialized import (
     ArchitectAgent,
-    TechLeadAgent,
+    CodeAssistantAgent,
     DocumentationAgent,
 )
 
@@ -208,7 +208,7 @@ def setup_agents(services):
 
     # Create specialized agents
     architect = ArchitectAgent(llm_service)
-    code_assistant = TechLeadAgent(llm_service)
+    code_assistant = CodeAssistantAgent(llm_service)
     documentation = DocumentationAgent(llm_service)
 
     # Register appropriate tools for each agent

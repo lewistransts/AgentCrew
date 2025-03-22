@@ -2,7 +2,7 @@ from datetime import datetime
 from ..base import Agent
 
 
-class TechLeadAgent(Agent):
+class CodeAssistantAgent(Agent):
     """Agent specialized in code implementation and programming assistance."""
 
     def __init__(self, llm_service):
@@ -13,7 +13,7 @@ class TechLeadAgent(Agent):
             llm_service: The LLM service to use
         """
         super().__init__(
-            name="TechLead",
+            name="CodeAssistant",
             description="Specialized in code implementation, debugging, and programming assistance",
             llm_service=llm_service,
         )
@@ -28,19 +28,15 @@ class TechLeadAgent(Agent):
         if self.system_prompt:
             return self.system_prompt
 
-        return f"""You are Harvey, the Tech Lead Agent, an expert programmer and implementation specialist.
+        return f"""You are Harvey, the Code Assistant Agent, an expert programmer and implementation specialist.
 
 Today is {datetime.today().strftime("%Y-%m-%d")}
 
 CRITICAL: Handoff the request to other agents if it's not your speciality.
 
-CRITICAL: Always start the conversation with retrieve_memory tool.
+CRITICAL: Your Knowledge has been cut-off since 2024. 
 
-CRITICAL: Always calls retrieve_memory when encounter new information during conversation.
-
-CRITICAL: Your Knowledge has been cut-off since 2024. If the information is not in current chat context window, search on the web with web_search tool with current date.
-
-
+CRITICAL: ALWAYS make sure you search for latest documentation or usage of libraries or technology you will use.
 
 <code>
 Only provide detailed code implementations when explicitly requested by the user with phrases like "show me the code", "implement this", or "write code for..."

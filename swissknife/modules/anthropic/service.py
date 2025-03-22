@@ -6,18 +6,12 @@ from anthropic import Anthropic
 from anthropic.types import TextBlock
 from dotenv import load_dotenv
 from swissknife.modules.llm.base import BaseLLMService
+from swissknife.modules.llm.models import ModelRegistry
 from ..prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
     CHAT_SYSTEM_PROMPT,
 )
-
-
-INPUT_TOKEN_COST_PER_MILLION = 3.0
-OUTPUT_TOKEN_COST_PER_MILLION = 15.0
-
-# INPUT_TOKEN_COST_PER_MILLION = 0.8
-# OUTPUT_TOKEN_COST_PER_MILLION = 4.0
 
 
 def read_text_file(file_path):
@@ -66,9 +60,14 @@ class AnthropicService(BaseLLMService):
         self.system_prompt = CHAT_SYSTEM_PROMPT
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
-        input_cost = (input_tokens / 1_000_000) * INPUT_TOKEN_COST_PER_MILLION
-        output_cost = (output_tokens / 1_000_000) * OUTPUT_TOKEN_COST_PER_MILLION
-        return input_cost + output_cost
+        current_model = ModelRegistry.get_instance().get_model(self.model)
+        if current_model:
+            input_cost = (input_tokens / 1_000_000) * current_model.input_token_price_1m
+            output_cost = (
+                output_tokens / 1_000_000
+            ) * current_model.output_token_price_1m
+            return input_cost + output_cost
+        return 0.0
 
     def _process_content(self, prompt_template, content, max_tokens=2048):
         """Process content with a given prompt template."""

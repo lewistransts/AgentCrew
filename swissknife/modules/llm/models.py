@@ -12,6 +12,8 @@ class Model:
     description: str
     capabilities: List[str]
     default: bool = False
+    input_token_price_1m: float = 0.0
+    output_token_price_1m: float = 0.0
 
 
 class ModelRegistry:
@@ -47,6 +49,8 @@ class ModelRegistry:
                 description="Anthropic's most powerful model with advanced reasoning",
                 capabilities=["thinking", "tool_use", "vision"],
                 default=True,
+                input_token_price_1m=3.0,
+                output_token_price_1m=15.0,
             ),
             Model(
                 id="claude-3-5-sonnet-latest",
@@ -54,6 +58,8 @@ class ModelRegistry:
                 name="Claude 3.5 Sonnet",
                 description="Anthropic's Claude 3.5 Sonnet model - balanced performance and capabilities",
                 capabilities=["tool_use", "vision"],
+                input_token_price_1m=3.0,
+                output_token_price_1m=15.0,
             ),
             Model(
                 id="claude-3-5-haiku-latest",
@@ -61,6 +67,8 @@ class ModelRegistry:
                 name="Claude 3.5 Haiku",
                 description="Anthropic's fastest model",
                 capabilities=["tool_use", "vision"],
+                input_token_price_1m=0.8,
+                output_token_price_1m=4.0,
             ),
             Model(
                 id="gpt-4o",
@@ -68,6 +76,8 @@ class ModelRegistry:
                 name="GPT-4o",
                 description="Fast, intelligent, flexible GPT model",
                 capabilities=["tool_use", "vision"],
+                input_token_price_1m=2.5,
+                output_token_price_1m=10.0,
             ),
             Model(
                 id="gpt-4o-mini",
@@ -75,6 +85,8 @@ class ModelRegistry:
                 name="GPT-4o Mini",
                 description="Fast, affordable small model for focused tasks",
                 capabilities=["tool_use", "vision"],
+                input_token_price_1m=0.15,
+                output_token_price_1m=0.6,
             ),
             Model(
                 id="o3-mini",
@@ -82,6 +94,8 @@ class ModelRegistry:
                 name="GPT o3 mini",
                 description="Fast, flexible, intelligent reasoning model",
                 capabilities=["thinking"],
+                input_token_price_1m=1.1,
+                output_token_price_1m=4.4,
             ),
             Model(
                 id="deepseek-r1-distill-llama-70b",
@@ -89,6 +103,8 @@ class ModelRegistry:
                 name="DeepSeek R1 Distill",
                 description="DeepSeek's powerful model optimized for Groq",
                 capabilities=["tool_use"],
+                input_token_price_1m=0.75,
+                output_token_price_1m=0.99,
             ),
             Model(
                 id="llama3-70b-8192",
@@ -96,6 +112,8 @@ class ModelRegistry:
                 name="Llama 3 70B",
                 description="Meta's Llama 3 70B model optimized for Groq",
                 capabilities=["tool_use"],
+                input_token_price_1m=0.59,
+                output_token_price_1m=0.79,
             ),
             Model(
                 id="qwen-qwq-32b",
@@ -104,6 +122,8 @@ class ModelRegistry:
                 description="SLM from Alibaba",
                 capabilities=["thinking", "tool_use"],
                 default=True,
+                input_token_price_1m=0.29,
+                output_token_price_1m=0.39,
             ),
             Model(
                 id="gemini-2.0-flash-001",
@@ -111,6 +131,8 @@ class ModelRegistry:
                 name="Gemini 2.0 Flash",
                 description="Gemini 2.0 Flash is a powerful language model from Google, designed for both text and visual inputs.",
                 capabilities=["tool_use", "vision"],
+                input_token_price_1m=0.1,
+                output_token_price_1m=0.4,
             ),
         ]
 

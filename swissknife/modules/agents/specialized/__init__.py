@@ -1,9 +1,9 @@
 from .architect import ArchitectAgent
-from .techlead import TechLeadAgent
+from .code_assistant import CodeAssistantAgent
 from .documentation import DocumentationAgent
 
 __all__ = [
     "ArchitectAgent",
-    "TechLeadAgent",
+    "CodeAssistantAgent",
     "DocumentationAgent",
 ]
