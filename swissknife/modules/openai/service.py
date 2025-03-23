@@ -187,8 +187,8 @@ class OpenAIService(BaseLLMService):
         if self.model.startswith("o3"):
             stream_params["reasoning_effort"] = "high"
             stream_params["parallel_tool_calls"] = False
-        else:
-            stream_params["temperature"] = 0.7
+        # else:
+        #     stream_params["temperature"] = 0.8
 
         # Add system message if provided
         if self.system_prompt:
