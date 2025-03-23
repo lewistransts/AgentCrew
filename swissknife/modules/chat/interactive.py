@@ -1,7 +1,6 @@
 import sys
 import traceback
 import os
-import shutil
 import time
 import pyperclip
 from prompt_toolkit import PromptSession
@@ -10,6 +9,7 @@ from prompt_toolkit.keys import Keys
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.text import Text
+from rich.live import Live
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.llm.message import MessageTransformer
@@ -17,11 +17,6 @@ from .constants import BLUE, GREEN, YELLOW, RESET, BOLD, GRAY, RICH_YELLOW, RICH
 from .completers import ChatCompleter
 from .history import ChatHistoryManager, ConversationTurn
 from swissknife.modules.agents.manager import AgentManager
-
-
-def get_terminal_width():
-    """Get the current terminal width."""
-    return shutil.get_terminal_size().columns
 
 
 class InteractiveChat:
@@ -132,13 +127,6 @@ class InteractiveChat:
 
         return kb
 
-    def _clear_to_start(self, text):
-        # Count how many lines were printed
-        self.console.clear(home=False)
-        terminal_width = get_terminal_width()
-        divider = "─" * terminal_width
-        self.console.print(f"\n{divider}")
-
     def _stream_assistant_response(self, messages, input_tokens=0, output_tokens=0):
         """Stream the assistant's response and return the response and token usage."""
         assistant_response = ""
@@ -147,71 +135,66 @@ class InteractiveChat:
         thinking_signature = ""  # Store the signature
         start_thinking = True
 
-        # Get the current agent's LLM service
-        # current_agent = self.agent_manager.get_current_agent()
-        # self.llm = current_agent.llm
-
         try:
-            with self.llm.stream_assistant_response(messages) as stream:
-                for chunk in stream:
-                    # Process the chunk using the LLM service
-                    (
-                        assistant_response,
-                        tool_uses,
-                        chunk_input_tokens,
-                        chunk_output_tokens,
-                        chunk_text,
-                        thinking_chunk,
-                    ) = self.llm.process_stream_chunk(
-                        chunk, assistant_response, tool_uses
-                    )
-
-                    # Update token counts
-                    if chunk_input_tokens > 0:
-                        input_tokens = chunk_input_tokens
-                    if chunk_output_tokens > 0:
-                        output_tokens = chunk_output_tokens
-
-                    # Accumulate thinking content if available
-                    if thinking_chunk:
-                        thinking_chunk, signature = thinking_chunk
-                        if thinking_chunk:
-                            thinking_content += thinking_chunk
-                        if signature:
-                            thinking_signature += signature
-                        # if signature:
-                        #     thinking_signature = signature
-                        # Print thinking content with a special format
-                        if start_thinking:
-                            self.console.print(
-                                Text(
-                                    f"\n💭 {self.agent_name.upper()}'s thinking process:",
-                                    style=RICH_YELLOW,
-                                )
-                            )
-                            start_thinking = False
-                        self.console.print(
-                            Text(f"{thinking_chunk}", style=RICH_GRAY),
-                            end="",
-                            soft_wrap=True,
+            with Live("", console=self.console, vertical_overflow="crop") as live:
+                with self.llm.stream_assistant_response(messages) as stream:
+                    for chunk in stream:
+                        # Process the chunk using the LLM service
+                        (
+                            assistant_response,
+                            tool_uses,
+                            chunk_input_tokens,
+                            chunk_output_tokens,
+                            chunk_text,
+                            thinking_chunk,
+                        ) = self.llm.process_stream_chunk(
+                            chunk, assistant_response, tool_uses
                         )
 
-                    # Print chunk text if available
-                    if chunk_text:
-                        self.console.print(chunk_text, end="", soft_wrap=True)
+                        # Update token counts
+                        if chunk_input_tokens > 0:
+                            input_tokens = chunk_input_tokens
+                        if chunk_output_tokens > 0:
+                            output_tokens = chunk_output_tokens
+
+                        # Accumulate thinking content if available
+                        if thinking_chunk:
+                            thinking_chunk, signature = thinking_chunk
+                            if thinking_chunk:
+                                thinking_content += thinking_chunk
+                            if signature:
+                                thinking_signature += signature
+
+                            # Print thinking content with a special format
+                            if start_thinking:
+                                self.console.print(
+                                    Text(
+                                        f"\n💭 {self.agent_name.upper()}'s thinking process:",
+                                        style=RICH_YELLOW,
+                                    )
+                                )
+                                start_thinking = False
+                            self.console.print(
+                                Text(f"{thinking_chunk}", style=RICH_GRAY),
+                                end="",
+                                soft_wrap=True,
+                            )
+
+                        # Update live rich markdown
+                        live.update(
+                            Markdown(
+                                "\n".join(
+                                    assistant_response.split("\n")[
+                                        self.console.size.height * -1 + 5 :
+                                    ]
+                                )
+                            )
+                        )
+                live.update("")
 
             # Handle tool use if needed
             if tool_uses and len(tool_uses) > 0:
                 # Add thinking content as a separate message if available
-                if thinking_content:
-                    # self._clear_to_start(thinking_content)
-                    self.console.print(
-                        Text(f"{thinking_content}", style=RICH_GRAY),
-                        end="",
-                        soft_wrap=True,
-                    )
-                    self.console.print("\n---\n")
-
                 thinking_data = (
                     (thinking_content, thinking_signature) if thinking_content else None
                 )
@@ -225,7 +208,6 @@ class InteractiveChat:
                 )
                 messages.append(assistant_message)
 
-                self._clear_to_start(assistant_response)
                 # Replace \n with two spaces followed by \n for proper Markdown line breaks
                 markdown_formatted_response = assistant_response.replace("\n", "  \n")
                 self.console.print(Markdown(markdown_formatted_response))
@@ -258,17 +240,14 @@ class InteractiveChat:
                 return self._stream_assistant_response(
                     messages, input_tokens, output_tokens
                 )
-            else:
-                self._clear_to_start(assistant_response)
+            # Replace \n with two spaces followed by \n for proper Markdown line breaks
+            markdown_formatted_response = assistant_response.replace("\n", "  \n")
+            self.console.print(Markdown(markdown_formatted_response))
 
-                # Replace \n with two spaces followed by \n for proper Markdown line breaks
-                markdown_formatted_response = assistant_response.replace("\n", "  \n")
-                self.console.print(Markdown(markdown_formatted_response))
+            # Store the latest response
+            self.latest_assistant_response = assistant_response
 
-                # Store the latest response
-                self.latest_assistant_response = assistant_response
-
-                return assistant_response, input_tokens, output_tokens
+            return assistant_response, input_tokens, output_tokens
 
         except Exception as e:
             print(f"\n{YELLOW}❌ Error: {str(e)}{RESET}")
@@ -569,6 +548,10 @@ class InteractiveChat:
 
         return messages, False, False
 
+    def divider(self):
+        divider = "─"
+        return divider * self.console.size.width
+
     def start_chat(self, initial_content=None, files=None):
         """
         Start an interactive chat session using streaming mode.
@@ -579,8 +562,6 @@ class InteractiveChat:
         """
         self.messages = []  # Reset messages at the start of a new chat
         message_content = []
-        terminal_width = get_terminal_width()
-        divider = "─" * terminal_width
         session_cost = 0.0
         user_input = None
         # Process files if provided
@@ -601,13 +582,13 @@ class InteractiveChat:
             print(f"\n{BLUE}{BOLD}👤 YOU:{RESET} [Initial content]")
 
         # Print welcome message
-        self._print_welcome_message(divider)
+        self._print_welcome_message(self.divider())
 
         # Main chat loop
         while True:
             # Handle initial message or get user input
             if not (self.messages and len(self.messages) == 1 and initial_content):
-                user_input = self._get_user_input(divider)
+                user_input = self._get_user_input(self.divider())
 
                 # Process the user input
                 self.messages, should_exit, was_cleared = self._process_user_input(
@@ -620,12 +601,12 @@ class InteractiveChat:
 
                 # Skip to next iteration if messages were cleared
                 if was_cleared:
-                    print(divider)
+                    print(self.divider())
                     continue
 
                 # Skip to next iteration if no messages to process
                 if not self.messages:
-                    print(divider)
+                    print(self.divider())
                     continue
 
             # Get and display assistant response
@@ -681,13 +662,13 @@ class InteractiveChat:
                 total_cost = self.llm.calculate_cost(input_tokens, output_tokens)
                 session_cost += total_cost
                 print("\n")
-                print(divider)
+                print(self.divider())
                 print(
                     f"{YELLOW}📊 Token Usage: Input: {input_tokens:,} | Output: {output_tokens:,} | "
                     f"Total: {input_tokens + output_tokens:,} | Cost: ${total_cost:.4f} | Total: {session_cost:.4f}{RESET}"
                 )
-                print(divider)
+                print(self.divider())
             else:
                 # Error occurred
-                print(divider)
+                print(self.divider())
                 continue
