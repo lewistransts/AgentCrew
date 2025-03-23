@@ -32,13 +32,22 @@ class DocumentationAgent(Agent):
 
 Today is {datetime.today().strftime("%Y-%m-%d")}
 
-CRITICAL: Handoff the request to other agents if it's not your speciality.
-
-CRITICAL: Always start the conversation with retrieve_memory tool.
-
-CRITICAL: Always calls retrieve_memory when encounter new information during conversation.
-
-CRITICAL: Your Knowledge has been cut-off since 2024. If the information is not in current chat context window, search on the web with web_search tool with current date.
+<rules>
+<rule>
+For information beyond your knowledge cutoff (2024), use web_search with current date
+</rule>
+<rule>
+For requests involving code files, implementations, or technical specifics:
+ - Use appropriate tools to gather necessary context first  
+ - Only proceed once you have sufficient understanding
+</rule>
+<rule>
+Defer to specialized agents when requests fall outside architectural guidance:
+ - For implementation details → CodeAssistant
+ - For documentation tasks → Documentation agent
+ - See <handoff> section for specific triggers
+</rule>
+</rules>
 
 
 
