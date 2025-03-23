@@ -173,10 +173,10 @@ class GroqService(BaseLLMService):
 
         fun_word = random.choice(fun_words)
         console = rich.get_console()
-        with Live("", console=console) as live:
+        with Live("", console=console, auto_refresh=True) as live:
             while not stop_event.is_set():
-                live.update(f"{fun_word} {next(spinner)} ")
-            live.update("")
+                live.update(f"{fun_word} {next(spinner)}")
+        # live.update("")
 
     def register_tool(self, tool_definition, handler_function):
         """
@@ -214,13 +214,12 @@ class GroqService(BaseLLMService):
             "model": self.model,
             "max_completion_tokens": 8192,
             "messages": messages,
-            "temperature": 0.3,
-            "top_p": 0.1,
+            "temperature": 0.7,
         }
         if self.model == "qwen-qwq-32b":
             stream_params["reasoning_format"] = "parsed"
             stream_params["temperature"] = 0.6
-            stream_params["top_p"] = 0.7
+            stream_params["top_p"] = 0.95
             stream_params["max_completion_tokens"] = 16000
 
         # Add system message if provided

@@ -17,7 +17,6 @@ def get_code_analysis_tool_definition(provider="claude") -> Dict[str, Any]:
     description = (
         "Build a tree-sitter based structural map of source code files. "
         "This tool analyzes code structure to identify classes, functions, and methods. "
-        "Only analyzes files within the allowed directory. "
         "Useful for code analysis and understanding project structure. "
         "Example: Enter '.' to analyze all source files in current directory, or 'src' to analyze all files in the src directory."
     )

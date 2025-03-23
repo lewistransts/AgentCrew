@@ -89,7 +89,7 @@ def get_memory_retrieve_tool_definition(provider="claude") -> Dict[str, Any]:
     if provider == "claude":
         return {
             "name": "retrieve_memory",
-            "description": "Retrieve relevant past conversations based on keywords",
+            "description": "Retrieve relevant context or information in memory based on keywords",
             "input_schema": {
                 "type": "object",
                 "properties": {
@@ -106,7 +106,7 @@ def get_memory_retrieve_tool_definition(provider="claude") -> Dict[str, Any]:
             "type": "function",
             "function": {
                 "name": "retrieve_memory",
-                "description": "Retrieve relevant past conversations based on keywords",
+                "description": "Retrieve relevant context or information in memory based on keywords",
                 "parameters": {
                     "type": "object",
                     "properties": {

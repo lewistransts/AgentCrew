@@ -6,7 +6,7 @@ def get_web_search_tool_definition(provider="claude"):
     if provider == "claude":
         return {
             "name": "web_search",
-            "description": "Search the web for current information on a topic or query.",
+            "description": "Search the internet for current information on a topic or query.",
             "input_schema": {
                 "type": "object",
                 "properties": {
