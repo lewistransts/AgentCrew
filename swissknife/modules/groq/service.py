@@ -6,6 +6,8 @@ import time
 import threading
 import itertools
 import sys
+import rich
+from rich.live import Live
 from typing import Dict, Any, List, Optional, Tuple
 from groq import Groq
 from dotenv import load_dotenv
@@ -170,13 +172,11 @@ class GroqService(BaseLLMService):
         import random
 
         fun_word = random.choice(fun_words)
-        while not stop_event.is_set():
-            sys.stdout.write("\r" + f"{fun_word} {next(spinner)} ")
-            sys.stdout.flush()
-            time.sleep(0.1)
-        # Clear the spinner line when done
-        sys.stdout.write("\r" + " " * 30 + "\r")
-        sys.stdout.flush()
+        console = rich.get_console()
+        with Live("", console=console) as live:
+            while not stop_event.is_set():
+                live.update(f"{fun_word} {next(spinner)} ")
+            live.update("")
 
     def register_tool(self, tool_definition, handler_function):
         """
