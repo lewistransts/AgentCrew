@@ -144,6 +144,15 @@ class ModelRegistry:
                 input_token_price_1m=0.1,
                 output_token_price_1m=0.4,
             ),
+            Model(
+                id="gemini-2.0-flash-thinking-exp",
+                provider="google",
+                name="Gemini 2.0 Flash Thinking",
+                description="Gemini 2.0 Flash with thinking.",
+                capabilities=["tool_use", "vision", "thinking"],
+                input_token_price_1m=0.1,
+                output_token_price_1m=0.4,
+            ),
         ]
 
         for model in default_models:

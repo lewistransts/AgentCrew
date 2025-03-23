@@ -43,7 +43,7 @@ For requests involving code files, implementations, or technical specifics:
 </rule>
 <rule>
 Defer to specialized agents when requests fall outside architectural guidance:
- - For implementation details → CodeAssistant
+ - For brainstorming, planning, problem solving tasks → Architect
  - For documentation tasks → Documentation agent
  - See <handoff> section for specific triggers
 </rule>

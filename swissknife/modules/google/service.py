@@ -45,6 +45,28 @@ class GoogleAIService(OpenAIService):
 
         return message
 
+    def stream_assistant_response(self, messages):
+        """Stream the assistant's response with tool support."""
+        stream_params = {
+            "model": self.model,
+            "messages": messages,
+            "stream_options": {"include_usage": True},
+            "max_tokens": 4096,
+        }
+        # stream_params["temperature"] = 0.8
+
+        # Add system message if provided
+        if self.system_prompt:
+            stream_params["messages"] = [
+                {"role": "system", "content": self.system_prompt}
+            ] + messages
+
+        # Add tools if available
+        if self.tools and self.model != "gemini-2.0-flash-thinking-exp":
+            stream_params["tools"] = self.tools
+
+        return self.client.chat.completions.create(**stream_params, stream=True)
+
     def process_stream_chunk(
         self, chunk, assistant_response: str, tool_uses: List[Dict]
     ) -> Tuple[str, List[Dict], int, int, Optional[str], Optional[tuple]]:

@@ -185,7 +185,7 @@ class InteractiveChat:
                             Markdown(
                                 "\n".join(
                                     assistant_response.split("\n")[
-                                        self.console.size.height * -1 + 5 :
+                                        self.console.size.height * -1 + 10 :
                                     ]
                                 )
                             )
