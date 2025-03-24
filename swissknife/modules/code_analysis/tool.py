@@ -84,7 +84,7 @@ def get_file_content_tool_definition(provider="claude"):
     Returns:
         Dict containing the tool definition
     """
-    description = "Read content from local project files. Use this tool to examine any file in the current project workspace. Can retrieve either the entire file content or specific code elements (classes/functions) within the file. For complete files, only provide the file_path parameter."
+    description = "Read function body, class body or whole code file. Use this tool when you need information about a specific function logic or class or file"
 
     properties = {
         "file_path": {

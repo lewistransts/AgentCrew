@@ -344,6 +344,7 @@ class InteractiveChat:
 
             # Truncate messages to the index from the selected turn
             truncated_messages = self.messages[: selected_turn.message_index]
+            self.conversation_turns = self.conversation_turns[: turn_number - 1]
 
             # Return the truncated messages
             return truncated_messages, True

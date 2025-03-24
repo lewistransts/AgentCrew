@@ -182,13 +182,14 @@ class OpenAIService(BaseLLMService):
             "model": self.model,
             "messages": messages,
             "stream_options": {"include_usage": True},
-            "max_tokens": 4096,
+            "max_tokens": 16000,
         }
         if self.model.startswith("o3"):
             stream_params["reasoning_effort"] = "high"
             stream_params["parallel_tool_calls"] = False
-        # else:
-        #     stream_params["temperature"] = 0.8
+        else:
+            stream_params["temperature"] = 0.6
+            stream_params["top_p"] = 0.9
 
         # Add system message if provided
         if self.system_prompt:

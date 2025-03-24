@@ -214,7 +214,8 @@ class GroqService(BaseLLMService):
             "model": self.model,
             "max_completion_tokens": 8192,
             "messages": messages,
-            # "temperature": 0.7,
+            "temperature": 0.7,
+            "top_p": 0.9,
         }
         if self.model == "qwen-qwq-32b":
             stream_params["reasoning_format"] = "parsed"

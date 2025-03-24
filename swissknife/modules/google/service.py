@@ -51,9 +51,11 @@ class GoogleAIService(OpenAIService):
             "model": self.model,
             "messages": messages,
             "stream_options": {"include_usage": True},
-            "max_tokens": 4096,
+            "max_tokens": 16000,
+            "parallel_tool_calls": False,
         }
-        # stream_params["temperature"] = 0.8
+        stream_params["temperature"] = 0.7
+        stream_params["top_p"] = 0.95
 
         # Add system message if provided
         if self.system_prompt:

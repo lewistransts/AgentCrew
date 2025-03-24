@@ -107,9 +107,9 @@ class ModelRegistry:
                 output_token_price_1m=0.99,
             ),
             Model(
-                id="llama3-70b-8192",
+                id="llama-3.3-70b-versatile",
                 provider="groq",
-                name="Llama 3 70B",
+                name="Llama 3.3 70B",
                 description="Meta's Llama 3 70B model optimized for Groq",
                 capabilities=["tool_use"],
                 input_token_price_1m=0.59,
