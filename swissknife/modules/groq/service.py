@@ -221,7 +221,7 @@ class GroqService(BaseLLMService):
             stream_params["reasoning_format"] = "parsed"
             # Base on model recommendation
             stream_params["temperature"] = 0.6
-            stream_params["top_p"] = 0.95
+            stream_params["top_p"] = 0.7
             stream_params["max_completion_tokens"] = 16000
 
         # Add system message if provided

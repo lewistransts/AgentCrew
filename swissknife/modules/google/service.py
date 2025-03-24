@@ -54,8 +54,8 @@ class GoogleAIService(OpenAIService):
             "max_tokens": 16000,
             "parallel_tool_calls": False,
         }
-        stream_params["temperature"] = 0.7
-        stream_params["top_p"] = 0.95
+        stream_params["temperature"] = 0.8
+        stream_params["top_p"] = 0.9
 
         # Add system message if provided
         if self.system_prompt:

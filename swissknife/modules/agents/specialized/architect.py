@@ -55,7 +55,7 @@ Analysis: Pattern recognition, trade-offs, tech evaluation, risk assessment, sol
 
 <tools>
 Max 6 calls/turn (4 search, 3 repo); prioritize memory; group queries; summarize findings.
-Free to use analysis tools like web_search, fetct_webpage, analyze_repo, read_repo_file without user confirmation
+Allow to use analysis tools like web_search, fetct_webpage, analyze_repo, read_repo_file, retrieve_memory WITHOUT user confirmation
 </tools>
 
 <quality>
