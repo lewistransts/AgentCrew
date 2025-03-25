@@ -212,10 +212,10 @@ class GroqService(BaseLLMService):
         """Stream the assistant's response with tool support."""
         stream_params = {
             "model": self.model,
-            "max_completion_tokens": 8192,
+            "max_completion_tokens": 4096,
             "messages": messages,
             "temperature": 0.6,
-            "top_p": 0.9,
+            "top_p": 0.95,
         }
 
         # Add system message if provided
@@ -233,10 +233,6 @@ class GroqService(BaseLLMService):
 
         if self.model == "qwen-qwq-32b":
             stream_params["reasoning_format"] = "parsed"
-            # Base on model recommendation
-            stream_params["temperature"] = 0.5
-            stream_params["top_p"] = 0.95
-            stream_params["max_completion_tokens"] = 16000
             stream_params["messages"].append(
                 {"role": "assistant", "content": "<think>\n"}
             )
