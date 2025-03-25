@@ -5,7 +5,13 @@ import mimetypes
 from typing import Optional, Dict, Any
 import logging
 
-from docling.document_converter import DocumentConverter
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import (
+    AcceleratorDevice,
+    AcceleratorOptions,
+    PdfPipelineOptions,
+)
+from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.exceptions import ConversionError
 
 logger = logging.getLogger(__name__)
@@ -42,7 +48,21 @@ class FileHandler:
         self.converter = None
         if DOCLING_ENABLED:
             try:
-                self.converter = DocumentConverter()
+                pipeline_options = PdfPipelineOptions()
+                pipeline_options.do_ocr = True
+                pipeline_options.do_table_structure = True
+                pipeline_options.table_structure_options.do_cell_matching = True
+
+                pipeline_options.accelerator_options = AcceleratorOptions(
+                    num_threads=4, device=AcceleratorDevice.AUTO
+                )
+                self.converter = DocumentConverter(
+                    format_options={
+                        InputFormat.PDF: PdfFormatOption(
+                            pipeline_options=pipeline_options
+                        )
+                    }
+                )
                 logger.info("Docling converter initialized successfully")
             except Exception as e:
                 logger.error(f"Failed to initialize Docling converter: {str(e)}")
