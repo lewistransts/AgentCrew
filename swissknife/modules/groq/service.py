@@ -215,12 +215,14 @@ class GroqService(BaseLLMService):
             "max_completion_tokens": 8192,
             "messages": messages,
             "temperature": 0.6,
-            "top_p": 0.95,
+            "top_p": 0.9,
         }
 
         # Add system message if provided
         if self.system_prompt:
-            system_role = "user" if "deepseek" in self.model else "system"
+            system_role = (
+                "user" if "deepseek" in self.model or "qwen" in self.model else "system"
+            )
             stream_params["messages"] = [
                 {
                     "role": f"{system_role}",
@@ -232,8 +234,8 @@ class GroqService(BaseLLMService):
         if self.model == "qwen-qwq-32b":
             stream_params["reasoning_format"] = "parsed"
             # Base on model recommendation
-            stream_params["temperature"] = 0.6
-            stream_params["top_p"] = 0.7
+            stream_params["temperature"] = 0.5
+            stream_params["top_p"] = 0.95
             stream_params["max_completion_tokens"] = 16000
             stream_params["messages"].append(
                 {"role": "assistant", "content": "<think>\n"}

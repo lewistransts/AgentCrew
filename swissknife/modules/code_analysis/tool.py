@@ -84,7 +84,7 @@ def get_file_content_tool_definition(provider="claude"):
     Returns:
         Dict containing the tool definition
     """
-    description = "Read function body, class body or whole code file. Use this tool when you need information about a specific function logic or class or file"
+    description = "Read whole file or function body, class body of a code file. Use this tool when you need information about a specific file or function logic or class body of a code file"
 
     properties = {
         "file_path": {
@@ -108,7 +108,7 @@ def get_file_content_tool_definition(provider="claude"):
 
     if provider == "claude":
         return {
-            "name": "read_repo_file",
+            "name": "read_file",
             "description": description,
             "input_schema": {
                 "type": "object",
@@ -120,7 +120,7 @@ def get_file_content_tool_definition(provider="claude"):
         return {
             "type": "function",
             "function": {
-                "name": "read_repo_file",
+                "name": "read_file",
                 "description": description,
                 "parameters": {
                     "type": "object",
