@@ -220,9 +220,7 @@ class GroqService(BaseLLMService):
 
         # Add system message if provided
         if self.system_prompt:
-            system_role = (
-                "user" if "deepseek" in self.model or "qwen" in self.model else "system"
-            )
+            system_role = "user" if "deepseek" in self.model else "system"
             stream_params["messages"] = [
                 {
                     "role": f"{system_role}",
@@ -233,9 +231,9 @@ class GroqService(BaseLLMService):
 
         if self.model == "qwen-qwq-32b":
             stream_params["reasoning_format"] = "parsed"
-            stream_params["messages"].append(
-                {"role": "assistant", "content": "<think>\n"}
-            )
+            # stream_params["messages"].append(
+            #     {"role": "assistant", "content": "<think>\n"}
+            # )
 
         # Add tools if available
         if self.tools:
@@ -302,7 +300,7 @@ class GroqService(BaseLLMService):
             message = chunk.message
             content = message.content or ""
             # Check for tool calls
-            if hasattr(message, "reasoning"):
+            if hasattr(message, "reasoning") and message.reasoning:
                 thinking_content = (message.reasoning, None)
             if hasattr(message, "tool_calls") and message.tool_calls:
                 for tool_call in message.tool_calls:

@@ -146,7 +146,7 @@ class ModelRegistry:
                 output_token_price_1m=0.79,
             ),
             Model(
-                id="gemini-2.0-flash-001",
+                id="gemini-2.0-flash",
                 provider="google",
                 name="Gemini 2.0 Flash",
                 description="Gemini 2.0 Flash is a powerful language model from Google, designed for both text and visual inputs.",

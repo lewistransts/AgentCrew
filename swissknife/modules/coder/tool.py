@@ -16,18 +16,18 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
     """
     if provider == "claude":
         return {
-            "name": "review_spec_prompt",
-            "description": "Run through a checklist with spec prompt and return refine suggestions",
+            "name": "review_aider_prompt",
+            "description": "Run through a checklist with aider prompt and return refine suggestions",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "prompt": {
                         "type": "string",
-                        "description": "The spec prompt to be reviewed",
+                        "description": "The aider prompt to be reviewed",
                     },
                     "repo_path": {
                         "type": "string",
-                        "description": "The repo directory path to review spec prompt against",
+                        "description": "The repo directory path to review aider prompt against",
                     },
                 },
                 "required": ["prompt", "repo_path"],
@@ -37,18 +37,18 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
         return {
             "type": "function",
             "function": {
-                "name": "review_spec_prompt",
-                "description": "Run through a checklist with spec prompt and return refine suggestions",
+                "name": "review_aider_prompt",
+                "description": "Run through a checklist with aider prompt and return refine suggestions",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "prompt": {
                             "type": "string",
-                            "description": "The spec prompt to be reviewed",
+                            "description": "The aider prompt to be reviewed",
                         },
                         "repo_path": {
                             "type": "string",
-                            "description": "The repo directory path to review spec prompt against",
+                            "description": "The repo directory path to review aider prompt against",
                         },
                     },
                     "required": ["prompt", "repo_path"],
@@ -100,42 +100,42 @@ def get_implement_spec_prompt_tool_definition(provider="claude") -> Dict[str, An
     """
     if provider == "claude":
         return {
-            "name": "implement_spec_prompt",
-            "description": "NEVER run this without user request explicitly. Generate code implementation via aider using a spec prompt",
+            "name": "implement_aider_prompt",
+            "description": "NEVER run this without user request explicitly. Generate code implementation via aider using a aider prompt",
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "spec_prompt": {
+                    "aider_prompt": {
                         "type": "string",
-                        "description": "The specification prompt to implement",
+                        "description": "The Aider prompt that instructs Aider to implement",
                     },
                     "repo_path": {
                         "type": "string",
                         "description": "The repository path where code should be implemented",
                     },
                 },
-                "required": ["spec_prompt", "repo_path"],
+                "required": ["aider_prompt", "repo_path"],
             },
         }
     elif provider in ["openai", "groq"]:
         return {
             "type": "function",
             "function": {
-                "name": "implement_spec_prompt",
-                "description": "NEVER run this without user request explicitly. Generate code implementation via aider using a spec prompt",
+                "name": "implement_aider_prompt",
+                "description": "NEVER run this without user request explicitly. Generate code implementation via aider using a aider prompt",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "spec_prompt": {
+                        "aider_prompt": {
                             "type": "string",
-                            "description": "The specification prompt to implement",
+                            "description": "The Aider prompt that instructs Aider to implement",
                         },
                         "repo_path": {
                             "type": "string",
                             "description": "The repository path where code should be implemented",
                         },
                     },
-                    "required": ["spec_prompt", "repo_path"],
+                    "required": ["aider_prompt", "repo_path"],
                 },
             },
         }
