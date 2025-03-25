@@ -14,22 +14,21 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
     if provider == "claude":
         return {
             "name": "handoff",
-            "description": "Hands off the conversation to a specialized agent when the current task requires different expertise",
+            "description": "Transfers the conversation to a specialized agent when the current task requires expertise beyond the current agent's capabilities. ALWAYS check for handoff triggers BEFORE responding to the user. Provide a clear explanation to the user why the handoff is necessary.",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "target_agent": {
                         "type": "string",
-                        "enum": ["Architect", "TechLead", "Documentation"],
-                        "description": "The name of the agent to hand off to.",
+                        "description": "The name of the specialized agent to hand off the conversation to.  Refer to the agent registry for available agents and their specific expertise.",
                     },
                     "task": {
                         "type": "string",
-                        "description": "The task for handoff agent to handle",
+                        "description": "A precise description of the task the target agent should perform. This description MUST include the triggering keywords that prompted the handoff. Be specific and actionable.",
                     },
                     "context_summary": {
                         "type": "string",
-                        "description": "A summary of the conversation context to provide to the new agent",
+                        "description": "A concise summary of the relevant conversation history and current state, providing essential background information for the target agent. Include key decisions, user intent, and unresolved issues.",
                     },
                 },
                 "required": ["target_agent", "task"],
@@ -40,22 +39,21 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
             "type": "function",
             "function": {
                 "name": "handoff",
-                "description": "Hands off the conversation to a specialized agent when the current task requires different expertise",
+                "description": "Transfers the conversation to a specialized agent when the current task requires expertise beyond the current agent's capabilities. ALWAYS check for handoff triggers BEFORE responding to the user. Provide a clear explanation to the user why the handoff is necessary.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "target_agent": {
                             "type": "string",
-                            "enum": ["Architect", "TechLead", "Documentation"],
-                            "description": "The name of the agent to hand off to",
+                            "description": "The name of the specialized agent to hand off the conversation to.  Refer to the agent registry for available agents and their specific expertise.",
                         },
                         "task": {
                             "type": "string",
-                            "description": "The task for handoff agent to handle",
+                            "description": "A precise description of the task the target agent should perform. This description MUST include the triggering keywords that prompted the handoff. Be specific and actionable.",
                         },
                         "context_summary": {
                             "type": "string",
-                            "description": "A summary of the conversation context to provide to the new agent",
+                            "description": "A concise summary of the relevant conversation history and current state, providing essential background information for the target agent. Include key decisions, user intent, and unresolved issues.",
                         },
                     },
                     "required": ["target_agent", "task"],

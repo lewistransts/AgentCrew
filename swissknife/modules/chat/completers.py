@@ -20,7 +20,7 @@ class JumpCompleter(Completer):
             word_before_cursor = document.get_word_before_cursor()
 
             # Get all available turn numbers
-            for i, turn in enumerate(self.conversation_turns[1:], 1):
+            for i, turn in enumerate(self.conversation_turns, 1):
                 turn_str = str(i)
                 if turn_str.startswith(word_before_cursor):
                     # Use the stored preview

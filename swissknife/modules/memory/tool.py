@@ -15,13 +15,13 @@ def get_memory_forget_tool_definition(provider="claude") -> Dict[str, Any]:
     if provider == "claude":
         return {
             "name": "forget_memory_topic",
-            "description": "Remove memories related to a specific topic from the conversation history",
+            "description": "Removes memories related to a specific topic from the conversation history. This is useful for clearing sensitive information, irrelevant details, or outdated information that might conflict with the current task. Use this sparingly and only when absolutely necessary to avoid losing valuable context. Provide a clear justification for why the topic is being removed.",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "topic": {
                         "type": "string",
-                        "description": "Keywords describing the topic to forget",
+                        "description": "Keywords describing the topic to be forgotten. Be precise and comprehensive to ensure all relevant memories are removed. Include any IDs or specific identifiers related to the topic.",
                     },
                 },
                 "required": ["topic"],
@@ -32,13 +32,13 @@ def get_memory_forget_tool_definition(provider="claude") -> Dict[str, Any]:
             "type": "function",
             "function": {
                 "name": "forget_memory_topic",
-                "description": "Remove memories related to a specific topic from the conversation history",
+                "description": "Removes memories related to a specific topic from the conversation history. This is useful for clearing sensitive information, irrelevant details, or outdated information that might conflict with the current task. Use this sparingly and only when absolutely necessary to avoid losing valuable context. Provide a clear justification for why the topic is being removed.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "topic": {
                             "type": "string",
-                            "description": "Keywords describing the topic to forget",
+                            "description": "Keywords describing the topic to be forgotten. Be precise and comprehensive to ensure all relevant memories are removed. Include any IDs or specific identifiers related to the topic.",
                         },
                     },
                     "required": ["topic"],
@@ -89,13 +89,13 @@ def get_memory_retrieve_tool_definition(provider="claude") -> Dict[str, Any]:
     if provider == "claude":
         return {
             "name": "retrieve_memory",
-            "description": "Retrieve relevant context or information in memory based on keywords",
+            "description": "Retrieves relevant information from past conversations and stored knowledge, based on keywords. ALWAYS use this tool as a primary method for finding relevant information and context. Use specific keywords for best results. Consider the likely topics and key terms from prior interactions when formulating your keywords.",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "keywords": {
                         "type": "string",
-                        "description": "Keywords to search for in past conversations",
+                        "description": "Keywords used to search for relevant information in memory. Use specific and descriptive terms to narrow the search and retrieve the most useful results. Consider synonyms and related terms to broaden the search.",
                     },
                 },
                 "required": ["keywords"],
@@ -106,13 +106,13 @@ def get_memory_retrieve_tool_definition(provider="claude") -> Dict[str, Any]:
             "type": "function",
             "function": {
                 "name": "retrieve_memory",
-                "description": "Retrieve relevant context or information in memory based on keywords",
+                "description": "Retrieves relevant information from past conversations and stored knowledge, based on keywords. ALWAYS use this tool as a primary method for finding relevant information and context. Use specific keywords for best results. Consider the likely topics and key terms from prior interactions when formulating your keywords.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "keywords": {
                             "type": "string",
-                            "description": "Keywords to search for in past conversations",
+                            "description": "Keywords used to search for relevant information in memory. Use specific and descriptive terms to narrow the search and retrieve the most useful results. Consider synonyms and related terms to broaden the search.",
                         },
                     },
                     "required": ["keywords"],

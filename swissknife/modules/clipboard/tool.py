@@ -15,7 +15,7 @@ def get_clipboard_read_tool_definition(provider="claude") -> Dict[str, Any]:
     if provider == "claude":
         return {
             "name": "clipboard_read",
-            "description": "Read content from the system clipboard (automatically detects text or image)",
+            "description": "Reads the current content from the system clipboard. Automatically detects whether the content is text or an image. Use this to access data the user may have copied from another application. Useful when the user refers to content they've copied from another source without explicitly providing it. If the user seems to be referencing external content without providing it, consider using this tool.",
             "input_schema": {
                 "type": "object",
                 "properties": {},
@@ -27,7 +27,7 @@ def get_clipboard_read_tool_definition(provider="claude") -> Dict[str, Any]:
             "type": "function",
             "function": {
                 "name": "clipboard_read",
-                "description": "Read content from the system clipboard (automatically detects text or image)",
+                "description": "Reads the current content from the system clipboard. Automatically detects whether the content is text or an image. Use this to access data the user may have copied from another application. Useful when the user refers to content they've copied from another source without explicitly providing it. If the user seems to be referencing external content without providing it, consider using this tool.",
                 "parameters": {
                     "type": "object",
                     "properties": {},
@@ -50,13 +50,13 @@ def get_clipboard_write_tool_definition(provider="claude") -> Dict[str, Any]:
     if provider == "claude":
         return {
             "name": "clipboard_write",
-            "description": "Write content to the system clipboard",
+            "description": "Writes content to the system clipboard, making it accessible for pasting into other applications. Use this to provide information to the user in a readily accessible format. Always explain *why* you are writing to the clipboard and what the user should do with the copied content. For example, 'I have written the generated code snippet to your clipboard. You can now paste it into your code editor.",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "content": {
                         "type": "string",
-                        "description": "Content to write to the clipboard",
+                        "description": "The text or data to write to the clipboard. Ensure the content is properly formatted for the intended use and is clear and concise.",
                     },
                 },
                 "required": ["content"],
@@ -67,13 +67,13 @@ def get_clipboard_write_tool_definition(provider="claude") -> Dict[str, Any]:
             "type": "function",
             "function": {
                 "name": "clipboard_write",
-                "description": "Write content to the system clipboard",
+                "description": "Writes content to the system clipboard, making it accessible for pasting into other applications. Use this to provide information to the user in a readily accessible format. Always explain *why* you are writing to the clipboard and what the user should do with the copied content. For example, 'I have written the generated code snippet to your clipboard. You can now paste it into your code editor.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "content": {
                             "type": "string",
-                            "description": "Content to write to the clipboard",
+                            "description": "The text or data to write to the clipboard. Ensure the content is properly formatted for the intended use and is clear and concise.",
                         },
                     },
                     "required": ["content"],

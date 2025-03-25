@@ -162,7 +162,7 @@ def register_agent_tools(agent, services):
 
         register_memory(services["memory"], agent)
 
-    if agent.name == "Architect":
+    if agent.name == "Architect" or agent.name == "Documentation":
         if services.get("web_search"):
             from swissknife.modules.web_search.tool import (
                 register as register_web_search,
@@ -171,7 +171,7 @@ def register_agent_tools(agent, services):
             register_web_search(services["web_search"], agent)
 
     # Agent-specific tools
-    if agent.name == "Architect" or agent.name == "TechLead":
+    if agent.name == "Architect" or agent.name == "CodeAssistant":
         # Code analysis tools for technical agents
         if services.get("code_analysis"):
             from swissknife.modules.code_analysis.tool import (
@@ -180,7 +180,7 @@ def register_agent_tools(agent, services):
 
             register_code_analysis(services["code_analysis"], agent)
 
-    if agent.name == "TechLead":
+    if agent.name == "CodeAssistant":
         # Spec validation for Code Assistant
         if services.get("spec_validator"):
             from swissknife.modules.coder.tool import (

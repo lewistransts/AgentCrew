@@ -6,23 +6,23 @@ def get_web_search_tool_definition(provider="claude"):
     if provider == "claude":
         return {
             "name": "web_search",
-            "description": "Search the internet for current information on a topic or query.",
+            "description": "Searches the web for up-to-date information on a specific topic or query. Use this to gather current information, verify facts, or explore the latest developments. Summarize your findings *before* presenting them to the user. If the user is seeking information that is likely to have changed recently, this is the tool to use.",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "The search query to look up on the web",
+                        "description": "The search query to use for web search. Use precise and specific keywords to get the most relevant results. Include any relevant context to improve search accuracy.",
                     },
                     "search_depth": {
                         "type": "string",
                         "enum": ["basic", "advanced"],
-                        "description": "The depth of search to perform. 'basic' is faster, 'advanced' is more thorough.",
+                        "description": "The depth of the search to perform. 'basic' is faster and suitable for general information. 'advanced' is more thorough and suitable for complex or nuanced queries. Start with 'basic' and only use 'advanced' if initial results are insufficient.",
                         "default": "basic",
                     },
                     "max_results": {
                         "type": "integer",
-                        "description": "Maximum number of results to return (1-10)",
+                        "description": "The maximum number of search results to return. A higher number allows for broader coverage but may include less relevant results. (Range: 1-10)",
                         "default": 5,
                         "minimum": 1,
                         "maximum": 10,
@@ -36,23 +36,23 @@ def get_web_search_tool_definition(provider="claude"):
             "type": "function",
             "function": {
                 "name": "web_search",
-                "description": "Search the web for current information on a topic or query.",
+                "description": "Searches the web for up-to-date information on a specific topic or query. Use this to gather current information, verify facts, or explore the latest developments. Summarize your findings *before* presenting them to the user. If the user is seeking information that is likely to have changed recently, this is the tool to use.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "The search query to look up on the web",
+                            "description": "The search query to use for web search. Use precise and specific keywords to get the most relevant results. Include any relevant context to improve search accuracy.",
                         },
                         "search_depth": {
                             "type": "string",
                             "enum": ["basic", "advanced"],
-                            "description": "The depth of search to perform. 'basic' is faster, 'advanced' is more thorough.",
+                            "description": "The depth of the search to perform. 'basic' is faster and suitable for general information. 'advanced' is more thorough and suitable for complex or nuanced queries. Start with 'basic' and only use 'advanced' if initial results are insufficient.",
                             "default": "basic",
                         },
                         "max_results": {
                             "type": "integer",
-                            "description": "Maximum number of results to return (1-10)",
+                            "description": "The maximum number of search results to return. A higher number allows for broader coverage but may include less relevant results. (Range: 1-10)",
                             "default": 5,
                             "minimum": 1,
                             "maximum": 10,
@@ -69,13 +69,13 @@ def get_web_extract_tool_definition(provider="claude"):
     if provider == "claude":
         return {
             "name": "fetch_webpage",
-            "description": "Extract and retrieve the content from external web pages (HTTP/HTTPS URLs only). Use this tool exclusively for accessing online resources, not for reading local project files.",
+            "description": "Retrieves the content from a web page specified by its URL. Use this to access information, documentation, or data available on the web *after* finding the URL using `web_search` or other means. Only use HTTP/HTTPS URLs. DO NOT use this tool to access local project files. Summarize the content of the webpage before presenting it to the user. Prioritize extracting information relevant to the user's current request.",
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "url": {
                         "type": "string",
-                        "description": "The complete HTTP/HTTPS web address to extract content from (e.g., 'https://example.com/page')",
+                        "description": "The complete HTTP or HTTPS web address to retrieve content from (e.g., 'https://example.com/page'). Ensure the URL is valid and accessible. Verify the URL's relevance to the user's request before fetching.",
                     }
                 },
                 "required": ["url"],
@@ -86,13 +86,13 @@ def get_web_extract_tool_definition(provider="claude"):
             "type": "function",
             "function": {
                 "name": "fetch_webpage",
-                "description": "Extract and retrieve the content from external web pages (HTTP/HTTPS URLs only). Use this tool exclusively for accessing online resources, not for reading local project files.",
+                "description": "Retrieves the content from a web page specified by its URL. Use this to access information, documentation, or data available on the web *after* finding the URL using `web_search` or other means. Only use HTTP/HTTPS URLs. DO NOT use this tool to access local project files. Summarize the content of the webpage before presenting it to the user. Prioritize extracting information relevant to the user's current request.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "url": {
                             "type": "string",
-                            "description": "The complete HTTP/HTTPS web address to extract content from (e.g., 'https://example.com/page')",
+                            "description": "The complete HTTP or HTTPS web address to retrieve content from (e.g., 'https://example.com/page'). Ensure the URL is valid and accessible. Verify the URL's relevance to the user's request before fetching.",
                         }
                     },
                     "required": ["url"],

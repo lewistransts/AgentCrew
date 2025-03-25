@@ -87,6 +87,7 @@ class ModelRegistry:
                 capabilities=["tool_use", "vision"],
                 input_token_price_1m=0.15,
                 output_token_price_1m=0.6,
+                default=True,
             ),
             Model(
                 id="o3-mini",
@@ -152,6 +153,7 @@ class ModelRegistry:
                 capabilities=["tool_use", "vision"],
                 input_token_price_1m=0.1,
                 output_token_price_1m=0.4,
+                default=True,
             ),
             Model(
                 id="gemini-2.0-flash-thinking-exp",

@@ -14,12 +14,7 @@ def get_code_analysis_tool_definition(provider="claude") -> Dict[str, Any]:
     Returns:
         Dict containing the tool definition
     """
-    description = (
-        "Build a tree-sitter based structural map of source code files. "
-        "This tool analyzes code structure to identify classes, functions, and methods. "
-        "Useful for code analysis and understanding project structure. "
-        "Example: Enter '.' to analyze all source files in current directory, or 'src' to analyze all files in the src directory."
-    )
+    description = "Analyzes the structure of source code files within a repository, creating a structural map. This identifies key code elements, enabling code understanding and project organization insights. Explain what insights you are hoping to gain from analyzing the repository before using this tool."
 
     if provider == "claude":
         return {
@@ -30,7 +25,7 @@ def get_code_analysis_tool_definition(provider="claude") -> Dict[str, Any]:
                 "properties": {
                     "path": {
                         "type": "string",
-                        "description": "Root directory to analyze",
+                        "description": "The root directory to analyze. Use '.' to analyze all source files in the current directory, or specify a subdirectory (e.g., 'src') to analyze files within that directory. Choose the path that will provide the most relevant information for the task at hand.",
                     }
                 },
                 "required": ["path"],
@@ -47,7 +42,7 @@ def get_code_analysis_tool_definition(provider="claude") -> Dict[str, Any]:
                     "properties": {
                         "path": {
                             "type": "string",
-                            "description": "Root directory to analyze",
+                            "description": "The root directory to analyze. Use '.' to analyze all source files in the current directory, or specify a subdirectory (e.g., 'src') to analyze files within that directory. Choose the path that will provide the most relevant information for the task at hand.",
                         }
                     },
                     "required": ["path"],
@@ -84,25 +79,25 @@ def get_file_content_tool_definition(provider="claude"):
     Returns:
         Dict containing the tool definition
     """
-    description = "Read whole file or function body, class body of a code file. Use this tool when you need information about a specific file or function logic or class body of a code file"
+    description = "Reads the content of a code file, or a specific code element within that file (function or class body). Use this to examine the logic of specific functions, the structure of classes, or the overall content of a file. ALWAYS justify why you're reading the file and what you expect to learn from it. Before using, consider if `analyze_repo` would provide sufficient information at a higher level."
 
     properties = {
         "file_path": {
             "type": "string",
-            "description": "Relative path from current directory of agent to the local repo file.",
+            "description": "The relative path from the current directory of the agent to the local repository file. Example: 'src/my_module.py'",
         },
         "element_type": {
             "type": "string",
-            "description": "Optional: Type of code element to extract (Always use when only targeting a specific element)",
+            "description": "The type of code element to extract. ALWAYS use this when targeting a specific element.",
             "enum": ["class", "function"],
         },
         "element_name": {
             "type": "string",
-            "description": "Optional: Name of the class or function to extract (Always use when only targeting a specific element)",
+            "description": "The name of the class or function to extract. ALWAYS use this when targeting a specific element. Case-sensitive.",
         },
         "scope_path": {
             "type": "string",
-            "description": "Optional: Dot-separated path to resolve ambiguity (e.g., 'ClassName.method_name')",
+            "description": "A dot-separated path to resolve ambiguity when multiple elements share the same name (e.g., 'ClassName.method_name'). Required only if the element name is ambiguous. Omit if unnecessary.",
         },
     }
 
