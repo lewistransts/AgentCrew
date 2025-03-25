@@ -214,25 +214,31 @@ class GroqService(BaseLLMService):
             "model": self.model,
             "max_completion_tokens": 8192,
             "messages": messages,
-            "temperature": 0.7,
-            "top_p": 0.9,
+            "temperature": 0.6,
+            "top_p": 0.95,
         }
+
+        # Add system message if provided
+        if self.system_prompt:
+            system_role = "user" if "deepseek" in self.model else "system"
+            stream_params["messages"] = [
+                {
+                    "role": f"{system_role}",
+                    "content": """DO NOT generate Chinese characters.""",
+                },
+                {"role": f"{system_role}", "content": self.system_prompt},
+            ] + messages
+
         if self.model == "qwen-qwq-32b":
             stream_params["reasoning_format"] = "parsed"
             # Base on model recommendation
             stream_params["temperature"] = 0.6
             stream_params["top_p"] = 0.7
             stream_params["max_completion_tokens"] = 16000
+            stream_params["messages"].append(
+                {"role": "assistant", "content": "<think>\n"}
+            )
 
-        # Add system message if provided
-        if self.system_prompt:
-            stream_params["messages"] = [
-                {
-                    "role": "system",
-                    "content": """DO NOT generate Chinese characters. Always call tool using JSON format: {"role": "assistant", "tool_calls": [{"id": "call_d5wg", "type": "function", "function": {"name": "get_weather", "arguments": "{\"location\": \"New York, NY\"}"}}]}""",
-                },
-                {"role": "system", "content": self.system_prompt},
-            ] + messages
         # Add tools if available
         if self.tools:
             stream_params["tools"] = self.tools
@@ -287,7 +293,7 @@ class GroqService(BaseLLMService):
             )
         """
         # Check if this is a non-streaming response (for tool use)
-        thinking_content = None  # Groq doesn't support thinking mode
+        thinking_content = None
 
         input_tokens = self.current_input_tokens
         self.current_input_tokens = 0
@@ -298,6 +304,8 @@ class GroqService(BaseLLMService):
             message = chunk.message
             content = message.content or ""
             # Check for tool calls
+            if hasattr(message, "reasoning"):
+                thinking_content = (message.reasoning, None)
             if hasattr(message, "tool_calls") and message.tool_calls:
                 for tool_call in message.tool_calls:
                     function = tool_call.function
