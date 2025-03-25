@@ -56,7 +56,8 @@ class InteractiveChat:
         @kb.add(Keys.ControlS)
         def _(event):
             """Submit on Ctrl+S."""
-            event.current_buffer.validate_and_handle()
+            if event.current_buffer.text.strip():
+                event.current_buffer.validate_and_handle()
 
         @kb.add(Keys.Enter)
         def _(event):
