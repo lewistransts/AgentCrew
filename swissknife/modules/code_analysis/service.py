@@ -455,31 +455,80 @@ class CodeAnalysisService:
                                 return result
 
                 elif language == "java":
-                    if node.type in [
-                        "class_declaration",
-                        "method_declaration",
-                        "constructor_declaration",
-                        "interface_declaration",
-                    ]:
+                    if node.type in ["class_declaration", "interface_declaration"]:
+                        # Handle class and interface declarations
                         for child in node.children:
                             if child.type == "identifier":
                                 result["name"] = self._extract_node_text(
                                     child, source_code
                                 )
-                                return result
-                        return result
-                    elif node.type in ["field_declaration", "variable_declaration"]:
-                        # Handle Java global fields and variables
+                            elif child.type in ["class_body", "interface_body"]:
+                                result["children"] = [
+                                    process_node(c) for c in child.children
+                                ]
+
+                    elif node.type == "method_declaration":
+                        # Handle method declarations
+                        method_name = None
+                        parameters = []
+                        return_type = None
+
+                        for child in node.children:
+                            if child.type == "identifier":
+                                method_name = self._extract_node_text(
+                                    child, source_code
+                                )
+                                result["name"] = method_name
+                            elif child.type == "formal_parameters":
+                                for param in child.children:
+                                    if param.type == "parameter":
+                                        param_name = self._extract_node_text(
+                                            param.child_by_field_name("name"),
+                                            source_code,
+                                        )
+                                        param_type = self._extract_node_text(
+                                            param.child_by_field_name("type"),
+                                            source_code,
+                                        )
+                                        parameters.append(f"{param_type} {param_name}")
+                                result["parameters"] = parameters
+                            elif child.type == "type":
+                                return_type = self._extract_node_text(
+                                    child, source_code
+                                )
+                                result["return_type"] = return_type
+
+                    elif node.type == "field_declaration":
+                        # Handle field declarations
                         for child in node.children:
                             if child.type == "variable_declarator":
-                                for subchild in child.children:
-                                    if subchild.type == "identifier":
-                                        result["type"] = "variable_declaration"
-                                        result["name"] = self._extract_node_text(
-                                            subchild, source_code
-                                        )
-                                        return result
-                        return result
+                                var_name = self._extract_node_text(
+                                    child.child_by_field_name("name"), source_code
+                                )
+                                var_type = self._extract_node_text(
+                                    child.child_by_field_name("type"), source_code
+                                )
+                                result["name"] = var_name
+                                result["variable_type"] = var_type
+                                result["type"] = "field_declaration"
+
+                    elif node.type == "annotation":
+                        # Handle annotations
+                        annotation_name = self._extract_node_text(node, source_code)
+                        result["name"] = annotation_name
+                        result["type"] = "annotation"
+
+                    elif node.type == "lambda_expression":
+                        # Handle lambda expressions
+                        result["type"] = "lambda_expression"
+                        # Additional processing for lambda parameters and body can be added here
+
+                    # Recursively process children for nested classes or other constructs
+                    children = [process_node(child) for child in node.children]
+                    if children:
+                        result["children"] = children
+
+                    return result
 
                 elif language == "cpp":
                     if node.type in [

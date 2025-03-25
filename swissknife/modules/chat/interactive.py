@@ -1,3 +1,5 @@
+# swissknife/modules/chat/interactive.py
+
 import sys
 import traceback
 import os
@@ -17,7 +19,11 @@ from .constants import BLUE, GREEN, YELLOW, RESET, BOLD, GRAY, RICH_YELLOW, RICH
 from .completers import ChatCompleter
 from .history import ChatHistoryManager, ConversationTurn
 from swissknife.modules.agents.manager import AgentManager
+from swissknife.modules.chat.file_handler import FileHandler
 
+# Color constants for error messages
+RED = "\033[91m"  # Red color for errors
+RESET = "\033[0m"  # Reset color
 
 class InteractiveChat:
     def __init__(self, memory_service=None):
@@ -38,6 +44,7 @@ class InteractiveChat:
         self.conversation_turns = []  # Track conversation turns
         self.current_user_message = None  # Track the current user message
         self.messages = []  # Store messages as an instance variable
+        self.file_handler = FileHandler()
 
     def _copy_to_clipboard(self):
         """Copy the latest assistant response to clipboard and show confirmation."""
@@ -538,9 +545,15 @@ class InteractiveChat:
         elif user_input.startswith("/file "):
             file_path = user_input[6:].strip()
             file_path = os.path.expanduser(file_path)
-            file_message = self.llm.handle_file_command(file_path)
-            if file_message:
-                messages.append({"role": "user", "content": file_message})
+
+            # Process file with the file handling service
+            file_content = self.file_handler.process_file(file_path)
+
+            if file_content:
+                messages.append({"role": "user", "content": [file_content]})
+                return messages, False, True
+            else:
+                print(f"{RED}Error: Failed to process file {file_path}{RESET}")
                 return messages, False, True
         else:
             # Add regular text message
@@ -570,7 +583,8 @@ class InteractiveChat:
         if files:
             message_content = []
             for file_path in files:
-                file_content = self.llm.process_file_for_message(file_path)
+                # Use the file handling service instead of direct LLM processing
+                file_content = self.file_handler.process_file(file_path)
                 if file_content:
                     message_content.append(file_content)
 
