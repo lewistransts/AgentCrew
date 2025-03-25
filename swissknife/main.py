@@ -137,59 +137,6 @@ def setup_services(provider):
     return services
 
 
-def register_agent_tools(agent, services):
-    """
-    Register appropriate tools for each agent type.
-
-    Args:
-        agent: The agent to register tools for
-        services: Dictionary of available services
-    """
-    # Register the handoff tool with all agents
-    if services.get("agent_manager"):
-        from swissknife.modules.agents.tools.handoff import register as register_handoff
-
-        register_handoff(services["agent_manager"], agent)
-
-    # Common tools for all agents
-    if services.get("clipboard"):
-        from swissknife.modules.clipboard.tool import register as register_clipboard
-
-        register_clipboard(services["clipboard"], agent)
-
-    if services.get("memory"):
-        from swissknife.modules.memory.tool import register as register_memory
-
-        register_memory(services["memory"], agent)
-
-    if agent.name == "Architect" or agent.name == "Documentation":
-        if services.get("web_search"):
-            from swissknife.modules.web_search.tool import (
-                register as register_web_search,
-            )
-
-            register_web_search(services["web_search"], agent)
-
-    # Agent-specific tools
-    if agent.name == "Architect" or agent.name == "CodeAssistant":
-        # Code analysis tools for technical agents
-        if services.get("code_analysis"):
-            from swissknife.modules.code_analysis.tool import (
-                register as register_code_analysis,
-            )
-
-            register_code_analysis(services["code_analysis"], agent)
-
-    if agent.name == "CodeAssistant":
-        # Spec validation for Code Assistant
-        if services.get("spec_validator"):
-            from swissknife.modules.coder.tool import (
-                register as register_spec_validator,
-            )
-
-            register_spec_validator(services["spec_validator"], agent)
-
-
 def setup_agents(services):
     """
     Set up the agent system with specialized agents.
@@ -207,14 +154,9 @@ def setup_agents(services):
     llm_service = services["llm"]
 
     # Create specialized agents
-    architect = ArchitectAgent(llm_service)
-    code_assistant = CodeAssistantAgent(llm_service)
-    documentation = DocumentationAgent(llm_service)
-
-    # Register appropriate tools for each agent
-    register_agent_tools(architect, services)
-    register_agent_tools(code_assistant, services)
-    register_agent_tools(documentation, services)
+    architect = ArchitectAgent(llm_service, services)
+    code_assistant = CodeAssistantAgent(llm_service, services)
+    documentation = DocumentationAgent(llm_service, services)
 
     # Register agents with the manager - this will keep them deactivated until selected
     agent_manager.register_agent(architect)

@@ -1,11 +1,18 @@
 from abc import ABC
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 
 class Agent(ABC):
     """Base class for all specialized agents."""
 
-    def __init__(self, name: str, description: str, llm_service):
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        llm_service,
+        services: Dict[str, Any],
+        tools: List[str],
+    ):
         """
         Initialize a new agent.
 
@@ -13,10 +20,13 @@ class Agent(ABC):
             name: The name of the agent
             description: A description of the agent's capabilities
             llm_service: The LLM service to use for this agent
+            services: Dictionary of available services
         """
         self.name = name
         self.description = description
         self.llm = llm_service
+        self.services = services
+        self.tools: List[str] = tools  # List of tool names that the agent needs
         self.system_prompt = None
         # Store tool definitions in the same format as ToolRegistry
         self.tool_definitions = {}  # {tool_name: (definition_func, handler_factory, service_instance)}
@@ -24,6 +34,8 @@ class Agent(ABC):
             set()
         )  # Set of tool names that are registered with the LLM
         self.is_active = False
+
+        self.register_tools()
 
     def _extract_tool_name(self, tool_def: Dict) -> str:
         """
@@ -44,6 +56,61 @@ class Agent(ABC):
             return tool_def["function"]["name"]
         else:
             raise ValueError("Could not extract tool name from definition")
+
+    def register_tools(self):
+        """
+        Register tools for this agent using the services dictionary.
+        """
+
+        if self.services.get("agent_manager"):
+            from swissknife.modules.agents.tools.handoff import (
+                register as register_handoff,
+            )
+
+            register_handoff(self.services["agent_manager"], self)
+        for tool_name in self.tools:
+            if self.services and tool_name in self.services:
+                service = self.services[tool_name]
+                if service:
+                    if tool_name == "llm":
+                        self.register_tool(
+                            service.register_tool, service.register_tool
+                        )  # Example: register LLM tools
+                    elif tool_name == "memory":
+                        from swissknife.modules.memory.tool import (
+                            register as register_memory,
+                        )
+
+                        register_memory(service, self)
+                    elif tool_name == "clipboard":
+                        from swissknife.modules.clipboard.tool import (
+                            register as register_clipboard,
+                        )
+
+                        register_clipboard(service, self)
+                    elif tool_name == "code_analysis":
+                        from swissknife.modules.code_analysis.tool import (
+                            register as register_code_analysis,
+                        )
+
+                        register_code_analysis(service, self)
+                    elif tool_name == "web_search":
+                        from swissknife.modules.web_search.tool import (
+                            register as register_web_search,
+                        )
+
+                        register_web_search(service, self)
+                    elif tool_name == "spec_validator":
+                        from swissknife.modules.coder.tool import (
+                            register as register_spec_validator,
+                        )
+
+                        register_spec_validator(service, self)
+
+                    else:
+                        print(f"⚠️ Tool {tool_name} not found in services")
+            else:
+                print(f"⚠️ Service {tool_name} not available for tool registration")
 
     def register_tool(self, definition_func, handler_factory, service_instance=None):
         """
