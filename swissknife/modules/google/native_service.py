@@ -479,21 +479,26 @@ class GoogleAINativeService(BaseLLMService):
                 thinking_data
             )
         """
-        chunk_text = None
+        chunk_text = ""
         input_tokens = 0
         output_tokens = 0
-        thinking_data = None
+        thinking_content = ""
 
-        # Process text content
-        if hasattr(chunk, "text") and chunk.text:
-            chunk_text = chunk.text
-            assistant_response += chunk_text
-
-        # Process function calls
         if hasattr(chunk, "candidates") and chunk.candidates:
             for candidate in chunk.candidates:
-                if hasattr(candidate, "content") and candidate.content:
+                if (
+                    hasattr(candidate, "content")
+                    and candidate.content
+                    and candidate.content.parts is not None
+                ):
+                    # get chunk text
                     for part in candidate.content.parts:
+                        if hasattr(part, "text") and part.text is not None:
+                            chunk_text += part.text
+
+                        # get the thinking data
+                        if hasattr(part, "thought") and part.thought is not None:
+                            thinking_content += part.thought
                         # Check if this part has a function call
                         if hasattr(part, "function_call") and part.function_call:
                             function_call = part.function_call
@@ -532,6 +537,7 @@ class GoogleAINativeService(BaseLLMService):
                                     }
                                 )
 
+        assistant_response += chunk_text
         # Process usage information if available
         if hasattr(chunk, "usage_metadata"):
             if hasattr(chunk.usage_metadata, "prompt_token_count"):
@@ -545,7 +551,7 @@ class GoogleAINativeService(BaseLLMService):
             input_tokens,
             output_tokens,
             chunk_text,
-            thinking_data,
+            (thinking_content, None) if thinking_content.strip() else None,
         )
 
     def format_tool_result(

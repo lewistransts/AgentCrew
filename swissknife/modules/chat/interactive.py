@@ -295,7 +295,7 @@ class InteractiveChat:
         """Get multiline input from the user."""
         print(f"\n{BLUE}{BOLD}👤 YOU:{RESET}")
         print(
-            f"{YELLOW}(Press Enter for new line, Ctrl+S to submit, Up/Down for history){RESET}"
+            f"{YELLOW}🤖 {self.agent_name} 🧠 {self.llm.model}\n(Press Enter for new line, Ctrl+S to submit, Up/Down for history){RESET}"
         )
 
         kb = self._setup_key_bindings()

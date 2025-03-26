@@ -23,9 +23,9 @@ def get_web_search_tool_definition(provider="claude"):
                     "max_results": {
                         "type": "integer",
                         "description": "The maximum number of search results to return. A higher number allows for broader coverage but may include less relevant results. (Range: 1-10)",
-                        "default": 5,
+                        "default": 10,
                         "minimum": 1,
-                        "maximum": 10,
+                        "maximum": 20,
                     },
                 },
                 "required": ["query"],
@@ -53,9 +53,9 @@ def get_web_search_tool_definition(provider="claude"):
                         "max_results": {
                             "type": "integer",
                             "description": "The maximum number of search results to return. A higher number allows for broader coverage but may include less relevant results. (Range: 1-10)",
-                            "default": 5,
+                            "default": 10,
                             "minimum": 1,
-                            "maximum": 10,
+                            "maximum": 20,
                         },
                     },
                     "required": ["query"],
@@ -115,7 +115,7 @@ def get_web_search_tool_handler(tavily_service: TavilySearchService):
     def web_search_handler(**params):
         query = params.get("query")
         search_depth = params.get("search_depth", "basic")
-        max_results = params.get("max_results", 5)
+        max_results = params.get("max_results", 10)
 
         if not query:
             return "Error: No search query provided."
