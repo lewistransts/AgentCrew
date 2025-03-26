@@ -1,7 +1,9 @@
 import click
 import importlib
 import os
-
+import traceback
+from swissknife.modules.chat import ConsoleUI
+from swissknife.modules.chat import MessageHandler
 from swissknife.modules.scraping import ScrapingService
 from swissknife.modules.web_search import TavilySearchService
 from swissknife.modules.clipboard import ClipboardService
@@ -245,13 +247,16 @@ def chat(message, files, provider, agent):
                 click.echo(
                     f"⚠️ Unknown agent: {agent}. Using default agent. Available agents: {available_agents}"
                 )
-
         # Create the chat interface with the agent manager injected
-        chat_interface = InteractiveChat(services["memory"])
+        # chat_interface = InteractiveChat(services["memory"])
+        message_handler = MessageHandler(services["memory"])
+        ui = ConsoleUI(message_handler)
+        ui.start()
 
         # Start the chat
-        chat_interface.start_chat(initial_content=message, files=files)
+        # chat_interface.start_chat(initial_content=message, files=files)
     except Exception as e:
+        print(traceback.format_exc())
         click.echo(f"❌ Error: {str(e)}", err=True)
 
 
