@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import base64
 import mimetypes
@@ -538,6 +539,42 @@ class GoogleAINativeService(BaseLLMService):
                                 )
 
         assistant_response += chunk_text
+        # Process tool usage information from text if present
+        tool_pattern = r"Using tool: (\w+)\s*\nArguments: (\{[\s\S]*?\})"
+        tool_matches = re.findall(tool_pattern, chunk_text)
+
+        for tool_name, tool_args_str in tool_matches:
+            try:
+                # Parse the JSON arguments
+                tool_args = json.loads(tool_args_str)
+
+                # Create a unique ID for this tool call
+                tool_id = f"{tool_name}_{len(tool_uses)}"
+
+                # Check if this tool is already in tool_uses
+                existing_tool = next(
+                    (t for t in tool_uses if t.get("name") == tool_name),
+                    None,
+                )
+
+                if existing_tool:
+                    # Update the existing tool
+                    existing_tool["input"] = tool_args
+                else:
+                    # Create a new tool use entry
+                    tool_uses.append(
+                        {
+                            "id": tool_id,
+                            "name": tool_name,
+                            "input": tool_args,
+                            "type": "function",
+                            "response": "",
+                        }
+                    )
+            except json.JSONDecodeError:
+                print(f"Failed to parse tool arguments: {tool_args_str}")
+
+        assistant_response = re.sub(tool_pattern, "", assistant_response)
         # Process usage information if available
         if hasattr(chunk, "usage_metadata"):
             if hasattr(chunk.usage_metadata, "prompt_token_count"):
