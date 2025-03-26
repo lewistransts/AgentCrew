@@ -1,4 +1,5 @@
 from typing import Dict
+from swissknife.modules.google import GoogleAINativeService
 from swissknife.modules.llm.base import BaseLLMService
 from swissknife.modules.anthropic import AnthropicService
 from swissknife.modules.groq import GroqService
@@ -30,7 +31,7 @@ class ServiceManager:
             "claude": AnthropicService,
             "groq": GroqService,
             "openai": OpenAIService,
-            "google": GoogleAIService,
+            "google": GoogleAINativeService,
         }
 
     def get_service(self, provider: str) -> BaseLLMService:

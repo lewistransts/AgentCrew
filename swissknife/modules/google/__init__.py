@@ -1,3 +1,4 @@
 from .service import GoogleAIService
+from .native_service import GoogleAINativeService
 
-__all__ = ["GoogleAIService"]
+__all__ = ["GoogleAIService", "GoogleAINativeService"]

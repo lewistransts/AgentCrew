@@ -34,7 +34,7 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                 "required": ["target_agent", "task"],
             },
         }
-    elif provider in ["openai", "groq"]:
+    else:
         return {
             "type": "function",
             "function": {
@@ -60,8 +60,6 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                 },
             },
         }
-    else:
-        raise ValueError(f"Unsupported provider: {provider}")
 
 
 def get_handoff_tool_handler(agent_manager) -> Callable:

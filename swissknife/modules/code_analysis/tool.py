@@ -120,7 +120,7 @@ def get_file_content_tool_definition(provider="claude"):
                 "parameters": {
                     "type": "object",
                     "properties": properties,
-                    "required": ["file_path", "element_type", "element_name"],
+                    "required": ["file_path"],
                 },
             },
         }
