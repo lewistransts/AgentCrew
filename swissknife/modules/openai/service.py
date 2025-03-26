@@ -292,7 +292,7 @@ class OpenAIService(BaseLLMService):
 
                 # For tool calls, we don't append to assistant_response as it's handled separately
                 return (
-                    assistant_response,
+                    assistant_response or " ",
                     tool_uses,
                     input_tokens,
                     output_tokens,
@@ -317,7 +317,7 @@ class OpenAIService(BaseLLMService):
                 output_tokens = chunk.usage.completion_tokens
 
         return (
-            assistant_response,
+            assistant_response or " ",
             tool_uses,
             input_tokens,
             output_tokens,

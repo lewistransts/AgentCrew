@@ -25,6 +25,7 @@ from swissknife.modules.chat.file_handler import FileHandler
 RED = "\033[91m"  # Red color for errors
 RESET = "\033[0m"  # Reset color
 
+
 class InteractiveChat:
     def __init__(self, memory_service=None):
         """
@@ -247,6 +248,11 @@ class InteractiveChat:
                 )
                 return self._stream_assistant_response(
                     messages, input_tokens, output_tokens
+                )
+            if thinking_content:
+                print(self.divider())
+                print(
+                    f"\n{GREEN}{BOLD}🤖 {self.agent_name.upper()} (continued):{RESET}"
                 )
             # Replace \n with two spaces followed by \n for proper Markdown line breaks
             markdown_formatted_response = assistant_response.replace("\n", "  \n")

@@ -182,7 +182,7 @@ class GoogleAIService(OpenAIService):
                 output_tokens = chunk.usage.completion_tokens
 
         return (
-            assistant_response,
+            assistant_response or " ",
             tool_uses,
             input_tokens,
             output_tokens,
