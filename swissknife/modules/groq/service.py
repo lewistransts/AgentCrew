@@ -298,7 +298,7 @@ class GroqService(BaseLLMService):
         if hasattr(chunk, "message"):
             # This is a complete response, not a streaming chunk
             message = chunk.message
-            content = message.content or ""
+            content = message.content or " "
             # Check for tool calls
             if hasattr(message, "reasoning") and message.reasoning:
                 thinking_content = (message.reasoning, None)
@@ -326,10 +326,40 @@ class GroqService(BaseLLMService):
                     thinking_content,
                 )
 
+            # Check for tool call format in the response
+            tool_call_start = "<tool_call>"
+            tool_call_end = "<｜tool▁calls▁end｜>"
+
+            if tool_call_start in content and tool_call_end in content:
+                start_idx = content.find(tool_call_start)
+                end_idx = content.find(tool_call_end) + len(tool_call_end)
+
+                tool_call_content = content[
+                    start_idx + len(tool_call_start) : end_idx - len(tool_call_end)
+                ]
+
+                try:
+                    tool_data = json.loads(tool_call_content)
+                    tool_uses.append(
+                        {
+                            "id": f"call_{len(tool_uses)}",  # Generate an ID
+                            "name": tool_data.get("name", ""),
+                            "input": tool_data.get("arguments", {}),
+                            "type": "function",
+                            "response": "",
+                        }
+                    )
+
+                    # Remove the tool call from the response
+                    content = content[:start_idx] + content[end_idx:]
+                except json.JSONDecodeError:
+                    # If we can't parse the JSON, just continue
+                    pass
+
             # Regular response without tool calls
             return (
                 content,
-                [],
+                tool_uses,
                 input_tokens,
                 output_tokens,
                 content,  # Return the full content to be printed

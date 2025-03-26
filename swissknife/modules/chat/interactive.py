@@ -15,15 +15,21 @@ from rich.live import Live
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.llm.message import MessageTransformer
-from .constants import BLUE, GREEN, YELLOW, RESET, BOLD, GRAY, RICH_YELLOW, RICH_GRAY
+from .constants import (
+    BLUE,
+    GREEN,
+    YELLOW,
+    RESET,
+    BOLD,
+    GRAY,
+    RICH_YELLOW,
+    RICH_GRAY,
+    RED,
+)
 from .completers import ChatCompleter
 from .history import ChatHistoryManager, ConversationTurn
 from swissknife.modules.agents.manager import AgentManager
 from swissknife.modules.chat.file_handler import FileHandler
-
-# Color constants for error messages
-RED = "\033[91m"  # Red color for errors
-RESET = "\033[0m"  # Reset color
 
 
 class InteractiveChat:

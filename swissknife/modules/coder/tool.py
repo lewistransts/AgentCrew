@@ -33,7 +33,7 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
                 "required": ["prompt", "repo_path"],
             },
         }
-    elif provider in ["openai", "groq"]:
+    else:
         return {
             "type": "function",
             "function": {
@@ -55,8 +55,6 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
                 },
             },
         }
-    else:
-        raise ValueError(f"Unsupported provider: {provider}")
 
 
 def get_spec_validation_tool_handler(
@@ -117,7 +115,7 @@ def get_implement_spec_prompt_tool_definition(provider="claude") -> Dict[str, An
                 "required": ["aider_prompt", "repo_path"],
             },
         }
-    elif provider in ["openai", "groq"]:
+    else:
         return {
             "type": "function",
             "function": {
@@ -139,8 +137,6 @@ def get_implement_spec_prompt_tool_definition(provider="claude") -> Dict[str, An
                 },
             },
         }
-    else:
-        raise ValueError(f"Unsupported provider: {provider}")
 
 
 def get_implement_spec_prompt_tool_handler(
