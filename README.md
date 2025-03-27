@@ -129,19 +129,6 @@ The system implements a unified service layer that:
 - **Memory System**: Store, retrieve, and manage conversation history.
 - **Code Structure Analysis**: Generate structural maps of source code.
 
-## Code Analysis Capabilities
-
-The `code_analysis` module provides:
-
-- Structural maps of repositories.
-- Node-by-node breakdowns of source files.
-
-Usage:
-
-```bash
-uv run swissknife/main.py analyze-code ./src
-```
-
 ## Chat Features
 
 - **File Integration**: Include files in your conversation.
