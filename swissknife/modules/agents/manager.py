@@ -66,7 +66,7 @@ class AgentManager:
             self.current_agent = new_agent
 
             # Activate the new agent
-            self.current_agent.activate()
+            self.current_agent.activate(self.get_handoff_system_prompt())
 
             return True
         return False
@@ -153,17 +153,36 @@ class AgentManager:
                 if agent != self.current_agent:
                     agent.update_llm_service(llm_service)
 
-    def route_message(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def get_handoff_system_prompt(self):
         """
-        Route messages to the current agent.
-
-        Args:
-            messages: The messages to route
+        Generate a handoff section for the system prompt based on available agents.
 
         Returns:
-            The processed messages with the agent's system prompt
+            str: A formatted string containing handoff instructions and available agents
         """
-        if not self.current_agent:
-            raise ValueError("No agent selected")
+        if not self.agents:
+            return ""
 
-        return self.current_agent.process_messages(messages)
+        # Build agent descriptions
+        agent_descriptions = []
+        for name, agent in self.agents.items():
+            if hasattr(agent, "description") and agent.description:
+                agent_descriptions.append(f"- {name}: {agent.description}")
+            else:
+                agent_descriptions.append(f"- {name}")
+
+        handoff_prompt = (
+            "## Agent Handoff\n\n"
+            "You can hand off the conversation to another specialized agent when appropriate. "
+            "To perform a handoff, use handoff tool with following argument:\n\n"
+            "```\n"
+            "{\n"
+            "'target_agent': [agent_name],\n"
+            "'task': [specific task or question for the agent]\n"
+            "'context_summary': [brief summary of relevant context]\n"
+            "}\n"
+            "```\n\n"
+            f"Available agents:\n{chr(10).join(agent_descriptions)}\n"
+        )
+
+        return handoff_prompt

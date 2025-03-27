@@ -177,7 +177,7 @@ class Agent(ABC):
         """
         return self.system_prompt
 
-    def activate(self):
+    def activate(self, custom_prompt: str):
         """
         Activate this agent by registering all tools with the LLM service.
 
@@ -188,7 +188,8 @@ class Agent(ABC):
             return False
 
         self.register_tools_with_llm()
-        self.llm.set_system_prompt(self.get_system_prompt())
+        system_prompt = self.get_system_prompt() + "\n---\n\n" + custom_prompt
+        self.llm.set_system_prompt(system_prompt)
         self.is_active = True
         return True
 

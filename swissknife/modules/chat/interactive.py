@@ -33,6 +33,13 @@ from swissknife.modules.chat.file_handler import FileHandler
 
 
 class InteractiveChat:
+    """
+    Interactive chat interface for command-line interaction with LLM agents.
+
+    DEPRECATED: This class is deprecated and will be removed in a future version.
+    Please use the new chat interface instead.
+    """
+
     def __init__(self, memory_service=None):
         """
         Initialize the interactive chat.
