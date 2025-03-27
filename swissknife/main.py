@@ -2,6 +2,7 @@ import click
 import importlib
 import os
 import traceback
+from datetime import datetime
 from swissknife.modules.chat import ConsoleUI
 from swissknife.modules.chat import MessageHandler
 from swissknife.modules.scraping import ScrapingService
@@ -13,12 +14,7 @@ from swissknife.modules.anthropic import AnthropicService
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.coder import SpecPromptValidationService
-from swissknife.modules.agents.manager import AgentManager
-from swissknife.modules.agents.specialized import (
-    ArchitectAgent,
-    CodeAssistantAgent,
-    DocumentationAgent,
-)
+from swissknife.modules.agents import AgentManager, Agent
 
 
 @click.group()
@@ -30,6 +26,7 @@ def cli():
 def cli_prod():
     os.environ["MEMORYDB_PATH"] = os.path.expanduser("~/.swissknife/memorydb")
     os.environ["MCP_CONFIG_PATH"] = os.path.expanduser("~/.swissknife/mcp_server.json")
+    os.environ["SW_AGENTS_CONFIG"] = os.path.expanduser("~/.swissknife/agents.toml")
     cli()  # Delegate to main CLI function
 
 
@@ -138,7 +135,7 @@ def setup_services(provider):
     return services
 
 
-def setup_agents(services):
+def setup_agents(services, config_path):
     """
     Set up the agent system with specialized agents.
 
@@ -155,20 +152,44 @@ def setup_agents(services):
     llm_service = services["llm"]
 
     # Create specialized agents
-    architect = ArchitectAgent(llm_service, services)
-    code_assistant = CodeAssistantAgent(llm_service, services)
-    documentation = DocumentationAgent(llm_service, services)
-
-    # Register agents with the manager - this will keep them deactivated until selected
-    agent_manager.register_agent(architect)
-    agent_manager.register_agent(code_assistant)
-    agent_manager.register_agent(documentation)
+    if config_path:
+        click.echo("Using command-line argument for agent configuration path.")
+    else:
+        config_path = os.getenv("SW_AGENTS_CONFIG")
+        if not config_path:
+            raise ValueError("No agent configuration path provided.")
+    # Load agents from configuration
+    agent_definitions = AgentManager.load_agents_from_config(config_path)
+    agent_name = None
+    for agent_def in agent_definitions:
+        llm_service = services["llm"]
+        if not agent_name:
+            agent_name = agent_def["name"]
+        agent = Agent(
+            name=agent_def["name"],
+            description=agent_def["description"],
+            llm_service=llm_service,
+            services=services,
+            tools=agent_def["tools"],
+        )
+        agent.set_system_prompt(
+            agent_def["system_prompt"].format(
+                current_date=datetime.today().strftime("%Y-%m-%d")
+            )
+        )
+        agent_manager.register_agent(agent)
 
     from swissknife.modules.mcpclient.tool import register as mcp_register
 
     mcp_register()
 
-    return agent_manager
+    # Select the initial agent if specified
+    if agent_name:
+        if not agent_manager.select_agent(agent_name):
+            available_agents = ", ".join(agent_manager.agents.keys())
+            click.echo(
+                f"⚠️ Unknown agent: {agent_name}. Using default agent. Available agents: {available_agents}"
+            )
 
 
 def discover_and_register_tools(services=None):
@@ -226,26 +247,16 @@ def discover_and_register_tools(services=None):
     help="LLM provider to use (claude, groq, or openai)",
 )
 @click.option(
-    "--agent",
-    type=str,
-    default="Architect",
-    help="Initial agent to use (Architect, TechLead, Documentation, Evaluation)",
+    "--agent-config", default=None, help="Path to the agent configuration file."
 )
-def chat(message, files, provider, agent):
+def chat(message, files, provider, agent_config):
     """Start an interactive chat session with LLM"""
     try:
         services = setup_services(provider)
 
         # Set up the agent system
-        agent_manager = setup_agents(services)
+        setup_agents(services, agent_config)
 
-        # Select the initial agent if specified
-        if agent:
-            if not agent_manager.select_agent(agent):
-                available_agents = ", ".join(agent_manager.agents.keys())
-                click.echo(
-                    f"⚠️ Unknown agent: {agent}. Using default agent. Available agents: {available_agents}"
-                )
         # Create the chat interface with the agent manager injected
         # chat_interface = InteractiveChat(services["memory"])
         message_handler = MessageHandler(services["memory"])

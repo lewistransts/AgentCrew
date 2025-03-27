@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Tuple, Optional
 import traceback
 import os
 from swissknife.modules.chat.history import ChatHistoryManager, ConversationTurn
-from swissknife.modules.agents.manager import AgentManager
+from swissknife.modules.agents import AgentManager
 from swissknife.modules.chat.file_handler import FileHandler
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.llm.service_manager import ServiceManager

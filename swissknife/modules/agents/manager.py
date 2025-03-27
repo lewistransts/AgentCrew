@@ -1,3 +1,5 @@
+import toml
+import json
 from typing import Dict, Any, Optional
 from .base import Agent
 
@@ -14,7 +16,36 @@ class AgentManager:
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    @staticmethod
+    def load_agents_from_config(config_path: str) -> list:
+        """
+        Load agent definitions from a TOML or JSON configuration file.
+
+        Args:
+            config_path: Path to the configuration file.
+
+        Returns:
+            List of agent dictionaries.
+        """
+        try:
+            if config_path.endswith(".toml"):
+                with open(config_path, "r") as file:
+                    config = toml.load(file)
+            elif config_path.endswith(".json"):
+                with open(config_path, "r") as file:
+                    config = json.load(file)
+            else:
+                raise ValueError(
+                    "Unsupported configuration file format. Use TOML or JSON."
+                )
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        except (toml.TomlDecodeError, json.JSONDecodeError):
+            raise ValueError("Invalid configuration file format.")
+
+        return config.get("agents", [])
+
+    def __init__(self, config_path: Optional[str] = None):
         """Initialize the agent manager."""
         if not self._initialized:
             self.agents = {}
@@ -37,12 +68,6 @@ class AgentManager:
             agent: The agent to register
         """
         self.agents[agent.name] = agent
-        # Set the first registered agent as the default
-        # if not self.current_agent:
-        #     self.select_agent(agent.name)
-        # else:
-        #     # Keep the agent in deactivated state until selected
-        #     agent.deactivate()
 
     def select_agent(self, agent_name: str) -> bool:
         """

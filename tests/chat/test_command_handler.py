@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from swissknife.modules.chat.command_handler import CommandHandler
 from swissknife.modules.chat.types import CommandType
 from swissknife.modules.llm.base import BaseLLMService
-from swissknife.modules.agents.manager import AgentManager
+from swissknife.modules.agents import AgentManager
 
 
 class TestCommandHandler(unittest.TestCase):

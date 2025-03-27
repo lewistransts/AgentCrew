@@ -28,7 +28,7 @@ from .constants import (
 )
 from .completers import ChatCompleter
 from .history import ChatHistoryManager, ConversationTurn
-from swissknife.modules.agents.manager import AgentManager
+from swissknife.modules.agents import AgentManager
 from swissknife.modules.chat.file_handler import FileHandler
 
 

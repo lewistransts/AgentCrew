@@ -3,7 +3,7 @@ from typing import Dict, Any, List, Optional, Callable
 from mcp import ClientSession, StdioServerParameters
 from mcp.types import EmbeddedResource, ImageContent, TextContent
 from mcp.client.stdio import stdio_client
-from swissknife.modules.agents.manager import AgentManager
+from swissknife.modules.agents import AgentManager
 from swissknife.modules.tools.registry import ToolRegistry
 from .config import MCPServerConfig
 import asyncio
