@@ -1,30 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Tuple, Optional
-import time
 import traceback
 import os
-from rich.console import Console
-from rich.markdown import Markdown
-from rich.text import Text
-from rich.live import Live
 from swissknife.modules.chat.history import ChatHistoryManager, ConversationTurn
-from swissknife.modules.llm.base import BaseLLMService  # Assuming this exists
 from swissknife.modules.agents.manager import AgentManager
 from swissknife.modules.chat.file_handler import FileHandler
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.message import MessageTransformer
-
-# Constants from the original code
-YELLOW = "\033[33m"
-GREEN = "\033[32m"
-BLUE = "\033[34m"
-RED = "\033[31m"
-GRAY = "\033[90m"
-RESET = "\033[0m"
-BOLD = "\033[1m"
-RICH_YELLOW = "yellow"
-RICH_GRAY = "grey"
 
 
 class Observable:
@@ -82,46 +65,46 @@ class MessageHandler(Observable):
         self.latest_assistant_response = ""
         self.conversation_turns = []
         self.file_handler = FileHandler()
+        self.messages = []  # Initialize empty messages list
 
     def process_user_input(
         self,
         user_input: str,
-        messages: List[Dict[str, Any]],
         message_content: Optional[List[Dict]] = None,
         files: Optional[List[str]] = None,
-    ) -> Tuple[List[Dict[str, Any]], bool, bool]:
+    ) -> Tuple[bool, bool]:
         """
         Processes user input, handles commands, and updates message history.
 
         Args:
             user_input: The input string from the user.
-            messages: Current message history.
             message_content: Optional content to prepend.
             files: Optional files to include.
 
         Returns:
-            Tuple of (messages, exit_flag, clear_flag)
+            Tuple of (exit_flag, clear_flag)
         """
         # Handle exit command
         if self._handle_exit_command(user_input):
             self._notify("exit_requested")
-            return messages, True, False
+            return True, False
 
         # Handle clear command
         if user_input.lower() == "/clear":
             self.conversation_turns = []  # Clear conversation turns
+            self.messages = []  # Clear messages
             self._notify("clear_requested")
-            return [], False, True  # messages, exit_flag, clear_flag
+            return False, True  # exit_flag, clear_flag
 
         # Handle copy command
         if user_input.lower() == "/copy":
             self._notify("copy_requested", self.latest_assistant_response)
-            return messages, False, True  # Skip to next iteration
+            return False, True  # Skip to next iteration
 
         # Handle debug command
         if user_input.lower() == "/debug":
-            self._notify("debug_requested", messages)
-            return messages, False, True
+            self._notify("debug_requested", self.messages)
+            return False, True
 
         # Handle think command
         if user_input.lower().startswith("/think "):
@@ -131,14 +114,14 @@ class MessageHandler(Observable):
                 self._notify("think_budget_set", budget)
             except ValueError:
                 self._notify("error", "Invalid budget value. Please provide a number.")
-            return messages, False, True
+            return False, True
 
         # Handle jump command
         if user_input.lower().startswith("/jump "):
-            new_messages, jumped = self._handle_jump_command(user_input, messages)
-            if jumped and new_messages:
-                return new_messages, False, True
-            return messages, False, True
+            jumped = self._handle_jump_command(user_input)
+            if jumped:
+                return False, True
+            return False, True
 
         # Handle agent command
         if user_input.lower().startswith("/agent"):
@@ -146,23 +129,24 @@ class MessageHandler(Observable):
             self._notify(
                 "agent_command_result", {"success": success, "message": message}
             )
-            return messages, False, True
+            return False, True
 
         # Handle model command
         if user_input.lower().startswith("/model"):
-            return self._handle_model_command(user_input, messages)
+            return self._handle_model_command(user_input)
 
         # Store non-command messages in history
         if not user_input.startswith("/"):
             self.history_manager.add_entry(user_input)
 
         # Handle files that were loaded but not yet sent
-        if files and not messages:
+        if files and not self.messages:
             combined_content = message_content.copy() if message_content else []
             combined_content.append({"type": "text", "text": user_input})
-            messages.append({"role": "user", "content": combined_content})
+            self.messages.append({"role": "user", "content": combined_content})
             self._notify(
-                "user_message_created", {"message": messages[-1], "with_files": True}
+                "user_message_created",
+                {"message": self.messages[-1], "with_files": True},
             )
         # Handle file command
         elif user_input.startswith("/file "):
@@ -173,39 +157,39 @@ class MessageHandler(Observable):
             file_content = self.file_handler.process_file(file_path)
 
             if file_content:
-                messages.append({"role": "user", "content": [file_content]})
+                self.messages.append({"role": "user", "content": [file_content]})
                 self._notify(
-                    "file_processed", {"file_path": file_path, "message": messages[-1]}
+                    "file_processed",
+                    {"file_path": file_path, "message": self.messages[-1]},
                 )
-                return messages, False, True
+                return False, True
             else:
                 self._notify("error", f"Failed to process file {file_path}")
-                return messages, False, True
+                return False, True
         else:
             # Add regular text message
-            messages.append(
+            self.messages.append(
                 {"role": "user", "content": [{"type": "text", "text": user_input}]}
             )
             self._notify(
-                "user_message_created", {"message": messages[-1], "with_files": False}
+                "user_message_created",
+                {"message": self.messages[-1], "with_files": False},
             )
 
-        return messages, False, False
+        return False, False
 
     def _handle_exit_command(self, user_input: str) -> bool:
         """Check if the user wants to exit the chat."""
         return user_input.lower() in ["exit", "quit"]
 
-    def _handle_jump_command(
-        self, command: str, messages: List[Dict[str, Any]]
-    ) -> Tuple[Optional[List[Dict[str, Any]]], bool]:
+    def _handle_jump_command(self, command: str) -> bool:
         """Handle the /jump command to rewind conversation to a previous turn."""
         try:
             # Extract the turn number from the command
             parts = command.split()
             if len(parts) != 2:
                 self._notify("error", "Usage: /jump <turn_number>")
-                return None, False
+                return False
 
             turn_number = int(parts[1])
 
@@ -215,7 +199,7 @@ class MessageHandler(Observable):
                     "error",
                     f"Invalid turn number. Available turns: 1-{len(self.conversation_turns)}",
                 )
-                return None, False
+                return False
 
             # Get the selected turn
             selected_turn = self.conversation_turns[turn_number - 1]
@@ -227,28 +211,25 @@ class MessageHandler(Observable):
             )
 
             # Truncate messages to the index from the selected turn
-            truncated_messages = messages[: selected_turn.message_index]
+            self.messages = self.messages[: selected_turn.message_index]
             self.conversation_turns = self.conversation_turns[: turn_number - 1]
 
-            # Return the truncated messages
-            return truncated_messages, True
+            # Return success
+            return True
 
         except ValueError:
             self._notify("error", "Invalid turn number. Please provide a number.")
-            return None, False
+            return False
 
-    def _handle_model_command(
-        self, command: str, messages: List[Dict[str, Any]]
-    ) -> Tuple[List[Dict[str, Any]], bool, bool]:
+    def _handle_model_command(self, command: str) -> Tuple[bool, bool]:
         """
         Handle the /model command to switch models or list available models.
 
         Args:
             command: The model command string
-            messages: The current message history
 
         Returns:
-            Tuple of (messages, exit_flag, clear_flag)
+            Tuple of (exit_flag, clear_flag)
         """
         model_id = command[7:].strip()
         registry = ModelRegistry.get_instance()
@@ -277,7 +258,7 @@ class MessageHandler(Observable):
                         )
 
             self._notify("models_listed", models_by_provider)
-            return messages, False, True
+            return False, True
 
         # Try to switch to the specified model
         if registry.set_current_model(model_id):
@@ -290,10 +271,10 @@ class MessageHandler(Observable):
                 if current_provider != model.provider:
                     # Standardize messages from current provider
                     std_messages = MessageTransformer.standardize_messages(
-                        messages, current_provider
+                        self.messages, current_provider
                     )
                     # Convert to new provider format
-                    messages = MessageTransformer.convert_messages(
+                    self.messages = MessageTransformer.convert_messages(
                         std_messages, model.provider
                     )
 
@@ -318,7 +299,7 @@ class MessageHandler(Observable):
         else:
             self._notify("error", f"Unknown model: {model_id}")
 
-        return messages, False, True
+        return False, True
 
     def _handle_agent_command(self, command: str) -> Tuple[bool, str]:
         """
@@ -369,13 +350,10 @@ class MessageHandler(Observable):
             )
 
     def get_assistant_response(
-        self, messages: List[Dict[str, Any]]
+        self, input_tokens=0, output_tokens=0
     ) -> Tuple[Optional[str], int, int]:
         """
         Stream the assistant's response and return the response and token usage.
-
-        Args:
-            messages: A list of messages representing the conversation history.
 
         Returns:
             Tuple of (assistant_response, input_tokens, output_tokens)
@@ -385,11 +363,9 @@ class MessageHandler(Observable):
         thinking_content = ""  # Reset thinking content for new response
         thinking_signature = ""  # Store the signature
         start_thinking = True
-        input_tokens = 0
-        output_tokens = 0
-
+        end_thinking = False
         try:
-            with self.llm.stream_assistant_response(messages) as stream:
+            with self.llm.stream_assistant_response(self.messages) as stream:
                 for chunk in stream:
                     # Process the chunk using the LLM service
                     (
@@ -411,20 +387,24 @@ class MessageHandler(Observable):
 
                     # Accumulate thinking content if available
                     if thinking_chunk:
-                        thinking_chunk, signature = thinking_chunk
-                        if thinking_chunk:
-                            thinking_content += thinking_chunk
-                        if signature:
-                            thinking_signature += signature
+                        think_text_chunk, signature = thinking_chunk
 
-                        # Notify about thinking process
                         if start_thinking:
+                            # Notify about thinking process
                             self._notify("thinking_started", self.agent_name)
                             start_thinking = False
-                        self._notify("thinking_chunk", thinking_chunk)
-
-                    # Notify about response progress
-                    self._notify("response_chunk", assistant_response)
+                        if think_text_chunk:
+                            thinking_content += think_text_chunk
+                            self._notify("thinking_chunk", think_text_chunk)
+                        if signature:
+                            thinking_signature += signature
+                    if chunk_text:
+                        # End thinking when chunk_text start
+                        if not end_thinking and not start_thinking:
+                            self._notify("thinking_completed")
+                            end_thinking = True
+                        # Notify about response progress
+                        self._notify("response_chunk", assistant_response)
 
             # Handle tool use if needed
             if tool_uses and len(tool_uses) > 0:
@@ -434,18 +414,19 @@ class MessageHandler(Observable):
                 )
                 thinking_message = self.llm.format_thinking_message(thinking_data)
                 if thinking_message:
-                    messages.append(thinking_message)
+                    self.messages.append(thinking_message)
                     self._notify("thinking_message_added", thinking_message)
 
                 # Format assistant message with the response and tool uses
                 assistant_message = self.llm.format_assistant_message(
                     assistant_response, tool_uses
                 )
-                messages.append(assistant_message)
+                self.messages.append(assistant_message)
                 self._notify("assistant_message_added", assistant_message)
 
                 # Process each tool use
                 for tool_use in tool_uses:
+                    self._notify("response_completed", assistant_response)
                     self._notify("tool_use", tool_use)
 
                     try:
@@ -455,7 +436,7 @@ class MessageHandler(Observable):
                         tool_result_message = self.llm.format_tool_result(
                             tool_use, tool_result
                         )
-                        messages.append(tool_result_message)
+                        self.messages.append(tool_result_message)
                         self._notify(
                             "tool_result",
                             {
@@ -477,7 +458,7 @@ class MessageHandler(Observable):
                         error_message = self.llm.format_tool_result(
                             tool_use, str(e), is_error=True
                         )
-                        messages.append(error_message)
+                        self.messages.append(error_message)
                         self._notify(
                             "tool_error",
                             {
@@ -487,9 +468,7 @@ class MessageHandler(Observable):
                             },
                         )
 
-                # Continuation after tool use
-                self._notify("agent_continue", self.agent_name)
-                return self.get_assistant_response(messages)
+                return self.get_assistant_response(input_tokens, output_tokens)
 
             if thinking_content:
                 self._notify("thinking_completed")
@@ -501,22 +480,30 @@ class MessageHandler(Observable):
             # Store the latest response
             self.latest_assistant_response = assistant_response
 
+            # Add assistant response to messages
+            if assistant_response:
+                self.messages.append(
+                    self.llm.format_assistant_message(assistant_response)
+                )
+
             # Store conversation in memory if memory service is available
             if (
                 self.memory_service
-                and messages[-1]["role"] == "user"
+                and len(self.messages) >= 2
+                and self.messages[-2]["role"] == "user"  # Check second-to-last message
                 and assistant_response
             ):
                 user_input = ""
+                user_message = self.messages[-2]  # Get the user message
                 if (
-                    isinstance(messages[-1]["content"], list)
-                    and len(messages[-1]["content"]) > 0
+                    isinstance(user_message["content"], list)
+                    and len(user_message["content"]) > 0
                 ):
-                    for content_item in messages[-1]["content"]:
+                    for content_item in user_message["content"]:
                         if content_item.get("type") == "text":
                             user_input += content_item.get("text", "")
-                elif isinstance(messages[-1]["content"], str):
-                    user_input = messages[-1]["content"]
+                elif isinstance(user_message["content"], str):
+                    user_input = user_message["content"]
 
                 try:
                     self.memory_service.store_conversation(
@@ -528,7 +515,7 @@ class MessageHandler(Observable):
                     )
 
             # Store the conversation turn
-            for i, message in reversed(list(enumerate(messages))):
+            for i, message in reversed(list(enumerate(self.messages))):
                 if (
                     isinstance(message, dict)
                     and "role" in message
@@ -559,7 +546,7 @@ class MessageHandler(Observable):
                 {
                     "message": error_message,
                     "traceback": traceback_str,
-                    "messages": messages,
+                    "messages": self.messages,
                 },
             )
             return None, 0, 0

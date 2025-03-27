@@ -119,7 +119,7 @@ class MessageTransformer:
                 if text_parts:
                     std_msg["content"] = "\n".join(text_parts)
                 else:
-                    std_msg["content"] = ""
+                    std_msg["content"] = " "
 
                 # Add tool calls if present
                 if tool_calls:

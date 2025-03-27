@@ -83,13 +83,15 @@ class AgentManager:
         """
         return self.agents.get(agent_name)
 
-    def get_current_agent(self) -> Optional[Agent]:
+    def get_current_agent(self) -> Agent:
         """
         Get the current agent.
 
         Returns:
             The current agent, or None if no agent is selected
         """
+        if not self.current_agent:
+            raise ValueError("Current agent is not set")
         return self.current_agent
 
     def perform_handoff(

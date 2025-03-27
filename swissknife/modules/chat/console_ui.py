@@ -71,7 +71,6 @@ class ConsoleUI(Observer):
         elif event == "tool_error":
             self.display_tool_error(data)  # data is dict with tool_use and error
         elif event == "response_completed":
-            self.live.update("")
             self.finish_response(data)  # data is the complete response
         elif event == "error":
             self.display_error(data)  # data is the error message or dict
@@ -103,15 +102,14 @@ class ConsoleUI(Observer):
         elif event == "agent_changed_by_handoff":
             self.display_message(f"{YELLOW}Handed off to {data} agent{RESET}")
         elif event == "agent_continue":
-            self.display_message(
-                f"\n{GREEN}{BOLD}🤖 {data.upper()} (continued):{RESET}"
-            )
+            self.display_message(f"\n{GREEN}{BOLD}🤖 {data.upper()}:{RESET}")
         elif event == "jump_performed":
             self.display_message(
                 f"{YELLOW}{BOLD}🕰️ Jumping to turn {data['turn_number']}...{RESET}\n"
                 f"{YELLOW}Conversation rewound to: {data['preview']}{RESET}"
             )
         elif event == "thinking_completed":
+            self.console.print("\n")
             self.display_divider()
         elif event == "file_processed":
             self.display_message(f"{YELLOW}Processed file: {data['file_path']}{RESET}")
@@ -128,18 +126,20 @@ class ConsoleUI(Observer):
 
     def update_live_display(self, chunk: str):
         """Update the live display with a new chunk of the response."""
-        if self.live:
-            updated_text = chunk
+        if not self.live:
+            self.start_streaming_response(self.message_handler.agent_name)
 
-            # Only show the last part that fits in the console
-            lines = updated_text.split("\n")
-            height_limit = (
-                self.console.size.height - 10
-            )  # leave some space for other elements
-            if len(lines) > height_limit:
-                lines = lines[-height_limit:]
+        updated_text = chunk
 
-            self.live.update(Markdown("\n".join(lines)))
+        # Only show the last part that fits in the console
+        lines = updated_text.split("\n")
+        height_limit = (
+            self.console.size.height - 10
+        )  # leave some space for other elements
+        if len(lines) > height_limit:
+            lines = lines[-height_limit:]
+
+        self.live.update(Markdown("\n".join(lines)))
 
     def display_tool_use(self, tool_use: Dict):
         """Display information about a tool being used."""
@@ -162,6 +162,7 @@ class ConsoleUI(Observer):
     def finish_response(self, response: str):
         """Finalize and display the complete response."""
         if self.live:
+            self.live.update("")
             self.live.stop()
             self.live = None
 
@@ -397,7 +398,6 @@ class ConsoleUI(Observer):
     def start(self):
         self.print_welcome_message()
 
-        messages = []
         session_cost = 0.0
 
         while True:
@@ -405,8 +405,9 @@ class ConsoleUI(Observer):
             user_input = self.get_user_input()
 
             # Process user input and commands
-            messages, should_exit, was_cleared = (
-                self.message_handler.process_user_input(user_input, messages)
+            # self.start_streaming_response(self.message_handler.agent_name)
+            should_exit, was_cleared = self.message_handler.process_user_input(
+                user_input
             )
 
             # Exit if requested
@@ -418,25 +419,18 @@ class ConsoleUI(Observer):
                 continue
 
             # Skip to next iteration if no messages to process
-            if not messages:
+            if not self.message_handler.messages:
                 continue
 
             # Start streaming response
-            self.start_streaming_response(self.message_handler.agent_name)
+            # self.start_streaming_response(self.message_handler.agent_name)
 
             # Get assistant response
             assistant_response, input_tokens, output_tokens = (
-                self.message_handler.get_assistant_response(messages)
+                self.message_handler.get_assistant_response()
             )
 
             if assistant_response:
-                # Add assistant response to messages
-                messages.append(
-                    self.message_handler.llm.format_assistant_message(
-                        assistant_response
-                    )
-                )
-
                 # Calculate and display token usage
                 total_cost = self.message_handler.llm.calculate_cost(
                     input_tokens, output_tokens
