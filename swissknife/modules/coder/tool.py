@@ -150,11 +150,11 @@ def get_implement_spec_prompt_tool_handler(
     """
 
     def handle_implement_spec_prompt(**params) -> str:
-        spec_prompt = params.get("spec_prompt", "")
+        spec_prompt = params.get("aider_prompt", "")
         repo_path = params.get("repo_path", "")
 
         if not spec_prompt or not repo_path:
-            return "Error: Both spec_prompt and repo_path are required."
+            return "Error: Both aider_prompt and repo_path are required."
 
         try:
             result = code_assistant.generate_implementation(spec_prompt, repo_path)
