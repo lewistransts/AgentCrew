@@ -28,7 +28,9 @@ class MCPConfigManager:
         self.config_path = config_path or os.environ.get(
             "MCP_CONFIG_PATH",
             os.path.join(
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                ),
                 "mcp_servers.json",
             ),
         )

@@ -202,7 +202,7 @@ class AgentManager:
 
         handoff_prompt = (
             "## Agent Handoff\n\n"
-            "You can hand off the conversation to another specialized agent when appropriate. "
+            "You must hand off the conversation to another specialized agent when task is not in your specialized. "
             "To perform a handoff, use handoff tool with following argument:\n\n"
             "```\n"
             "{\n"
