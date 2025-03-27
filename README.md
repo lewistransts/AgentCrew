@@ -147,25 +147,16 @@ Key multi-model capabilities:
 - Standardized message transformation between providers.
 - Consistent tool integration across all models.
 
-| Provider  | Key Features              |
-| --------- | ------------------------- |
-| Anthropic | Extended thinking mode    |
-| OpenAI    | Advanced function calling |
-| Groq      | High-speed inference      |
-| Gemini    | Multimodal processing     |
-
 ## Key Features
 
 - **Interactive Chat**: Rich conversation interface with various AI models.
 - **File Integration**: Include PDFs and text files directly in conversations.
 - **Web Capabilities**: Fetch content, perform searches, and extract information
   from the web.
-- **Tool Ecosystem**: Extensible set of tools for specialized tasks.
+- **Tool Ecosystem**: Extensible set of tools via MCP support.
 - **Keyboard Shortcuts**: Efficient message editing and response management.
 - **Persistent Memory**: Cross-conversation knowledge retention and retrieval.
 - **Code Analysis**: Deep analysis of code structure in repositories.
-- **Tool Registration System**: (via `ToolRegistry`)
-- **Cross-Provider Message Formatting**: (via `MessageTransformer`)
 
 ## Agent System Details
 
