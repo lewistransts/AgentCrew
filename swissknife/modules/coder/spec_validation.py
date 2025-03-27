@@ -16,7 +16,7 @@ class SpecPromptValidationService:
             preferred_provider: Optional preferred LLM provider (claude, openai, groq)
         """
         self.preferred_provider = (
-            preferred_provider or "claude"
+            preferred_provider or "groq"
         )  # Default to Claude if not specified
 
     def validate(self, prompt: str, repo_path: str) -> str:
@@ -47,7 +47,6 @@ class SpecPromptValidationService:
 
             # Call the validate_spec method on the LLM service
             validation_result = llm_service.validate_spec(validation_prompt)
-            print(validation_result)
 
             # Parse and structure the validation result
             return validation_result

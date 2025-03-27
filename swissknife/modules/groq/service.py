@@ -464,14 +464,13 @@ class GroqService(BaseLLMService):
                 max_completion_tokens=8192,
                 temperature=0.6,
                 top_p=0.95,
+                reasoning_format="parsed",
                 messages=[
                     {
                         "role": "user",
                         "content": prompt,
                     },
-                    {"role": "assistant", "content": "```xml"},
                 ],
-                stop="```",
                 # Groq doesn't support response_format, so we rely on the prompt
             )
 
