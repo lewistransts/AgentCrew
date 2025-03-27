@@ -32,7 +32,7 @@ class Observable:
             observer.update(event, data)
 
 
-class Observer(ABC):
+class Observer:
     """Abstract base class for observers."""
 
     @abstractmethod

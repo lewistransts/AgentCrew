@@ -27,8 +27,6 @@ ALLOWED_MIME_TYPES = [
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "application/vnd.ms-excel",
     "application/msword",
-    "text/html",
-    "text/plain",
     "image/jpeg",
     "image/png",
 ]
@@ -90,7 +88,7 @@ class FileHandler:
 
         # Check MIME type
         mime_type, _ = mimetypes.guess_type(file_path)
-        if mime_type not in ALLOWED_MIME_TYPES:
+        if mime_type not in ALLOWED_MIME_TYPES and not mime_type.startswith("text/"):
             logger.warning(f"Unsupported MIME type: {mime_type} for {file_path}")
             return False
 
