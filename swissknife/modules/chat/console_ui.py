@@ -10,9 +10,9 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 
-from .message_handler import Observer
-from modules.chat.completers import ChatCompleter
-from modules.chat.constants import (
+from swissknife.modules.chat.message_handler import Observer
+from swissknife.modules.chat.completers import ChatCompleter
+from swissknife.modules.chat.constants import (
     YELLOW,
     GREEN,
     BLUE,
