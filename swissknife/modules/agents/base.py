@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 
 class Agent(ABC):
@@ -28,6 +28,7 @@ class Agent(ABC):
         self.services = services
         self.tools: List[str] = tools  # List of tool names that the agent needs
         self.system_prompt = None
+        self.custom_system_prompt = None
         # Store tool definitions in the same format as ToolRegistry
         self.tool_definitions = {}  # {tool_name: (definition_func, handler_factory, service_instance)}
         self.registered_tools = (
@@ -168,6 +169,15 @@ class Agent(ABC):
         """
         self.system_prompt = prompt
 
+    def set_custom_system_prompt(self, prompt: str):
+        """
+        Set the system prompt for this agent.
+
+        Args:
+            prompt: The system prompt
+        """
+        self.custom_system_prompt = prompt
+
     def get_system_prompt(self) -> str:
         """
         Get the system prompt for this agent.
@@ -177,7 +187,7 @@ class Agent(ABC):
         """
         return self.system_prompt
 
-    def activate(self, custom_prompt: str):
+    def activate(self):
         """
         Activate this agent by registering all tools with the LLM service.
 
@@ -188,7 +198,12 @@ class Agent(ABC):
             return False
 
         self.register_tools_with_llm()
-        system_prompt = self.get_system_prompt() + "\n---\n\n" + custom_prompt
+        system_prompt = self.get_system_prompt()
+        if self.custom_system_prompt:
+            system_prompt = (
+                self.get_system_prompt() + "\n---\n\n" + self.custom_system_prompt
+            )
+
         self.llm.set_system_prompt(system_prompt)
         self.is_active = True
         return True

@@ -65,8 +65,12 @@ class AgentManager:
             # Set the new agent as current
             self.current_agent = new_agent
 
+            if not self.current_agent.custom_system_prompt:
+                self.current_agent.set_custom_system_prompt(
+                    self.get_handoff_system_prompt()
+                )
             # Activate the new agent
-            self.current_agent.activate(self.get_handoff_system_prompt())
+            self.current_agent.activate()
 
             return True
         return False
