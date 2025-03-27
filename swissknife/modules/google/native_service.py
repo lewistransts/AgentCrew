@@ -8,9 +8,7 @@ from dotenv import load_dotenv
 from google import genai
 from swissknife.modules.llm.models import ModelRegistry
 from google.genai import types
-from contextlib import contextmanager
 from swissknife.modules.llm.base import BaseLLMService
-from swissknife.modules.llm.message import MessageTransformer
 from swissknife.modules.prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,

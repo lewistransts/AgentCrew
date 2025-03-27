@@ -4,7 +4,6 @@ from swissknife.modules.llm.base import BaseLLMService
 from swissknife.modules.anthropic import AnthropicService
 from swissknife.modules.groq import GroqService
 from swissknife.modules.openai import OpenAIService
-from swissknife.modules.google import GoogleAIService
 
 
 class ServiceManager:

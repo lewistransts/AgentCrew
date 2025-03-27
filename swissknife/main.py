@@ -10,7 +10,6 @@ from swissknife.modules.clipboard import ClipboardService
 from swissknife.modules.memory import MemoryService
 from swissknife.modules.code_analysis import CodeAnalysisService
 from swissknife.modules.anthropic import AnthropicService
-from swissknife.modules.chat import InteractiveChat
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.coder import SpecPromptValidationService
