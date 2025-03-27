@@ -5,19 +5,105 @@ experience through a multi-agent architecture and support for multiple LLM
 providers. It features specialized agents, intelligent handoffs, file
 integration, web capabilities, and a modular extension system.
 
+## Installation
+
+### Prerequisites
+
+- Python 3.8 or higher.
+- [uv](https://github.com/astral-sh/uv) for package manager.
+- An Anthropic API key (for Claude AI models).
+- A Groq API key (optional, for Groq LLM models).
+- An OpenAI API key (optional, for GPT models).
+- A Google Gemini API key (optional, for Gemini models).
+- A Tavily API key (for web search features).
+
+### Setup
+
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/daltonnyx/swissknife.git
+   cd swissknife
+   ```
+
+2. Install the package:
+
+   ```bash
+   uv sync
+   ```
+
+3. Install the tool
+
+   ```bash
+   uv tool install .
+   ```
+
+4. Create a `.env` file in the project root with your API keys:
+
+   ```
+   ANTHROPIC_API_KEY=your_anthropic_api_key
+   OPENAI_API_KEY=your_openai_api_key(optional)
+   GROQ_API_KEY=your_groq_api_key(optional)
+   GOOGLE_API_KEY=your_google_api_key(optional)
+   TAVILY_API_KEY=your_tavily_api_key
+   ```
+
+## Usage
+
+### Start an Interactive Chat
+
+```bash
+uv run swissknife/main.py chat --agent-config agents.toml
+```
+
+### Start a Chat with an Initial Message
+
+```bash
+uv run swissknife/main.py chat --agent-config agents.toml --message "Hello, I need help with software architecture"
+```
+
+### Include Files in Your Chat
+
+```bash
+uv run swissknife/main.py chat --agent-config agents.toml --files document.pdf --files code.py
+```
+
+### Start a Chat with Different Providers
+
+```bash
+# Use Claude models from Anthropic
+uv run swissknife/main.py chat --agent-config agents.toml --provider claude
+
+# Use LLM models from Groq
+uv run swissknife/main.py chat --agent-config agents.toml --provider groq
+
+# Use GPT models from OpenAI
+uv run swissknife/main.py chat --agent-config agents.toml --provider openai
+
+# Use Gemini models from Google
+uv run swissknife/main.py chat --agent-config agents.toml --provider gemini
+```
+
 ## Core Architecture
 
 ### Multi-Agent System
 
-This system implements a multi-agent architecture with specialized agents for
-different domains:
+This system implements a multi-agent architecture with specialized agents with `toml` config file `agents.toml`:
 
-- **Documentation Agent**: Expert in creating clear technical documentation,
-  user guides, and explanations.
-- **Architect Agent**: Specializes in software architecture design, system
-  planning, and technical decision-making.
-- **Code Assistant Agent**: Focuses on code implementation, debugging, and
-  programming tasks.
+```toml
+[[agents]]
+name = "Coding"
+description = "Specialized in code implementation, debugging, programming assistance and aider prompt"
+tools = ["clipboard", "memory", "code_analysis", "spec_validator"]
+system_prompt = """You are Harvey, a focused code implementation expert. Your guiding principle: **SIMPLICITY IN IMPLEMENTATION** (Simple + Practical Implementation). Prioritize clean, maintainable code that aligns with best practices.  
+
+Today is {current_date}.
+"""
+```
+
+Current supported dynamic template tag is:
+
+- `current_date`: return current date in YYYY-MM-dd format
 
 The system intelligently routes tasks to the appropriate agent and features
 seamless **agent handoffs** when a conversation requires different expertise.
@@ -121,11 +207,8 @@ The system implements a unified service layer that:
 - **Web Content Processing**: Fetch and process web content as markdown.
 - **Web Search**: Search the internet for current information.
 - **Web Content Extraction**: Extract and analyze content from specific URLs.
-- **YouTube Integration**: Extract subtitles and chapter information.
 - **Model Context Protocol (MCP)**: Connect to MCP-compatible servers to extend
   AI capabilities.
-- **AI Summarization & Explanation**: Process complex content into summaries or
-  explanations.
 - **Memory System**: Store, retrieve, and manage conversation history.
 - **Code Structure Analysis**: Generate structural maps of source code.
 
@@ -175,15 +258,6 @@ The tool includes a persistent memory system that:
   `retrieve_memory` tool.
 - Automatically cleans up conversations older than one month.
 - Intelligently chunks and stores conversations for efficient retrieval.
-
-## Adding a New Agent
-
-To add a new specialized agent:
-
-1. **Create a new agent class** in `swissknife/modules/agents/specialized/`.
-2. **Define a system prompt** tailored to the agent's expertise.
-3. **Register the agent** with the `AgentManager` in `swissknife/main.py`.
-4. **Ensure proper handoff logic** for seamless transitions.
 
 ## Universal MCP Server Support
 
@@ -266,98 +340,6 @@ The following features are planned for future releases:
       configurations.
 - [ ] **Memory Visualization**: Browse and manage stored conversations.
 - [ ] **Agent Performance Metrics**: Track and analyze agent effectiveness.
-
-## Installation
-
-### Prerequisites
-
-- Python 3.8 or higher.
-- [uv](https://github.com/astral-sh/uv) for package manager.
-- An Anthropic API key (for Claude AI features).
-- A Groq API key (optional, for Groq LLM features).
-- An OpenAI API key (optional, for GPT features).
-- A Google Gemini API key (optional, for Gemini features).
-- A Tavily API key (for web search features).
-
-### Setup
-
-1. Clone this repository:
-
-   ```bash
-   git clone https://github.com/daltonnyx/swissknife.git
-   cd swissknife
-   ```
-
-2. Install the package:
-
-   ```bash
-   uv sync
-   ```
-
-3. Install the tool
-
-   ```bash
-   uv tool install .
-   ```
-
-4. Create a `.env` file in the project root with your API keys:
-
-   ```
-   ANTHROPIC_API_KEY=your_anthropic_api_key
-   OPENAI_API_KEY=your_openai_api_key(optional)
-   GROQ_API_KEY=your_groq_api_key(optional)
-   GOOGLE_API_KEY=your_google_api_key(optional)
-   TAVILY_API_KEY=your_tavily_api_key
-   ```
-
-## Usage
-
-### Start an Interactive Chat
-
-```bash
-uv run swissknife/main.py chat
-```
-
-### Start a Chat with an Initial Message
-
-```bash
-uv run swissknife/main.py chat --message "Hello, I need help with software architecture"
-```
-
-### Include Files in Your Chat
-
-```bash
-uv run swissknife/main.py chat --files document.pdf --files code.py
-```
-
-### Start a Chat with Different Providers
-
-```bash
-# Use Claude models from Anthropic
-uv run swissknife/main.py chat --provider claude
-
-# Use LLM models from Groq
-uv run swissknife/main.py chat --provider groq
-
-# Use GPT models from OpenAI
-uv run swissknife/main.py chat --provider openai
-
-# Use Gemini models from Google
-uv run swissknife/main.py chat --provider gemini
-```
-
-### Start with a Specific Agent
-
-```bash
-# Start with the Architect agent for system design tasks
-uv run swissknife/main.py chat --agent architect
-
-# Start with the Code Assistant agent for programming tasks
-uv run swissknife/main.py chat --agent code_assistant
-
-# Start with the Documentation agent for documentation tasks
-uv run swissknife/main.py chat --agent documentation
-```
 
 ## License
 
