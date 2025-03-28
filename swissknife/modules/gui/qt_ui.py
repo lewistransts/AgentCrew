@@ -1,5 +1,5 @@
-import traceback
-import markdown
+import re
+import os
 from typing import Any, Dict
 import pyperclip
 
@@ -15,9 +15,6 @@ from PySide6.QtWidgets import (
     QStatusBar,
     QLabel,
     QScrollArea,
-    QFrame,
-    QSizePolicy,
-    QSpacerItem,
     QMenu,
     QMenuBar,
     QFileDialog,
@@ -26,337 +23,28 @@ from PySide6.QtCore import (
     Qt,
     Slot,
     QThread,
-    QObject,
     Signal,
+    QStringListModel,
 )
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.agents.manager import AgentManager
-from PySide6.QtGui import QKeySequence, QShortcut, QFont, QColor, QPalette, QAction
+from PySide6.QtGui import (
+    QKeySequence,
+    QShortcut,
+    QFont,
+    QAction,
+    QTextCursor,
+)
 from swissknife.modules.chat.message_handler import MessageHandler, Observer
+from swissknife.modules.chat.completers import DirectoryListingCompleter
+from PySide6.QtWidgets import QCompleter
+from swissknife.modules.gui.widgets import (
+    TokenUsageWidget,
+    SystemMessageWidget,
+    MessageBubble,
+)
 
-
-class TokenUsageWidget(QWidget):
-    """Widget to display token usage information."""
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setAutoFillBackground(True)
-
-        # Set background color
-        palette = self.palette()
-        palette.setColor(
-            QPalette.ColorRole.Window, QColor("#EEEEFF")
-        )  # Light blue background
-        self.setPalette(palette)
-
-        # Create layout
-        layout = QVBoxLayout(self)
-
-        # Create labels
-        self.token_label = QLabel(
-            "📊 Token Usage: Input: 0 | Output: 0 | Total: 0 | Cost: $0.0000 | Session: $0.0000"
-        )
-        self.token_label.setStyleSheet("color: #555555; font-weight: bold;")
-
-        # Add to layout
-        layout.addWidget(self.token_label)
-
-    def update_token_info(
-        self,
-        input_tokens: int,
-        output_tokens: int,
-        total_cost: float,
-        session_cost: float,
-    ):
-        """Update the token usage information."""
-        self.token_label.setText(
-            f"📊 Token Usage: Input: {input_tokens:,} | Output: {output_tokens:,} | "
-            f"Total: {input_tokens + output_tokens:,} | Cost: ${total_cost:.4f} | Session: ${session_cost:.4f}"
-        )
-
-
-class SystemMessageWidget(QWidget):
-    """Widget to display system messages."""
-
-    def __init__(self, text, parent=None):
-        super().__init__(parent)
-
-        # Create layout
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
-
-        # Store the full text
-        self.full_text = text
-        self.is_expanded = False
-
-        # Create collapsible container
-        self.container = QWidget()
-        container_layout = QVBoxLayout(self.container)
-        container_layout.setContentsMargins(0, 0, 0, 0)
-        container_layout.setSpacing(0)
-
-        # Create label with HTML support
-        self.message_label = QLabel()
-        self.message_label.setTextFormat(Qt.TextFormat.RichText)
-        self.message_label.setStyleSheet(
-            "color: #6495ED; font-style: italic; text-align: left;"
-        )  # Olive yellow
-        self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.message_label.setWordWrap(True)
-
-        font = self.message_label.font()
-        font_size = font.pointSizeF() * 1.2  # Increase by 10%
-        font.setPointSizeF(font_size)
-        self.message_label.setFont(font)
-
-        # Create expand/collapse button
-        self.toggle_button = QPushButton("▼ Show More")
-        self.toggle_button.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #6495ED; border: none; text-align: left; }"
-        )
-        self.toggle_button.setMaximumHeight(20)
-        self.toggle_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.toggle_button.clicked.connect(self.toggle_expansion)
-
-        # Add widgets to container
-        container_layout.addWidget(self.message_label)
-        container_layout.addWidget(self.toggle_button)
-
-        # Add container to main layout
-        layout.addWidget(self.container)
-
-        # Set the collapsed text initially
-        self.set_collapsed_text()
-
-    def set_collapsed_text(self):
-        """Set the text to show only 2 lines when collapsed."""
-        # Convert markdown to HTML if the text contains code blocks
-        if "```" in self.full_text:
-            try:
-                html_content = markdown.markdown(
-                    self.full_text, extensions=["fenced_code"]
-                )
-
-                # Get first two lines (approximate)
-                lines = self.full_text.split("\n")
-                if len(lines) <= 2:
-                    # If there are only 1-2 lines, show everything and hide the button
-                    self.message_label.setText(html_content)
-                    self.toggle_button.hide()
-                    return
-
-                # Show first two lines
-                collapsed_text = "\n".join(lines[:2])
-                if "```" in collapsed_text and "```" not in collapsed_text + "\n```":
-                    # If we cut in the middle of a code block, add closing ```
-                    collapsed_text += "\n```"
-
-                collapsed_html = markdown.markdown(
-                    collapsed_text, extensions=["fenced_code"]
-                )
-                self.message_label.setText(collapsed_html + "...")
-                self.toggle_button.show()
-            except Exception:
-                # Fallback to simple text truncation
-                lines = self.full_text.split("\n")
-                if len(lines) <= 2:
-                    self.message_label.setText(self.full_text)
-                    self.toggle_button.hide()
-                else:
-                    self.message_label.setText("\n".join(lines[:2]) + "...")
-                    self.toggle_button.show()
-        else:
-            # Simple text truncation
-            lines = self.full_text.split("\n")
-            if len(lines) <= 2:
-                self.message_label.setText(self.full_text)
-                self.toggle_button.hide()
-            else:
-                self.message_label.setText("\n".join(lines[:2]) + "...")
-                self.toggle_button.show()
-
-    def set_expanded_text(self):
-        """Set the text to show all content."""
-        if "```" in self.full_text:
-            try:
-                html_content = markdown.markdown(
-                    self.full_text, extensions=["fenced_code"]
-                )
-                self.message_label.setText(html_content)
-            except Exception:
-                self.message_label.setText(self.full_text)
-        else:
-            self.message_label.setText(self.full_text)
-
-    def toggle_expansion(self):
-        """Toggle between expanded and collapsed states."""
-        self.is_expanded = not self.is_expanded
-
-        if self.is_expanded:
-            self.set_expanded_text()
-            self.toggle_button.setText("▲ Show Less")
-        else:
-            self.set_collapsed_text()
-            self.toggle_button.setText("▼ Show More")
-
-
-class MessageBubble(QFrame):
-    """A custom widget to display messages as bubbles."""
-
-    def __init__(self, text, is_user=True, agent_name="ASSISTANT", parent=None):
-        super().__init__(parent)
-
-        # Setup frame appearance
-        self.setFrameShape(QFrame.Shape.StyledPanel)
-        self.setFrameShadow(QFrame.Shadow.Raised)
-        self.setLineWidth(1)
-
-        # Set background color based on sender
-        if is_user:
-            self.setStyleSheet(
-                "QFrame { border-radius: 10px; background-color: #DCF8C6; }"
-            )
-        else:
-            self.setStyleSheet(
-                "QFrame { border-radius: 10px; background-color: #ADD8E6; }"
-            )
-        self.setAutoFillBackground(True)
-
-        # Create layout
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
-
-        # Add sender label - Use agent_name for non-user messages
-        sender_label = QLabel(is_user and "👤 YOU:" or f"🤖 {agent_name}:")
-        sender_label.setStyleSheet("font-weight: bold; color: #333333;")
-        layout.addWidget(sender_label)
-
-        # Create label with HTML support
-        self.message_label = QLabel()
-        self.message_label.setTextFormat(Qt.TextFormat.RichText)
-        self.message_label.setWordWrap(True)
-        self.message_label.setOpenExternalLinks(True)  # Allow clicking links
-
-        # Increase font size by 10%
-        font = self.message_label.font()
-        font_size = font.pointSizeF() * 1.5  # Increase by 10%
-        font.setPointSizeF(font_size)
-        self.message_label.setFont(font)
-
-        # Set the text content (convert Markdown to HTML)
-        self.set_text(text)
-
-        # Set minimum and maximum width - increase max width by 3 times
-        self.message_label.setMinimumWidth(500)
-        self.message_label.setMaximumWidth(1200)  # Increased from 500 to 1500
-
-        # Add to layout
-        layout.addWidget(self.message_label)
-
-        # Set size policies
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
-
-        # Store the original text (for adding chunks)
-        self.text_content = text
-
-    def set_text(self, text):
-        """Set or update the text content of the message."""
-        try:
-            html_content = markdown.markdown(text, extensions=["fenced_code"])
-            self.message_label.setText(html_content)
-        except Exception as e:
-            print(f"Error rendering markdown: {e}")
-            self.message_label.setText(text)
-
-    def append_text(self, text):
-        """Append text to the existing message."""
-        self.text_content += text
-        self.set_text(self.text_content)
-
-
-class LLMWorker(QObject):
-    """Worker object that processes LLM requests in a separate thread"""
-
-    # Signals for thread communication
-    response_ready = Signal(str, int, int)  # response, input_tokens, output_tokens
-    response_chunk = Signal(str)
-    error = Signal(str)
-    status_message = Signal(str)
-    token_usage = Signal(dict)
-    request_exit = Signal()
-    request_clear = Signal()
-
-    # Signal to request processing - passing the user input as a string
-    process_request = Signal(str)
-
-    def __init__(self):
-        super().__init__()
-        self.user_input = None
-        self.message_handler = None  # Will be set in connect_handler
-
-    def connect_handler(self, message_handler):
-        """Connect to the message handler - called from main thread before processing begins"""
-        self.message_handler = message_handler
-        # Connect the process_request signal to our processing slot
-        self.process_request.connect(self.process_input)
-
-    @Slot(str)
-    def process_input(self, user_input):
-        """Process the user input with the message handler"""
-        try:
-            if not self.message_handler:
-                self.error.emit("Message handler not connected")
-                return
-
-            if not user_input:
-                return
-
-            # Process user input (commands, etc.)
-            exit_flag, clear_flag = self.message_handler.process_user_input(user_input)
-
-            # Handle command results
-            if exit_flag:
-                self.status_message.emit("Exiting...")
-                self.request_exit.emit()
-                return
-
-            if clear_flag:
-                # self.request_clear.emit()
-                return  # Skip further processing if chat was cleared
-
-            # Get assistant response
-            assistant_response, input_tokens, output_tokens = (
-                self.message_handler.get_assistant_response()
-            )
-
-            # Emit the response
-            if assistant_response:
-                self.response_ready.emit(
-                    assistant_response, input_tokens, output_tokens
-                )
-
-                # Calculate cost
-                total_cost = self.message_handler.llm.calculate_cost(
-                    input_tokens, output_tokens
-                )
-
-                # Emit token usage information
-                self.token_usage.emit(
-                    {
-                        "input_tokens": input_tokens,
-                        "output_tokens": output_tokens,
-                        "total_cost": total_cost,
-                    }
-                )
-            else:
-                print("No response received from assistant")
-                self.status_message.emit("No response received")
-
-        except Exception as e:
-            traceback_str = traceback.format_exc()
-            error_msg = f"{str(e)}\n{traceback_str}"
-            print(f"Error in LLMWorker: {error_msg}")  # Console debug
-            self.error.emit(error_msg)
+from .worker import LLMWorker
 
 
 class ChatWindow(QMainWindow, Observer):
@@ -397,7 +85,7 @@ class ChatWindow(QMainWindow, Observer):
 
         # Create the status indicator (showing current agent and model)
         self.status_indicator = QLabel(
-            f"🤖 {self.message_handler.agent_name} 🧠 {self.message_handler.llm.model}"
+            f"⚙️ {self.message_handler.agent_name} 🧠 {self.message_handler.llm.model}"
         )
         self.status_indicator.setStyleSheet(
             "background-color: #FFFEEE; padding: 5px; border-radius: 5px;"
@@ -412,6 +100,18 @@ class ChatWindow(QMainWindow, Observer):
             "Type your message here... (Ctrl+Enter to send)"
         )
 
+        # Set up file path completion
+        self.file_completer = QCompleter(self)
+        self.file_completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        self.file_completer.setCaseSensitivity(Qt.CaseSensitivity.CaseSensitive)
+        self.file_completer.setWidget(self.message_input)
+        self.file_completer.activated.connect(self.insert_completion)
+        # Set completer to use Enter and Tab keys
+        self.file_completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        self.directory_completer = DirectoryListingCompleter()
+        self.path_prefix = ""  # Store the path prefix for completions
+        self.message_input.textChanged.connect(self.check_for_path_completion)
+
         # Create buttons layout
         buttons_layout = QVBoxLayout()  # Change to vertical layout for stacking buttons
 
@@ -423,7 +123,7 @@ class ChatWindow(QMainWindow, Observer):
         )
 
         # Create File button with emoji
-        self.file_button = QPushButton("📎 File")
+        self.file_button = QPushButton("📄 File")
         self.file_button.setFont(QFont("Arial", 12))
         self.file_button.setStyleSheet(
             "background-color: #2196F3; color: white; border-radius: 5px; padding: 5px;"
@@ -532,8 +232,34 @@ class ChatWindow(QMainWindow, Observer):
 
     def input_key_press_event(self, event):
         """Custom key press event for the message input."""
+        # Handle Tab key for completion
+        if event.key() == Qt.Key.Key_Tab and self.file_completer.popup().isVisible():
+            # Select the current completion
+            current_index = self.file_completer.popup().currentIndex()
+            if current_index.isValid():
+                completion = self.file_completer.completionModel().data(
+                    current_index, Qt.ItemDataRole.DisplayRole
+                )
+                self.insert_completion(completion)
+                self.file_completer.popup().hide()
+                event.accept()
+                return
+        # Handle Enter key for completion
+        elif (
+            event.key() == Qt.Key.Key_Return and self.file_completer.popup().isVisible()
+        ):
+            # Select the current completion
+            current_index = self.file_completer.popup().currentIndex()
+            if current_index.isValid():
+                completion = self.file_completer.completionModel().data(
+                    current_index, Qt.ItemDataRole.DisplayRole
+                )
+                self.insert_completion(completion)
+                self.file_completer.popup().hide()
+                event.accept()
+                return
         # Ctrl+Enter to send
-        if (
+        elif (
             event.key() == Qt.Key.Key_Return
             and event.modifiers() == Qt.KeyboardModifier.ControlModifier
         ):
@@ -544,6 +270,7 @@ class ChatWindow(QMainWindow, Observer):
         elif (
             event.key() == Qt.Key.Key_Up
             and event.modifiers() == Qt.KeyboardModifier.NoModifier
+            and not self.file_completer.popup().isVisible()
         ):
             self.history_navigate(-1)
             event.accept()
@@ -552,6 +279,7 @@ class ChatWindow(QMainWindow, Observer):
         elif (
             event.key() == Qt.Key.Key_Down
             and event.modifiers() == Qt.KeyboardModifier.NoModifier
+            and not self.file_completer.popup().isVisible()
         ):
             self.history_navigate(1)
             event.accept()
@@ -855,6 +583,73 @@ class ChatWindow(QMainWindow, Observer):
         # Show the menu at the cursor position
         context_menu.exec(self.mapToGlobal(position))
 
+    def check_for_path_completion(self):
+        """Check if the current text contains a path that should trigger completion."""
+        text = self.message_input.toPlainText()
+        cursor_position = self.message_input.textCursor().position()
+
+        # Get the text up to the cursor position
+        text_to_cursor = text[:cursor_position]
+
+        # Look for path patterns that should trigger completion
+        path_match = re.search(r"((~|\.{1,2})?/[^\s]*|~)$", text_to_cursor)
+
+        if path_match:
+            path = path_match.group(0)
+            completions = self.directory_completer.get_path_completions(path)
+
+            if completions:
+                # Create a model for the completer
+                model = QStringListModel(completions)
+                self.file_completer.setModel(model)
+
+                # Calculate the prefix length to determine what part to complete
+                prefix = os.path.basename(path) if "/" in path else path
+                self.file_completer.setCompletionPrefix(prefix)
+
+                # Store the path prefix (everything before the basename)
+                self.path_prefix = path[: len(path) - len(prefix)]
+
+                # Show the completion popup
+                popup = self.file_completer.popup()
+                popup.setCurrentIndex(self.file_completer.completionModel().index(0, 0))
+
+                # Calculate position for the popup
+                rect = self.message_input.cursorRect()
+                rect.setWidth(300)  # Set a reasonable width for the popup
+
+                # Show the popup
+                self.file_completer.complete(rect)
+            else:
+                # Hide the popup if no completions
+                self.file_completer.popup().hide()
+
+    def insert_completion(self, completion):
+        """Insert the selected completion into the text input."""
+        cursor = self.message_input.textCursor()
+        text = self.message_input.toPlainText()
+        position = cursor.position()
+
+        # Find the start of the path
+        text_to_cursor = text[:position]
+        path_match = re.search(r"((~|\.{1,2})?/[^\s]*|~)$", text_to_cursor)
+
+        if path_match:
+            path_start = path_match.start()
+            path = path_match.group(0)
+
+            # Calculate what part of the path to replace
+            prefix = os.path.basename(path) if "/" in path else path
+            prefix_start = path_start + len(path) - len(prefix)
+
+            # Replace the prefix with the completion
+            cursor.setPosition(prefix_start)
+            cursor.setPosition(position, QTextCursor.MoveMode.KeepAnchor)
+
+            # If the completion is a directory, add a trailing slash
+            # full_path = os.path.join(os.path.expanduser(self.path_prefix), completion)
+            cursor.insertText(completion)
+
     def create_menu_bar(self):
         """Create the application menu bar with Agents and Models menus"""
         menu_bar = QMenuBar(self)
@@ -944,15 +739,15 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "agent_changed":
             self.add_system_message(f"Switched to {data} agent")
             self.status_indicator.setText(
-                f"🤖 {data} 🧠 {self.message_handler.llm.model}"
+                f"⚙️ {data} 🧠 {self.message_handler.llm.model}"
             )
         elif event == "model_changed":
             self.add_system_message(f"Switched to {data['name']} ({data['id']})")
             self.status_indicator.setText(
-                f"🤖 {self.message_handler.agent_name} 🧠 {data['id']}"
+                f"⚙️ {self.message_handler.agent_name} 🧠 {data['id']}"
             )
         elif event == "agent_changed_by_handoff":
             self.add_system_message(f"Handed off to {data} agent")
             self.status_indicator.setText(
-                f"🤖 {data} 🧠 {self.message_handler.llm.model}"
+                f"⚙️ {data} 🧠 {self.message_handler.llm.model}"
             )

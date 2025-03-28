@@ -4,7 +4,8 @@ import os
 import sys
 import traceback
 from datetime import datetime
-from swissknife.modules.chat import ConsoleUI, ChatWindow
+from swissknife.modules.chat import ConsoleUI
+from swissknife.modules.gui import ChatWindow
 from swissknife.modules.chat import MessageHandler
 from swissknife.modules.scraping import ScrapingService
 from swissknife.modules.web_search import TavilySearchService
