@@ -47,6 +47,10 @@ class MessageBubble(QFrame):
         self.message_label.setTextFormat(Qt.TextFormat.RichText)
         self.message_label.setWordWrap(True)
         self.message_label.setOpenExternalLinks(True)  # Allow clicking links
+        self.message_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse | 
+            Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
 
         # Increase font size by 10%
         font = self.message_label.font()

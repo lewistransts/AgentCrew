@@ -37,6 +37,10 @@ class SystemMessageWidget(QWidget):
         self.message_label.setStyleSheet("color: #6495ED;")  # Olive yellow
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.message_label.setWordWrap(True)
+        self.message_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse | 
+            Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
 
         font = self.message_label.font()
         font_size = font.pointSizeF() * 1.2  # Increase by 10%

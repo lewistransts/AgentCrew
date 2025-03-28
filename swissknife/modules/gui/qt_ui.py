@@ -62,6 +62,9 @@ class ChatWindow(QMainWindow, Observer):
         # Initialize MessageHandler - kept in main thread
         self.message_handler = message_handler
         self.message_handler.attach(self)
+        
+        # Track if we're waiting for a response
+        self.waiting_for_response = False
 
         # Create widget for chat messages
         self.chat_container = QWidget()
@@ -288,11 +291,40 @@ class ChatWindow(QMainWindow, Observer):
         else:
             QTextEdit.keyPressEvent(self.message_input, event)
 
+    def set_input_controls_enabled(self, enabled: bool):
+        """Enable or disable input controls based on whether we're waiting for a response."""
+        self.message_input.setEnabled(enabled)
+        self.send_button.setEnabled(enabled)
+        self.file_button.setEnabled(enabled)
+        
+        # Update cursor and appearance for visual feedback
+        if enabled:
+            self.message_input.setFocus()
+            self.send_button.setStyleSheet(
+                "background-color: #4CAF50; color: white; border-radius: 5px; padding: 5px;"
+            )
+            self.file_button.setStyleSheet(
+                "background-color: #2196F3; color: white; border-radius: 5px; padding: 5px;"
+            )
+        else:
+            self.send_button.setStyleSheet(
+                "background-color: #A0A0A0; color: white; border-radius: 5px; padding: 5px;"
+            )
+            self.file_button.setStyleSheet(
+                "background-color: #A0A0A0; color: white; border-radius: 5px; padding: 5px;"
+            )
+        
+        # Update waiting state
+        self.waiting_for_response = not enabled
+
     @Slot()
     def send_message(self):
         user_input = self.message_input.toPlainText().strip()  # Get text from QTextEdit
         if not user_input:  # Skip if empty
             return
+
+        # Disable input controls while waiting for response
+        self.set_input_controls_enabled(False)
 
         self.message_input.clear()
 
@@ -301,10 +333,12 @@ class ChatWindow(QMainWindow, Observer):
             # Clear command
             if user_input.startswith("/clear"):
                 self.clear_chat(True)
+                self.set_input_controls_enabled(True)  # Re-enable controls
                 return
             # Copy command
             elif user_input.startswith("/copy"):
                 self.copy_last_response()
+                self.set_input_controls_enabled(True)  # Re-enable controls
                 return
             # Exit command
             elif user_input in ["/exit", "/quit"]:
@@ -392,6 +426,9 @@ class ChatWindow(QMainWindow, Observer):
                 "total_cost": total_cost,
             }
         )
+        
+        # Re-enable input controls
+        self.set_input_controls_enabled(True)
 
     @Slot(str)
     def display_response_chunk(self, chunk: str):
@@ -433,6 +470,9 @@ class ChatWindow(QMainWindow, Observer):
             f"Error: {error_message}", 5000
         )  # Display error in status bar
         self.expecting_response = False
+        
+        # Re-enable input controls
+        self.set_input_controls_enabled(True)
 
     @Slot(str)
     def display_status_message(self, message):
@@ -455,6 +495,9 @@ class ChatWindow(QMainWindow, Observer):
 
         # Reset response expectation
         self.expecting_response = False
+        
+        # Re-enable input controls
+        self.set_input_controls_enabled(True)
 
     @Slot()
     def copy_last_response(self):
@@ -502,6 +545,9 @@ class ChatWindow(QMainWindow, Observer):
             self.current_response_bubble = None
             self.current_response_container = None
             self.expecting_response = False
+            
+            # Ensure input controls are enabled
+            self.set_input_controls_enabled(True)
 
             # Add welcome message back
             self.add_system_message("Chat history cleared.")
@@ -540,6 +586,10 @@ class ChatWindow(QMainWindow, Observer):
         tool_result = data["tool_result"]
         result_message = f"RESULT: Tool {tool_use['name']}:\n\n```\n{tool_result}\n```"
         self.add_system_message(result_message)
+        
+        # Reset the current response bubble so the next agent message starts in a new bubble
+        self.current_response_bubble = None
+        self.current_response_container = None
 
     def display_tool_error(self, data: Dict):
         """Display an error that occurred during tool execution."""
@@ -548,6 +598,10 @@ class ChatWindow(QMainWindow, Observer):
         error_message = f"ERROR: Tool {tool_use['name']}: {error}"
         self.add_system_message(error_message)
         self.display_status_message(f"Error in tool {tool_use['name']}")
+        
+        # Reset the current response bubble so the next agent message starts in a new bubble
+        self.current_response_bubble = None
+        self.current_response_container = None
 
     def browse_file(self):
         """Open file dialog and process selected file."""
@@ -559,6 +613,9 @@ class ChatWindow(QMainWindow, Observer):
         )
 
         if file_path:
+            # Disable input controls while processing file
+            self.set_input_controls_enabled(False)
+            
             # Process the file using the /file command
             file_command = f"/file {file_path}"
             self.display_status_message(f"Processing file: {file_path}")
