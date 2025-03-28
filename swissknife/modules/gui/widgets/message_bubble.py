@@ -38,7 +38,7 @@ class MessageBubble(QFrame):
         layout.setContentsMargins(10, 10, 10, 10)
 
         # Add sender label - Use agent_name for non-user messages
-        sender_label = QLabel(is_user and "👤 YOU:" or f"⚙️ {agent_name}:")
+        sender_label = QLabel(is_user and "YOU:" or f"{agent_name}:")
         sender_label.setStyleSheet("font-weight: bold; color: #333333;")
         layout.addWidget(sender_label)
 

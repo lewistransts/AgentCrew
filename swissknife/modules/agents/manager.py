@@ -203,14 +203,8 @@ class AgentManager:
         handoff_prompt = (
             "## Agent Handoff\n\n"
             "You must hand off the conversation to another specialized agent when task is not in your specialized. "
-            "To perform a handoff, use handoff tool with following argument:\n\n"
-            "```\n"
-            "{\n"
-            "'target_agent': [agent_name],\n"
-            "'task': [specific task or question for the agent]\n"
-            "'context_summary': [brief summary of relevant context]\n"
-            "}\n"
-            "```\n\n"
+            "To perform a handoff, use handoff tool with target_agent, task, context_summary arguments. Example:\n\n"
+            """{'id': 'random id', 'name': 'handoff', 'input': {'target_agent': 'AgentName', 'task': 'Task need to be done', 'context_summary': 'Summary of the context'}, 'type': 'function' }\n"""
             f"Available agents:\n{chr(10).join(agent_descriptions)}\n"
         )
 

@@ -89,7 +89,11 @@ class FileHandler:
 
         # Check MIME type
         mime_type, _ = mimetypes.guess_type(file_path)
-        if mime_type not in ALLOWED_MIME_TYPES and not mime_type.startswith("text/"):
+        if (
+            mime_type
+            and mime_type not in ALLOWED_MIME_TYPES
+            and not mime_type.startswith("text/")
+        ):
             logger.warning(f"Unsupported MIME type: {mime_type} for {file_path}")
             return False
 

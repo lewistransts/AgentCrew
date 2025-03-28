@@ -85,7 +85,7 @@ class ChatWindow(QMainWindow, Observer):
 
         # Create the status indicator (showing current agent and model)
         self.status_indicator = QLabel(
-            f"⚙️ {self.message_handler.agent_name} 🧠 {self.message_handler.llm.model}"
+            f"Agent: {self.message_handler.agent_name} | Model: {self.message_handler.llm.model}"
         )
         self.status_indicator.setStyleSheet(
             "background-color: #FFFEEE; padding: 5px; border-radius: 5px;"
@@ -115,15 +115,15 @@ class ChatWindow(QMainWindow, Observer):
         # Create buttons layout
         buttons_layout = QVBoxLayout()  # Change to vertical layout for stacking buttons
 
-        # Create Send button with emoji
-        self.send_button = QPushButton("📤 Send")
+        # Create Send button
+        self.send_button = QPushButton("Send")
         self.send_button.setFont(QFont("Arial", 12))
         self.send_button.setStyleSheet(
             "background-color: #4CAF50; color: white; border-radius: 5px; padding: 5px;"
         )
 
-        # Create File button with emoji
-        self.file_button = QPushButton("📄 File")
+        # Create File button
+        self.file_button = QPushButton("File")
         self.file_button.setFont(QFont("Arial", 12))
         self.file_button.setStyleSheet(
             "background-color: #2196F3; color: white; border-radius: 5px; padding: 5px;"
@@ -530,7 +530,7 @@ class ChatWindow(QMainWindow, Observer):
 
     def display_tool_use(self, tool_use: Dict):
         """Display information about a tool being used."""
-        tool_message = f"🔧 Using tool: {tool_use['name']}\n\n```\n{tool_use}\n```"
+        tool_message = f"TOOL: Using {tool_use['name']}\n\n```\n{tool_use}\n```"
         self.add_system_message(tool_message)
         self.display_status_message(f"Using tool: {tool_use['name']}")
 
@@ -538,16 +538,14 @@ class ChatWindow(QMainWindow, Observer):
         """Display the result of a tool execution."""
         tool_use = data["tool_use"]
         tool_result = data["tool_result"]
-        result_message = (
-            f"✓ Tool result for {tool_use['name']}:\n\n```\n{tool_result}\n```"
-        )
+        result_message = f"RESULT: Tool {tool_use['name']}:\n\n```\n{tool_result}\n```"
         self.add_system_message(result_message)
 
     def display_tool_error(self, data: Dict):
         """Display an error that occurred during tool execution."""
         tool_use = data["tool_use"]
         error = data["error"]
-        error_message = f"❌ Error in tool {tool_use['name']}: {error}"
+        error_message = f"ERROR: Tool {tool_use['name']}: {error}"
         self.add_system_message(error_message)
         self.display_status_message(f"Error in tool {tool_use['name']}")
 
@@ -739,15 +737,15 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "agent_changed":
             self.add_system_message(f"Switched to {data} agent")
             self.status_indicator.setText(
-                f"⚙️ {data} 🧠 {self.message_handler.llm.model}"
+                f"Agent: {data} | Model: {self.message_handler.llm.model}"
             )
         elif event == "model_changed":
             self.add_system_message(f"Switched to {data['name']} ({data['id']})")
             self.status_indicator.setText(
-                f"⚙️ {self.message_handler.agent_name} 🧠 {data['id']}"
+                f"Agent: {self.message_handler.agent_name} | Model: {data['id']}"
             )
         elif event == "agent_changed_by_handoff":
             self.add_system_message(f"Handed off to {data} agent")
             self.status_indicator.setText(
-                f"⚙️ {data} 🧠 {self.message_handler.llm.model}"
+                f"Agent: {data} | Model: {self.message_handler.llm.model}"
             )
