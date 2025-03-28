@@ -49,7 +49,7 @@ class ConsoleUI(Observer):
         # Set up key bindings
         self.kb = self._setup_key_bindings()
 
-    def update(self, event: str, data: Any = None):
+    def listen(self, event: str, data: Any = None):
         """
         Update method required by the Observer interface. Handles events from the MessageHandler.
 
@@ -62,7 +62,8 @@ class ConsoleUI(Observer):
         elif event == "thinking_chunk":
             self.display_thinking_chunk(data)  # data is the thinking chunk
         elif event == "response_chunk":
-            self.update_live_display(data)  # data is the response chunk
+            chunk, assistant_response = data
+            self.update_live_display(assistant_response)  # data is the response chunk
         elif event == "tool_use":
             self.display_tool_use(data)  # data is the tool use object
         elif event == "tool_result":

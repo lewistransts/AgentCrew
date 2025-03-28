@@ -1,9 +1,10 @@
 import click
 import importlib
 import os
+import sys
 import traceback
 from datetime import datetime
-from swissknife.modules.chat import ConsoleUI
+from swissknife.modules.chat import ConsoleUI, ChatWindow
 from swissknife.modules.chat import MessageHandler
 from swissknife.modules.scraping import ScrapingService
 from swissknife.modules.web_search import TavilySearchService
@@ -15,6 +16,7 @@ from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.coder import SpecPromptValidationService
 from swissknife.modules.agents import AgentManager, Agent
+from PySide6.QtWidgets import QApplication
 
 
 @click.group()
@@ -242,7 +244,7 @@ def discover_and_register_tools(services=None):
 @click.option("--files", multiple=True, help="Files to include in the initial message")
 @click.option(
     "--provider",
-    type=click.Choice(["claude", "groq", "openai", "google"]),
+    type=click.Choice(["claude", "groq", "openai", "google", "deepinfra"]),
     default="claude",
     help="LLM provider to use (claude, groq, or openai)",
 )
@@ -260,9 +262,13 @@ def chat(message, files, provider, agent_config):
         # Create the chat interface with the agent manager injected
         # chat_interface = InteractiveChat(services["memory"])
         message_handler = MessageHandler(services["memory"])
-        ui = ConsoleUI(message_handler)
-        ui.start()
+        # ui = ConsoleUI(message_handler)
+        # ui.start()
 
+        app = QApplication(sys.argv)
+        chat_window = ChatWindow(message_handler)
+        chat_window.show()
+        sys.exit(app.exec())
         # Start the chat
         # chat_interface.start_chat(initial_content=message, files=files)
     except Exception as e:

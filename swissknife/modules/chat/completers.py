@@ -48,7 +48,7 @@ class ModelCompleter(Completer):
 
             # Get all available models from the registry
             all_models = []
-            for provider in ["claude", "openai", "groq", "google"]:
+            for provider in ["claude", "openai", "groq", "google", "deepinfra"]:
                 for model in self.registry.get_models_by_provider(provider):
                     all_models.append((model.id, model.name, provider))
 

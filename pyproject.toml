@@ -34,6 +34,8 @@ dependencies = [
   "docling>=2.26.0",
   "google-genai>=1.7.0",
   "toml>=0.10.2",
+  "pyside6>=6.8.3",
+  "markdown>=3.7",
 ]
 
 [build-system]

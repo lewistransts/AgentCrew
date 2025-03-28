@@ -284,41 +284,22 @@ The following features are planned for future releases:
 
 - [x] **Web Search Integration**: Allow AI to search the web for real-time
       information.
-- [x] **YouTube Integration**: Extract subtitles and chapters from YouTube
-      videos.
 - [x] **Conversation Memory**: Store and retrieve past conversations.
 - [x] **Code Analysis**: Analyze code structure in git repositories.
 - [x] **Model Context Protocol (MCP) Support**: Implement MCP for improved
       context management.
 - [x] **Command-line Thinking Mode Options**: Enable and configure thinking mode
       with the `/think` command.
-- [ ] **Bash Command Execution**: Enable running system commands directly from
-      the chat.
-- [ ] **File Manipulation**: Create, edit, and manage files through chat
-      commands.
-- [ ] **Enhanced Agent Specialization**: More domain-specific agents with deeper
-      expertise.
+- [x] **Agents through config**: Dynamic agents configurations through config file
 
 ### Advanced Personalization
 
-- [ ] **Custom Instructions**: Save and load different instruction sets for
-      various use cases.
 - [ ] **Enhanced Memory Management**: Configure memory retention periods and
       retrieval preferences.
-- [ ] **Agent Customization**: Create and configure custom specialized agents.
 - [ ] **Local Model Support**: Add ONNX runtime integration.
 - [ ] **Advanced Memory Indexing**: Improve memory retrieval accuracy and
       performance.
-- [ ] **Multi-Agent Collaboration**: Enable multiple agents to work together on
-      complex tasks.
-
-### Technical Improvements
-
-- [ ] **Streaming Optimizations**: Enhance response speed and token efficiency.
-- [ ] **Local Model Support**: Add compatibility with locally-hosted models.
-- [ ] **Advanced Memory Indexing**: Improve memory retrieval accuracy and
-      performance.
-- [ ] **Multi-Agent Collaboration**: Enable multiple agents to work together on
+- [x] **Multi-Agent Collaboration**: Enable multiple agents to work together on
       complex tasks.
 
 ### User Experience

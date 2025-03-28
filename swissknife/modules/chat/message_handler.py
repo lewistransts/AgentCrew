@@ -29,14 +29,14 @@ class Observable:
     def _notify(self, event: str, data: Any = None):
         """Notifies all attached observers of a new event."""
         for observer in self._observers:
-            observer.update(event, data)
+            observer.listen(event, data)
 
 
 class Observer:
     """Abstract base class for observers."""
 
     @abstractmethod
-    def update(self, event: str, data: Any = None):
+    def listen(self, event: str, data: Any = None):
         """Updates the observer with new data from the observable."""
         pass
 
@@ -404,7 +404,7 @@ class MessageHandler(Observable):
                             self._notify("thinking_completed")
                             end_thinking = True
                         # Notify about response progress
-                        self._notify("response_chunk", assistant_response)
+                        self._notify("response_chunk", (chunk_text, assistant_response))
 
             # Handle tool use if needed
             if tool_uses and len(tool_uses) > 0:
