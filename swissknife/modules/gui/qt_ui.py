@@ -340,6 +340,11 @@ class ChatWindow(QMainWindow, Observer):
                 self.copy_last_response()
                 self.set_input_controls_enabled(True)  # Re-enable controls
                 return
+            # Debug command
+            elif user_input.startswith("/debug"):
+                self.display_debug_info()
+                self.set_input_controls_enabled(True)  # Re-enable controls
+                return
             # Exit command
             elif user_input in ["/exit", "/quit"]:
                 QApplication.quit()
@@ -380,7 +385,24 @@ class ChatWindow(QMainWindow, Observer):
 
         # Create the message bubble with agent name for non-user messages
         agent_name = self.message_handler.agent_name if not is_user else "YOU"
-        message_bubble = MessageBubble(text, is_user, agent_name)
+        
+        # Get the message index for this message - only for user messages
+        message_index = None
+        if is_user and self.message_handler.messages:
+            # For user messages, we need to find the index in the messages array
+            # This will be the index of the last user message
+            for i, msg in enumerate(self.message_handler.messages):
+                if msg.get("role") == "user":
+                    message_index = i
+        
+        message_bubble = MessageBubble(text, is_user, agent_name, message_index=message_index)
+        
+        # Set up context menu for user messages
+        if is_user:
+            message_bubble.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            message_bubble.customContextMenuRequested.connect(
+                lambda pos, bubble=message_bubble: self.show_message_context_menu(pos, bubble)
+            )
 
         # Add bubble to container with appropriate alignment
         if is_user:
@@ -637,6 +659,91 @@ class ChatWindow(QMainWindow, Observer):
 
         # Show the menu at the cursor position
         context_menu.exec(self.mapToGlobal(position))
+        
+    def show_message_context_menu(self, position, message_bubble):
+        """Show context menu for a message bubble."""
+        # Only show rollback option for user messages
+        if not message_bubble.is_user:
+            return
+            
+        context_menu = QMenu(self)
+        
+        # Add rollback action only for user messages with a valid index
+        if message_bubble.message_index is not None:
+            rollback_action = context_menu.addAction("Rollback Here")
+            rollback_action.triggered.connect(
+                lambda: self.rollback_to_message(message_bubble)
+            )
+        
+        # Show the menu at the cursor position
+        context_menu.exec(message_bubble.mapToGlobal(position))
+
+    def rollback_to_message(self, message_bubble):
+        """Rollback the conversation to the selected message."""
+        if message_bubble.message_index is None:
+            self.display_status_message("Cannot rollback: no message index available")
+            return
+        
+        # Find the turn number for this message
+        # We need to find which conversation turn corresponds to this message
+        turn_number = None
+        
+        # Get the user message text for comparison
+        user_text = message_bubble.text_content
+        
+        # Find the matching turn by comparing the user message content
+        for i, turn in enumerate(self.message_handler.conversation_turns):
+            # Get the preview of the turn to compare with our message
+            turn_preview = turn.get_preview(1000)  # Get a longer preview to ensure we match
+            
+            # Check if this turn's preview contains our message text
+            # We use a substring match since the preview might be truncated
+            if user_text in turn_preview:
+                turn_number = i + 1  # Turn numbers are 1-indexed
+                break
+        
+        if turn_number is None:
+            # Try a different approach - use the message index directly
+            for i, turn in enumerate(self.message_handler.conversation_turns):
+                if turn.message_index == message_bubble.message_index:
+                    turn_number = i + 1  # Turn numbers are 1-indexed
+                    break
+        
+        if turn_number is None:
+            self.display_status_message("Cannot rollback: message not found in conversation history")
+            return
+            
+        # Execute the jump command
+        self.llm_worker.process_request.emit(f"/jump {turn_number}")
+        
+        # Find and remove all widgets after this message in the UI
+        self.remove_messages_after(message_bubble)
+        
+    def remove_messages_after(self, message_bubble):
+        """Remove all message widgets that appear after the given message bubble, including the message bubble itself."""
+        # Find the index of the container widget that holds the message bubble
+        container_index = -1
+        for i in range(self.chat_layout.count()):
+            item = self.chat_layout.itemAt(i)
+            if item and item.widget():
+                # Check if this widget contains our message bubble
+                if message_bubble in item.widget().findChildren(MessageBubble):
+                    container_index = i
+                    break
+        
+        if container_index == -1:
+            return  # Message bubble not found
+        
+        # Remove the container with the message bubble and all widgets after it
+        while self.chat_layout.count() > container_index:
+            item = self.chat_layout.takeAt(container_index)
+            if item.widget():
+                item.widget().deleteLater()
+        
+        # Reset current response tracking
+        self.current_response_bubble = None
+        self.current_response_container = None
+        self.expecting_response = False
 
     def check_for_path_completion(self):
         """Check if the current text contains a path that should trigger completion."""
@@ -757,6 +864,22 @@ class ChatWindow(QMainWindow, Observer):
         """Change the current model"""
         # Process the model change command
         self.llm_worker.process_request.emit(f"/model {model_id}")
+        
+    def display_debug_info(self):
+        """Display debug information about the current messages."""
+        import json
+        
+        try:
+            # Format the messages for display
+            debug_info = json.dumps(self.message_handler.messages, indent=2)
+            
+            # Add as a system message
+            self.add_system_message(f"DEBUG INFO:\n\n```json\n{debug_info}\n```")
+            
+            # Update status bar
+            self.display_status_message("Debug information displayed")
+        except Exception as e:
+            self.display_error(f"Error displaying debug info: {str(e)}")
 
     def listen(self, event: str, data: Any = None):
         """Handle events from the message handler."""
@@ -783,6 +906,15 @@ class ChatWindow(QMainWindow, Observer):
             if isinstance(data, str):
                 pyperclip.copy(data)
                 self.display_status_message("Text copied to clipboard!")
+        elif event == "debug_requested":
+            # Format the debug data and display it
+            import json
+            try:
+                debug_info = json.dumps(data, indent=2)
+                self.add_system_message(f"DEBUG INFO:\n\n```json\n{debug_info}\n```")
+            except Exception:
+                # Fallback for non-JSON serializable data
+                self.add_system_message(f"DEBUG INFO:\n\n{str(data)}")
         elif event == "file_processed":
             self.add_system_message(f"Processed file: {data['file_path']}")
         elif event == "tool_use":
@@ -791,6 +923,10 @@ class ChatWindow(QMainWindow, Observer):
             self.display_tool_result(data)
         elif event == "tool_error":
             self.display_tool_error(data)
+        elif event == "jump_performed":
+            self.add_system_message(
+                f"🕰️ Jumped to turn {data['turn_number']}: {data['preview']}"
+            )
         elif event == "agent_changed":
             self.add_system_message(f"Switched to {data} agent")
             self.status_indicator.setText(

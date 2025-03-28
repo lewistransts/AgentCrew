@@ -14,9 +14,13 @@ from PySide6.QtCore import (
 class MessageBubble(QFrame):
     """A custom widget to display messages as bubbles."""
 
-    def __init__(self, text, is_user=True, agent_name="ASSISTANT", parent=None):
+    def __init__(self, text, is_user=True, agent_name="ASSISTANT", parent=None, message_index=None):
         super().__init__(parent)
-
+        
+        # Store message index for rollback functionality
+        self.message_index = message_index
+        self.is_user = is_user
+        
         # Setup frame appearance
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.setFrameShadow(QFrame.Shadow.Raised)

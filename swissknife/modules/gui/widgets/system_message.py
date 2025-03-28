@@ -19,7 +19,8 @@ class SystemMessageWidget(QWidget):
 
         # Create layout
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setSpacing(0)
 
         # Store the full text
         self.full_text = text
@@ -34,12 +35,12 @@ class SystemMessageWidget(QWidget):
         # Create label with HTML support
         self.message_label = QLabel()
         self.message_label.setTextFormat(Qt.TextFormat.RichText)
-        self.message_label.setStyleSheet("color: #6495ED;")  # Olive yellow
-        self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.message_label.setStyleSheet("color: #6495ED;")
+        self.message_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.message_label.setWordWrap(True)
         self.message_label.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse | 
-            Qt.TextInteractionFlag.LinksAccessibleByMouse
+            Qt.TextInteractionFlag.TextSelectableByMouse
+            | Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
 
         font = self.message_label.font()
@@ -52,7 +53,7 @@ class SystemMessageWidget(QWidget):
         self.toggle_button.setStyleSheet(
             "QPushButton { background-color: transparent; color: #6495ED; border: none; text-align: left; }"
         )
-        self.toggle_button.setMaximumHeight(20)
+        self.toggle_button.setMaximumHeight(16)
         self.toggle_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.toggle_button.clicked.connect(self.toggle_expansion)
 
