@@ -300,6 +300,7 @@ class MessageTransformer:
                     )
 
             if "tool_call_id" in msg:
+                openai_msg["role"] = "tool"
                 openai_msg["tool_call_id"] = msg.get("tool_call_id", "")
             # Handle tool results
             if "tool_result" in msg:

@@ -1,6 +1,5 @@
-import sys
 import traceback
-import markdown  # pip install markdown
+import markdown
 from typing import Any, Dict
 import pyperclip
 
@@ -29,9 +28,6 @@ from PySide6.QtCore import (
     QThread,
     QObject,
     Signal,
-    QMetaObject,
-    Q_ARG,
-    Q_RETURN_ARG,
 )
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.agents.manager import AgentManager
@@ -89,16 +85,119 @@ class SystemMessageWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
 
-        # Create label
-        message_label = QLabel(text)
-        message_label.setStyleSheet(
-            "color: #8B8000; font-style: italic;"
-        )  # Olive yellow
-        message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        message_label.setWordWrap(True)
+        # Store the full text
+        self.full_text = text
+        self.is_expanded = False
 
-        # Add to layout
-        layout.addWidget(message_label)
+        # Create collapsible container
+        self.container = QWidget()
+        container_layout = QVBoxLayout(self.container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(0)
+
+        # Create label with HTML support
+        self.message_label = QLabel()
+        self.message_label.setTextFormat(Qt.TextFormat.RichText)
+        self.message_label.setStyleSheet(
+            "color: #6495ED; font-style: italic; text-align: left;"
+        )  # Olive yellow
+        self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.message_label.setWordWrap(True)
+
+        font = self.message_label.font()
+        font_size = font.pointSizeF() * 1.2  # Increase by 10%
+        font.setPointSizeF(font_size)
+        self.message_label.setFont(font)
+
+        # Create expand/collapse button
+        self.toggle_button = QPushButton("▼ Show More")
+        self.toggle_button.setStyleSheet(
+            "QPushButton { background-color: transparent; color: #6495ED; border: none; text-align: left; }"
+        )
+        self.toggle_button.setMaximumHeight(20)
+        self.toggle_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.toggle_button.clicked.connect(self.toggle_expansion)
+
+        # Add widgets to container
+        container_layout.addWidget(self.message_label)
+        container_layout.addWidget(self.toggle_button)
+
+        # Add container to main layout
+        layout.addWidget(self.container)
+
+        # Set the collapsed text initially
+        self.set_collapsed_text()
+
+    def set_collapsed_text(self):
+        """Set the text to show only 2 lines when collapsed."""
+        # Convert markdown to HTML if the text contains code blocks
+        if "```" in self.full_text:
+            try:
+                html_content = markdown.markdown(
+                    self.full_text, extensions=["fenced_code"]
+                )
+
+                # Get first two lines (approximate)
+                lines = self.full_text.split("\n")
+                if len(lines) <= 2:
+                    # If there are only 1-2 lines, show everything and hide the button
+                    self.message_label.setText(html_content)
+                    self.toggle_button.hide()
+                    return
+
+                # Show first two lines
+                collapsed_text = "\n".join(lines[:2])
+                if "```" in collapsed_text and "```" not in collapsed_text + "\n```":
+                    # If we cut in the middle of a code block, add closing ```
+                    collapsed_text += "\n```"
+
+                collapsed_html = markdown.markdown(
+                    collapsed_text, extensions=["fenced_code"]
+                )
+                self.message_label.setText(collapsed_html + "...")
+                self.toggle_button.show()
+            except Exception:
+                # Fallback to simple text truncation
+                lines = self.full_text.split("\n")
+                if len(lines) <= 2:
+                    self.message_label.setText(self.full_text)
+                    self.toggle_button.hide()
+                else:
+                    self.message_label.setText("\n".join(lines[:2]) + "...")
+                    self.toggle_button.show()
+        else:
+            # Simple text truncation
+            lines = self.full_text.split("\n")
+            if len(lines) <= 2:
+                self.message_label.setText(self.full_text)
+                self.toggle_button.hide()
+            else:
+                self.message_label.setText("\n".join(lines[:2]) + "...")
+                self.toggle_button.show()
+
+    def set_expanded_text(self):
+        """Set the text to show all content."""
+        if "```" in self.full_text:
+            try:
+                html_content = markdown.markdown(
+                    self.full_text, extensions=["fenced_code"]
+                )
+                self.message_label.setText(html_content)
+            except Exception:
+                self.message_label.setText(self.full_text)
+        else:
+            self.message_label.setText(self.full_text)
+
+    def toggle_expansion(self):
+        """Toggle between expanded and collapsed states."""
+        self.is_expanded = not self.is_expanded
+
+        if self.is_expanded:
+            self.set_expanded_text()
+            self.toggle_button.setText("▲ Show Less")
+        else:
+            self.set_collapsed_text()
+            self.toggle_button.setText("▼ Show More")
 
 
 class MessageBubble(QFrame):
@@ -119,7 +218,7 @@ class MessageBubble(QFrame):
             )
         else:
             self.setStyleSheet(
-                "QFrame { border-radius: 10px; background-color: #ECECEC; }"
+                "QFrame { border-radius: 10px; background-color: #ADD8E6; }"
             )
         self.setAutoFillBackground(True)
 
@@ -148,7 +247,7 @@ class MessageBubble(QFrame):
         self.set_text(text)
 
         # Set minimum and maximum width - increase max width by 3 times
-        self.message_label.setMinimumWidth(700)
+        self.message_label.setMinimumWidth(500)
         self.message_label.setMaximumWidth(1200)  # Increased from 500 to 1500
 
         # Add to layout
@@ -315,21 +414,21 @@ class ChatWindow(QMainWindow, Observer):
 
         # Create buttons layout
         buttons_layout = QVBoxLayout()  # Change to vertical layout for stacking buttons
-        
+
         # Create Send button with emoji
         self.send_button = QPushButton("📤 Send")
         self.send_button.setFont(QFont("Arial", 12))
         self.send_button.setStyleSheet(
             "background-color: #4CAF50; color: white; border-radius: 5px; padding: 5px;"
         )
-        
+
         # Create File button with emoji
         self.file_button = QPushButton("📎 File")
         self.file_button.setFont(QFont("Arial", 12))
         self.file_button.setStyleSheet(
             "background-color: #2196F3; color: white; border-radius: 5px; padding: 5px;"
         )
-        
+
         # Add buttons to layout
         buttons_layout.addWidget(self.send_button)
         buttons_layout.addWidget(self.file_button)
@@ -344,12 +443,12 @@ class ChatWindow(QMainWindow, Observer):
         layout = QVBoxLayout(central_widget)
         layout.addWidget(self.chat_scroll, 1)  # Give chat area more space
         layout.addWidget(self.status_indicator)
-        
+
         # Create horizontal layout for input and buttons
         input_row = QHBoxLayout()
         input_row.addWidget(self.message_input, 1)  # Give input area stretch priority
         input_row.addLayout(buttons_layout)  # Add buttons layout to the right
-        
+
         layout.addLayout(input_row)  # Add the horizontal layout to main layout
         layout.addWidget(self.token_usage)
         self.setCentralWidget(central_widget)
@@ -590,17 +689,17 @@ class ChatWindow(QMainWindow, Observer):
     @Slot(str)
     def display_error(self, error):
         """Display an error message.
-        
+
         Args:
             error: Either a string error message or a dictionary with error details
         """
         # Handle both string and dictionary error formats
         if isinstance(error, dict):
             # Extract error message from dictionary
-            error_message = error.get('message', str(error))
+            error_message = error.get("message", str(error))
         else:
             error_message = str(error)
-        
+
         QMessageBox.critical(self, "Error", error_message)
         self.status_bar.showMessage(
             f"Error: {error_message}", 5000
@@ -701,6 +800,29 @@ class ChatWindow(QMainWindow, Observer):
             self.history_position = len(self.message_handler.history_manager.history)
             self.message_input.clear()
 
+    def display_tool_use(self, tool_use: Dict):
+        """Display information about a tool being used."""
+        tool_message = f"🔧 Using tool: {tool_use['name']}\n\n```\n{tool_use}\n```"
+        self.add_system_message(tool_message)
+        self.display_status_message(f"Using tool: {tool_use['name']}")
+
+    def display_tool_result(self, data: Dict):
+        """Display the result of a tool execution."""
+        tool_use = data["tool_use"]
+        tool_result = data["tool_result"]
+        result_message = (
+            f"✓ Tool result for {tool_use['name']}:\n\n```\n{tool_result}\n```"
+        )
+        self.add_system_message(result_message)
+
+    def display_tool_error(self, data: Dict):
+        """Display an error that occurred during tool execution."""
+        tool_use = data["tool_use"]
+        error = data["error"]
+        error_message = f"❌ Error in tool {tool_use['name']}: {error}"
+        self.add_system_message(error_message)
+        self.display_status_message(f"Error in tool {tool_use['name']}")
+
     def browse_file(self):
         """Open file dialog and process selected file."""
         file_path, _ = QFileDialog.getOpenFileName(
@@ -709,15 +831,15 @@ class ChatWindow(QMainWindow, Observer):
             "",
             "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf);;Word Files (*.docx)",
         )
-        
+
         if file_path:
             # Process the file using the /file command
             file_command = f"/file {file_path}"
             self.display_status_message(f"Processing file: {file_path}")
-            
+
             # Send the file command to the worker thread
             self.llm_worker.process_request.emit(file_command)
-    
+
     def show_context_menu(self, position):
         """Show context menu with options."""
         context_menu = QMenu(self)
@@ -813,6 +935,12 @@ class ChatWindow(QMainWindow, Observer):
                 self.display_status_message("Text copied to clipboard!")
         elif event == "file_processed":
             self.add_system_message(f"Processed file: {data['file_path']}")
+        elif event == "tool_use":
+            self.display_tool_use(data)
+        elif event == "tool_result":
+            self.display_tool_result(data)
+        elif event == "tool_error":
+            self.display_tool_error(data)
         elif event == "agent_changed":
             self.add_system_message(f"Switched to {data} agent")
             self.status_indicator.setText(
