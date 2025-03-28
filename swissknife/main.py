@@ -251,7 +251,10 @@ def discover_and_register_tools(services=None):
 @click.option(
     "--agent-config", default=None, help="Path to the agent configuration file."
 )
-def chat(message, files, provider, agent_config):
+@click.option(
+    "--gui", is_flag=True, default=False, help="Use GUI interface instead of console"
+)
+def chat(message, files, provider, agent_config, gui):
     """Start an interactive chat session with LLM"""
     try:
         services = setup_services(provider)
@@ -259,18 +262,18 @@ def chat(message, files, provider, agent_config):
         # Set up the agent system
         setup_agents(services, agent_config)
 
-        # Create the chat interface with the agent manager injected
-        # chat_interface = InteractiveChat(services["memory"])
+        # Create the message handler
         message_handler = MessageHandler(services["memory"])
-        # ui = ConsoleUI(message_handler)
-        # ui.start()
 
-        app = QApplication(sys.argv)
-        chat_window = ChatWindow(message_handler)
-        chat_window.show()
-        sys.exit(app.exec())
-        # Start the chat
-        # chat_interface.start_chat(initial_content=message, files=files)
+        # Choose between GUI and console based on the --gui flag
+        if gui:
+            app = QApplication(sys.argv)
+            chat_window = ChatWindow(message_handler)
+            chat_window.show()
+            sys.exit(app.exec())
+        else:
+            ui = ConsoleUI(message_handler)
+            ui.start()
     except Exception as e:
         print(traceback.format_exc())
         click.echo(f"❌ Error: {str(e)}", err=True)

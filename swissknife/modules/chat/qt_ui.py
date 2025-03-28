@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QMenu,
     QMenuBar,
+    QFileDialog,
 )
 from PySide6.QtCore import (
     Qt,
@@ -231,7 +232,6 @@ class LLMWorker(QObject):
 
             # Emit the response
             if assistant_response:
-                print(f"Emitting response: {assistant_response[:30]}...")  # Debug print
                 self.response_ready.emit(
                     assistant_response, input_tokens, output_tokens
                 )
@@ -313,16 +313,27 @@ class ChatWindow(QMainWindow, Observer):
             "Type your message here... (Ctrl+Enter to send)"
         )
 
-        # Create buttons
-        buttons_layout = QHBoxLayout()
-
-        self.send_button = QPushButton("Send")
+        # Create buttons layout
+        buttons_layout = QVBoxLayout()  # Change to vertical layout for stacking buttons
+        
+        # Create Send button with emoji
+        self.send_button = QPushButton("📤 Send")
         self.send_button.setFont(QFont("Arial", 12))
         self.send_button.setStyleSheet(
             "background-color: #4CAF50; color: white; border-radius: 5px; padding: 5px;"
         )
-
+        
+        # Create File button with emoji
+        self.file_button = QPushButton("📎 File")
+        self.file_button.setFont(QFont("Arial", 12))
+        self.file_button.setStyleSheet(
+            "background-color: #2196F3; color: white; border-radius: 5px; padding: 5px;"
+        )
+        
+        # Add buttons to layout
         buttons_layout.addWidget(self.send_button)
+        buttons_layout.addWidget(self.file_button)
+        buttons_layout.addStretch(1)  # Add stretch to keep buttons at the top
 
         # Status Bar
         self.status_bar = QStatusBar()
@@ -333,13 +344,19 @@ class ChatWindow(QMainWindow, Observer):
         layout = QVBoxLayout(central_widget)
         layout.addWidget(self.chat_scroll, 1)  # Give chat area more space
         layout.addWidget(self.status_indicator)
-        layout.addWidget(self.message_input, 0)
+        
+        # Create horizontal layout for input and buttons
+        input_row = QHBoxLayout()
+        input_row.addWidget(self.message_input, 1)  # Give input area stretch priority
+        input_row.addLayout(buttons_layout)  # Add buttons layout to the right
+        
+        layout.addLayout(input_row)  # Add the horizontal layout to main layout
         layout.addWidget(self.token_usage)
-        layout.addLayout(buttons_layout)
         self.setCentralWidget(central_widget)
 
         # Connect signals and slots
         self.send_button.clicked.connect(self.send_message)
+        self.file_button.clicked.connect(self.browse_file)
 
         # Setup context menu
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -552,17 +569,14 @@ class ChatWindow(QMainWindow, Observer):
     @Slot(str)
     def display_response_chunk(self, chunk: str):
         """Display a response chunk from the assistant."""
-        print(f"Received response chunk: {chunk[:30]}...")  # Debug print
 
         # If we're expecting a response and don't have a bubble yet, create one
         if self.expecting_response and self.current_response_bubble is None:
-            print("Creating new assistant bubble...")  # Debug print
             self.current_response_bubble = self.append_message(
                 chunk, False
             )  # False = assistant message
         # If we already have a response bubble, append to it
         elif self.expecting_response and self.current_response_bubble is not None:
-            print("Appending to existing bubble...")  # Debug print
             self.current_response_bubble.append_text(chunk)
             # Force update and scroll
             QApplication.processEvents()
@@ -571,14 +585,25 @@ class ChatWindow(QMainWindow, Observer):
             )
         # Otherwise, create a new message (should not happen in normal operation)
         else:
-            print("Creating new bubble (unexpected case)...")  # Debug print
             self.current_response_bubble = self.append_message(chunk, False)
 
     @Slot(str)
-    def display_error(self, error: str):
-        QMessageBox.critical(self, "Error", error)
+    def display_error(self, error):
+        """Display an error message.
+        
+        Args:
+            error: Either a string error message or a dictionary with error details
+        """
+        # Handle both string and dictionary error formats
+        if isinstance(error, dict):
+            # Extract error message from dictionary
+            error_message = error.get('message', str(error))
+        else:
+            error_message = str(error)
+        
+        QMessageBox.critical(self, "Error", error_message)
         self.status_bar.showMessage(
-            f"Error: {error}", 5000
+            f"Error: {error_message}", 5000
         )  # Display error in status bar
         self.expecting_response = False
 
@@ -676,6 +701,23 @@ class ChatWindow(QMainWindow, Observer):
             self.history_position = len(self.message_handler.history_manager.history)
             self.message_input.clear()
 
+    def browse_file(self):
+        """Open file dialog and process selected file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select File",
+            "",
+            "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf);;Word Files (*.docx)",
+        )
+        
+        if file_path:
+            # Process the file using the /file command
+            file_command = f"/file {file_path}"
+            self.display_status_message(f"Processing file: {file_path}")
+            
+            # Send the file command to the worker thread
+            self.llm_worker.process_request.emit(file_command)
+    
     def show_context_menu(self, position):
         """Show context menu with options."""
         context_menu = QMenu(self)
@@ -690,51 +732,55 @@ class ChatWindow(QMainWindow, Observer):
 
         # Show the menu at the cursor position
         context_menu.exec(self.mapToGlobal(position))
-        
+
     def create_menu_bar(self):
         """Create the application menu bar with Agents and Models menus"""
         menu_bar = QMenuBar(self)
         self.setMenuBar(menu_bar)
-        
+
         # Create Agents menu
         agents_menu = menu_bar.addMenu("Agents")
-        
+
         # Get agent manager instance
         agent_manager = AgentManager.get_instance()
-        
+
         # Get available agents
         available_agents = agent_manager.agents
-        
+
         # Add agent options to menu
         for agent_name in available_agents:
             agent_action = QAction(agent_name, self)
-            agent_action.triggered.connect(lambda checked, name=agent_name: self.change_agent(name))
+            agent_action.triggered.connect(
+                lambda checked, name=agent_name: self.change_agent(name)
+            )
             agents_menu.addAction(agent_action)
-        
+
         # Create Models menu
         models_menu = menu_bar.addMenu("Models")
-        
+
         # Get model registry instance
         model_registry = ModelRegistry.get_instance()
-        
+
         # Add provider submenus
         for provider in ["claude", "openai", "groq", "google", "deepinfra"]:
             provider_menu = models_menu.addMenu(provider.capitalize())
-            
+
             # Get models for this provider
             models = model_registry.get_models_by_provider(provider)
-            
+
             # Add model options to submenu
             for model in models:
                 model_action = QAction(f"{model.name} ({model.id})", self)
-                model_action.triggered.connect(lambda checked, model_id=model.id: self.change_model(model_id))
+                model_action.triggered.connect(
+                    lambda checked, model_id=model.id: self.change_model(model_id)
+                )
                 provider_menu.addAction(model_action)
-                
+
     def change_agent(self, agent_name):
         """Change the current agent"""
         # Process the agent change command
         self.llm_worker.process_request.emit(f"/agent {agent_name}")
-        
+
     def change_model(self, model_id):
         """Change the current model"""
         # Process the model change command
@@ -742,16 +788,12 @@ class ChatWindow(QMainWindow, Observer):
 
     def listen(self, event: str, data: Any = None):
         """Handle events from the message handler."""
-        print(f"Event: {event}, Data: {type(data)}")  # Debug print
         # Use a signal to ensure thread-safety
         self.event_received.emit(event, data)
 
     @Slot(str, object)
     def handle_event(self, event: str, data: Any):
         if event == "response_chunk":
-            print(
-                f"Handling response_chunk event with data: {data[:30] if isinstance(data, str) else type(data)}..."
-            )  # Debug print
             chunk, assistant_response = data
             self.display_response_chunk(chunk)
         elif event == "error":
