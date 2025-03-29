@@ -38,6 +38,7 @@ class SystemMessageWidget(QWidget):
         self.message_label.setStyleSheet("color: #6495ED;")
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.message_label.setWordWrap(True)
+        self.message_label.setMaximumWidth(1200)  # Increased from 500 to 1500
         self.message_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
             | Qt.TextInteractionFlag.LinksAccessibleByMouse

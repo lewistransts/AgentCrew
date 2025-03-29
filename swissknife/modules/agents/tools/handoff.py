@@ -26,12 +26,16 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                         "type": "string",
                         "description": "A precise description of the task the target agent should perform. This description MUST include the triggering keywords that prompted the handoff. Be specific and actionable.",
                     },
+                    "report_back": {
+                        "type": "boolean",
+                        "description": "Indicated task need to report back to original Agent for further processing",
+                    },
                     "context_summary": {
                         "type": "string",
                         "description": "A concise summary of the relevant conversation history and current state, providing essential background information for the target agent. Include key decisions, user intent, and unresolved issues.",
                     },
                 },
-                "required": ["target_agent", "task"],
+                "required": ["target_agent", "task", "report_back"],
             },
         }
     else:
@@ -51,12 +55,16 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                             "type": "string",
                             "description": "A precise description of the task the target agent should perform. This description MUST include the triggering keywords that prompted the handoff. Be specific and actionable.",
                         },
+                        "report_back": {
+                            "type": "boolean",
+                            "description": "Indicated task need to report back to original Agent for any further processing",
+                        },
                         "context_summary": {
                             "type": "string",
                             "description": "A concise summary of the relevant conversation history and current state, providing essential background information for the target agent. Include key decisions, user intent, and unresolved issues.",
                         },
                     },
-                    "required": ["target_agent", "task"],
+                    "required": ["target_agent", "task", "report_back"],
                 },
             },
         }
@@ -88,6 +96,7 @@ def get_handoff_tool_handler(agent_manager) -> Callable:
         target_agent = params.get("target_agent")
         task = params.get("task")
         context_summary = params.get("context_summary", "")
+        report_back = params.get("report_back", True)
 
         if not target_agent:
             return "Error: No target agent specified"
@@ -96,9 +105,18 @@ def get_handoff_tool_handler(agent_manager) -> Callable:
             return "Error: No task specified for the handoff"
 
         result = agent_manager.perform_handoff(target_agent, task, context_summary)
+        if target_agent == "None":
+            return "Error: Task is completed. This handoff is invalid"
 
         if result["success"]:
-            return f"You are now {target_agent}. Continue to {task}. Here is the summary: {context_summary}"
+            if (
+                report_back
+                and "handoff" in result
+                and result["handoff"]["from"] != "None"
+            ):
+                return f"You are now {target_agent}. Continue to {task}. Handoff back to {result['handoff']['from']} as reporting when you finish. Here is the summary: {context_summary}"
+            else:
+                return f"You are now {target_agent}. Continue to {task}. Here is the summary: {context_summary}"
         else:
             available_agents = ", ".join(result.get("available_agents", []))
             return f"Error: {result.get('error')}. Available agents: {available_agents}"

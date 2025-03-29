@@ -538,8 +538,8 @@ class GoogleAINativeService(BaseLLMService):
 
         assistant_response += chunk_text
         # Process tool usage information from text if present
-        tool_pattern = r"Using tool: (\w+)\s*\nArguments: (\{[\s\S]*?\})"
-        tool_matches = re.findall(tool_pattern, chunk_text)
+        tool_pattern = r"Using tool: (\w+)\s*(?:\n)?Arguments: (\{[\s\S]*?\})"
+        tool_matches = re.findall(tool_pattern, assistant_response, re.M)
 
         for tool_name, tool_args_str in tool_matches:
             try:
