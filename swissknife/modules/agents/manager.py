@@ -50,7 +50,7 @@ class AgentManager:
         if not self._initialized:
             self.agents = {}
             self.current_agent = None
-            self.handoff_history = []
+            self.transform_history = []
             self._initialized = True
 
     @classmethod
@@ -92,7 +92,7 @@ class AgentManager:
 
             if not self.current_agent.custom_system_prompt:
                 self.current_agent.set_custom_system_prompt(
-                    self.get_handoff_system_prompt()
+                    self.get_transform_system_prompt()
                 )
             # Activate the new agent
             self.current_agent.activate()
@@ -123,19 +123,19 @@ class AgentManager:
             raise ValueError("Current agent is not set")
         return self.current_agent
 
-    def perform_handoff(
+    def perform_transform(
         self, target_agent_name: str, task: str, context_summary: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Perform a handoff to another agent.
+        Perform a transform to another agent.
 
         Args:
-            target_agent_name: The name of the agent to hand off to
-            reason: The reason for the handoff
+            target_agent_name: The name of the agent to transform to
+            reason: The reason for the transform
             context_summary: Optional summary of the conversation context
 
         Returns:
-            A dictionary with the result of the handoff
+            A dictionary with the result of the transform
         """
         if target_agent_name not in self.agents:
             return {
@@ -146,19 +146,19 @@ class AgentManager:
 
         source_agent = self.current_agent
 
-        # Record the handoff
-        handoff_record = {
+        # Record the transform
+        transform_record = {
             "from": source_agent.name if source_agent else "None",
             "to": target_agent_name,
             "reason": task,
             "context_summary": context_summary,
         }
-        self.handoff_history.append(handoff_record)
+        self.transform_history.append(transform_record)
 
         # Set the new current agent
         self.select_agent(target_agent_name)
 
-        return {"success": True, "handoff": handoff_record}
+        return {"success": True, "transform": transform_record}
 
     def update_llm_service(self, llm_service):
         """
@@ -182,12 +182,12 @@ class AgentManager:
                 if agent != self.current_agent:
                     agent.update_llm_service(llm_service)
 
-    def get_handoff_system_prompt(self):
+    def get_transform_system_prompt(self):
         """
-        Generate a handoff section for the system prompt based on available agents.
+        Generate a transform section for the system prompt based on available agents.
 
         Returns:
-            str: A formatted string containing handoff instructions and available agents
+            str: A formatted string containing transform instructions and available agents
         """
         if not self.agents:
             return ""
@@ -206,14 +206,14 @@ class AgentManager:
                 agent_desc += f" - available tools: {', '.join(agent.tools)}"
             agent_descriptions.append(agent_desc)
 
-        handoff_prompt = (
-            "## Agent Handoff\n\n"
-            "You must hand off the conversation to another specialized agent when task is not in your specialized. "
-            "You're ONLY able to handoff to one agent at a time"
+        transform_prompt = (
+            "## Agents\n\n"
+            "You must transform to another specialized agent when task is not in your specialized and continue the conversation"
+            "You're ONLY able to transform to one agent at a time"
             "Only set `report_back` to `true` when you need further processing based on target_agent findings"
-            "To perform a handoff, use handoff tool with target_agent, task, context_summary arguments. Example:\n\n"
-            """{'id': 'random id', 'name': 'handoff', 'input': {'target_agent': 'AgentName', 'task': 'Task need to be done', 'report_back': 'true/false', 'context_summary': 'Summary of the context'}, 'type': 'function' }\n"""
+            "To perform a transform, use transform tool with target_agent, task, context_summary arguments. Example:\n\n"
+            # """{'id': 'random id', 'name': 'transform', 'input': {'target_agent': 'AgentName', 'task': 'Task need to be done', 'report_back': 'true/false', 'context_summary': 'Summary of the context'}, 'type': 'function' }\n"""
             f"Available agents:\n{chr(10).join(agent_descriptions)}\n"
         )
 
-        return handoff_prompt
+        return transform_prompt

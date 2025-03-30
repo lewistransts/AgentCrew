@@ -100,8 +100,8 @@ class ConsoleUI(Observer):
             self.display_agents(data)  # data is dict of agent info
         elif event == "agent_changed":
             self.display_message(f"{YELLOW}Switched to {data} agent{RESET}")
-        elif event == "agent_changed_by_handoff":
-            self.display_message(f"{YELLOW}Handed off to {data} agent{RESET}")
+        elif event == "agent_changed_by_transform":
+            self.display_message(f"{YELLOW}Transformed to {data} agent{RESET}")
         elif event == "agent_continue":
             self.display_message(f"\n{GREEN}{BOLD}🤖 {data.upper()}:{RESET}")
         elif event == "jump_performed":

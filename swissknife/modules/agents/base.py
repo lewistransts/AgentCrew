@@ -64,11 +64,11 @@ class Agent(ABC):
         """
 
         if self.services.get("agent_manager"):
-            from swissknife.modules.agents.tools.handoff import (
-                register as register_handoff,
+            from swissknife.modules.agents.tools.transform import (
+                register as register_transform,
             )
 
-            register_handoff(self.services["agent_manager"], self)
+            register_transform(self.services["agent_manager"], self)
         for tool_name in self.tools:
             if self.services and tool_name in self.services:
                 service = self.services[tool_name]

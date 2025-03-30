@@ -947,8 +947,8 @@ class ChatWindow(QMainWindow, Observer):
             self.status_indicator.setText(
                 f"Agent: {self.message_handler.agent_name} | Model: {data['id']}"
             )
-        elif event == "agent_changed_by_handoff":
-            self.add_system_message(f"Handed off to {data} agent")
+        elif event == "agent_changed_by_transform":
+            self.add_system_message(f"Transformed to {data} agent")
             self.status_indicator.setText(
                 f"Agent: {data} | Model: {self.message_handler.llm.model}"
             )
