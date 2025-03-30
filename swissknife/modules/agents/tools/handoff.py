@@ -20,7 +20,7 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                 "properties": {
                     "target_agent": {
                         "type": "string",
-                        "description": "The name of the specialized agent to hand off the conversation to.  Refer to the agent registry for available agents and their specific expertise.",
+                        "description": "The name of the specialized agent to hand off the conversation to.  Refer to the ## Agent Handoff for list of available agents",
                     },
                     "task": {
                         "type": "string",
@@ -49,7 +49,7 @@ def get_handoff_tool_definition(provider="claude") -> Dict[str, Any]:
                     "properties": {
                         "target_agent": {
                             "type": "string",
-                            "description": "The name of the specialized agent to hand off the conversation to.  Refer to the agent registry for available agents and their specific expertise.",
+                            "description": "The name of the specialized agent to hand off the conversation to.  Refer to the ## Agent Handoff for list of available agents",
                         },
                         "task": {
                             "type": "string",
@@ -114,9 +114,9 @@ def get_handoff_tool_handler(agent_manager) -> Callable:
                 and "handoff" in result
                 and result["handoff"]["from"] != "None"
             ):
-                return f"You are now {target_agent}. Continue to {task}. Handoff back to {result['handoff']['from']} as reporting when you finish. Here is the summary: {context_summary}"
+                return f"You are now {target_agent}. Start perform {task}. Handoff back to {result['handoff']['from']} as reporting when you finish. Here is the summary: {context_summary}"
             else:
-                return f"You are now {target_agent}. Continue to {task}. Here is the summary: {context_summary}"
+                return f"You are now {target_agent}. Start perform {task}. Here is the summary: {context_summary}"
         else:
             available_agents = ", ".join(result.get("available_agents", []))
             return f"Error: {result.get('error')}. Available agents: {available_agents}"

@@ -62,7 +62,7 @@ class ChatWindow(QMainWindow, Observer):
         # Initialize MessageHandler - kept in main thread
         self.message_handler = message_handler
         self.message_handler.attach(self)
-        
+
         # Track if we're waiting for a response
         self.waiting_for_response = False
 
@@ -296,7 +296,7 @@ class ChatWindow(QMainWindow, Observer):
         self.message_input.setEnabled(enabled)
         self.send_button.setEnabled(enabled)
         self.file_button.setEnabled(enabled)
-        
+
         # Update cursor and appearance for visual feedback
         if enabled:
             self.message_input.setFocus()
@@ -313,7 +313,7 @@ class ChatWindow(QMainWindow, Observer):
             self.file_button.setStyleSheet(
                 "background-color: #A0A0A0; color: white; border-radius: 5px; padding: 5px;"
             )
-        
+
         # Update waiting state
         self.waiting_for_response = not enabled
 
@@ -385,7 +385,7 @@ class ChatWindow(QMainWindow, Observer):
 
         # Create the message bubble with agent name for non-user messages
         agent_name = self.message_handler.agent_name if not is_user else "YOU"
-        
+
         # Get the message index for this message - only for user messages
         message_index = None
         if is_user and self.message_handler.messages:
@@ -394,14 +394,18 @@ class ChatWindow(QMainWindow, Observer):
             for i, msg in enumerate(self.message_handler.messages):
                 if msg.get("role") == "user":
                     message_index = i
-        
-        message_bubble = MessageBubble(text, is_user, agent_name, message_index=message_index)
-        
+
+        message_bubble = MessageBubble(
+            text, is_user, agent_name, message_index=message_index
+        )
+
         # Set up context menu for user messages
         if is_user:
             message_bubble.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             message_bubble.customContextMenuRequested.connect(
-                lambda pos, bubble=message_bubble: self.show_message_context_menu(pos, bubble)
+                lambda pos, bubble=message_bubble: self.show_message_context_menu(
+                    pos, bubble
+                )
             )
 
         # Add bubble to container with appropriate alignment
@@ -448,7 +452,7 @@ class ChatWindow(QMainWindow, Observer):
                 "total_cost": total_cost,
             }
         )
-        
+
         # Re-enable input controls
         self.set_input_controls_enabled(True)
 
@@ -492,7 +496,7 @@ class ChatWindow(QMainWindow, Observer):
             f"Error: {error_message}", 5000
         )  # Display error in status bar
         self.expecting_response = False
-        
+
         # Re-enable input controls
         self.set_input_controls_enabled(True)
 
@@ -517,7 +521,7 @@ class ChatWindow(QMainWindow, Observer):
 
         # Reset response expectation
         self.expecting_response = False
-        
+
         # Re-enable input controls
         self.set_input_controls_enabled(True)
 
@@ -567,7 +571,7 @@ class ChatWindow(QMainWindow, Observer):
             self.current_response_bubble = None
             self.current_response_container = None
             self.expecting_response = False
-            
+
             # Ensure input controls are enabled
             self.set_input_controls_enabled(True)
 
@@ -608,7 +612,7 @@ class ChatWindow(QMainWindow, Observer):
         tool_result = data["tool_result"]
         result_message = f"RESULT: Tool {tool_use['name']}:\n\n```\n{tool_result}\n```"
         self.add_system_message(result_message)
-        
+
         # Reset the current response bubble so the next agent message starts in a new bubble
         self.current_response_bubble = None
         self.current_response_container = None
@@ -620,7 +624,7 @@ class ChatWindow(QMainWindow, Observer):
         error_message = f"ERROR: Tool {tool_use['name']}: {error}"
         self.add_system_message(error_message)
         self.display_status_message(f"Error in tool {tool_use['name']}")
-        
+
         # Reset the current response bubble so the next agent message starts in a new bubble
         self.current_response_bubble = None
         self.current_response_container = None
@@ -637,7 +641,7 @@ class ChatWindow(QMainWindow, Observer):
         if file_path:
             # Disable input controls while processing file
             self.set_input_controls_enabled(False)
-            
+
             # Process the file using the /file command
             file_command = f"/file {file_path}"
             self.display_status_message(f"Processing file: {file_path}")
@@ -659,22 +663,22 @@ class ChatWindow(QMainWindow, Observer):
 
         # Show the menu at the cursor position
         context_menu.exec(self.mapToGlobal(position))
-        
+
     def show_message_context_menu(self, position, message_bubble):
         """Show context menu for a message bubble."""
         # Only show rollback option for user messages
         if not message_bubble.is_user:
             return
-            
+
         context_menu = QMenu(self)
-        
+
         # Add rollback action only for user messages with a valid index
         if message_bubble.message_index is not None:
             rollback_action = context_menu.addAction("Rollback Here")
             rollback_action.triggered.connect(
                 lambda: self.rollback_to_message(message_bubble)
             )
-        
+
         # Show the menu at the cursor position
         context_menu.exec(message_bubble.mapToGlobal(position))
 
@@ -683,42 +687,46 @@ class ChatWindow(QMainWindow, Observer):
         if message_bubble.message_index is None:
             self.display_status_message("Cannot rollback: no message index available")
             return
-        
+
         # Find the turn number for this message
         # We need to find which conversation turn corresponds to this message
         turn_number = None
-        
+
         # Get the user message text for comparison
         user_text = message_bubble.text_content
-        
+
         # Find the matching turn by comparing the user message content
         for i, turn in enumerate(self.message_handler.conversation_turns):
             # Get the preview of the turn to compare with our message
-            turn_preview = turn.get_preview(1000)  # Get a longer preview to ensure we match
-            
+            turn_preview = turn.get_preview(
+                1000
+            )  # Get a longer preview to ensure we match
+
             # Check if this turn's preview contains our message text
             # We use a substring match since the preview might be truncated
             if user_text in turn_preview:
                 turn_number = i + 1  # Turn numbers are 1-indexed
                 break
-        
+
         if turn_number is None:
             # Try a different approach - use the message index directly
             for i, turn in enumerate(self.message_handler.conversation_turns):
                 if turn.message_index == message_bubble.message_index:
                     turn_number = i + 1  # Turn numbers are 1-indexed
                     break
-        
+
         if turn_number is None:
-            self.display_status_message("Cannot rollback: message not found in conversation history")
+            self.display_status_message(
+                "Cannot rollback: message not found in conversation history"
+            )
             return
-            
+
         # Execute the jump command
         self.llm_worker.process_request.emit(f"/jump {turn_number}")
-        
+
         # Find and remove all widgets after this message in the UI
         self.remove_messages_after(message_bubble)
-        
+
     def remove_messages_after(self, message_bubble):
         """Remove all message widgets that appear after the given message bubble, including the message bubble itself."""
         # Find the index of the container widget that holds the message bubble
@@ -730,16 +738,16 @@ class ChatWindow(QMainWindow, Observer):
                 if message_bubble in item.widget().findChildren(MessageBubble):
                     container_index = i
                     break
-        
+
         if container_index == -1:
             return  # Message bubble not found
-        
+
         # Remove the container with the message bubble and all widgets after it
         while self.chat_layout.count() > container_index:
             item = self.chat_layout.takeAt(container_index)
             if item.widget():
                 item.widget().deleteLater()
-        
+
         # Reset current response tracking
         self.current_response_bubble = None
         self.current_response_container = None
@@ -864,18 +872,18 @@ class ChatWindow(QMainWindow, Observer):
         """Change the current model"""
         # Process the model change command
         self.llm_worker.process_request.emit(f"/model {model_id}")
-        
+
     def display_debug_info(self):
         """Display debug information about the current messages."""
         import json
-        
+
         try:
             # Format the messages for display
             debug_info = json.dumps(self.message_handler.messages, indent=2)
-            
+
             # Add as a system message
             self.add_system_message(f"DEBUG INFO:\n\n```json\n{debug_info}\n```")
-            
+
             # Update status bar
             self.display_status_message("Debug information displayed")
         except Exception as e:
@@ -909,6 +917,7 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "debug_requested":
             # Format the debug data and display it
             import json
+
             try:
                 debug_info = json.dumps(data, indent=2)
                 self.add_system_message(f"DEBUG INFO:\n\n```json\n{debug_info}\n```")
@@ -917,6 +926,7 @@ class ChatWindow(QMainWindow, Observer):
                 self.add_system_message(f"DEBUG INFO:\n\n{str(data)}")
         elif event == "file_processed":
             self.add_system_message(f"Processed file: {data['file_path']}")
+            self.set_input_controls_enabled(True)
         elif event == "tool_use":
             self.display_tool_use(data)
         elif event == "tool_result":

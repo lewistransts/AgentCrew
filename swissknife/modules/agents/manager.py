@@ -195,6 +195,8 @@ class AgentManager:
         # Build agent descriptions
         agent_descriptions = []
         for name, agent in self.agents.items():
+            if self.current_agent and name == self.current_agent.name:
+                continue
             agent_desc = ""
             if hasattr(agent, "description") and agent.description:
                 agent_desc = f"- {name}: {agent.description}"
@@ -207,6 +209,7 @@ class AgentManager:
         handoff_prompt = (
             "## Agent Handoff\n\n"
             "You must hand off the conversation to another specialized agent when task is not in your specialized. "
+            "You're ONLY able to handoff to one agent at a time"
             "Only set `report_back` to `true` when you need further processing based on target_agent findings"
             "To perform a handoff, use handoff tool with target_agent, task, context_summary arguments. Example:\n\n"
             """{'id': 'random id', 'name': 'handoff', 'input': {'target_agent': 'AgentName', 'task': 'Task need to be done', 'report_back': 'true/false', 'context_summary': 'Summary of the context'}, 'type': 'function' }\n"""
