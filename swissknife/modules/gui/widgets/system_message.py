@@ -117,15 +117,10 @@ class SystemMessageWidget(QWidget):
 
     def set_expanded_text(self):
         """Set the text to show all content."""
-        if "```" in self.full_text:
-            try:
-                html_content = markdown.markdown(
-                    self.full_text, extensions=["fenced_code"]
-                )
-                self.message_label.setText(html_content)
-            except Exception:
-                self.message_label.setText(self.full_text)
-        else:
+        try:
+            html_content = markdown.markdown(self.full_text, extensions=["fenced_code"])
+            self.message_label.setText(html_content)
+        except Exception:
             self.message_label.setText(self.full_text)
 
     def toggle_expansion(self):

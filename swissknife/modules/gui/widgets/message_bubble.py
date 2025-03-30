@@ -14,13 +14,20 @@ from PySide6.QtCore import (
 class MessageBubble(QFrame):
     """A custom widget to display messages as bubbles."""
 
-    def __init__(self, text, is_user=True, agent_name="ASSISTANT", parent=None, message_index=None):
+    def __init__(
+        self,
+        text,
+        is_user=True,
+        agent_name="ASSISTANT",
+        parent=None,
+        message_index=None,
+    ):
         super().__init__(parent)
-        
+
         # Store message index for rollback functionality
         self.message_index = message_index
         self.is_user = is_user
-        
+
         # Setup frame appearance
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.setFrameShadow(QFrame.Shadow.Raised)
@@ -52,8 +59,8 @@ class MessageBubble(QFrame):
         self.message_label.setWordWrap(True)
         self.message_label.setOpenExternalLinks(True)  # Allow clicking links
         self.message_label.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse | 
-            Qt.TextInteractionFlag.LinksAccessibleByMouse
+            Qt.TextInteractionFlag.TextSelectableByMouse
+            | Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
 
         # Increase font size by 10%
@@ -81,7 +88,9 @@ class MessageBubble(QFrame):
     def set_text(self, text):
         """Set or update the text content of the message."""
         try:
-            html_content = markdown.markdown(text, extensions=["fenced_code"])
+            html_content = markdown.markdown(
+                text, extensions=["fenced_code", "tables", "codehilite"]
+            )
             self.message_label.setText(html_content)
         except Exception as e:
             print(f"Error rendering markdown: {e}")
