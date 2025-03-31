@@ -2,12 +2,14 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Tuple, Optional
 import traceback
 import os
+import time
 from swissknife.modules.chat.history import ChatHistoryManager, ConversationTurn
 from swissknife.modules.agents import AgentManager
 from swissknife.modules.chat.file_handler import FileHandler
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.message import MessageTransformer
+from swissknife.modules.groq import GroqService
 
 
 class Observable:
@@ -362,7 +364,7 @@ class MessageHandler(Observable):
         tool_uses = []
         thinking_content = ""  # Reset thinking content for new response
         thinking_signature = ""  # Store the signature
-        start_thinking = True
+        start_thinking = False
         end_thinking = False
         try:
             with self.llm.stream_assistant_response(self.messages) as stream:
@@ -389,10 +391,13 @@ class MessageHandler(Observable):
                     if thinking_chunk:
                         think_text_chunk, signature = thinking_chunk
 
-                        if start_thinking:
+                        if not start_thinking:
                             # Notify about thinking process
                             self._notify("thinking_started", self.agent_name)
-                            start_thinking = False
+                            if isinstance(self.llm, GroqService):
+                                # Delays it a bit when using without stream
+                                time.sleep(0.5)
+                            start_thinking = True
                         if think_text_chunk:
                             thinking_content += think_text_chunk
                             self._notify("thinking_chunk", think_text_chunk)
@@ -400,10 +405,13 @@ class MessageHandler(Observable):
                             thinking_signature += signature
                     if chunk_text:
                         # End thinking when chunk_text start
-                        if not end_thinking and not start_thinking:
+                        if not end_thinking and start_thinking:
                             self._notify("thinking_completed")
                             end_thinking = True
                         # Notify about response progress
+                        if isinstance(self.llm, GroqService):
+                            # Delays it a bit when using without stream
+                            time.sleep(0.5)
                         self._notify("response_chunk", (chunk_text, assistant_response))
 
             # Handle tool use if needed
@@ -471,7 +479,7 @@ class MessageHandler(Observable):
                 return self.get_assistant_response(input_tokens, output_tokens)
 
             if thinking_content:
-                self._notify("thinking_completed")
+                # self._notify("thinking_completed")
                 self._notify("agent_continue", self.agent_name)
 
             # Final assistant message

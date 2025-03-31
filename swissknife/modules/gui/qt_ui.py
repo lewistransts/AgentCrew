@@ -209,6 +209,8 @@ class ChatWindow(QMainWindow, Observer):
         # Track current response bubble for chunked responses
         self.current_response_bubble = None
         self.current_response_container = None
+        self.current_thinking_bubble = None
+        self.thinking_content = ""
         self.expecting_response = False
 
         # Track session cost
@@ -894,6 +896,54 @@ class ChatWindow(QMainWindow, Observer):
         # Use a signal to ensure thread-safety
         self.event_received.emit(event, data)
 
+    def display_thinking_started(self, agent_name: str):
+        """Display the start of the thinking process."""
+        self.add_system_message(f"💭 {agent_name.upper()}'s thinking process started")
+
+        # Create a new thinking bubble
+        self.current_thinking_bubble = self.append_thinking_message(" ", agent_name)
+        self.thinking_content = ""  # Initialize thinking content
+
+    def display_thinking_chunk(self, chunk: str):
+        """Display a chunk of the thinking process."""
+        if hasattr(self, "current_thinking_bubble") and self.current_thinking_bubble:
+            # Append to the thinking content
+            self.thinking_content += chunk
+            self.current_thinking_bubble.append_text(chunk)
+
+            # Force update and scroll
+            QApplication.processEvents()
+            self.chat_scroll.verticalScrollBar().setValue(
+                self.chat_scroll.verticalScrollBar().maximum()
+            )
+
+    def append_thinking_message(self, text, agent_name):
+        """Adds a thinking message bubble to the chat container."""
+        # Create container for message alignment
+        container = QWidget()
+        container_layout = QHBoxLayout(container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Create the message bubble with agent name and thinking flag
+        message_bubble = MessageBubble(text, False, agent_name, is_thinking=True)
+
+        # Add bubble to container with appropriate alignment (same as assistant messages)
+        container_layout.addStretch(1)  # Push to right
+        container_layout.addWidget(message_bubble)
+
+        # Add the container to the chat layout
+        self.chat_layout.addWidget(container)
+
+        # Process events to ensure UI updates immediately
+        QApplication.processEvents()
+
+        # Scroll to the bottom to show new message
+        self.chat_scroll.verticalScrollBar().setValue(
+            self.chat_scroll.verticalScrollBar().maximum()
+        )
+
+        return message_bubble
+
     @Slot(str, object)
     def handle_event(self, event: str, data: Any):
         if event == "response_chunk":
@@ -902,9 +952,13 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "error":
             self.display_error(data)
         elif event == "thinking_started":
-            self.display_status_message(f"Thinking started for {data}...")
+            self.display_thinking_started(data)  # data is agent_name
+        elif event == "thinking_chunk":
+            self.display_thinking_chunk(data)  # data is the thinking chunk
         elif event == "thinking_completed":
             self.display_status_message("Thinking completed.")
+            # Reset thinking bubble reference
+            self.current_thinking_bubble = None
         elif event == "clear_requested":
             pass
             # self.clear_chat(True)
@@ -952,3 +1006,6 @@ class ChatWindow(QMainWindow, Observer):
             self.status_indicator.setText(
                 f"Agent: {data} | Model: {self.message_handler.llm.model}"
             )
+        elif event == "think_budget_set":
+            self.add_system_message(f"Set thinking budget at {data}")
+            self.set_input_controls_enabled(True)

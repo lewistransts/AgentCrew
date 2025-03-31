@@ -1,4 +1,5 @@
 import traceback
+from typing import Any
 
 from PySide6.QtCore import (
     Slot,
@@ -18,6 +19,9 @@ class LLMWorker(QObject):
     token_usage = Signal(dict)
     request_exit = Signal()
     request_clear = Signal()
+    thinking_started = Signal(str)  # agent_name
+    thinking_chunk = Signal(str)  # thinking text chunk
+    thinking_completed = Signal()
 
     # Signal to request processing - passing the user input as a string
     process_request = Signal(str)
@@ -32,7 +36,7 @@ class LLMWorker(QObject):
         self.message_handler = message_handler
         # Connect the process_request signal to our processing slot
         self.process_request.connect(self.process_input)
-
+    
     @Slot(str)
     def process_input(self, user_input):
         """Process the user input with the message handler"""

@@ -21,12 +21,14 @@ class MessageBubble(QFrame):
         agent_name="ASSISTANT",
         parent=None,
         message_index=None,
+        is_thinking=False,  # Add this parameter
     ):
         super().__init__(parent)
 
         # Store message index for rollback functionality
         self.message_index = message_index
         self.is_user = is_user
+        self.is_thinking = is_thinking  # Store thinking state
 
         # Setup frame appearance
         self.setFrameShape(QFrame.Shape.StyledPanel)
@@ -49,7 +51,11 @@ class MessageBubble(QFrame):
         layout.setContentsMargins(10, 10, 10, 10)
 
         # Add sender label - Use agent_name for non-user messages
-        sender_label = QLabel(is_user and "YOU:" or f"{agent_name}:")
+        label_text = "YOU:" if is_user else f"{agent_name}:"
+        if is_thinking:
+            label_text = f"{agent_name}'s THINKING:"  # Special label for thinking content
+            
+        sender_label = QLabel(label_text)
         sender_label.setStyleSheet("font-weight: bold; color: #333333;")
         layout.addWidget(sender_label)
 
@@ -68,6 +74,10 @@ class MessageBubble(QFrame):
         font_size = font.pointSizeF() * 1.5  # Increase by 10%
         font.setPointSizeF(font_size)
         self.message_label.setFont(font)
+        
+        # Set different text color for thinking content
+        if is_thinking:
+            self.message_label.setStyleSheet("color: #666666;")  # Gray color for thinking text
 
         # Set the text content (convert Markdown to HTML)
         self.set_text(text)
