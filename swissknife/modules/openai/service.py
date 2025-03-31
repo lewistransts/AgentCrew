@@ -4,6 +4,10 @@ import json
 from typing import Dict, Any, List, Optional, Tuple
 from openai import OpenAI
 from dotenv import load_dotenv
+from openai.types.chat import ChatCompletionChunk
+from openai.types.chat.chat_completion import Choice
+from contextlib import _GeneratorContextManager
+from openai import Stream
 from swissknife.modules.llm.base import BaseLLMService
 from swissknife.modules.llm.models import ModelRegistry
 from ..prompts.constants import (
@@ -176,7 +180,9 @@ class OpenAIService(BaseLLMService):
         result = handler(**tool_params)
         return result
 
-    def stream_assistant_response(self, messages):
+    def stream_assistant_response(
+        self, messages
+    ) -> Stream[ChatCompletionChunk] | _GeneratorContextManager[List[Choice]]:
         """Stream the assistant's response with tool support."""
         stream_params = {
             "model": self.model,
