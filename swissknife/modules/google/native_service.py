@@ -306,11 +306,15 @@ class GoogleAINativeService(BaseLLMService):
             ):
                 function_declaration.parameters.properties[param_name] = types.Schema(
                     type=types.Type(param_type),
-                    description=param_def.get("description", ""),
+                    description=param_def.get("description", None),
                 )
-                # Add required parameters
-                if required:
-                    function_declaration.parameters.required = required
+                if param_type == "OBJECT":
+                    function_declaration.parameters.properties[
+                        param_name
+                    ].properties = {}
+        # Add required parameters
+        if required and function_declaration.parameters:
+            function_declaration.parameters.required = required
 
         # Create a Tool object with the function declaration
         self.tools.append(types.Tool(function_declarations=[function_declaration]))
@@ -371,7 +375,6 @@ class GoogleAINativeService(BaseLLMService):
             if self.tools:
                 config.tools = self.tools
             # Get the stream generator
-            # print(config)
             stream_generator = self.client.models.generate_content_stream(
                 model=self.model, contents=google_messages, config=config
             )
