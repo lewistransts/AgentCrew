@@ -53,8 +53,10 @@ class MessageBubble(QFrame):
         # Add sender label - Use agent_name for non-user messages
         label_text = "YOU:" if is_user else f"{agent_name}:"
         if is_thinking:
-            label_text = f"{agent_name}'s THINKING:"  # Special label for thinking content
-            
+            label_text = (
+                f"{agent_name}'s THINKING:"  # Special label for thinking content
+            )
+
         sender_label = QLabel(label_text)
         sender_label.setStyleSheet("font-weight: bold; color: #333333;")
         layout.addWidget(sender_label)
@@ -74,17 +76,18 @@ class MessageBubble(QFrame):
         font_size = font.pointSizeF() * 1.5  # Increase by 10%
         font.setPointSizeF(font_size)
         self.message_label.setFont(font)
-        
+
         # Set different text color for thinking content
         if is_thinking:
-            self.message_label.setStyleSheet("color: #666666;")  # Gray color for thinking text
+            self.message_label.setStyleSheet(
+                "color: #666666;"
+            )  # Gray color for thinking text
 
         # Set the text content (convert Markdown to HTML)
         self.set_text(text)
 
-        # Set minimum and maximum width - increase max width by 3 times
-        self.message_label.setMinimumWidth(500)
-        self.message_label.setMaximumWidth(1200)  # Increased from 500 to 1500
+        self.message_label.setMinimumWidth(700)
+        self.message_label.setMaximumWidth(1600)
 
         # Add to layout
         layout.addWidget(self.message_label)
@@ -99,7 +102,15 @@ class MessageBubble(QFrame):
         """Set or update the text content of the message."""
         try:
             html_content = markdown.markdown(
-                text, extensions=["fenced_code", "tables", "codehilite"]
+                text,
+                output_format="html",
+                extensions=["tables", "fenced_code", "codehilite"],
+            )
+            html_content = (
+                """<style>
+            pre { white-space: pre-wrap; }
+            </style>"""
+                + html_content
             )
             self.message_label.setText(html_content)
         except Exception as e:

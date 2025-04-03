@@ -38,7 +38,7 @@ class SystemMessageWidget(QWidget):
         self.message_label.setStyleSheet("color: #6495ED;")
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.message_label.setWordWrap(True)
-        self.message_label.setMaximumWidth(1000)  # Increased from 500 to 1500
+        self.message_label.setMaximumWidth(1200)  # Increased from 500 to 1200
         self.message_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
             | Qt.TextInteractionFlag.LinksAccessibleByMouse
@@ -74,7 +74,7 @@ class SystemMessageWidget(QWidget):
         if "```" in self.full_text:
             try:
                 html_content = markdown.markdown(
-                    self.full_text, extensions=["fenced_code"]
+                    self.full_text, output_format="html", extensions=["fenced_code"]
                 )
 
                 # Get first two lines (approximate)
@@ -92,7 +92,7 @@ class SystemMessageWidget(QWidget):
                     collapsed_text += "\n```"
 
                 collapsed_html = markdown.markdown(
-                    collapsed_text, extensions=["fenced_code"]
+                    collapsed_text, output_format="html", extensions=["fenced_code"]
                 )
                 self.message_label.setText(collapsed_html + "...")
                 self.toggle_button.show()
@@ -118,7 +118,15 @@ class SystemMessageWidget(QWidget):
     def set_expanded_text(self):
         """Set the text to show all content."""
         try:
-            html_content = markdown.markdown(self.full_text, extensions=["fenced_code"])
+            html_content = markdown.markdown(
+                self.full_text, output_format="html", extensions=["fenced_code"]
+            )
+            html_content = (
+                """<style>
+            pre { white-space: pre-wrap; }
+            </style>"""
+                + html_content
+            )
             self.message_label.setText(html_content)
         except Exception:
             self.message_label.setText(self.full_text)
