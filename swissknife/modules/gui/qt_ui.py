@@ -274,7 +274,7 @@ class ChatWindow(QMainWindow, Observer):
         # Up arrow to navigate history
         elif (
             event.key() == Qt.Key.Key_Up
-            and event.modifiers() == Qt.KeyboardModifier.NoModifier
+            and event.modifiers() == Qt.KeyboardModifier.ControlModifier
             and not self.file_completer.popup().isVisible()
         ):
             self.history_navigate(-1)
@@ -283,7 +283,7 @@ class ChatWindow(QMainWindow, Observer):
         # Down arrow to navigate history
         elif (
             event.key() == Qt.Key.Key_Down
-            and event.modifiers() == Qt.KeyboardModifier.NoModifier
+            and event.modifiers() == Qt.KeyboardModifier.ControlModifier
             and not self.file_completer.popup().isVisible()
         ):
             self.history_navigate(1)
