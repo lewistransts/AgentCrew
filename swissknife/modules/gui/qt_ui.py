@@ -694,28 +694,10 @@ class ChatWindow(QMainWindow, Observer):
         # We need to find which conversation turn corresponds to this message
         turn_number = None
 
-        # Get the user message text for comparison
-        user_text = message_bubble.text_content
-
-        # Find the matching turn by comparing the user message content
         for i, turn in enumerate(self.message_handler.conversation_turns):
-            # Get the preview of the turn to compare with our message
-            turn_preview = turn.get_preview(
-                1000
-            )  # Get a longer preview to ensure we match
-
-            # Check if this turn's preview contains our message text
-            # We use a substring match since the preview might be truncated
-            if user_text in turn_preview:
+            if turn.message_index == message_bubble.message_index:
                 turn_number = i + 1  # Turn numbers are 1-indexed
                 break
-
-        if turn_number is None:
-            # Try a different approach - use the message index directly
-            for i, turn in enumerate(self.message_handler.conversation_turns):
-                if turn.message_index == message_bubble.message_index:
-                    turn_number = i + 1  # Turn numbers are 1-indexed
-                    break
 
         if turn_number is None:
             self.display_status_message(

@@ -66,6 +66,8 @@ class MessageHandler(Observable):
         self.history_manager = ChatHistoryManager()
         self.latest_assistant_response = ""
         self.conversation_turns = []
+        self.current_user_input = None
+        self.current_user_input_idx = -1
         self.file_handler = FileHandler()
         self.messages = []  # Initialize empty messages list
 
@@ -177,6 +179,9 @@ class MessageHandler(Observable):
                 "user_message_created",
                 {"message": self.messages[-1], "with_files": False},
             )
+
+        self.current_user_input = self.messages[-1]
+        self.current_user_input_idx = len(self.messages) - 1
 
         return False, False
 
@@ -394,7 +399,7 @@ class MessageHandler(Observable):
                         if not start_thinking:
                             # Notify about thinking process
                             self._notify("thinking_started", self.agent_name)
-                            if isinstance(self.llm, GroqService):
+                            if not self.llm.is_stream:
                                 # Delays it a bit when using without stream
                                 time.sleep(0.5)
                             start_thinking = True
@@ -409,7 +414,7 @@ class MessageHandler(Observable):
                             self._notify("thinking_completed")
                             end_thinking = True
                         # Notify about response progress
-                        if isinstance(self.llm, GroqService):
+                        if not self.llm.is_stream:
                             # Delays it a bit when using without stream
                             time.sleep(0.5)
                         self._notify("response_chunk", (chunk_text, assistant_response))
@@ -494,55 +499,36 @@ class MessageHandler(Observable):
                     self.llm.format_assistant_message(assistant_response)
                 )
 
-            # Store conversation in memory if memory service is available
-            if (
-                self.memory_service
-                and len(self.messages) >= 2
-                and self.messages[-2]["role"] == "user"  # Check second-to-last message
-                and assistant_response
-            ):
-                user_input = ""
-                user_message = self.messages[-2]  # Get the user message
-                if (
-                    isinstance(user_message["content"], list)
-                    and len(user_message["content"]) > 0
-                ):
-                    for content_item in user_message["content"]:
-                        if content_item.get("type") == "text":
-                            user_input += content_item.get("text", "")
-                elif isinstance(user_message["content"], str):
-                    user_input = user_message["content"]
-
-                try:
-                    self.memory_service.store_conversation(
-                        user_input, assistant_response
-                    )
-                except Exception as e:
-                    self._notify(
-                        "error", f"Failed to store conversation in memory: {str(e)}"
-                    )
-
-            # Store the conversation turn
-            for i, message in reversed(list(enumerate(self.messages))):
-                if (
-                    isinstance(message, dict)
-                    and "role" in message
-                    and message["role"] == "user"
-                ):
+            if self.current_user_input and self.current_user_input_idx >= 0:
+                if self.memory_service:
+                    user_input = ""
+                    user_message = self.current_user_input  # Get the user message
                     if (
-                        "content" in message
-                        and isinstance(message["content"], list)
-                        and len(message["content"]) > 0
-                        and "type" in message["content"][0]
-                        and message["content"][0]["type"] == "tool_result"
+                        isinstance(user_message["content"], list)
+                        and len(user_message["content"]) > 0
                     ):
-                        continue
-                    turn = ConversationTurn(
-                        message,  # User message for preview
-                        i,  # Index of the last message
-                    )
-                    self.conversation_turns.append(turn)
-                    break
+                        for content_item in user_message["content"]:
+                            if content_item.get("type") == "text":
+                                user_input += content_item.get("text", "")
+                    elif isinstance(user_message["content"], str):
+                        user_input = user_message["content"]
+
+                    try:
+                        self.memory_service.store_conversation(
+                            user_input, assistant_response
+                        )
+                    except Exception as e:
+                        self._notify(
+                            "error", f"Failed to store conversation in memory: {str(e)}"
+                        )
+                # Store the conversation turn
+                turn = ConversationTurn(
+                    self.current_user_input,  # User message for preview
+                    self.current_user_input_idx,  # Index of the last message
+                )
+                self.conversation_turns.append(turn)
+                self.current_user_input = None
+                self.current_user_input_idx = -1
 
             return assistant_response, input_tokens, output_tokens
 

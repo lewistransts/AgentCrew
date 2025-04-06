@@ -20,6 +20,7 @@ class DeepInfraService(OpenAIService):
         self.model = "deepseek-ai/DeepSeek-V3-0324"
         self.current_input_tokens = 0
         self.current_output_tokens = 0
+        self._is_stream = False
 
     def format_tool_result(
         self, tool_use: Dict, tool_result: Any, is_error: bool = False

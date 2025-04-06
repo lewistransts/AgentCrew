@@ -57,6 +57,7 @@ class GroqService(BaseLLMService):
         self.current_input_tokens = 0
         self.current_output_tokens = 0
         self.system_prompt = CHAT_SYSTEM_PROMPT
+        self._is_stream = False
 
     def set_think(self, budget_tokens: int) -> bool:
         """

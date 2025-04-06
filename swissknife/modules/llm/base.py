@@ -16,6 +16,11 @@ class BaseLLMService(ABC):
         """Set the provider name for this service."""
         self._provider_name = value
 
+    @property
+    def is_stream(self) -> bool:
+        """Get the provider name for this service."""
+        return getattr(self, "_is_stream", True)
+
     def register_all_tools(self):
         """Register all available tools with this LLM service"""
         registry = ToolRegistry.get_instance()

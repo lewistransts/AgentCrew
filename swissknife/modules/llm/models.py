@@ -156,13 +156,13 @@ class ModelRegistry:
                 default=True,
             ),
             Model(
-                id="gemini-2.5-pro-exp-03-25",
+                id="gemini-2.5-pro-preview-03-25",
                 provider="google",
                 name="Gemini 2.5 Pro Thinking",
                 description="Gemini 2.5 Pro with thinking",
                 capabilities=["tool_use", "thinking"],
-                input_token_price_1m=0.1,
-                output_token_price_1m=0.4,
+                input_token_price_1m=1.25,
+                output_token_price_1m=2.5,
             ),
             Model(
                 id="meta-llama/Llama-3.3-70B-Instruct",
