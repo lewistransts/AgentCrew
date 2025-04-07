@@ -119,5 +119,5 @@ class MessageBubble(QFrame):
 
     def append_text(self, text):
         """Append text to the existing message."""
-        self.text_content += text
+        self.text_content = text
         self.set_text(self.text_content)

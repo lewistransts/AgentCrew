@@ -174,6 +174,15 @@ class ModelRegistry:
                 output_token_price_1m=0.40,
             ),
             Model(
+                id="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+                provider="deepinfra",
+                name="Llama 4 17B - 128E Instruct",
+                description="The Llama 4 collection of models are natively multimodal AI models that enable text and multimodal experiences. These models leverage a mixture-of-experts architecture to offer industry-leading performance in text and image understanding",
+                capabilities=["text-generation"],
+                input_token_price_1m=0.2,
+                output_token_price_1m=0.6,
+            ),
+            Model(
                 id="google/gemma-3-27b-it",
                 provider="deepinfra",
                 name="Gemma 3 27B",

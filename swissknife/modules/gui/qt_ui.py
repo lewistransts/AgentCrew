@@ -930,7 +930,7 @@ class ChatWindow(QMainWindow, Observer):
     def handle_event(self, event: str, data: Any):
         if event == "response_chunk":
             chunk, assistant_response = data
-            self.display_response_chunk(chunk)
+            self.display_response_chunk(assistant_response)
         elif event == "error":
             self.display_error(data)
         elif event == "thinking_started":

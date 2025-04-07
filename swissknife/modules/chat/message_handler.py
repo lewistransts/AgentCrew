@@ -156,7 +156,8 @@ class MessageHandler(Observable):
                     "content": [
                         {
                             "type": "text",
-                            "text": f"""Use user_context_summary to tailor your response:  \n<user_context_summary>{self.persistent_service.get_user_context_json(1, 4)}</user_context_summary>""",
+                            "text": f"""Use user_context_summary to tailor your response:
+                            <user_context_summary>{self.persistent_service.get_user_context_json(2, 4)}</user_context_summary>""",
                         }
                     ],
                 }
