@@ -390,6 +390,7 @@ class MessageHandler(Observable):
         thinking_signature = ""  # Store the signature
         start_thinking = False
         end_thinking = False
+        context_data_processed = False
         try:
             with self.llm.stream_assistant_response(self.messages) as stream:
                 for chunk in stream:
@@ -408,15 +409,17 @@ class MessageHandler(Observable):
                     context_data, clean_response = self.llm.parse_user_context_summary(
                         assistant_response
                     )
-                    if context_data:
+                    if context_data and not context_data_processed:
+                        self._notify("debug_requested", context_data)
                         self.persistent_service.store_user_context(context_data)
-                        self.messages.append(
-                            self.llm.format_assistant_message(
-                                f"""<user_context_summary>{json.dumps(context_data)}</user_context_summary>"""
-                            )
-                        )
+                        context_data_processed = True
+                        # self.messages.append(
+                        #     self.llm.format_assistant_message(
+                        #         f"""<user_context_summary>{json.dumps(context_data)}</user_context_summary>"""
+                        #     )
+                        # )
 
-                    assistant_response = clean_response
+                    # assistant_response = clean_response
 
                     # Update token counts
                     if chunk_input_tokens > 0:
@@ -449,7 +452,7 @@ class MessageHandler(Observable):
                         if not self.llm.is_stream:
                             # Delays it a bit when using without stream
                             time.sleep(0.5)
-                        self._notify("response_chunk", (chunk_text, assistant_response))
+                        self._notify("response_chunk", (chunk_text, clean_response))
 
             # Handle tool use if needed
             if tool_uses and len(tool_uses) > 0:

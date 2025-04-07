@@ -65,3 +65,4 @@ dmypy.json
 memory_db/
 mcp_servers.json
 .chat_histories
+persistents/

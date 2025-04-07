@@ -54,7 +54,7 @@ class ContextPersistenceService:
                     f"INFO: Using persistence directory from PERSISTENCE_DIR environment variable: {persistence_dir}"
                 )
             else:
-                persistence_dir = "."  # Default to current directory
+                persistence_dir = "./persistents"  # Default to current directory
                 print(
                     "INFO: PERSISTENCE_DIR environment variable not set. Defaulting persistence directory to current directory ('.')"
                 )
