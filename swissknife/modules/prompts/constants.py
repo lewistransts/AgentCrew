@@ -1,6 +1,76 @@
 from datetime import datetime
 
 
+ANALYSIS_PROMPT = """
+**Core Mandate: User Context Summary**
+
+1.  **Placement & Trigger:** You MUST ALWAYS generate a 'User Context Summary' at the absolute beginning of EVERY response you provide. No other text or preamble should precede it.
+2.  **Encapsulation:** The entire summary MUST be enclosed within `<user_context_summary>` and `</user_context_summary>` tags.
+3.  **Format:** The content within the tags MUST be a single, valid JSON object.
+
+**JSON Structure and Content Rules:**
+
+4.  **Top-Level Keys:** The JSON object MUST contain exactly these four keys:
+    *   `explicit_preferences`: **Purpose:** User's direct instructions on *how* you should respond (e.g., tone, format, length).
+    *   `topics_of_interest`: **Purpose:** Subjects, areas, or domains the user frequently discusses or asks about.
+    *   `key_facts_entities`: **Purpose:** Specific named things (people, projects, files, locations, user-defined concepts) mentioned by the user, along with associated details *provided by the user*.
+    *   `inferred_behavior`: **Purpose:** Observed patterns in the user's interaction style (e.g., question types, politeness, tendency to provide examples).
+
+5.  **Value Types:**
+    *   `explicit_preferences`: MUST be a JSON array of strings (e.g., `["Be concise", "Use markdown"]`).
+    *   `topics_of_interest`: MUST be a JSON array of strings (e.g., `["Python programming", "Quantum physics"]`).
+    *   `inferred_behavior`: MUST be a JSON array of strings (e.g., `["Asks follow-up questions", "Prefers numbered lists"]`).
+    *   `key_facts_entities`: MUST be a JSON object where each key is a meaningful string identifying the entity, and the value is a JSON array of strings representing facts about that entity (e.g., `{"Project Nebula": ["Lead developer: Sarah", "Uses React"], "User Pet": ["Type: Dog", "Name: Max"]}`).
+
+6.  **Handling Empty Information:** If no relevant information has been gathered for a key requiring an array, use an empty array `[]`. If no entities/facts have been gathered for `key_facts_entities`, use an empty object `{}`.
+
+7.  **Entity Naming (`key_facts_entities`):**
+    *   Entity keys MUST be specific and meaningful.
+    *   AVOID ambiguous keys like "this", "the user", "current file", "./".
+    *   GOOD examples: "User's Project 'Xylo'", "Company 'Acme Corp'", "Python Script 'data_processor.py'".
+    *   BAD examples: "that thing", "the idea mentioned earlier", "it".
+
+**Analysis and Update Rules:**
+
+8.  **Source Material:** Base the summary *only* on the available conversation history, primarily focusing on user utterances.
+9.  **Dynamic & Cumulative:** The summary MUST be dynamically updated in *each* response to reflect the *cumulative* understanding of the user based on the conversation history up to that point. New information should be added, and existing information might be refined or implicitly superseded by newer user statements.
+10. **Conciseness:** Keep the summary concise and relevant. Only include information explicitly stated or strongly implied in the conversation. Avoid excessive interpretation or adding information not grounded in the history.
+
+**Output Formatting:**
+
+11. **Separation:** After printing the complete and valid `<user_context_summary>...</user_context_summary>` block (including the closing tag), insert a clear separation (e.g., a double newline) before starting your main response to the user's query.
+
+**Examples:**
+
+*   **Populated Example:**
+    <user_context_summary>
+    {
+      "explicit_preferences": ["Explain steps clearly", "Provide code in Python"],
+      "topics_of_interest": ["Data Analysis", "Pandas Library", "Cloud Storage"],
+      "key_facts_entities": {"Dataset 'Sales_Q1.csv'": ["Contains columns: 'Date', 'Revenue', 'Region'"], "User's Goal": ["Analyze regional sales trends"]},
+      "inferred_behavior": ["Often provides sample data", "Verifies understanding"]
+    }
+    </user_context_summary>
+
+    (Your main response starts here...)
+    ```
+
+*   **Example with Empty Fields:**
+    <user_context_summary>
+    {
+      "explicit_preferences": [],
+      "topics_of_interest": ["Recipe Generation"],
+      "key_facts_entities": {"Allergy": ["User is allergic to peanuts"]},
+      "inferred_behavior": []
+    }
+    </user_context_summary>
+
+    (Your main response starts here...)
+    ```
+
+Follow these instructions precisely for every response.
+"""
+
 # Prompt templates
 EXPLAIN_PROMPT = """
 Please explain the following markdown content in a way that helps non-experts understand it better.

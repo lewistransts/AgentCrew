@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import Dict, Any, List
+from swissknife.modules.prompts.constants import ANALYSIS_PROMPT
 
 
 class Agent(ABC):
@@ -201,7 +202,11 @@ class Agent(ABC):
         system_prompt = self.get_system_prompt()
         if self.custom_system_prompt:
             system_prompt = (
-                self.get_system_prompt() + "\n---\n\n" + self.custom_system_prompt
+                self.get_system_prompt()
+                + "\n---\n\n"
+                + self.custom_system_prompt
+                + "\n---\n\n"
+                + ANALYSIS_PROMPT
             )
 
         self.llm.set_system_prompt(system_prompt)

@@ -3,13 +3,14 @@ from typing import List, Dict, Any, Tuple, Optional
 import traceback
 import os
 import time
+import json
 from swissknife.modules.chat.history import ChatHistoryManager, ConversationTurn
 from swissknife.modules.agents import AgentManager
 from swissknife.modules.chat.file_handler import FileHandler
 from swissknife.modules.llm.models import ModelRegistry
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.message import MessageTransformer
-from swissknife.modules.groq import GroqService
+from swissknife.modules.memory import MemoryService, ContextPersistenceService
 
 
 class Observable:
@@ -50,7 +51,11 @@ class MessageHandler(Observable):
     about relevant events.
     """
 
-    def __init__(self, memory_service=None):
+    def __init__(
+        self,
+        memory_service: MemoryService,
+        context_persistent_service: ContextPersistenceService,
+    ):
         """
         Initializes the MessageHandler.
 
@@ -63,6 +68,7 @@ class MessageHandler(Observable):
         self.llm = self.agent_manager.get_current_agent().llm
         self.agent_name = self.agent_manager.get_current_agent().name
         self.memory_service = memory_service
+        self.persistent_service = context_persistent_service
         self.history_manager = ChatHistoryManager()
         self.latest_assistant_response = ""
         self.conversation_turns = []
@@ -143,6 +149,18 @@ class MessageHandler(Observable):
         if not user_input.startswith("/"):
             self.history_manager.add_entry(user_input)
 
+        if len(self.messages) == 0:
+            self.messages.append(
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"""Use user_context_summary to tailor your response:  \n<user_context_summary>{self.persistent_service.get_user_context_json(1, 4)}</user_context_summary>""",
+                        }
+                    ],
+                }
+            )
         # Handle files that were loaded but not yet sent
         if files and not self.messages:
             combined_content = message_content.copy() if message_content else []
@@ -385,6 +403,19 @@ class MessageHandler(Observable):
                     ) = self.llm.process_stream_chunk(
                         chunk, assistant_response, tool_uses
                     )
+
+                    context_data, clean_response = self.llm.parse_user_context_summary(
+                        assistant_response
+                    )
+                    if context_data:
+                        self.persistent_service.store_user_context(context_data)
+                        self.messages.append(
+                            self.llm.format_assistant_message(
+                                f"""<user_context_summary>{json.dumps(context_data)}</user_context_summary>"""
+                            )
+                        )
+
+                    assistant_response = clean_response
 
                     # Update token counts
                     if chunk_input_tokens > 0:

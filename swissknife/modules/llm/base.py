@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from swissknife.modules.tools.registry import ToolRegistry
+import re
+import json
 
 
 class BaseLLMService(ABC):
@@ -43,6 +45,79 @@ class BaseLLMService(ABC):
             return tool_def["function"]["name"]
         else:
             raise ValueError("Could not extract tool name from definition")
+
+    def parse_user_context_summary(
+        self,
+        assistant_response: str,
+    ) -> Tuple[Optional[Dict[str, Any]], str]:
+        """
+        Parses the <user_context_summary> JSON block from the beginning of a string.
+
+        Args:
+            raw_response: The raw string potentially containing the summary block
+                        at the beginning.
+
+        Returns:
+            A tuple containing:
+            - The parsed dictionary from the JSON block (or None if not found or invalid).
+            - The rest of the string after the summary block (or the original
+            string if the block wasn't found).
+        """
+        summary_data: Optional[Dict[str, Any]] = None
+        cleaned_response: str = (
+            assistant_response  # Default to original if no block found
+        )
+
+        # Regex explanation:
+        # \s*                  - Match optional leading whitespace
+        # <user_context_summary> - Match the opening tag literally (case-insensitive due to re.IGNORECASE)
+        # (.*?)                - Match any character (non-greedy) inside the tags (Group 1: the JSON content)
+        # </user_context_summary> - Match the closing tag literally (case-insensitive)
+        # \s*                  - Match optional trailing whitespace after the block
+        # (.*)                 - Match the rest of the string (Group 2: the cleaned response)
+        # re.DOTALL            - Makes '.' match newline characters as well
+        # re.IGNORECASE        - Makes the tag matching case-insensitive
+        match = re.match(
+            r"(?:```json|```)?\s*<user_context_summary>(.*?)</user_context_summary>\s*(?:```)?(.*)",
+            assistant_response,
+            re.DOTALL | re.IGNORECASE,
+        )
+
+        if match:
+            summary_json_str = match.group(1).strip()
+            # Potential optimization: If group 2 is empty, maybe assign original string minus matched part?
+            # But group(2) correctly captures the rest, even if empty.
+            cleaned_response = match.group(2).strip()
+
+            try:
+                summary_data = json.loads(summary_json_str)
+                # Optional: Add validation here to check if the loaded data
+                # has the expected keys (explicit_preferences, etc.)
+                if not isinstance(summary_data, dict):
+                    print(
+                        f"WARNING: Parsed user context summary is not a dictionary: {type(summary_data)}"
+                    )
+                    summary_data = (
+                        None  # Treat non-dict JSON as invalid for this purpose
+                    )
+                    # Revert cleaned_response if parsing fails? Or keep it cleaned?
+                    # Let's keep it cleaned, assuming the block was intended but malformed.
+
+            except json.JSONDecodeError as json_err:
+                print(
+                    f"ERROR: Failed to parse user context JSON: {json_err}\nContent: <<< {summary_json_str} >>>"
+                )
+                summary_data = None  # Parsing failed
+                # Keep cleaned_response as the block was likely intended but invalid.
+            except Exception as e:
+                print(f"ERROR: Unexpected error parsing user context JSON: {e}")
+                summary_data = None
+                # Consider if unexpected errors should revert cleaned_response
+                # Sticking with keeping it cleaned for now.
+
+        # else: No match found, summary_data remains None, cleaned_response remains raw_response
+
+        return summary_data, cleaned_response
 
     @abstractmethod
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:

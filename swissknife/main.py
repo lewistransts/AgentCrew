@@ -10,7 +10,11 @@ from swissknife.modules.chat import MessageHandler
 from swissknife.modules.scraping import ScrapingService
 from swissknife.modules.web_search import TavilySearchService
 from swissknife.modules.clipboard import ClipboardService
-from swissknife.modules.memory import MemoryService
+from swissknife.modules.memory import (
+    MemoryService,
+    ContextPersistenceService,
+    context_persistent,
+)
 from swissknife.modules.code_analysis import CodeAnalysisService
 from swissknife.modules.anthropic import AnthropicService
 from swissknife.modules.llm.service_manager import ServiceManager
@@ -95,6 +99,7 @@ def setup_services(provider):
 
     # Initialize services
     memory_service = MemoryService()
+    context_service = ContextPersistenceService()
     clipboard_service = ClipboardService()
     spec_validator = SpecPromptValidationService("groq")
     # Try to create search service if API key is available
@@ -133,6 +138,7 @@ def setup_services(provider):
         "code_analysis": code_analysis_service,
         "web_search": search_service,
         "spec_validator": spec_validator,
+        "context_persistent": context_service,
         # "scraping": scraping_service,
     }
     return services
@@ -264,7 +270,9 @@ def chat(message, files, provider, agent_config, gui):
         setup_agents(services, agent_config)
 
         # Create the message handler
-        message_handler = MessageHandler(services["memory"])
+        message_handler = MessageHandler(
+            services["memory"], services["context_persistent"]
+        )
 
         # Choose between GUI and console based on the --gui flag
         if gui:
