@@ -104,7 +104,7 @@ def setup_services(provider):
     spec_validator = SpecPromptValidationService("groq")
     # Try to create search service if API key is available
     try:
-        search_service = TavilySearchService(llm=llm_service)
+        search_service = TavilySearchService()
     except Exception as e:
         click.echo(f"⚠️ Web search tools not available: {str(e)}")
         search_service = None

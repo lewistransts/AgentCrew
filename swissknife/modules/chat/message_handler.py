@@ -419,8 +419,6 @@ class MessageHandler(Observable):
                         #     )
                         # )
 
-                    # assistant_response = clean_response
-
                     # Update token counts
                     if chunk_input_tokens > 0:
                         input_tokens = chunk_input_tokens
