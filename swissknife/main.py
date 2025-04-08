@@ -34,6 +34,7 @@ def cli_prod():
     os.environ["MEMORYDB_PATH"] = os.path.expanduser("~/.swissknife/memorydb")
     os.environ["MCP_CONFIG_PATH"] = os.path.expanduser("~/.swissknife/mcp_server.json")
     os.environ["SW_AGENTS_CONFIG"] = os.path.expanduser("~/.swissknife/agents.toml")
+    os.environ["PERSISTENCE_DIR"] = os.path.expanduser("~/.swissknife/persistents")
     cli()  # Delegate to main CLI function
 
 

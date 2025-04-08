@@ -1,7 +1,8 @@
 import sys
 import time
 import pyperclip
-from typing import Dict, Any
+import re
+from typing import Dict, Any, List
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.text import Text
@@ -114,6 +115,16 @@ class ConsoleUI(Observer):
             self.display_divider()
         elif event == "file_processed":
             self.display_message(f"{YELLOW}Processed file: {data['file_path']}{RESET}")
+        elif event == "conversations_listed":
+            self.display_conversations(data)  # data is list of conversation metadata
+        elif event == "conversation_loaded":
+            self.display_message(
+                f"{YELLOW}Loaded conversation: {data.get('id', 'N/A')}{RESET}"
+            )
+        elif event == "conversation_saved":
+            self.display_message(
+                f"{YELLOW}Conversation saved: {data.get('id', 'N/A')}{RESET}"
+            )
 
     def display_thinking_started(self, agent_name: str):
         """Display the start of the thinking process."""
@@ -229,6 +240,130 @@ class ConsoleUI(Observer):
         for agent_name, agent_data in agents_info["available"].items():
             current = " (current)" if agent_data["current"] else ""
             print(f"  - {agent_name}{current}: {agent_data['description']}")
+
+    def display_conversations(self, conversations: List[Dict[str, Any]]):
+        """Display available conversations."""
+        if not conversations:
+            print(f"{YELLOW}No saved conversations found.{RESET}")
+            return
+
+        print(f"{YELLOW}Available conversations:{RESET}")
+        for i, convo in enumerate(conversations, 1):
+            # Format timestamp for better readability
+            timestamp = convo.get("timestamp", "Unknown")
+            if isinstance(timestamp, (int, float)):
+                from datetime import datetime
+
+                timestamp = datetime.fromtimestamp(timestamp).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+
+            title = convo.get("title", "Untitled")
+            convo_id = convo.get("id", "unknown")
+
+            # Display conversation with index for easy selection
+            print(f"  {i}. {title} [{convo_id}]")
+            print(f"     Created: {timestamp}")
+
+            # Show a preview if available
+            if "preview" in convo:
+                print(f"     Preview: {convo['preview']}")
+            print()
+
+    def handle_load_conversation(self, load_arg: str):
+        """
+        Handle loading a conversation by number or ID.
+
+        Args:
+            load_arg: Either a conversation number (from the list) or a conversation ID
+        """
+        # First check if we have a list of conversations cached
+        if not hasattr(self, "_cached_conversations"):
+            # If not, get the list first
+            self._cached_conversations = self.message_handler.list_conversations()
+
+        try:
+            # Check if the argument is a number (index in the list)
+            if load_arg.isdigit():
+                index = int(load_arg) - 1  # Convert to 0-based index
+                if 0 <= index < len(self._cached_conversations):
+                    convo_id = self._cached_conversations[index].get("id")
+                    if convo_id:
+                        print(f"{YELLOW}Loading conversation #{load_arg}...{RESET}")
+                        messages = self.message_handler.load_conversation(convo_id)
+                        if messages:
+                            self.display_loaded_conversation(messages)
+                        return
+                print(
+                    f"{RED}Invalid conversation number. Use '/list' to see available conversations.{RESET}"
+                )
+            else:
+                # Assume it's a conversation ID
+                print(f"{YELLOW}Loading conversation with ID: {load_arg}...{RESET}")
+                messages = self.message_handler.load_conversation(load_arg)
+                if messages:
+                    self.display_loaded_conversation(messages)
+        except Exception as e:
+            print(f"{RED}Error loading conversation: {str(e)}{RESET}")
+
+    def display_loaded_conversation(self, messages):
+        """Display all messages from a loaded conversation.
+
+        Args:
+            messages: List of message dictionaries from the loaded conversation
+        """
+        print(f"\n{YELLOW}Displaying conversation history:{RESET}")
+        self.display_divider()
+
+        # Display each message in the conversation
+        for msg in messages:
+            role = msg.get("role")
+            if role == "user":
+                print(f"\n{BLUE}{BOLD}👤 YOU:{RESET}")
+                content = self._extract_message_content(msg)
+                print(content)
+                self.display_divider()
+            elif role == "assistant":
+                agent_name = self.message_handler.agent_name
+                print(f"\n{GREEN}{BOLD}🤖 {agent_name.upper()}:{RESET}")
+                content = self._extract_message_content(msg)
+                # Format as markdown for better display
+                self.console.print(Markdown(content))
+                self.display_divider()
+
+        print(f"{YELLOW}End of conversation history{RESET}\n")
+
+    def _extract_message_content(self, message):
+        """Extract the content from a message, handling different formats.
+
+        Args:
+            message: A message dictionary
+
+        Returns:
+            The extracted content as a string
+        """
+        content = message.get("content", "")
+
+        # Handle different content structures
+        if isinstance(content, str):
+            pass
+        elif isinstance(content, list) and content:
+            # For content in the format of a list of content parts
+            result = []
+            for item in content:
+                if isinstance(item, dict):
+                    if item.get("type") == "text":
+                        result.append(item.get("text", ""))
+                    # Handle other content types if needed
+            return "\n".join(result)
+
+        content = re.sub(
+            r"(?:```(?:json)?)?\s*<user_context_summary>.*?</user_context_summary>\s*(?:```)?",
+            "",
+            str(content),
+            flags=re.DOTALL | re.IGNORECASE,
+        )
+        return str(content)
 
     def get_user_input(self, conversation_turns=None):
         """
@@ -374,6 +509,8 @@ class ConsoleUI(Observer):
             f"{YELLOW}Press Alt/Meta+C to copy the latest assistant response.{RESET}",
             f"{YELLOW}Use Up/Down arrow keys to navigate through command history.{RESET}",
             f"{YELLOW}Use '/agent [agent_name]' to switch agents or list available agents.{RESET}",
+            f"{YELLOW}Use '/list' to list saved conversations.{RESET}",
+            f"{YELLOW}Use '/load <id>' or '/load <number>' to load a conversation.{RESET}",
         ]
 
         for message in welcome_messages:
@@ -400,10 +537,30 @@ class ConsoleUI(Observer):
         self.print_welcome_message()
 
         session_cost = 0.0
+        self._cached_conversations = []  # Add this to cache conversation list
 
         while True:
             # Get user input
             user_input = self.get_user_input()
+
+            # Handle list command directly
+            if user_input.strip() == "/list":
+                self._cached_conversations = self.message_handler.list_conversations()
+                self.display_conversations(self._cached_conversations)
+                continue
+
+            # Handle load command directly
+            if user_input.strip().startswith("/load "):
+                load_arg = user_input.strip()[
+                    6:
+                ].strip()  # Extract argument after "/load "
+                if load_arg:
+                    self.handle_load_conversation(load_arg)
+                else:
+                    print(
+                        f"{YELLOW}Usage: /load <conversation_id> or /load <number>{RESET}"
+                    )
+                continue
 
             # Process user input and commands
             # self.start_streaming_response(self.message_handler.agent_name)
