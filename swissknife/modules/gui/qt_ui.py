@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QMenuBar,
     QFileDialog,
+    QSplitter,
 )
 from PySide6.QtCore import (
     Qt,
@@ -42,6 +43,8 @@ from swissknife.modules.gui.widgets import (
     TokenUsageWidget,
     SystemMessageWidget,
     MessageBubble,
+    ConversationSidebar,
+    ConversationLoader,
 )
 
 from .worker import LLMWorker
@@ -54,7 +57,7 @@ class ChatWindow(QMainWindow, Observer):
     def __init__(self, message_handler: MessageHandler):
         super().__init__()
         self.setWindowTitle("Interactive Chat")
-        self.setGeometry(100, 100, 800, 600)  # Adjust size as needed
+        self.setGeometry(100, 100, 1000, 700)  # Adjust size for sidebar
 
         # Create menu bar
         self.create_menu_bar()
@@ -65,7 +68,9 @@ class ChatWindow(QMainWindow, Observer):
 
         # Track if we're waiting for a response
         self.waiting_for_response = False
+        self.loading_conversation = False  # Track conversation loading state
 
+        # --- Create Chat Area Widgets ---
         # Create widget for chat messages
         self.chat_container = QWidget()
         self.chat_layout = QVBoxLayout(self.chat_container)
@@ -141,22 +146,41 @@ class ChatWindow(QMainWindow, Observer):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
-        # Main Layout
-        central_widget = QWidget()
-        layout = QVBoxLayout(central_widget)
-        layout.addWidget(self.chat_scroll, 1)  # Give chat area more space
-        layout.addWidget(self.status_indicator)
+        # --- Assemble Chat Area Layout ---
+        chat_area_widget = QWidget()  # Container for everything right of the sidebar
+        chat_area_layout = QVBoxLayout(chat_area_widget)
+        chat_area_layout.setContentsMargins(
+            0, 0, 0, 0
+        )  # No margins for this inner container
+        chat_area_layout.addWidget(self.chat_scroll, 1)  # Give chat area more space
+        chat_area_layout.addWidget(self.status_indicator)
 
         # Create horizontal layout for input and buttons
         input_row = QHBoxLayout()
         input_row.addWidget(self.message_input, 1)  # Give input area stretch priority
         input_row.addLayout(buttons_layout)  # Add buttons layout to the right
 
-        layout.addLayout(input_row)  # Add the horizontal layout to main layout
-        layout.addWidget(self.token_usage)
-        self.setCentralWidget(central_widget)
+        chat_area_layout.addLayout(
+            input_row
+        )  # Add the horizontal layout to main layout
+        chat_area_layout.addWidget(self.token_usage)
 
-        # Connect signals and slots
+        # --- Create Sidebar ---
+        self.sidebar = ConversationSidebar(self.message_handler, self)
+        self.sidebar.conversation_selected.connect(self.load_conversation)
+        self.sidebar.error_occurred.connect(self.display_error)  # Connect error signal
+
+        # --- Create Splitter and Set Central Widget ---
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.addWidget(self.sidebar)
+        self.splitter.addWidget(chat_area_widget)
+        self.splitter.setStretchFactor(0, 0)  # Sidebar doesn't stretch
+        self.splitter.setStretchFactor(1, 1)  # Chat area stretches
+        self.splitter.setSizes([250, 750])  # Initial sizes
+
+        self.setCentralWidget(self.splitter)
+
+        # --- Connect signals and slots (rest of the setup) ---
         self.send_button.clicked.connect(self.send_message)
         self.file_button.clicked.connect(self.browse_file)
 
@@ -177,7 +201,9 @@ class ChatWindow(QMainWindow, Observer):
 
         # Ctrl+L shortcut (clear chat)
         self.clear_shortcut = QShortcut(QKeySequence("Ctrl+L"), self)
-        self.clear_shortcut.activated.connect(self.clear_chat)
+        self.clear_shortcut.activated.connect(
+            lambda: self.clear_chat(requested=False)
+        )  # Pass requested=False
 
         # Override key press event
         self.message_input.keyPressEvent = self.input_key_press_event
@@ -218,7 +244,7 @@ class ChatWindow(QMainWindow, Observer):
 
         # Add welcome message
         self.add_system_message(
-            "Welcome to the interactive chat! Type a message to begin."
+            "Welcome! Select a past conversation or start a new one."
         )
         self.add_system_message(
             "Press Ctrl+Enter to send, Ctrl+C to copy, Ctrl+L to clear chat."
@@ -294,13 +320,16 @@ class ChatWindow(QMainWindow, Observer):
             QTextEdit.keyPressEvent(self.message_input, event)
 
     def set_input_controls_enabled(self, enabled: bool):
-        """Enable or disable input controls based on whether we're waiting for a response."""
-        self.message_input.setEnabled(enabled)
-        self.send_button.setEnabled(enabled)
-        self.file_button.setEnabled(enabled)
+        """Enable or disable input controls."""
+        # Keep controls disabled if loading a conversation, regardless of 'enabled' argument
+        actual_enabled = enabled and not self.loading_conversation
+
+        self.message_input.setEnabled(actual_enabled)
+        self.send_button.setEnabled(actual_enabled)
+        self.file_button.setEnabled(actual_enabled)
 
         # Update cursor and appearance for visual feedback
-        if enabled:
+        if actual_enabled:
             self.message_input.setFocus()
             self.send_button.setStyleSheet(
                 "background-color: #4CAF50; color: white; border-radius: 5px; padding: 5px;"
@@ -309,15 +338,18 @@ class ChatWindow(QMainWindow, Observer):
                 "background-color: #2196F3; color: white; border-radius: 5px; padding: 5px;"
             )
         else:
+            # Use a different style if disabled due to loading vs. waiting for response
+            disabled_color = "#C0C0C0" if self.loading_conversation else "#A0A0A0"
             self.send_button.setStyleSheet(
-                "background-color: #A0A0A0; color: white; border-radius: 5px; padding: 5px;"
+                f"background-color: {disabled_color}; color: white; border-radius: 5px; padding: 5px;"
             )
             self.file_button.setStyleSheet(
-                "background-color: #A0A0A0; color: white; border-radius: 5px; padding: 5px;"
+                f"background-color: {disabled_color}; color: white; border-radius: 5px; padding: 5px;"
             )
 
-        # Update waiting state
-        self.waiting_for_response = not enabled
+        # Update waiting state (only relevant for LLM responses)
+        if not self.loading_conversation:
+            self.waiting_for_response = not enabled
 
     @Slot()
     def send_message(self):
@@ -334,7 +366,7 @@ class ChatWindow(QMainWindow, Observer):
         if user_input.startswith("/"):
             # Clear command
             if user_input.startswith("/clear"):
-                self.clear_chat(True)
+                self.clear_chat()
                 self.set_input_controls_enabled(True)  # Re-enable controls
                 return
             # Copy command
@@ -549,39 +581,50 @@ class ChatWindow(QMainWindow, Observer):
 
     @Slot()
     def clear_chat(self, requested=False):
-        """Clear the chat history."""
-        reply = QMessageBox.question(
-            self,
-            "Clear Chat",
-            "Are you sure you want to clear the chat history?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
+        """Clear the chat history and UI."""
+        # Only ask for confirmation if triggered by user (e.g., Ctrl+L), not programmatically
+        if not requested:
+            reply = QMessageBox.question(
+                self,
+                "Clear Chat",
+                "Are you sure you want to clear the chat history?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if reply == QMessageBox.StandardButton.No:
+                return  # User cancelled
 
-        if reply == QMessageBox.StandardButton.Yes:
-            # Clear the UI
-            while self.chat_layout.count():
-                item = self.chat_layout.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
+        # Clear the UI immediately
+        self._clear_chat_ui()
 
-            # Let the message handler handle the clear action
-            # This will trigger the appropriate events
-            if not requested:
-                self.llm_worker.process_request.emit("/clear")
+        # Reset session cost display
+        self.session_cost = 0.0
+        self.token_usage.update_token_info(0, 0, 0.0, 0.0)
 
-            # Reset state variables
-            self.current_response_bubble = None
-            self.current_response_container = None
-            self.expecting_response = False
-
-            # Ensure input controls are enabled
-            self.set_input_controls_enabled(True)
-
-            # Add welcome message back
+        # If the clear was initiated by the user (not loading a conversation),
+        # tell the message handler to clear its state.
+        if not requested:
+            self.llm_worker.process_request.emit("/clear")
+            # Add a confirmation message after clearing
             self.add_system_message("Chat history cleared.")
-
-            # Update status bar
             self.display_status_message("Chat history cleared")
+
+        # Ensure input controls are enabled after clearing
+        self.set_input_controls_enabled(True)
+        self.loading_conversation = False  # Ensure loading flag is reset
+
+    def _clear_chat_ui(self):
+        """Clears only the chat message widgets from the UI."""
+        while self.chat_layout.count():
+            item = self.chat_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+        # Reset tracking variables related to response streaming
+        self.current_response_bubble = None
+        self.current_response_container = None
+        self.current_thinking_bubble = None
+        self.thinking_content = ""
+        self.expecting_response = False
 
     def history_navigate(self, direction):
         if not self.message_handler.history_manager.history:
@@ -736,6 +779,84 @@ class ChatWindow(QMainWindow, Observer):
         self.current_response_bubble = None
         self.current_response_container = None
         self.expecting_response = False
+
+    @Slot(str)
+    def load_conversation(self, conversation_id):
+        """Initiates loading a conversation asynchronously."""
+        if self.loading_conversation:
+            self.display_status_message("Already loading a conversation.")
+            return
+
+        self.loading_conversation = True
+        self.set_input_controls_enabled(False)  # Disable input during load
+        self.display_status_message(f"Loading conversation: {conversation_id}...")
+
+        # Use the ConversationLoader thread
+        self.loader_thread = ConversationLoader(self.message_handler, conversation_id)
+        self.loader_thread.loaded.connect(self.display_conversation)
+        self.loader_thread.error.connect(self.handle_load_error)
+        # Clean up thread when finished
+        self.loader_thread.finished.connect(self.loader_thread.deleteLater)
+        self.loader_thread.start()
+
+    @Slot(list, str)
+    def display_conversation(self, messages, conversation_id):
+        """Displays the loaded conversation messages in the UI."""
+        self._clear_chat_ui()  # Clear existing messages first
+
+        # Reset session cost when loading a new conversation
+        self.session_cost = 0.0
+        self.token_usage.update_token_info(0, 0, 0.0, 0.0)
+
+        # Add messages from the loaded conversation, filtering for user/assistant roles
+        for msg in messages:
+            role = msg.get("role")
+            if role == "user" or role == "assistant":
+                content = msg.get("content", "")
+                message_content = ""
+                is_user = role == "user"
+
+                # Handle different content structures (standardized format)
+                if isinstance(content, str):
+                    message_content = content
+                    # self.append_message(content, is_user=is_user)
+                elif isinstance(content, list) and content:
+                    # Assuming the first item in the list contains the primary text
+                    first_item = content[0]
+                    if (
+                        isinstance(first_item, dict)
+                        and first_item.get("type") == "text"
+                    ):
+                        message_content = first_item.get("text", "")
+                        # self.append_message(first_item.get("text", ""), is_user=is_user)
+                    # Add more specific handling here if other content types need display
+
+                ## Striped out the user context summary
+                message_content = re.sub(
+                    r"(?:```(?:json)?)?\s*<user_context_summary>.*?</user_context_summary>\s*(?:```)?",
+                    "",
+                    message_content,
+                    flags=re.DOTALL | re.IGNORECASE,
+                )
+                self.append_message(message_content, is_user=is_user)
+                # Add handling for other potential content formats if necessary
+
+        # Update status bar and re-enable controls
+        self.display_status_message(f"Loaded conversation: {conversation_id}")
+        self.loading_conversation = False
+        self.set_input_controls_enabled(True)
+        # Optionally, update the agent/model indicator if that info is part of the loaded convo metadata
+        # self.status_indicator.setText(...)
+
+        # Refresh sidebar in case title/timestamp changed (optional)
+        # self.sidebar.update_conversation_list()
+
+    @Slot(str)
+    def handle_load_error(self, error_message):
+        """Handles errors during conversation loading."""
+        self.display_error(error_message)
+        self.loading_conversation = False
+        self.set_input_controls_enabled(True)  # Re-enable controls on error
 
     def check_for_path_completion(self):
         """Check if the current text contains a path that should trigger completion."""
@@ -932,6 +1053,9 @@ class ChatWindow(QMainWindow, Observer):
             chunk, assistant_response = data
             self.display_response_chunk(assistant_response)
         elif event == "error":
+            # If an error occurs during LLM processing, ensure loading flag is false
+            self.loading_conversation = False
+            self.set_input_controls_enabled(True)
             self.display_error(data)
         elif event == "thinking_started":
             self.display_thinking_started(data)  # data is agent_name
@@ -942,8 +1066,17 @@ class ChatWindow(QMainWindow, Observer):
             # Reset thinking bubble reference
             self.current_thinking_bubble = None
         elif event == "clear_requested":
-            pass
-            # self.clear_chat(True)
+            # This is likely triggered by the worker after /clear command
+            # The UI clear might have already happened if user initiated via Ctrl+L
+            # Ensure UI is clear and state is reset.
+            self._clear_chat_ui()
+            self.session_cost = 0.0
+            self.token_usage.update_token_info(0, 0, 0.0, 0.0)
+            self.add_system_message("Chat history cleared by command.")
+            self.loading_conversation = False
+            self.set_input_controls_enabled(True)
+            # Refresh sidebar as the current conversation is gone
+            self.sidebar.update_conversation_list()
         elif event == "exit_requested":
             QApplication.quit()
         elif event == "copy_requested":
@@ -962,7 +1095,9 @@ class ChatWindow(QMainWindow, Observer):
                 self.add_system_message(f"DEBUG INFO:\n\n{str(data)}")
         elif event == "file_processed":
             self.add_system_message(f"Processed file: {data['file_path']}")
-            self.set_input_controls_enabled(True)
+            # Re-enable controls only if not loading a conversation
+            if not self.loading_conversation:
+                self.set_input_controls_enabled(True)
         elif event == "tool_use":
             self.display_tool_use(data)
         elif event == "tool_result":
@@ -991,3 +1126,15 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "think_budget_set":
             self.add_system_message(f"Set thinking budget at {data}")
             self.set_input_controls_enabled(True)
+        elif event == "conversation_saved":  # Add handler for this event
+            self.display_status_message(f"Conversation saved: {data.get('id', 'N/A')}")
+            self.sidebar.update_conversation_list()  # Refresh sidebar
+        elif (
+            event == "conversation_loaded"
+        ):  # Add handler for this event (if loaded via command)
+            self.display_status_message(f"Conversation loaded: {data.get('id', 'N/A')}")
+
+        # --- Ensure controls are re-enabled after most events if not loading ---
+        # Place this check strategically if needed, or rely on specific event handlers
+        # if not self.loading_conversation and not self.waiting_for_response:
+        #    self.set_input_controls_enabled(True)

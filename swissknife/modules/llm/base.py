@@ -65,7 +65,9 @@ class BaseLLMService(ABC):
         """
         summary_data: Optional[Dict[str, Any]] = None
         cleaned_response: str = (
-            assistant_response  # Default to original if no block found
+            assistant_response
+            if "user_context_summary" not in assistant_response
+            else ""  # Default to original if no block found
         )
 
         # Regex explanation:

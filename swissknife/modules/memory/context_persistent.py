@@ -464,20 +464,16 @@ class ContextPersistenceService:
 
     def start_conversation(self) -> str:
         """
-        Generates a unique conversation ID and creates an empty file placeholder.
+        Generates a unique conversation ID. Does not create a file immediately.
 
         Returns:
             The unique conversation ID (UUID string).
-
-        Raises:
-            IOError, TypeError, OSError: If writing the placeholder file fails.
         """
         conversation_id = str(uuid.uuid4())
-        file_path = os.path.join(self.conversations_dir, f"{conversation_id}.json")
-
-        # Create an empty list representing the conversation history
-        self._write_json_file(file_path, [])
-        print(f"INFO: Started new conversation with ID: {conversation_id}")
+        # Removed file creation: File will be created on first append.
+        # file_path = os.path.join(self.conversations_dir, f"{conversation_id}.json")
+        # self._write_json_file(file_path, []) # REMOVED
+        print(f"INFO: Generated new conversation ID: {conversation_id}")
         return conversation_id
 
     def append_conversation_messages(
@@ -510,12 +506,16 @@ class ContextPersistenceService:
 
         file_path = os.path.join(self.conversations_dir, f"{conversation_id}.json")
 
-        history = self._read_json_file(file_path, default_value=[])
-        if not isinstance(history, list):
-            print(
-                f"WARNING: Conversation file {file_path} was not a list. Resetting history before append."
-            )
-            history = []
+        history = [] # Initialize history as empty list
+        if os.path.exists(file_path):
+            # File exists, read its content
+            history = self._read_json_file(file_path, default_value=[])
+            if not isinstance(history, list):
+                print(
+                    f"WARNING: Conversation file {file_path} was not a list. Resetting history before append."
+                )
+                history = []
+        # else: File doesn't exist, history remains [], file will be created by _write_json_file
 
         # Append the new messages
         history.extend(new_messages)

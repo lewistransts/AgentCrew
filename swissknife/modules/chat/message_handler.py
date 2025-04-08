@@ -76,6 +76,8 @@ class MessageHandler(Observable):
         self.current_user_input_idx = -1
         self.file_handler = FileHandler()
         self.messages = []  # Initialize empty messages list
+        self.current_conversation_id = None  # ID for persistence
+        self.start_new_conversation()  # Initialize first conversation
 
     def process_user_input(
         self,
@@ -101,9 +103,8 @@ class MessageHandler(Observable):
 
         # Handle clear command
         if user_input.lower() == "/clear":
-            self.conversation_turns = []  # Clear conversation turns
-            self.messages = []  # Clear messages
-            self._notify("clear_requested")
+            # Now handled by start_new_conversation
+            self.start_new_conversation()
             return False, True  # exit_flag, clear_flag
 
         # Handle copy command
@@ -203,6 +204,41 @@ class MessageHandler(Observable):
         self.current_user_input_idx = len(self.messages) - 1
 
         return False, False
+
+    def start_new_conversation(self):
+        """Starts a new persistent conversation, clears history, and gets a new ID."""
+        try:
+            # Ensure the service instance is available
+            if (
+                not hasattr(self, "persistent_service")
+                or self.persistent_service is None
+            ):
+                raise RuntimeError(
+                    "ContextPersistenceService not initialized in MessageHandler."
+                )
+
+            self.current_conversation_id = self.persistent_service.start_conversation()
+            self.messages = []  # Clear in-memory message list
+            self.conversation_turns = []  # Clear jump history
+            self.current_user_input = None
+            self.current_user_input_idx = -1
+            # Notify UI about the new conversation
+            self._notify(
+                "system_message",
+                f"Started new conversation: {self.current_conversation_id}",
+            )
+            # Re-use existing signal to clear UI display, ensures UI is reset
+            self._notify("clear_requested")
+            print(
+                f"INFO: Started new persistent conversation {self.current_conversation_id}"
+            )
+        except Exception as e:
+            error_message = f"Failed to start new persistent conversation: {str(e)}"
+            print(f"ERROR: {error_message}")
+            self._notify("error", {"message": error_message})
+            self.current_conversation_id = (
+                None  # Ensure saving fails safely if start fails
+            )
 
     def _handle_exit_command(self, user_input: str) -> bool:
         """Check if the user wants to exit the chat."""
@@ -410,7 +446,7 @@ class MessageHandler(Observable):
                         assistant_response
                     )
                     if context_data and not context_data_processed:
-                        self._notify("debug_requested", context_data)
+                        # self._notify("debug_requested", context_data)
                         self.persistent_service.store_user_context(context_data)
                         context_data_processed = True
                         # self.messages.append(
@@ -532,6 +568,26 @@ class MessageHandler(Observable):
                     self.llm.format_assistant_message(assistant_response)
                 )
 
+            # --- Start of Persistence Logic ---
+            if self.current_conversation_id and self.current_user_input_idx >= 0:
+                try:
+                    # Get all messages added since the user input for this turn
+                    current_provider = self.llm.provider_name
+                    messages_for_this_turn = MessageTransformer.standardize_messages(
+                        self.messages[self.current_user_input_idx :], current_provider
+                    )
+                    if (
+                        messages_for_this_turn
+                    ):  # Only save if there are messages for the turn
+                        self.persistent_service.append_conversation_messages(
+                            self.current_conversation_id, messages_for_this_turn
+                        )
+                except Exception as e:
+                    error_message = f"Failed to save conversation turn to {self.current_conversation_id}: {str(e)}"
+                    print(f"ERROR: {error_message}")
+                    self._notify("error", {"message": error_message})
+            # --- End of Persistence Logic ---
+
             if self.current_user_input and self.current_user_input_idx >= 0:
                 if self.memory_service:
                     user_input = ""
@@ -554,10 +610,10 @@ class MessageHandler(Observable):
                         self._notify(
                             "error", f"Failed to store conversation in memory: {str(e)}"
                         )
-                # Store the conversation turn
+                # Store the conversation turn reference for /jump command
                 turn = ConversationTurn(
                     self.current_user_input,  # User message for preview
-                    self.current_user_input_idx,  # Index of the last message
+                    self.current_user_input_idx,  # Index of the *start* of this turn's messages
                 )
                 self.conversation_turns.append(turn)
                 self.current_user_input = None
@@ -577,3 +633,37 @@ class MessageHandler(Observable):
                 },
             )
             return None, 0, 0
+
+    # --- Add these new methods ---
+    def list_conversations(self) -> List[Dict[str, Any]]:
+        """Lists available conversations from the persistence service."""
+        try:
+            return self.persistent_service.list_conversations()
+        except Exception as e:
+            print(f"Error listing conversations: {e}")
+            self._notify("error", f"Failed to list conversations: {e}")
+            return []
+
+    def load_conversation(self, conversation_id: str) -> Optional[List[Dict[str, Any]]]:
+        """Loads a specific conversation history and sets it as active."""
+        try:
+            history = self.persistent_service.get_conversation_history(conversation_id)
+            if history:
+                self.current_conversation_id = conversation_id
+                current_provider = self.llm.provider_name
+                self.messages = MessageTransformer.convert_messages(
+                    history, current_provider
+                )
+                print(f"Loaded conversation {conversation_id}")  # Optional: Debugging
+                self._notify(
+                    "conversation_loaded", {"id": conversation_id, "history": history}
+                )
+                return history
+            else:
+                self._notify(
+                    "error", f"Conversation {conversation_id} not found or empty."
+                )
+                return []
+        except Exception as e:
+            print(f"Error loading conversation {conversation_id}: {e}")
+            self._notify("error", f"Failed to load conversation {conversation_id}: {e}")
