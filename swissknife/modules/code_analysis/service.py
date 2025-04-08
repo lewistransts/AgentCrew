@@ -1,19 +1,8 @@
 import os
 import subprocess
 from typing import Any, Dict, List, Optional
-
-import tree_sitter_c_sharp
-import tree_sitter_cpp
-import tree_sitter_go
-import tree_sitter_java
-import tree_sitter_javascript
-import tree_sitter_kotlin
-import tree_sitter_python
-import tree_sitter_ruby
-import tree_sitter_rust
-import tree_sitter_typescript
-import tree_sitter_php
-from tree_sitter import Language, Parser
+from tree_sitter_language_pack import get_parser
+from tree_sitter import Parser
 
 
 class CodeAnalysisService:
@@ -53,20 +42,18 @@ class CodeAnalysisService:
         """Initialize the code analysis service with tree-sitter parsers."""
         try:
             self._parser_cache = {
-                "python": Parser(Language(tree_sitter_python.language())),
-                "javascript": Parser(Language(tree_sitter_javascript.language())),
-                "typescript": Parser(
-                    Language(tree_sitter_typescript.language_typescript())
-                ),
-                "tsx": Parser(Language(tree_sitter_typescript.language_tsx())),
-                "java": Parser(Language(tree_sitter_java.language())),
-                "cpp": Parser(Language(tree_sitter_cpp.language())),
-                "ruby": Parser(Language(tree_sitter_ruby.language())),
-                "go": Parser(Language(tree_sitter_go.language())),
-                "rust": Parser(Language(tree_sitter_rust.language())),
-                "php": Parser(Language(tree_sitter_php.language_php())),
-                "c-sharp": Parser(Language(tree_sitter_c_sharp.language())),
-                "kotlin": Parser(Language(tree_sitter_kotlin.language())),
+                "python": get_parser("python"),
+                "javascript": get_parser("javascript"),
+                "typescript": get_parser("typescript"),
+                "tsx": get_parser("typescript"),
+                "java": get_parser("java"),
+                "cpp": get_parser("cpp"),
+                "ruby": get_parser("ruby"),
+                "go": get_parser("go"),
+                "rust": get_parser("rust"),
+                "php": get_parser("php"),
+                "c-sharp": get_parser("csharp"),
+                "kotlin": get_parser("kotlin"),
             }
             # Define node types for different categories
             self.class_types = {
