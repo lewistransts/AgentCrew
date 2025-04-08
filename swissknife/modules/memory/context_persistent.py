@@ -43,21 +43,21 @@ class ContextPersistenceService:
 
         if persistence_dir_override:
             persistence_dir = persistence_dir_override
-            print(
-                f"INFO: Using provided persistence directory override: {persistence_dir}"
-            )
+            # print(
+            #     f"INFO: Using provided persistence directory override: {persistence_dir}"
+            # )
         else:
             env_dir = os.getenv("PERSISTENCE_DIR")
             if env_dir:
                 persistence_dir = env_dir
-                print(
-                    f"INFO: Using persistence directory from PERSISTENCE_DIR environment variable: {persistence_dir}"
-                )
+                # print(
+                #     f"INFO: Using persistence directory from PERSISTENCE_DIR environment variable: {persistence_dir}"
+                # )
             else:
                 persistence_dir = "./persistents"  # Default to current directory
-                print(
-                    "INFO: PERSISTENCE_DIR environment variable not set. Defaulting persistence directory to current directory ('.')"
-                )
+                # print(
+                #     "INFO: PERSISTENCE_DIR environment variable not set. Defaulting persistence directory to current directory ('.')"
+                # )
 
         # Expand user path (~) if present, and get absolute path for clarity
         self.base_dir = os.path.abspath(os.path.expanduser(persistence_dir))
@@ -298,7 +298,7 @@ class ContextPersistenceService:
 
         # _write_json_file now raises exceptions on failure
         self._write_json_file(self.context_file_path, data_to_save)
-        print(f"INFO: User context stored successfully at {self.context_file_path}")
+        # print(f"INFO: User context stored successfully at {self.context_file_path}")
 
     def get_user_context(self) -> Dict[str, Any] | None:
         """
@@ -323,7 +323,7 @@ class ContextPersistenceService:
 
         # Check if it's just the default empty structure
         if not data["latest_summary"] and not data["_rankings"]:
-            print(f"INFO: Stored context file {self.context_file_path} is empty.")
+            # print(f"INFO: Stored context file {self.context_file_path} is empty.")
             return None  # Return None if empty
 
         return data
@@ -473,7 +473,7 @@ class ContextPersistenceService:
         # Removed file creation: File will be created on first append.
         # file_path = os.path.join(self.conversations_dir, f"{conversation_id}.json")
         # self._write_json_file(file_path, []) # REMOVED
-        print(f"INFO: Generated new conversation ID: {conversation_id}")
+        # print(f"INFO: Generated new conversation ID: {conversation_id}")
         return conversation_id
 
     def append_conversation_messages(
@@ -499,14 +499,14 @@ class ContextPersistenceService:
             )
 
         if not new_messages:
-            print(
-                f"INFO: No new messages provided for {conversation_id}. Nothing to append."
-            )
+            # print(
+            #     f"INFO: No new messages provided for {conversation_id}. Nothing to append."
+            # )
             return  # Nothing to do
 
         file_path = os.path.join(self.conversations_dir, f"{conversation_id}.json")
 
-        history = [] # Initialize history as empty list
+        history = []  # Initialize history as empty list
         if os.path.exists(file_path):
             # File exists, read its content
             history = self._read_json_file(file_path, default_value=[])
@@ -521,9 +521,9 @@ class ContextPersistenceService:
         history.extend(new_messages)
 
         self._write_json_file(file_path, history)
-        print(
-            f"INFO: Appended {len(new_messages)} message(s) to conversation: {conversation_id}"
-        )
+        # print(
+        #     f"INFO: Appended {len(new_messages)} message(s) to conversation: {conversation_id}"
+        # )
 
     def get_conversation_history(
         self, conversation_id: str
