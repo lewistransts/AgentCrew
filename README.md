@@ -53,49 +53,56 @@ integration, web capabilities, and a modular extension system.
 ### Start an Interactive Chat
 
 ```bash
-uv run swissknife/main.py chat --agent-config agents.toml
+uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml
+```
+
+### Start an Interactive Chat with GUI
+
+```bash
+uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --gui
 ```
 
 ### Start a Chat with an Initial Message
 
 ```bash
-uv run swissknife/main.py chat --agent-config agents.toml --message "Hello, I need help with software architecture"
+uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --message "Hello, I need help with software architecture"
 ```
 
 ### Include Files in Your Chat
 
 ```bash
-uv run swissknife/main.py chat --agent-config agents.toml --files document.pdf --files code.py
+uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --files document.pdf --files code.py
 ```
 
 ### Start a Chat with Different Providers
 
 ```bash
 # Use Claude models from Anthropic
-uv run swissknife/main.py chat --agent-config agents.toml --provider claude
+uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --provider claude
 
 # Use LLM models from Groq
-uv run swissknife/main.py chat --agent-config agents.toml --provider groq
+uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --provider groq
 
 # Use GPT models from OpenAI
-uv run swissknife/main.py chat --agent-config agents.toml --provider openai
+uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --provider openai
 
 # Use Gemini models from Google
-uv run swissknife/main.py chat --agent-config agents.toml --provider gemini
+uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --provider gemini
 ```
 
 ## Core Architecture
 
 ### Multi-Agent System
 
-This system implements a multi-agent architecture with specialized agents with `toml` config file `agents.toml`:
+This system implements a multi-agent architecture with specialized agents with
+`toml` config file `agents.toml`:
 
 ```toml
 [[agents]]
 name = "Coding"
 description = "Specialized in code implementation, debugging, programming assistance and aider prompt"
 tools = ["clipboard", "memory", "code_analysis", "spec_validator"]
-system_prompt = """You are Harvey, a focused code implementation expert. Your guiding principle: **SIMPLICITY IN IMPLEMENTATION** (Simple + Practical Implementation). Prioritize clean, maintainable code that aligns with best practices.  
+system_prompt = """You are Harvey, a focused code implementation expert. Your guiding principle: **SIMPLICITY IN IMPLEMENTATION** (Simple + Practical Implementation). Prioritize clean, maintainable code that aligns with best practices.
 
 Today is {current_date}.
 """
@@ -290,7 +297,8 @@ The following features are planned for future releases:
       context management.
 - [x] **Command-line Thinking Mode Options**: Enable and configure thinking mode
       with the `/think` command.
-- [x] **Agents through config**: Dynamic agents configurations through config file
+- [x] **Agents through config**: Dynamic agents configurations through config
+      file
 
 ### Advanced Personalization
 
@@ -299,6 +307,8 @@ The following features are planned for future releases:
 - [ ] **Local Model Support**: Add ONNX runtime integration.
 - [ ] **Advanced Memory Indexing**: Improve memory retrieval accuracy and
       performance.
+- [x] **Adaptive User Context**: Agent can build up a context and knowledge base
+      when interact with user and use it to tailor the response
 - [x] **Multi-Agent Collaboration**: Enable multiple agents to work together on
       complex tasks.
 

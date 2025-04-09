@@ -4,7 +4,7 @@ from datetime import datetime
 ANALYSIS_PROMPT = """
 <user_context_analysis>
 <instruction>
-**Mandatory:** At the absolute beginning of EVERY response, you MUST generate a 'User Context Summary'.
+**Mandatory:** At the absolute beginning of EVERY response, you MUST generate a 'User Context Summary'. Use this <user_context_summary> to tailor your response
 1.  Analyze the available conversation history to gather user information.
 2.  Format this summary as a JSON object.
 3.  MUST enclose the entire JSON object within `<user_context_summary>` tags.
