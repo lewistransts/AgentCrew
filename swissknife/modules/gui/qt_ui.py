@@ -196,7 +196,7 @@ class ChatWindow(QMainWindow, Observer):
         self.send_shortcut.activated.connect(self.send_message)
 
         # Ctrl+C shortcut (copy last response)
-        self.copy_shortcut = QShortcut(QKeySequence("Ctrl+C"), self)
+        self.copy_shortcut = QShortcut(QKeySequence("Ctrl+Shift+C"), self)
         self.copy_shortcut.activated.connect(self.copy_last_response)
 
         # Ctrl+L shortcut (clear chat)
