@@ -1,4 +1,5 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, cast
+from anthropic.types import TextBlockParam
 import json
 
 
@@ -90,9 +91,20 @@ class MessageTransformer:
                             item.get("type") == "tool_result"
                             and msg.get("role") == "user"
                         ):
+                            content = ""
+                            try:
+                                if isinstance(item["content"], List):
+                                    content = [
+                                        TextBlockParam(i) for i in item["content"]
+                                    ][0]["text"]
+                                else:
+                                    content = item["content"]
+                            except Exception as e:
+                                print(f"================={str(e)}")
+                                pass
                             std_msg["tool_result"] = {
                                 "tool_use_id": item.get("tool_use_id", ""),
-                                "content": item.get("content", ""),
+                                "content": content,
                                 "is_error": item.get("is_error", False),
                             }
                     else:
@@ -110,9 +122,21 @@ class MessageTransformer:
                                 }
                             )
                         elif item_type == "tool_result" and msg.get("role") == "user":
+                            item_dict = item.to_dict()
+                            content = ""
+                            try:
+                                if isinstance(item_dict["content"], List):
+                                    content = [
+                                        TextBlockParam(i) for i in item_dict["content"]
+                                    ]
+                                else:
+                                    content = item_dict["content"]
+                            except Exception as e:
+                                pass
+
                             std_msg["tool_result"] = {
                                 "tool_use_id": getattr(item, "tool_use_id", ""),
-                                "content": getattr(item, "content", ""),
+                                "content": content,
                                 "is_error": getattr(item, "is_error", False),
                             }
 

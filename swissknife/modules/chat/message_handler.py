@@ -582,6 +582,9 @@ class MessageHandler(Observable):
                         self.persistent_service.append_conversation_messages(
                             self.current_conversation_id, messages_for_this_turn
                         )
+                        self._notify(
+                            "conversation_saved", {"id": self.current_conversation_id}
+                        )
                 except Exception as e:
                     error_message = f"Failed to save conversation turn to {self.current_conversation_id}: {str(e)}"
                     print(f"ERROR: {error_message}")

@@ -838,7 +838,8 @@ class ChatWindow(QMainWindow, Observer):
                     message_content,
                     flags=re.DOTALL | re.IGNORECASE,
                 )
-                self.append_message(message_content, is_user=is_user)
+                if message_content.strip():
+                    self.append_message(message_content, is_user=is_user)
                 # Add handling for other potential content formats if necessary
 
         # Update status bar and re-enable controls
@@ -1051,7 +1052,8 @@ class ChatWindow(QMainWindow, Observer):
     def handle_event(self, event: str, data: Any):
         if event == "response_chunk":
             chunk, assistant_response = data
-            self.display_response_chunk(assistant_response)
+            if assistant_response.strip():
+                self.display_response_chunk(assistant_response)
         elif event == "error":
             # If an error occurs during LLM processing, ensure loading flag is false
             self.loading_conversation = False

@@ -171,7 +171,6 @@ class ModelRegistry:
                 capabilities=["tool_use", "vision"],
                 input_token_price_1m=0.1,
                 output_token_price_1m=0.4,
-                default=True,
             ),
             Model(
                 id="gemini-2.5-pro-preview-03-25",
@@ -181,6 +180,7 @@ class ModelRegistry:
                 capabilities=["tool_use", "thinking"],
                 input_token_price_1m=1.25,
                 output_token_price_1m=2.5,
+                default=True,
             ),
             Model(
                 id="meta-llama/Llama-3.3-70B-Instruct",

@@ -183,8 +183,8 @@ def setup_agents(services, config_path):
             tools=agent_def["tools"],
         )
         agent.set_system_prompt(
-            agent_def["system_prompt"].format(
-                current_date=datetime.today().strftime("%Y-%m-%d")
+            agent_def["system_prompt"].replace(
+                "{current_date}", datetime.today().strftime("%Y-%m-%d")
             )
         )
         agent_manager.register_agent(agent)

@@ -72,7 +72,7 @@ class GoogleAINativeService(BaseLLMService):
         self.client = genai.Client(api_key=api_key)
 
         # Default model
-        self.model = "gemini-2.0-flash"
+        self.model = "gemini-2.5-pro-preview-03-25"
 
         # Initialize tools and handlers
         self.tools = []
@@ -541,10 +541,13 @@ class GoogleAINativeService(BaseLLMService):
 
         assistant_response += chunk_text
         # Process tool usage information from text if present
-        tool_pattern = r"Using tool: (\w+)\s*(?:\n)?Arguments: (\{[\s\S]*?\})"
+        tool_pattern = r"Using tool: (\w+)\s*(?:\n)?Arguments: (\{[\s\S]*\})"
         tool_matches = re.findall(tool_pattern, assistant_response, re.M)
 
         for tool_name, tool_args_str in tool_matches:
+            if assistant_response.count("{") > assistant_response.count("}"):
+                ## ignore if curly brackets not close
+                break
             try:
                 # Parse the JSON arguments
                 tool_args = json.loads(tool_args_str)

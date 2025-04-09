@@ -5,6 +5,7 @@ import json
 import threading
 import itertools
 import rich
+import re
 from rich.live import Live
 from typing import Dict, Any, List, Optional, Tuple
 from groq import Groq
@@ -325,37 +326,8 @@ class GroqService(BaseLLMService):
                     thinking_content,
                 )
 
-            # Check for tool call format in the response
-            tool_call_start = "<tool_call>"
-            tool_call_end = "<｜tool▁calls▁end｜>"
+            content, tool_uses = self._parse_tool_calls_from_content(content, tool_uses)
 
-            if tool_call_start in content and tool_call_end in content:
-                start_idx = content.find(tool_call_start)
-                end_idx = content.find(tool_call_end) + len(tool_call_end)
-
-                tool_call_content = content[
-                    start_idx + len(tool_call_start) : end_idx - len(tool_call_end)
-                ]
-
-                try:
-                    tool_data = json.loads(tool_call_content)
-                    tool_uses.append(
-                        {
-                            "id": f"call_{len(tool_uses)}",  # Generate an ID
-                            "name": tool_data.get("name", ""),
-                            "input": tool_data.get("arguments", {}),
-                            "type": "function",
-                            "response": "",
-                        }
-                    )
-
-                    # Remove the tool call from the response
-                    content = content[:start_idx] + content[end_idx:]
-                except json.JSONDecodeError:
-                    # If we can't parse the JSON, just continue
-                    pass
-
-            # Regular response without tool calls
             return (
                 content,
                 tool_uses,
@@ -377,6 +349,113 @@ class GroqService(BaseLLMService):
             chunk_text,
             thinking_content,
         )
+
+    def _parse_tool_calls_from_content(self, content, tool_uses):
+        """
+        Parse tool calls from content and update tool_uses list.
+
+        Args:
+            content (str): The content to parse
+            tool_uses (list): Current list of tool uses
+
+        Returns:
+            tuple: (updated_content, updated_tool_uses)
+        """
+        # Parse <tool_call> format
+        tool_call_start = "<tool_call>"
+        tool_call_end = "<｜tool▁calls▁end｜>"
+
+        start_idx = content.find(tool_call_start)
+        end_idx = (
+            content.find(tool_call_end) + len(tool_call_end)
+            if content.find(tool_call_end) != -1
+            else -1
+        )
+        if start_idx != -1 and end_idx != -1:
+            tool_call_content = content[
+                start_idx + len(tool_call_start) : end_idx - len(tool_call_end)
+            ]
+
+            try:
+                tool_data = json.loads(tool_call_content)
+                tool_uses.append(
+                    {
+                        "id": f"call_{len(tool_uses)}",  # Generate an ID
+                        "name": tool_data.get("name", ""),
+                        "input": tool_data.get("arguments", {}),
+                        "type": "function",
+                        "response": "",
+                    }
+                )
+
+                # Remove the tool call from the response
+                content = content[:start_idx] + content[end_idx:]
+            except json.JSONDecodeError:
+                # If we can't parse the JSON, just continue
+                pass
+            return content, tool_uses
+
+        # Parse <function=name>{...}</function=name> format
+        function_pattern = r"<function=([^>]+)>(.*?)</function=\1>"
+
+        matches = re.finditer(function_pattern, content, re.DOTALL)
+        for match in matches:
+            function_name = match.group(1)
+            function_content = match.group(2)
+
+            try:
+                # Try to parse the function content as JSON
+                function_data = json.loads(function_content)
+
+                tool_uses.append(
+                    {
+                        "id": f"call_{len(tool_uses)}",
+                        "name": function_name,
+                        "input": function_data,
+                        "type": "function",
+                        "response": "",
+                    }
+                )
+
+                # Remove the function call from the content
+                content = content.replace(match.group(0), "")
+            except json.JSONDecodeError:
+                # If we can't parse the JSON, just continue
+                pass
+
+        # Parse <mermaid_render_mermaid_chart>{...}</mermaid_render_mermaid_chart> format
+        mermaid_pattern = r"<([a-zA-Z_]+)>(.*?)</\1>"
+
+        matches = re.finditer(mermaid_pattern, content, re.DOTALL)
+        for match in matches:
+            tool_name = match.group(1)
+            tool_content = match.group(2)
+
+            # Check if the tool name is in the registered tools
+            if any(
+                tool.get("function", {}).get("name") == tool_name for tool in self.tools
+            ):
+                try:
+                    # Try to parse the tool content as JSON
+                    tool_data = json.loads(tool_content)
+
+                    tool_uses.append(
+                        {
+                            "id": f"call_{len(tool_uses)}",
+                            "name": tool_name,
+                            "input": tool_data,
+                            "type": "function",
+                            "response": "",
+                        }
+                    )
+
+                    # Remove the tool call from the content
+                    content = content.replace(match.group(0), "")
+                except json.JSONDecodeError:
+                    # If we can't parse the JSON, just continue
+                    pass
+
+        return content, tool_uses
 
     def format_tool_result(
         self, tool_use: Dict, tool_result: Any, is_error: bool = False
