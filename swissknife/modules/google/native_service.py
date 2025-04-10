@@ -312,6 +312,14 @@ class GoogleAINativeService(BaseLLMService):
                     function_declaration.parameters.properties[
                         param_name
                     ].properties = {}
+
+                if param_type == "ARRAY":
+                    itemsSchema = types.Schema(
+                        type=param_def.get("items").get("type", "STRING").upper()
+                    )
+                    function_declaration.parameters.properties[
+                        param_name
+                    ].items = itemsSchema
         # Add required parameters
         if required and function_declaration.parameters:
             function_declaration.parameters.required = required
