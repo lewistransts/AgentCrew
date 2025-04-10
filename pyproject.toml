@@ -1,6 +1,7 @@
 [project]
 name = "swissknife"
 version = "0.2.0"
+requires-python = ">=3.10"
 classifiers = ["Private :: Do not upload"]
 description = "Claude AI Interactive Chat Tool"
 dependencies = [
@@ -41,6 +42,4 @@ include-package-data = true
 where = ["./"]
 
 [dependency-groups]
-dev = [
-    "pygments>=2.19.1",
-]
+dev = ["pygments>=2.19.1"]

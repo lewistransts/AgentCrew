@@ -267,14 +267,19 @@ class MessageHandler(Observable):
             selected_turn = self.conversation_turns[turn_number - 1]
 
             # Provide feedback via notification
-            self._notify(
-                "jump_performed",
-                {"turn_number": turn_number, "preview": selected_turn.get_preview(100)},
-            )
 
             # Truncate messages to the index from the selected turn
             self.messages = self.messages[: selected_turn.message_index]
             self.conversation_turns = self.conversation_turns[: turn_number - 1]
+            if self.current_conversation_id:
+                self.persistent_service.append_conversation_messages(
+                    self.current_conversation_id, self.messages, True
+                )
+
+            self._notify(
+                "jump_performed",
+                {"turn_number": turn_number, "preview": selected_turn.get_preview(100)},
+            )
 
             # Return success
             return True

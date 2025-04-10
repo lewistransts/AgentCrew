@@ -1,11 +1,7 @@
+from typing import Optional
 import markdown
 
-from PySide6.QtWidgets import (
-    QVBoxLayout,
-    QLabel,
-    QFrame,
-    QSizePolicy,
-)
+from PySide6.QtWidgets import QVBoxLayout, QLabel, QFrame, QSizePolicy, QPushButton
 from PySide6.QtCore import (
     Qt,
 )
@@ -112,6 +108,7 @@ class MessageBubble(QFrame):
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.setFrameShadow(QFrame.Shadow.Raised)
         self.setLineWidth(1)
+        self.rollback_button: Optional[QPushButton] = None
 
         # Set background color based on sender
         if is_user:
@@ -204,6 +201,80 @@ class MessageBubble(QFrame):
 
         # Store the original text (for adding chunks)
         self.text_content = text
+
+        # For user messages, add hover button functionality
+        if is_user and message_index is not None:
+            # Set up hover events for rollback button
+            self.setMouseTracking(True)
+
+            rollback_button = QPushButton("↩ Rollback", self)
+            rollback_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #4C662B;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 4px 8px;
+                    font-size: 11px;
+                }
+                QPushButton:hover {
+                    background-color: #354E16;
+                }
+            """)
+            rollback_button.hide()
+
+            # Store the button as a property of the message bubble
+            self.rollback_button = rollback_button
+
+            # Override enter and leave events
+            original_enter_event = self.enterEvent
+            original_leave_event = self.leaveEvent
+
+            def enter_event_wrapper(event):
+                if self.rollback_button:
+                    # Position the button in the top right corner
+                    button_width = self.rollback_button.sizeHint().width()
+                    button_height = self.rollback_button.sizeHint().height()
+                    self.rollback_button.setGeometry(
+                        self.width() - button_width - 5,
+                        5,
+                        button_width,
+                        button_height,
+                    )
+                    self.rollback_button.show()
+                if original_enter_event:
+                    original_enter_event(event)
+
+            def leave_event_wrapper(event):
+                if self.rollback_button:
+                    self.rollback_button.hide()
+                if original_leave_event:
+                    original_leave_event(event)
+
+            self.enterEvent = enter_event_wrapper
+            self.leaveEvent = leave_event_wrapper
+
+            # Make sure button is properly positioned when message bubble is resized
+            original_resize_event = self.resizeEvent
+
+            def resize_event_wrapper(event):
+                if (
+                    hasattr(self, "rollback_button")
+                    and self.rollback_button
+                    and self.rollback_button.isVisible()
+                ):
+                    button_width = self.rollback_button.sizeHint().width()
+                    button_height = self.rollback_button.sizeHint().height()
+                    self.rollback_button.setGeometry(
+                        self.width() - button_width - 5,
+                        5,
+                        button_width,
+                        button_height,
+                    )
+                if original_resize_event:
+                    original_resize_event(event)
+
+            self.resizeEvent = resize_event_wrapper
 
     def set_text(self, text):
         """Set or update the text content of the message."""

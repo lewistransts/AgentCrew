@@ -477,7 +477,7 @@ class ContextPersistenceService:
         return conversation_id
 
     def append_conversation_messages(
-        self, conversation_id: str, new_messages: List[Dict[str, Any]]
+        self, conversation_id: str, new_messages: List[Dict[str, Any]], force=False
     ):
         """
         Appends a list of new message dictionaries to a conversation history file.
@@ -517,8 +517,11 @@ class ContextPersistenceService:
                 history = []
         # else: File doesn't exist, history remains [], file will be created by _write_json_file
 
-        # Append the new messages
-        history.extend(new_messages)
+        if force:
+            history = new_messages
+        else:
+            # Append the new messages
+            history.extend(new_messages)
 
         self._write_json_file(file_path, history)
         # print(

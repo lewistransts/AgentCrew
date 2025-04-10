@@ -1,6 +1,6 @@
 import re
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import pyperclip
 
 from PySide6.QtWidgets import (
@@ -537,7 +537,7 @@ class ChatWindow(QMainWindow, Observer):
 
         # Add user message to chat
         self.append_message(
-            user_input, self.message_handler.current_user_input_idx, True
+            user_input, True, self.message_handler.current_user_input_idx
         )  # True = user message
 
         # Set flag to expect a response (for chunking)
@@ -563,7 +563,7 @@ class ChatWindow(QMainWindow, Observer):
             self.chat_scroll.verticalScrollBar().maximum()
         )
 
-    def append_message(self, text, message_index=None, is_user=True):
+    def append_message(self, text, is_user=True, message_index=None):
         """Adds a message bubble to the chat container."""
         # Create container for message alignment
         container = QWidget()
@@ -577,16 +577,11 @@ class ChatWindow(QMainWindow, Observer):
             text, is_user, agent_name, message_index=message_index
         )
 
-        # Set up context menu for user messages
-        if is_user:
-            message_bubble.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-            message_bubble.customContextMenuRequested.connect(
-                lambda pos, bubble=message_bubble: self.show_message_context_menu(
-                    pos, bubble
-                )
-            )
-
         # Add bubble to container with appropriate alignment
+        if message_bubble.rollback_button:
+            message_bubble.rollback_button.clicked.connect(
+                lambda: self.rollback_to_message(message_bubble)
+            )
         if is_user:
             container_layout.addWidget(message_bubble)
             container_layout.addStretch(1)  # Push to left
@@ -853,29 +848,13 @@ class ChatWindow(QMainWindow, Observer):
         # Show the menu at the cursor position
         context_menu.exec(self.mapToGlobal(position))
 
-    def show_message_context_menu(self, position, message_bubble):
-        """Show context menu for a message bubble."""
-        # Only show rollback option for user messages
-        if not message_bubble.is_user:
-            return
-
-        context_menu = QMenu(self)
-
-        # Add rollback action only for user messages with a valid index
-        if message_bubble.message_index is not None:
-            rollback_action = context_menu.addAction("Rollback Here")
-            rollback_action.triggered.connect(
-                lambda: self.rollback_to_message(message_bubble)
-            )
-
-        # Show the menu at the cursor position
-        context_menu.exec(message_bubble.mapToGlobal(position))
-
     def rollback_to_message(self, message_bubble):
         """Rollback the conversation to the selected message."""
         if message_bubble.message_index is None:
             self.display_status_message("Cannot rollback: no message index available")
             return
+
+        current_text = message_bubble.message_label.text()
 
         # Find the turn number for this message
         # We need to find which conversation turn corresponds to this message
@@ -897,6 +876,7 @@ class ChatWindow(QMainWindow, Observer):
 
         # Find and remove all widgets after this message in the UI
         self.remove_messages_after(message_bubble)
+        self.message_input.setText(current_text)
 
     def remove_messages_after(self, message_bubble):
         """Remove all message widgets that appear after the given message bubble, including the message bubble itself."""
@@ -985,7 +965,7 @@ class ChatWindow(QMainWindow, Observer):
                 )
                 if message_content.strip():
                     self.append_message(
-                        message_content, msg_idx if is_user else None, is_user=is_user
+                        message_content, is_user, msg_idx if is_user else None
                     )
                 # Add handling for other potential content formats if necessary
             msg_idx += 1
