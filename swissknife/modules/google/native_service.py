@@ -253,6 +253,27 @@ class GoogleAINativeService(BaseLLMService):
                 ]
         return None
 
+    def _build_schema(self, param_def):
+        param_type = param_def.get("type", "STRING").upper()
+        if param_type == "INTEGER":
+            param_type = "NUMBER"
+
+        schema = types.Schema(
+            type=types.Type(param_type),
+            description=param_def.get("description", None),
+        )
+        if param_type == "OBJECT":
+            schema.properties = {}
+            if "properties" in param_def:
+                for key in param_def.get("properties", {}):
+                    prop = param_def.get("properties").get("key", {})
+                    schema.properties[key] = self._build_schema(prop)
+        elif param_type == "ARRAY":
+            itemsSchema = self._build_schema(param_def.get("items"))
+            schema.items = itemsSchema
+
+        return schema
+
     def register_tool(self, tool_definition, handler_function):
         """
         Register a tool with its handler function.
@@ -296,30 +317,14 @@ class GoogleAINativeService(BaseLLMService):
                 function_declaration.parameters = types.Schema(
                     type=types.Type.OBJECT, properties={}
                 )
-            param_type = param_def.get("type", "STRING").upper()
-            if param_type == "INTEGER":
-                param_type = "NUMBER"
 
             if (
                 function_declaration.parameters is not None
                 and function_declaration.parameters.properties is not None
             ):
-                function_declaration.parameters.properties[param_name] = types.Schema(
-                    type=types.Type(param_type),
-                    description=param_def.get("description", None),
+                function_declaration.parameters.properties[param_name] = (
+                    self._build_schema(param_def)
                 )
-                if param_type == "OBJECT":
-                    function_declaration.parameters.properties[
-                        param_name
-                    ].properties = {}
-
-                if param_type == "ARRAY":
-                    itemsSchema = types.Schema(
-                        type=param_def.get("items").get("type", "STRING").upper()
-                    )
-                    function_declaration.parameters.properties[
-                        param_name
-                    ].items = itemsSchema
         # Add required parameters
         if required and function_declaration.parameters:
             function_declaration.parameters.required = required
@@ -552,41 +557,41 @@ class GoogleAINativeService(BaseLLMService):
         tool_pattern = r"Using tool: (\w+)\s*(?:\n)?Arguments: (\{[\s\S]*\})"
         tool_matches = re.findall(tool_pattern, assistant_response, re.M)
 
-        for tool_name, tool_args_str in tool_matches:
-            if assistant_response.count("{") > assistant_response.count("}"):
-                ## ignore if curly brackets not close
-                break
-            try:
-                # Parse the JSON arguments
-                tool_args = json.loads(tool_args_str)
+        if assistant_response.count("{") == assistant_response.count("}"):
+            ## ignore if curly brackets not close
+            print(assistant_response)
+            for tool_name, tool_args_str in tool_matches:
+                try:
+                    # Parse the JSON arguments
+                    tool_args = json.loads(tool_args_str)
 
-                # Create a unique ID for this tool call
-                tool_id = f"{tool_name}_{len(tool_uses)}"
+                    # Create a unique ID for this tool call
+                    tool_id = f"{tool_name}_{len(tool_uses)}"
 
-                # Check if this tool is already in tool_uses
-                existing_tool = next(
-                    (t for t in tool_uses if t.get("name") == tool_name),
-                    None,
-                )
-
-                if existing_tool:
-                    # Update the existing tool
-                    existing_tool["input"] = tool_args
-                else:
-                    # Create a new tool use entry
-                    tool_uses.append(
-                        {
-                            "id": tool_id,
-                            "name": tool_name,
-                            "input": tool_args,
-                            "type": "function",
-                            "response": "",
-                        }
+                    # Check if this tool is already in tool_uses
+                    existing_tool = next(
+                        (t for t in tool_uses if t.get("name") == tool_name),
+                        None,
                     )
-            except json.JSONDecodeError:
-                print(f"Failed to parse tool arguments: {tool_args_str}")
 
-        assistant_response = re.sub(tool_pattern, "", assistant_response)
+                    if existing_tool:
+                        # Update the existing tool
+                        existing_tool["input"] = tool_args
+                    else:
+                        # Create a new tool use entry
+                        tool_uses.append(
+                            {
+                                "id": tool_id,
+                                "name": tool_name,
+                                "input": tool_args,
+                                "type": "function",
+                                "response": "",
+                            }
+                        )
+                except json.JSONDecodeError:
+                    print(f"Failed to parse tool arguments: {tool_args_str}")
+
+            assistant_response = re.sub(tool_pattern, "", assistant_response)
         # Process usage information if available
         if hasattr(chunk, "usage_metadata"):
             if hasattr(chunk.usage_metadata, "prompt_token_count"):

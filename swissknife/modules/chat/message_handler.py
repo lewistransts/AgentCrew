@@ -150,19 +150,19 @@ class MessageHandler(Observable):
         if not user_input.startswith("/"):
             self.history_manager.add_entry(user_input)
 
-        if len(self.messages) == 0:
-            self.messages.append(
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": f"""Use user_context_summary to tailor your response:
-                            <user_context_summary>{self.persistent_service.get_user_context_json(2, 4)}</user_context_summary>""",
-                        }
-                    ],
-                }
-            )
+        # if len(self.messages) == 0:
+        #     self.messages.append(
+        #         {
+        #             "role": "user",
+        #             "content": [
+        #                 {
+        #                     "type": "text",
+        #                     "text": f"""Use user_context_summary to tailor your response:
+        #                     <user_context_summary>{self.persistent_service.get_user_context_json(2, 4)}</user_context_summary>""",
+        #                 }
+        #             ],
+        #         }
+        #     )
         # Handle files that were loaded but not yet sent
         if files and not self.messages:
             combined_content = message_content.copy() if message_content else []
@@ -447,18 +447,19 @@ class MessageHandler(Observable):
                         chunk, assistant_response, tool_uses
                     )
 
-                    context_data, clean_response = self.llm.parse_user_context_summary(
-                        assistant_response
-                    )
-                    if context_data and not context_data_processed:
-                        # self._notify("debug_requested", context_data)
-                        self.persistent_service.store_user_context(context_data)
-                        context_data_processed = True
-                        # self.messages.append(
-                        #     self.llm.format_assistant_message(
-                        #         f"""<user_context_summary>{json.dumps(context_data)}</user_context_summary>"""
-                        #     )
-                        # )
+                    clean_response = assistant_response
+                    # context_data, clean_response = self.llm.parse_user_context_summary(
+                    #     assistant_response
+                    # )
+                    # if context_data and not context_data_processed:
+                    #     # self._notify("debug_requested", context_data)
+                    #     self.persistent_service.store_user_context(context_data)
+                    #     context_data_processed = True
+                    # self.messages.append(
+                    #     self.llm.format_assistant_message(
+                    #         f"""<user_context_summary>{json.dumps(context_data)}</user_context_summary>"""
+                    #     )
+                    # )
 
                     # Update token counts
                     if chunk_input_tokens > 0:
