@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
+    QHBoxLayout,
     QPushButton,
     QListWidget,
     QListWidgetItem,
@@ -19,6 +20,7 @@ class ConversationSidebar(QWidget):
 
     conversation_selected = Signal(str)  # Emits conversation_id
     error_occurred = Signal(str)
+    new_conversation_requested = Signal()  # Add this new signal
 
     def __init__(self, message_handler, parent=None):
         super().__init__(parent)
@@ -53,10 +55,20 @@ class ConversationSidebar(QWidget):
         # --- End of existing changes --- # Note: Adjusted comment slightly to reflect reality
         layout.addWidget(self.conversation_list)
 
+        # Button row with Refresh and New buttons
+        button_layout = QHBoxLayout()
+        
         # Refresh button
         self.refresh_btn = QPushButton("Refresh")
         self.refresh_btn.clicked.connect(self.update_conversation_list)
-        layout.addWidget(self.refresh_btn)
+        button_layout.addWidget(self.refresh_btn)
+        
+        # New conversation button
+        self.new_btn = QPushButton("New")
+        self.new_btn.clicked.connect(self.request_new_conversation)
+        button_layout.addWidget(self.new_btn)
+        
+        layout.addLayout(button_layout)
 
         self.setLayout(layout)
 
@@ -103,8 +115,7 @@ class ConversationSidebar(QWidget):
             """
         )
 
-        self.refresh_btn.setStyleSheet(
-            """
+        button_style = """
             QPushButton {
                 background-color: #4C662B;
                 color: white;
@@ -120,7 +131,9 @@ class ConversationSidebar(QWidget):
                 background-color: #102000;
             }
             """
-        )
+        
+        self.refresh_btn.setStyleSheet(button_style)
+        self.new_btn.setStyleSheet(button_style)
 
     def update_conversation_list(self):
         """Fetches and displays the list of conversations."""
@@ -166,6 +179,10 @@ class ConversationSidebar(QWidget):
         """Emits the ID of the selected conversation."""
         if item and item.data(Qt.ItemDataRole.UserRole):
             self.conversation_selected.emit(item.data(Qt.ItemDataRole.UserRole))
+            
+    def request_new_conversation(self):
+        """Emit signal to request a new conversation."""
+        self.new_conversation_requested.emit()
 
 
 class ConversationLoader(QThread):

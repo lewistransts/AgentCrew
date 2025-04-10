@@ -167,7 +167,28 @@ def setup_agents(services, config_path):
     else:
         config_path = os.getenv("SW_AGENTS_CONFIG")
         if not config_path:
-            raise ValueError("No agent configuration path provided.")
+            config_path = "./agent.toml"
+            # If config path doesn't exist, create a default one
+        if not os.path.exists(config_path):
+            click.echo(
+                f"Agent configuration not found at {config_path}. Creating default configuration."
+            )
+            os.makedirs(os.path.dirname(config_path), exist_ok=True)
+
+            default_config = """# Default SwissKnife Agent Configuration
+[[agents]]
+name = "default"
+description = "Default assistant agent"
+system_prompt = \"\"\"You are a helpful AI assistant. Always provide accurate, helpful, and ethical responses.
+Current date: {current_date}
+\"\"\"
+tools = ["memory", "clipboard", "web_search", "code_analysis"]
+"""
+
+            with open(config_path, "w+") as f:
+                f.write(default_config)
+
+            click.echo(f"Created default agent configuration at {config_path}")
     # Load agents from configuration
     agent_definitions = AgentManager.load_agents_from_config(config_path)
     agent_name = None

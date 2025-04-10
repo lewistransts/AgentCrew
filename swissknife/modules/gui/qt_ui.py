@@ -244,6 +244,9 @@ class ChatWindow(QMainWindow, Observer):
         self.sidebar = ConversationSidebar(self.message_handler, self)
         self.sidebar.conversation_selected.connect(self.load_conversation)
         self.sidebar.error_occurred.connect(self.display_error)  # Connect error signal
+        self.sidebar.new_conversation_requested.connect(
+            self.start_new_conversation
+        )  # Connect new conversation signal
 
         # --- Create Splitter and Set Central Widget ---
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -735,7 +738,7 @@ class ChatWindow(QMainWindow, Observer):
             reply = QMessageBox.question(
                 self,
                 "Clear Chat",
-                "Are you sure you want to clear the chat history?",
+                "Are you sure you want to start new conversation?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
             if reply == QMessageBox.StandardButton.No:
@@ -1006,6 +1009,20 @@ class ChatWindow(QMainWindow, Observer):
         self.display_error(error_message)
         self.loading_conversation = False
         self.set_input_controls_enabled(True)  # Re-enable controls on error
+
+    @Slot()
+    def start_new_conversation(self):
+        """Start a new conversation by clearing the current one."""
+        # Check if there are unsaved changes or ongoing operations
+        if self.waiting_for_response:
+            QMessageBox.warning(
+                self,
+                "Operation in Progress",
+                "Please wait for the current operation to complete before starting a new conversation.",
+            )
+            return
+
+        self.clear_chat()
 
     def check_for_path_completion(self):
         """Check if the current text contains a path that should trigger completion."""
