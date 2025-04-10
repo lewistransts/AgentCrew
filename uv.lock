@@ -2581,6 +2581,11 @@ dependencies = [
     { name = "tree-sitter-language-pack" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pygments" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "anthropic" },
@@ -2605,6 +2610,9 @@ requires-dist = [
     { name = "tree-sitter", specifier = ">=0.23.2" },
     { name = "tree-sitter-language-pack", specifier = ">=0.7.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pygments", specifier = ">=2.19.1" }]
 
 [[package]]
 name = "sympy"
