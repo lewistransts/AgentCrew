@@ -58,7 +58,7 @@ class ChatWindow(QMainWindow, Observer):
         super().__init__()
         self.setWindowTitle("Interactive Chat")
         self.setGeometry(100, 100, 1000, 700)  # Adjust size for sidebar
-        
+
         # Set application-wide style
         self.setStyleSheet(
             """
@@ -1075,7 +1075,7 @@ class ChatWindow(QMainWindow, Observer):
             cursor.insertText(completion)
 
     def create_menu_bar(self):
-        """Create the application menu bar with Agents and Models menus"""
+        """Create the application menu bar with Agents, Models, and Settings menus"""
         menu_bar = QMenuBar(self)
         menu_bar.setStyleSheet(
             """
@@ -1145,6 +1145,19 @@ class ChatWindow(QMainWindow, Observer):
                 )
                 provider_menu.addAction(model_action)
 
+        # Create Settings menu
+        settings_menu = menu_bar.addMenu("Settings")
+
+        # Add Agents configuration option
+        agents_config_action = QAction("Agents", self)
+        agents_config_action.triggered.connect(self.open_agents_config)
+        settings_menu.addAction(agents_config_action)
+
+        # Add MCPs configuration option
+        mcps_config_action = QAction("MCP Servers", self)
+        mcps_config_action.triggered.connect(self.open_mcps_config)
+        settings_menu.addAction(mcps_config_action)
+
     def change_agent(self, agent_name):
         """Change the current agent"""
         # Process the agent change command
@@ -1154,6 +1167,55 @@ class ChatWindow(QMainWindow, Observer):
         """Change the current model"""
         # Process the model change command
         self.llm_worker.process_request.emit(f"/model {model_id}")
+
+    def open_agents_config(self):
+        """Open the agents configuration window."""
+        from swissknife.modules.gui.widgets.config_window import ConfigWindow
+
+        config_window = ConfigWindow(self)
+        config_window.tab_widget.setCurrentIndex(0)  # Show Agents tab
+        config_window.exec()
+
+        # Refresh agent list in case changes were made
+        self.refresh_agent_menu()
+
+    def open_mcps_config(self):
+        """Open the MCP servers configuration window."""
+        from swissknife.modules.gui.widgets.config_window import ConfigWindow
+
+        config_window = ConfigWindow(self)
+        config_window.tab_widget.setCurrentIndex(1)  # Show MCPs tab
+        config_window.exec()
+
+    def refresh_agent_menu(self):
+        """Refresh the agents menu after configuration changes."""
+        # Get the menu bar
+        menu_bar = self.menuBar()
+
+        # Find the Agents menu
+        agents_menu = None
+        for action in menu_bar.actions():
+            if action.text() == "Agents":
+                agents_menu = action.menu()
+                break
+
+        if agents_menu:
+            # Clear existing actions
+            agents_menu.clear()
+
+            # Get agent manager instance
+            agent_manager = AgentManager.get_instance()
+
+            # Get available agents
+            available_agents = agent_manager.agents
+
+            # Add agent options to menu
+            for agent_name in available_agents:
+                agent_action = QAction(agent_name, self)
+                agent_action.triggered.connect(
+                    lambda checked, name=agent_name: self.change_agent(name)
+                )
+                agents_menu.addAction(agent_action)
 
     def display_debug_info(self):
         """Display debug information about the current messages."""

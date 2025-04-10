@@ -102,7 +102,7 @@ class Agent(ABC):
                         )
 
                         register_web_search(service, self)
-                    elif tool_name == "spec_validator":
+                    elif tool_name == "aider":
                         from swissknife.modules.coder.tool import (
                             register as register_spec_validator,
                         )

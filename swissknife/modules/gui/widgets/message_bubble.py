@@ -192,7 +192,9 @@ class MessageBubble(QFrame):
         self.set_text(text)
 
         self.message_label.setMinimumWidth(900)
-        self.message_label.setMaximumWidth(1600)
+        self.message_label.setSizePolicy(
+            QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
+        )
 
         # Add to layout
         layout.addWidget(self.message_label)
