@@ -19,8 +19,8 @@ class TokenUsageWidget(QWidget):
         # Set background color
         palette = self.palette()
         palette.setColor(
-            QPalette.ColorRole.Window, QColor("#EEEEFF")
-        )  # Light blue background
+            QPalette.ColorRole.Window, QColor("#E1E4D5")
+        )  # Light surface variant
         self.setPalette(palette)
 
         # Create layout
@@ -30,7 +30,7 @@ class TokenUsageWidget(QWidget):
         self.token_label = QLabel(
             "📊 Token Usage: Input: 0 | Output: 0 | Total: 0 | Cost: $0.0000 | Session: $0.0000"
         )
-        self.token_label.setStyleSheet("color: #555555; font-weight: bold;")
+        self.token_label.setStyleSheet("color: #4C662B; font-weight: bold; padding: 8px;")
 
         # Add to layout
         layout.addWidget(self.token_label)

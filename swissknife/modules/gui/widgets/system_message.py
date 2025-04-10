@@ -35,7 +35,7 @@ class SystemMessageWidget(QWidget):
         # Create label with HTML support
         self.message_label = QLabel()
         self.message_label.setTextFormat(Qt.TextFormat.RichText)
-        self.message_label.setStyleSheet("color: #6495ED;")
+        self.message_label.setStyleSheet("color: #4C662B; padding: 2px;")
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.message_label.setWordWrap(True)
         self.message_label.setMaximumWidth(1200)  # Increased from 500 to 1200
@@ -52,7 +52,18 @@ class SystemMessageWidget(QWidget):
         # Create expand/collapse button
         self.toggle_button = QPushButton("▼ Show More")
         self.toggle_button.setStyleSheet(
-            "QPushButton { background-color: transparent; color: #6495ED; border: none; text-align: left; }"
+            """
+            QPushButton { 
+                background-color: transparent; 
+                color: #4C662B; 
+                border: none; 
+                text-align: left; 
+                padding: 2px;
+            }
+            QPushButton:hover {
+                color: #354E16;
+            }
+            """
         )
         self.toggle_button.setMaximumHeight(16)
         self.toggle_button.setCursor(Qt.CursorShape.PointingHandCursor)

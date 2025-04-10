@@ -45,49 +45,10 @@ class ConversationSidebar(QWidget):
         self.conversation_list = QListWidget()
         self.conversation_list.itemClicked.connect(self.on_conversation_selected)
         # --- Start of changes ---
-        self.conversation_list.setAlternatingRowColors(True) # Keep this for fallback/clarity
+        self.conversation_list.setAlternatingRowColors(
+            True
+        )  # Keep this for fallback/clarity
         # --- Start of replacement ---
-        self.conversation_list.setStyleSheet(
-            """
-            QListWidget {
-                /* Optional: Set a base background for the whole widget */
-                /* background-color: white; */
-            }
-            QListWidget::item {
-                /* Define default text and background */
-                color: black; /* Or your default text color */
-                background-color: transparent; /* Default item background */
-                border: none; /* Reset border first */
-                border-bottom: 1px solid #555555; /* Darker gray border */
-                padding-top: 4px;
-                padding-bottom: 4px;
-            }
-            QListWidget::item:alternate {
-                 /* Explicitly define alternating row background */
-                 background-color: #f0f0f0; /* Light gray for alternating rows */
-            }
-            QListWidget::item:last-child {
-                /* No bottom border for the very last item in the list */
-                border-bottom: none;
-            }
-            QListWidget::item:selected {
-                /* Style for selected items */
-                background-color: #a0c4ff; /* Light blue background */
-                color: black; /* Black text */
-                /* Ensure border is still visible unless it's the last item */
-                /* (border-bottom is inherited from QListWidget::item unless overridden) */
-            }
-            /* Optional: Keep selection visible when widget loses focus */
-            QListWidget::item:selected:active {
-                 background-color: #a0c4ff;
-                 color: black;
-            }
-            /* Ensure the last selected item also has no bottom border */
-            QListWidget::item:selected:last-child {
-                 border-bottom: none;
-            }
-            """
-        )
         # --- End of replacement ---
         # --- End of existing changes --- # Note: Adjusted comment slightly to reflect reality
         layout.addWidget(self.conversation_list)
@@ -98,6 +59,68 @@ class ConversationSidebar(QWidget):
         layout.addWidget(self.refresh_btn)
 
         self.setLayout(layout)
+
+        self.conversation_list.setStyleSheet(
+            """
+            QListWidget {
+                background-color: #F9FAEF;
+                border: none;
+                border-radius: 4px;
+            }
+            QListWidget::item {
+                color: #1A1C16;
+                background-color: #FFFFFF;
+                border: none;
+                border-radius: 4px;
+                margin: 3px 5px;
+                padding: 8px;
+            }
+            QListWidget::item:alternate {
+                background-color: #F3F4E9;
+            }
+            QListWidget::item:selected {
+                background-color: #CDEDA3;
+                color: #354E16;
+            }
+            QListWidget::item:hover:!selected {
+                background-color: #E1E4D5;
+            }
+            """
+        )
+
+        # Also update the search box and refresh button styles
+        self.search_box.setStyleSheet(
+            """
+            QLineEdit {
+                border: 1px solid #C5C8BA;
+                border-radius: 4px;
+                padding: 8px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border: 1px solid #4C662B;
+            }
+            """
+        )
+
+        self.refresh_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #4C662B;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #354E16;
+            }
+            QPushButton:pressed {
+                background-color: #102000;
+            }
+            """
+        )
 
     def update_conversation_list(self):
         """Fetches and displays the list of conversations."""

@@ -58,8 +58,28 @@ class ChatWindow(QMainWindow, Observer):
         super().__init__()
         self.setWindowTitle("Interactive Chat")
         self.setGeometry(100, 100, 1000, 700)  # Adjust size for sidebar
+        
+        # Set application-wide style
+        self.setStyleSheet(
+            """
+            QMainWindow {
+                background-color: #F9FAEF;
+            }
+            QScrollArea {
+                border: none;
+                background-color: #FFFFFF;
+            }
+            QSplitter::handle {
+                background-color: #E1E4D5;
+            }
+            QStatusBar {
+                background-color: #F3F4E9;
+                color: #1A1C16;
+            }
+            """
+        )
 
-        # Create menu bar
+        # Create menu bar with styling
         self.create_menu_bar()
 
         # Initialize MessageHandler - kept in main thread
@@ -96,7 +116,13 @@ class ChatWindow(QMainWindow, Observer):
             f"Agent: {self.message_handler.agent_name} | Model: {self.message_handler.llm.model}"
         )
         self.status_indicator.setStyleSheet(
-            "background-color: #FFFEEE; padding: 5px; border-radius: 5px;"
+            """
+            background-color: #E1E4D5; 
+            color: #4C662B;
+            padding: 8px; 
+            border-radius: 4px;
+            font-weight: bold;
+            """
         )
 
         # Input area
@@ -106,6 +132,19 @@ class ChatWindow(QMainWindow, Observer):
         self.message_input.setMaximumHeight(100)  # Limit input height
         self.message_input.setPlaceholderText(
             "Type your message here... (Ctrl+Enter to send)"
+        )
+        self.message_input.setStyleSheet(
+            """
+            QTextEdit {
+                border: 1px solid #C5C8BA;
+                border-radius: 4px;
+                background-color: white;
+                padding: 8px;
+            }
+            QTextEdit:focus {
+                border: 1px solid #4C662B;
+            }
+            """
         )
 
         # Set up file path completion
@@ -127,14 +166,50 @@ class ChatWindow(QMainWindow, Observer):
         self.send_button = QPushButton("Send")
         self.send_button.setFont(QFont("Arial", 12))
         self.send_button.setStyleSheet(
-            "background-color: #4CAF50; color: white; border-radius: 5px; padding: 5px;"
+            """
+            QPushButton {
+                background-color: #4C662B; 
+                color: white; 
+                border: none;
+                border-radius: 4px; 
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #354E16;
+            }
+            QPushButton:pressed {
+                background-color: #102000;
+            }
+            QPushButton:disabled {
+                background-color: #B1D18A;
+            }
+            """
         )
 
         # Create File button
         self.file_button = QPushButton("File")
         self.file_button.setFont(QFont("Arial", 12))
         self.file_button.setStyleSheet(
-            "background-color: #2196F3; color: white; border-radius: 5px; padding: 5px;"
+            """
+            QPushButton {
+                background-color: #586249; 
+                color: white; 
+                border: none;
+                border-radius: 4px; 
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #404A33;
+            }
+            QPushButton:pressed {
+                background-color: #2A331E;
+            }
+            QPushButton:disabled {
+                background-color: #BFCBAD;
+            }
+            """
         )
 
         # Add buttons to layout
@@ -332,20 +407,93 @@ class ChatWindow(QMainWindow, Observer):
         if actual_enabled:
             self.message_input.setFocus()
             self.send_button.setStyleSheet(
-                "background-color: #4CAF50; color: white; border-radius: 5px; padding: 5px;"
+                """
+                QPushButton {
+                    background-color: #4C662B; 
+                    color: white; 
+                    border: none;
+                    border-radius: 4px; 
+                    padding: 8px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #354E16;
+                }
+                QPushButton:pressed {
+                    background-color: #102000;
+                }
+                """
             )
             self.file_button.setStyleSheet(
-                "background-color: #2196F3; color: white; border-radius: 5px; padding: 5px;"
+                """
+                QPushButton {
+                    background-color: #586249; 
+                    color: white; 
+                    border: none;
+                    border-radius: 4px; 
+                    padding: 8px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #404A33;
+                }
+                QPushButton:pressed {
+                    background-color: #2A331E;
+                }
+                """
             )
         else:
             # Use a different style if disabled due to loading vs. waiting for response
-            disabled_color = "#C0C0C0" if self.loading_conversation else "#A0A0A0"
-            self.send_button.setStyleSheet(
-                f"background-color: {disabled_color}; color: white; border-radius: 5px; padding: 5px;"
-            )
-            self.file_button.setStyleSheet(
-                f"background-color: {disabled_color}; color: white; border-radius: 5px; padding: 5px;"
-            )
+            if self.loading_conversation:
+                self.send_button.setStyleSheet(
+                    """
+                    QPushButton {
+                        background-color: #B1D18A; 
+                        color: white; 
+                        border: none;
+                        border-radius: 4px; 
+                        padding: 8px;
+                        font-weight: bold;
+                    }
+                    """
+                )
+                self.file_button.setStyleSheet(
+                    """
+                    QPushButton {
+                        background-color: #BFCBAD; 
+                        color: white; 
+                        border: none;
+                        border-radius: 4px; 
+                        padding: 8px;
+                        font-weight: bold;
+                    }
+                    """
+                )
+            else:
+                self.send_button.setStyleSheet(
+                    """
+                    QPushButton {
+                        background-color: #CDEDA3; 
+                        color: #354E16; 
+                        border: none;
+                        border-radius: 4px; 
+                        padding: 8px;
+                        font-weight: bold;
+                    }
+                    """
+                )
+                self.file_button.setStyleSheet(
+                    """
+                    QPushButton {
+                        background-color: #DCE7C8; 
+                        color: #404A33; 
+                        border: none;
+                        border-radius: 4px; 
+                        padding: 8px;
+                        font-weight: bold;
+                    }
+                    """
+                )
 
         # Update waiting state (only relevant for LLM responses)
         if not self.loading_conversation:
@@ -929,6 +1077,34 @@ class ChatWindow(QMainWindow, Observer):
     def create_menu_bar(self):
         """Create the application menu bar with Agents and Models menus"""
         menu_bar = QMenuBar(self)
+        menu_bar.setStyleSheet(
+            """
+            QMenuBar {
+                background-color: #4C662B;
+                color: white;
+                padding: 2px;
+            }
+            QMenuBar::item {
+                background-color: transparent;
+                padding: 4px 12px;
+                border-radius: 4px;
+            }
+            QMenuBar::item:selected {
+                background-color: #354E16;
+            }
+            QMenu {
+                background-color: white;
+                border: 1px solid #C5C8BA;
+            }
+            QMenu::item {
+                padding: 6px 24px 6px 12px;
+            }
+            QMenu::item:selected {
+                background-color: #CDEDA3;
+                color: #354E16;
+            }
+            """
+        )
         self.setMenuBar(menu_bar)
 
         # Create Agents menu
