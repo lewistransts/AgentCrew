@@ -102,7 +102,7 @@ def setup_services(provider):
     memory_service = MemoryService()
     context_service = ContextPersistenceService()
     clipboard_service = ClipboardService()
-    spec_validator = SpecPromptValidationService("groq")
+    aider_service = SpecPromptValidationService("groq")
     # Try to create search service if API key is available
     try:
         search_service = TavilySearchService()
@@ -138,7 +138,7 @@ def setup_services(provider):
         "clipboard": clipboard_service,
         "code_analysis": code_analysis_service,
         "web_search": search_service,
-        "spec_validator": spec_validator,
+        "aider": aider_service,
         "context_persistent": context_service,
         # "scraping": scraping_service,
     }
@@ -229,7 +229,7 @@ def discover_and_register_tools(services=None):
         ("modules.code_analysis.tool", "code_analysis"),
         ("modules.clipboard.tool", "clipboard"),
         ("modules.web_search.tool", "web_search"),
-        ("modules.coder.tool", "spec_validator"),
+        ("modules.coder.tool", "aider"),
     ]
 
     for module_name, service_key in tool_modules:
