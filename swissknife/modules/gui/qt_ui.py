@@ -536,7 +536,9 @@ class ChatWindow(QMainWindow, Observer):
                 return
 
         # Add user message to chat
-        self.append_message(user_input, True)  # True = user message
+        self.append_message(
+            user_input, self.message_handler.current_user_input_idx, True
+        )  # True = user message
 
         # Set flag to expect a response (for chunking)
         self.expecting_response = True
@@ -561,7 +563,7 @@ class ChatWindow(QMainWindow, Observer):
             self.chat_scroll.verticalScrollBar().maximum()
         )
 
-    def append_message(self, text, is_user=True):
+    def append_message(self, text, message_index=None, is_user=True):
         """Adds a message bubble to the chat container."""
         # Create container for message alignment
         container = QWidget()
@@ -570,15 +572,6 @@ class ChatWindow(QMainWindow, Observer):
 
         # Create the message bubble with agent name for non-user messages
         agent_name = self.message_handler.agent_name if not is_user else "YOU"
-
-        # Get the message index for this message - only for user messages
-        message_index = None
-        if is_user and self.message_handler.messages:
-            # For user messages, we need to find the index in the messages array
-            # This will be the index of the last user message
-            for i, msg in enumerate(self.message_handler.messages):
-                if msg.get("role") == "user":
-                    message_index = i
 
         message_bubble = MessageBubble(
             text, is_user, agent_name, message_index=message_index
@@ -960,6 +953,7 @@ class ChatWindow(QMainWindow, Observer):
         self.token_usage.update_token_info(0, 0, 0.0, 0.0)
 
         # Add messages from the loaded conversation, filtering for user/assistant roles
+        msg_idx = 0
         for msg in messages:
             role = msg.get("role")
             if role == "user" or role == "assistant":
@@ -990,8 +984,11 @@ class ChatWindow(QMainWindow, Observer):
                     flags=re.DOTALL | re.IGNORECASE,
                 )
                 if message_content.strip():
-                    self.append_message(message_content, is_user=is_user)
+                    self.append_message(
+                        message_content, msg_idx if is_user else None, is_user=is_user
+                    )
                 # Add handling for other potential content formats if necessary
+            msg_idx += 1
 
         # Update status bar and re-enable controls
         self.display_status_message(f"Loaded conversation: {conversation_id}")

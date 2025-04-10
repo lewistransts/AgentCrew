@@ -657,6 +657,29 @@ class MessageHandler(Observable):
                 self.messages = MessageTransformer.convert_messages(
                     history, current_provider
                 )
+                for i, message in enumerate(self.messages):
+                    role = message.get("role")
+                    if role == "user":
+                        content = message.get("content", "")
+                        message_content = ""
+
+                        # Handle different content structures (standardized format)
+                        if isinstance(content, str):
+                            message_content = content
+                            # self.append_message(content, is_user=is_user)
+                        elif isinstance(content, list) and content:
+                            # Assuming the first item in the list contains the primary text
+                            first_item = content[0]
+                            if (
+                                isinstance(first_item, dict)
+                                and first_item.get("type") == "text"
+                            ):
+                                message_content = first_item.get("text", "")
+                                # self.append_message(first_item.get("text", ""), is_user=is_user)
+                            # Add more specific handling here if other content types need display
+                        turn = ConversationTurn(message_content, i)
+                        self.conversation_turns.append(turn)
+
                 print(f"Loaded conversation {conversation_id}")  # Optional: Debugging
                 self._notify(
                     "conversation_loaded", {"id": conversation_id, "history": history}
