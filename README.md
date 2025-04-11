@@ -1,6 +1,6 @@
 # AI Multi-Agent Interactive System
 
-A sophisticated command-line tool that provides an enhanced interactive AI
+A sophisticated chat application that provides an enhanced interactive AI
 experience through a multi-agent architecture and support for multiple LLM
 providers. It features specialized agents, intelligent transfers, file
 integration, web capabilities, and a modular extension system.
