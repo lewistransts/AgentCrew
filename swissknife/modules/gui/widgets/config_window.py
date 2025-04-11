@@ -1,5 +1,3 @@
-import os
-from typing import Dict, Any, List, Optional
 from PySide6.QtWidgets import (
     QDialog,
     QTabWidget,
@@ -18,11 +16,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QScrollArea,
     QSplitter,
-    QFrame,
-    QComboBox,
 )
-from PySide6.QtCore import Qt, Signal, Slot
-from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt, Signal
 
 from swissknife.modules.config.config_management import ConfigManagement
 from swissknife.modules.agents.manager import AgentManager

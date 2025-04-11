@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import List, Dict, Any, Tuple, Optional
 import traceback
 import os
@@ -170,6 +170,8 @@ class MessageHandler(Observable):
             combined_content = message_content.copy() if message_content else []
             combined_content.append({"type": "text", "text": user_input})
             self.messages.append({"role": "user", "content": combined_content})
+            self.current_user_input = self.messages[-1]
+            self.current_user_input_idx = len(self.messages) - 1
             self._notify(
                 "user_message_created",
                 {"message": self.messages[-1], "with_files": True},
@@ -197,13 +199,12 @@ class MessageHandler(Observable):
             self.messages.append(
                 {"role": "user", "content": [{"type": "text", "text": user_input}]}
             )
+            self.current_user_input = self.messages[-1]
+            self.current_user_input_idx = len(self.messages) - 1
             self._notify(
                 "user_message_created",
                 {"message": self.messages[-1], "with_files": False},
             )
-
-        self.current_user_input = self.messages[-1]
-        self.current_user_input_idx = len(self.messages) - 1
 
         return False, False
 
@@ -576,31 +577,6 @@ class MessageHandler(Observable):
                     self.llm.format_assistant_message(assistant_response)
                 )
 
-            # --- Start of Persistence Logic ---
-            if self.current_conversation_id and self.last_assisstant_response_idx >= 0:
-                try:
-                    # Get all messages added since the user input for this turn
-                    current_provider = self.llm.provider_name
-                    messages_for_this_turn = MessageTransformer.standardize_messages(
-                        self.messages[self.last_assisstant_response_idx :],
-                        current_provider,
-                    )
-                    if (
-                        messages_for_this_turn
-                    ):  # Only save if there are messages for the turn
-                        self.persistent_service.append_conversation_messages(
-                            self.current_conversation_id, messages_for_this_turn
-                        )
-                        self._notify(
-                            "conversation_saved", {"id": self.current_conversation_id}
-                        )
-                except Exception as e:
-                    error_message = f"Failed to save conversation turn to {self.current_conversation_id}: {str(e)}"
-                    print(f"ERROR: {error_message}")
-                    self._notify("error", {"message": error_message})
-            self.last_assisstant_response_idx = len(self.messages)
-            # --- End of Persistence Logic ---
-
             if self.current_user_input and self.current_user_input_idx >= 0:
                 if self.memory_service:
                     user_input = ""
@@ -631,6 +607,31 @@ class MessageHandler(Observable):
                 self.conversation_turns.append(turn)
                 self.current_user_input = None
                 self.current_user_input_idx = -1
+
+            # --- Start of Persistence Logic ---
+            if self.current_conversation_id and self.last_assisstant_response_idx >= 0:
+                try:
+                    # Get all messages added since the user input for this turn
+                    current_provider = self.llm.provider_name
+                    messages_for_this_turn = MessageTransformer.standardize_messages(
+                        self.messages[self.last_assisstant_response_idx :],
+                        current_provider,
+                    )
+                    if (
+                        messages_for_this_turn
+                    ):  # Only save if there are messages for the turn
+                        self.persistent_service.append_conversation_messages(
+                            self.current_conversation_id, messages_for_this_turn
+                        )
+                        self._notify(
+                            "conversation_saved", {"id": self.current_conversation_id}
+                        )
+                except Exception as e:
+                    error_message = f"Failed to save conversation turn to {self.current_conversation_id}: {str(e)}"
+                    print(f"ERROR: {error_message}")
+                    self._notify("error", {"message": error_message})
+            self.last_assisstant_response_idx = len(self.messages)
+            # --- End of Persistence Logic ---
 
             return assistant_response, input_tokens, output_tokens
 

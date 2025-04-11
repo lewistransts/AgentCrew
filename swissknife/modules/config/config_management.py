@@ -249,7 +249,7 @@ class ConfigManagement:
         try:
             config = ConfigManagement(agents_config_path)
             return config.get_config()
-        except Exception as e:
+        except Exception:
             # If file doesn't exist or has errors, return empty config
             return {"agents": []}
 
@@ -288,7 +288,7 @@ class ConfigManagement:
         try:
             with open(mcp_config_path, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except Exception as e:
+        except Exception:
             # If file doesn't exist or has errors, return empty config
             return {}
 

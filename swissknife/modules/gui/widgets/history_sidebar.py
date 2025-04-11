@@ -57,17 +57,17 @@ class ConversationSidebar(QWidget):
 
         # Button row with Refresh and New buttons
         button_layout = QHBoxLayout()
-        
+
         # Refresh button
         self.refresh_btn = QPushButton("Refresh")
         self.refresh_btn.clicked.connect(self.update_conversation_list)
         button_layout.addWidget(self.refresh_btn)
-        
+
         # New conversation button
         self.new_btn = QPushButton("New")
         self.new_btn.clicked.connect(self.request_new_conversation)
         button_layout.addWidget(self.new_btn)
-        
+
         layout.addLayout(button_layout)
 
         self.setLayout(layout)
@@ -131,7 +131,7 @@ class ConversationSidebar(QWidget):
                 background-color: #102000;
             }
             """
-        
+
         self.refresh_btn.setStyleSheet(button_style)
         self.new_btn.setStyleSheet(button_style)
 
@@ -179,7 +179,7 @@ class ConversationSidebar(QWidget):
         """Emits the ID of the selected conversation."""
         if item and item.data(Qt.ItemDataRole.UserRole):
             self.conversation_selected.emit(item.data(Qt.ItemDataRole.UserRole))
-            
+
     def request_new_conversation(self):
         """Emit signal to request a new conversation."""
         self.new_conversation_requested.emit()

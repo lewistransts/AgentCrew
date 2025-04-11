@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QFileIconProvider,
 )
 from PySide6.QtCore import Qt, QFileInfo
-from PySide6.QtGui import QPixmap, QIcon
+from PySide6.QtGui import QPixmap
 
 # File display constants
 IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]

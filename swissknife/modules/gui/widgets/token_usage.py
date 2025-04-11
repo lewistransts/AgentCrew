@@ -30,7 +30,9 @@ class TokenUsageWidget(QWidget):
         self.token_label = QLabel(
             "📊 Token Usage: Input: 0 | Output: 0 | Total: 0 | Cost: $0.0000 | Session: $0.0000"
         )
-        self.token_label.setStyleSheet("color: #4C662B; font-weight: bold; padding: 8px;")
+        self.token_label.setStyleSheet(
+            "color: #4C662B; font-weight: bold; padding: 8px;"
+        )
 
         # Add to layout
         layout.addWidget(self.token_label)

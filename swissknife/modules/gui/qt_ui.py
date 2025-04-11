@@ -312,6 +312,7 @@ class ChatWindow(QMainWindow, Observer):
 
         # Track current response bubble for chunked responses
         self.current_response_bubble = None
+        self.current_user_bubble = None
         self.current_response_container = None
         self.current_thinking_bubble = None
         self.thinking_content = ""
@@ -620,6 +621,8 @@ class ChatWindow(QMainWindow, Observer):
         if not is_user:
             self.current_response_bubble = message_bubble
             self.current_response_container = container
+        else:
+            self.current_user_bubble = message_bubble
 
         # Process events to ensure UI updates immediately
         QApplication.processEvents()
@@ -885,8 +888,6 @@ class ChatWindow(QMainWindow, Observer):
         turn_number = None
 
         for i, turn in enumerate(self.message_handler.conversation_turns):
-            print(turn.message_index)
-            print(message_bubble.message_index)
             if turn.message_index == message_bubble.message_index:
                 turn_number = i + 1  # Turn numbers are 1-indexed
                 break
@@ -1326,6 +1327,12 @@ class ChatWindow(QMainWindow, Observer):
             self.loading_conversation = False
             self.set_input_controls_enabled(True)
             self.display_error(data)
+        elif event == "user_message_created":
+            if self.current_user_bubble:
+                self.current_user_bubble.message_index = (
+                    self.message_handler.current_user_input_idx
+                )
+                self.current_user_bubble = None
         elif event == "thinking_started":
             self.display_thinking_started(data)  # data is agent_name
         elif event == "thinking_chunk":

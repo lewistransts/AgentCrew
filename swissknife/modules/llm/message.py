@@ -1,4 +1,4 @@
-from typing import Dict, List, Any, cast
+from typing import Dict, List, Any
 from anthropic.types import TextBlockParam
 import json
 
@@ -131,7 +131,7 @@ class MessageTransformer:
                                     ]
                                 else:
                                     content = item_dict["content"]
-                            except Exception as e:
+                            except Exception:
                                 pass
 
                             std_msg["tool_result"] = {
