@@ -244,8 +244,8 @@ class InteractiveChat:
                         messages.append(
                             self.llm.format_tool_result(tool_use, tool_result)
                         )
-                        # Update llm service when transform agent
-                        if tool_use["name"] == "transform":
+                        # Update llm service when transfer agent
+                        if tool_use["name"] == "transfer":
                             self.llm = self.agent_manager.get_current_agent().llm
                             self.agent_name = (
                                 self.agent_manager.get_current_agent().name

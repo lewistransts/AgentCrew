@@ -50,7 +50,7 @@ class AgentManager:
         if not self._initialized:
             self.agents = {}
             self.current_agent = None
-            self.transform_history = []
+            self.transfer_history = []
             self._initialized = True
 
     @classmethod
@@ -92,7 +92,7 @@ class AgentManager:
 
             if not self.current_agent.custom_system_prompt:
                 self.current_agent.set_custom_system_prompt(
-                    self.get_transform_system_prompt()
+                    self.get_transfer_system_prompt()
                 )
             # Activate the new agent
             self.current_agent.activate()
@@ -123,19 +123,19 @@ class AgentManager:
             raise ValueError("Current agent is not set")
         return self.current_agent
 
-    def perform_transform(
+    def perform_transfer(
         self, target_agent_name: str, task: str, context_summary: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Perform a transform to another agent.
+        Perform a transfer to another agent.
 
         Args:
-            target_agent_name: The name of the agent to transform to
-            reason: The reason for the transform
+            target_agent_name: The name of the agent to transfer to
+            reason: The reason for the transfer
             context_summary: Optional summary of the conversation context
 
         Returns:
-            A dictionary with the result of the transform
+            A dictionary with the result of the transfer
         """
         if target_agent_name not in self.agents:
             return {
@@ -146,19 +146,19 @@ class AgentManager:
 
         source_agent = self.current_agent
 
-        # Record the transform
-        transform_record = {
+        # Record the transfer
+        transfer_record = {
             "from": source_agent.name if source_agent else "None",
             "to": target_agent_name,
             "reason": task,
             "context_summary": context_summary,
         }
-        self.transform_history.append(transform_record)
+        self.transfer_history.append(transfer_record)
 
         # Set the new current agent
         self.select_agent(target_agent_name)
 
-        return {"success": True, "transform": transform_record}
+        return {"success": True, "transfer": transfer_record}
 
     def update_llm_service(self, llm_service):
         """
@@ -182,12 +182,12 @@ class AgentManager:
                 if agent != self.current_agent:
                     agent.update_llm_service(llm_service)
 
-    def get_transform_system_prompt(self):
+    def get_transfer_system_prompt(self):
         """
-        Generate a transform section for the system prompt based on available agents.
+        Generate a transfer section for the system prompt based on available agents.
 
         Returns:
-            str: A formatted string containing transform instructions and available agents
+            str: A formatted string containing transfer instructions and available agents
         """
         if not self.agents:
             return ""
@@ -206,14 +206,14 @@ class AgentManager:
                 agent_desc += f" - available tools: {', '.join(agent.tools)}"
             agent_descriptions.append(agent_desc)
 
-        transform_prompt = (
+        transfer_prompt = (
             "## Agents\n\n"
-            "You must transform to another specialized agent when task is not in your specialized and continue the conversation"
-            "You're ONLY able to transform to one agent at a time"
+            "You must transfer to another specialized agent when task is not in your specialized and continue the conversation"
+            "You're ONLY able to transfer to one agent at a time"
             "Only set `report_back` to `true` when you need further processing based on target_agent findings"
-            "To perform a transform, use transform tool with target_agent, task, context_summary arguments. Example:\n\n"
-            # """{'id': 'random id', 'name': 'transform', 'input': {'target_agent': 'AgentName', 'task': 'Task need to be done', 'report_back': 'true/false', 'context_summary': 'Summary of the context'}, 'type': 'function' }\n"""
+            "To perform a transfer, use `transfer` tool with target_agent, task, context_summary arguments. Example:\n\n"
+            # """{'id': 'random id', 'name': 'transfer', 'input': {'target_agent': 'AgentName', 'task': 'Task need to be done', 'report_back': 'true/false', 'context_summary': 'Summary of the context'}, 'type': 'function' }\n"""
             f"Available agents:\n{chr(10).join(agent_descriptions)}\n"
         )
 
-        return transform_prompt
+        return transfer_prompt

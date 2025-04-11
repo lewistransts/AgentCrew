@@ -540,13 +540,13 @@ class MessageHandler(Observable):
                             },
                         )
 
-                        # Update llm service when transform agent
-                        if tool_use["name"] == "transform":
+                        # Update llm service when transfer agent
+                        if tool_use["name"] == "transfer":
                             self.llm = self.agent_manager.get_current_agent().llm
                             self.agent_name = (
                                 self.agent_manager.get_current_agent().name
                             )
-                            self._notify("agent_changed_by_transform", self.agent_name)
+                            self._notify("agent_changed_by_transfer", self.agent_name)
 
                     except Exception as e:
                         error_message = self.llm.format_tool_result(

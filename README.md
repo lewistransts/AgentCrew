@@ -2,7 +2,7 @@
 
 A sophisticated command-line tool that provides an enhanced interactive AI
 experience through a multi-agent architecture and support for multiple LLM
-providers. It features specialized agents, intelligent handoffs, file
+providers. It features specialized agents, intelligent transfers, file
 integration, web capabilities, and a modular extension system.
 
 ## Installation
@@ -127,7 +127,7 @@ Current supported dynamic template tag is:
 - `current_date`: return current date in YYYY-MM-dd format
 
 The system intelligently routes tasks to the appropriate agent and features
-seamless **agent handoffs** when a conversation requires different expertise.
+seamless **agent transfer** when a conversation requires different expertise.
 This allows for:
 
 - Domain-specialized reasoning and responses.
@@ -138,18 +138,18 @@ This allows for:
 [User Input] --> [Agent Manager] --> [Selected Agent] --> [LLM Service] --> [Response]
 ```
 
-### Agent Handoff Mechanism
+### Agent Transfer Mechanism
 
-The intelligent handoff system allows seamless transitions between specialized
+The intelligent transfer system allows seamless transitions between specialized
 agents:
 
 1. The current agent identifies when a different expertise is required.
-2. A handoff request is initiated with context preservation.
+2. A transfer request is initiated with context preservation.
 3. The appropriate specialized agent is activated.
 4. Conversation continues with maintained context but specialized capabilities.
 
 ```
-[Current Agent] --> [Handoff Request] --> [New Agent with Context]
+[Current Agent] --> [Transfer Request] --> [New Agent with Context]
 ```
 
 ### Multi-Provider LLM Integration
@@ -187,7 +187,7 @@ The system employs a centralized Agent Manager that:
 
 - Maintains the registry of available specialized agents.
 - Handles selection of the appropriate agent for each task.
-- Manages the handoff process between agents.
+- Manages the transfer process between agents.
 - Ensures context preservation during transitions.
 
 ### Agent Activation
