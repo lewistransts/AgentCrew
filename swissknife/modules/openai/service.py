@@ -1,6 +1,7 @@
 import os
 import base64
 import json
+import mimetypes
 from typing import Dict, Any, List, Optional, Tuple
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -115,31 +116,44 @@ class OpenAIService(BaseLLMService):
         """Explain the provided content using OpenAI."""
         return self._process_content(EXPLAIN_PROMPT, content, max_tokens=1500)
 
-    def process_file_for_message(self, file_path):
-        """Process a file and return the appropriate message content."""
-        content = read_text_file(file_path)
-        if content:
-            print(f"📄 Including text file: {file_path}")
-            return {
-                "type": "text",
-                "text": f"Content of {file_path}:\n\n{content}",
-            }
-        return None
+    def _process_file(self, file_path):
+        mime_type, _ = mimetypes.guess_type(file_path)
 
-    def handle_file_command(self, file_path):
-        """Handle the /file command and return message content."""
-        content = read_text_file(file_path)
-        if content:
-            message_content = [
-                {
+        if mime_type and mime_type.startswith("image/"):
+            image_data = read_binary_file(file_path)
+            if image_data:
+                message_content = {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{mime_type};base64,{image_data}",
+                        "detail": "high",
+                    },
+                }
+                return message_content
+        else:
+            content = read_text_file(file_path)
+            if content:
+                message_content = {
                     "type": "text",
                     "text": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
                 }
-            ]
-            print(f"📄 Including text file: {file_path}")
-            return message_content
-        else:
-            return None
+
+                print(f"📄 Including text file: {file_path}")
+                return message_content
+            else:
+                return None
+
+    def process_file_for_message(self, file_path):
+        """Process a file and return the appropriate message content."""
+
+        return self._process_file(file_path)
+
+    def handle_file_command(self, file_path):
+        """Handle the /file command and return message content."""
+        content = self._process_file(file_path)
+        if content:
+            return [content]
+        return None
 
     def register_tool(self, tool_definition, handler_function):
         """

@@ -183,6 +183,9 @@ class MessageHandler(Observable):
 
             # Process file with the file handling service
             file_content = self.file_handler.process_file(file_path)
+            # Fallback to llm handle
+            if not file_content:
+                file_content = self.llm.process_file_for_message(file_path)
 
             if file_content:
                 self.messages.append({"role": "user", "content": [file_content]})
