@@ -281,11 +281,25 @@ def discover_and_register_tools(services=None):
     "--agent-config", default=None, help="Path to the agent configuration file."
 )
 @click.option(
-    "--gui", is_flag=True, default=False, help="Use GUI interface instead of console"
+    "--gui", is_flag=True, default=True, help="Use GUI interface instead of console"
 )
 def chat(message, files, provider, agent_config, gui):
     """Start an interactive chat session with LLM"""
     try:
+        if os.getenv("ANTHROPIC_API_KEY"):
+            provider = "claude"
+        elif os.getenv("GEMINI_API_KEY"):
+            provider = "google"
+        elif os.getenv("OPENAI_API_KEY"):
+            provider = "openai"
+        elif os.getenv("GROQ_API_KEY"):
+            provider = "groq"
+        elif os.getenv("DEEPINFRA_API_KEY"):
+            provider = "deepinfra"
+        else:
+            raise ValueError(
+                "NO {LLM}_API_KEY Found. please set either ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, DEEPINFRA_API_KEY"
+            )
         services = setup_services(provider)
 
         # Set up the agent system

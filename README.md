@@ -9,7 +9,7 @@ integration, web capabilities, and a modular extension system.
 
 ### Prerequisites
 
-- Python 3.8 or higher.
+- Python 3.10 or higher.
 - [uv](https://github.com/astral-sh/uv) for package manager.
 - An Anthropic API key (for Claude AI models).
 - A Groq API key (optional, for Groq LLM models).
@@ -38,56 +38,70 @@ integration, web capabilities, and a modular extension system.
    uv tool install .
    ```
 
-4. Create a `.env` file in the project root with your API keys:
+4. Make sure you have one of `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
+   `GOOGLE_API_KEY`, `GROQ_API_KEY`, `DEEPINFRA_API_KEY` in Environment
+   variables. you can setup multi LLM api key for switching model in app
 
    ```
    ANTHROPIC_API_KEY=your_anthropic_api_key
-   OPENAI_API_KEY=your_openai_api_key(optional)
-   GROQ_API_KEY=your_groq_api_key(optional)
-   GOOGLE_API_KEY=your_google_api_key(optional)
+   OPENAI_API_KEY=your_openai_api_key
+   GROQ_API_KEY=your_groq_api_key
+   GOOGLE_API_KEY=your_google_api_key
    TAVILY_API_KEY=your_tavily_api_key
    ```
+
+   `TAVILY_API_KEY` is for web search capability. omit it if you don't need that
+   features
 
 ## Usage
 
 ### Start an Interactive Chat
 
 ```bash
-uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml
+swissknife chat
 ```
 
-### Start an Interactive Chat with GUI
+### Start an Interactive Chat with TUI
 
 ```bash
-uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --gui
+swissknife chat --gui false
 ```
 
 ### Start a Chat with an Initial Message
 
 ```bash
-uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --message "Hello, I need help with software architecture"
+swissknife chat --message "Hello, I need help with software architecture"
 ```
 
 ### Include Files in Your Chat
 
 ```bash
-uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --files document.pdf --files code.py
+swissknife chat --agent-config ./examples/agents/agents.toml --files document.pdf --files code.py
 ```
 
 ### Start a Chat with Different Providers
 
 ```bash
 # Use Claude models from Anthropic
-uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --provider claude
+swissknife chat --provider claude
 
 # Use LLM models from Groq
-uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --provider groq
+swissknife chat --provider groq
 
 # Use GPT models from OpenAI
-uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --provider openai
+swissknife chat --provider openai
 
 # Use Gemini models from Google
-uv run swissknife/main.py chat --agent-config ./examples/agents/agents.toml --provider gemini
+swissknife chat --provider gemini
+
+# Use LLM models from Deepinfra
+swissknife chat --provider deepinfra
+```
+
+### Start chat with different agent config
+
+```bash
+swissknife chat --agent-config path/to/custom_agents.toml
 ```
 
 ## Core Architecture
@@ -198,6 +212,7 @@ The system implements a unified service layer that:
 - **Claude (Anthropic)**: Extended thinking mode for complex reasoning.
 - **GPT (OpenAI)**: Advanced tool use and function calling.
 - **Groq**: High-performance inference for faster responses.
+- **Deep infra**: more options for open-source models.
 - **Gemini (Google)**: Multimodal processing and advanced content generation.
 
 ## Additional Capabilities
@@ -314,9 +329,9 @@ The following features are planned for future releases:
 
 ### User Experience
 
-- [ ] **Session Management**: Save, resume, and manage multiple conversation
+- [x] **Session Management**: Save, resume, and manage multiple conversation
       threads.
-- [ ] **UI Improvements**: Enhanced terminal interface with better visualization
+- [x] **UI Improvements**: Enhanced terminal interface with better visualization
       options.
 - [ ] **Configuration Profiles**: Create and switch between different tool
       configurations.
