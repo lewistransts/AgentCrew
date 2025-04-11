@@ -1265,14 +1265,13 @@ class ChatWindow(QMainWindow, Observer):
         try:
             # Format the messages for display
             debug_info = json.dumps(self.message_handler.messages, indent=2)
-
-            # Add as a system message
-            self.add_system_message(f"DEBUG INFO:\n\n```json\n{debug_info}\n```")
-
-            # Update status bar
-            self.display_status_message("Debug information displayed")
         except Exception as e:
-            self.display_error(f"Error displaying debug info: {str(e)}")
+            debug_info = str(self.message_handler.messages)
+        # Add as a system message
+        self.add_system_message(f"DEBUG INFO:\n\n```json\n{debug_info}\n```")
+
+        # Update status bar
+        self.display_status_message("Debug information displayed")
 
     def listen(self, event: str, data: Any = None):
         """Handle events from the message handler."""

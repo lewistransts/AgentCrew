@@ -1,6 +1,6 @@
 import re
 from typing import Dict, List, Any, Union
-from anthropic.types import TextBlockParam
+from anthropic.types import TextBlockParam, ToolUseBlock
 import json
 
 
@@ -117,6 +117,16 @@ class MessageTransformer:
                                 "content": content,
                                 "is_error": item.get("is_error", False),
                             }
+                    elif isinstance(item, ToolUseBlock):
+                        item_type = item.type
+                        tool_calls.append(
+                            {
+                                "id": item.id,
+                                "name": item.name,
+                                "arguments": item.input,
+                                "type": "function",
+                            }
+                        )
                     else:
                         # Handle object-style items
                         item_type = getattr(item, "type", None)
