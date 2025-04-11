@@ -66,7 +66,8 @@ class BaseLLMService(ABC):
         summary_data: Optional[Dict[str, Any]] = None
         cleaned_response: str = (
             assistant_response
-            if "<user_context_summary>" not in assistant_response
+            if not assistant_response.startswith("<user_context_summary>")
+            and not assistant_response.startswith("```user_context_summary")
             else "Updating user context..."  # Default to original if no block found
         )
 
@@ -80,10 +81,16 @@ class BaseLLMService(ABC):
         # re.DOTALL            - Makes '.' match newline characters as well
         # re.IGNORECASE        - Makes the tag matching case-insensitive
         match = re.match(
-            r"(?:```json|```)?\s*<user_context_summary>(.*?)</user_context_summary>\s*(?:```)?(.*)",
+            r"^(?:```json|```)?\s*<user_context_summary>(.*?)</user_context_summary>\s*(?:```)?(.*)",
             assistant_response,
             re.DOTALL | re.IGNORECASE,
         )
+        if not match:
+            match = re.match(
+                r"^```user_context_summary\n(.*?)\n```",
+                assistant_response,
+                re.DOTALL | re.IGNORECASE,
+            )
 
         if match:
             summary_json_str = match.group(1).strip()

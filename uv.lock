@@ -3059,7 +3059,7 @@ wheels = [
 
 [[package]]
 name = "swissknife"
-version = "0.2.0"
+version = "0.2.6"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
