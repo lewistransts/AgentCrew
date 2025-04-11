@@ -163,6 +163,7 @@ def setup_agents(services, config_path):
     # Create specialized agents
     if config_path:
         click.echo("Using command-line argument for agent configuration path.")
+        os.environ["SW_AGENTS_CONFIG"] = config_path
     else:
         config_path = os.getenv("SW_AGENTS_CONFIG")
         if not config_path:
