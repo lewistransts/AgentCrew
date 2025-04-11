@@ -1,6 +1,6 @@
 import re
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 import pyperclip
 
 from PySide6.QtWidgets import (
@@ -563,6 +563,30 @@ class ChatWindow(QMainWindow, Observer):
             self.chat_scroll.verticalScrollBar().maximum()
         )
 
+    def append_file(self, file_path):
+        # Create container for message alignment (similar to append_message)
+        container = QWidget()
+        container_layout = QHBoxLayout(container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Create the message bubble
+        message_bubble = MessageBubble("", True, "You")
+
+        # Add the file display to the message bubble
+        message_bubble.display_file(file_path)
+
+        container_layout.addWidget(message_bubble)
+        container_layout.addStretch(1)  # Push to left
+
+        # Add the container to the chat layout
+        self.chat_layout.addWidget(container)
+
+        # Process events and scroll to show the new message
+        QApplication.processEvents()
+        self.chat_scroll.verticalScrollBar().setValue(
+            self.chat_scroll.verticalScrollBar().maximum()
+        )
+
     def append_message(self, text, is_user=True, message_index=None):
         """Adds a message bubble to the chat container."""
         # Create container for message alignment
@@ -861,6 +885,8 @@ class ChatWindow(QMainWindow, Observer):
         turn_number = None
 
         for i, turn in enumerate(self.message_handler.conversation_turns):
+            print(turn.message_index)
+            print(message_bubble.message_index)
             if turn.message_index == message_bubble.message_index:
                 turn_number = i + 1  # Turn numbers are 1-indexed
                 break
@@ -963,7 +989,16 @@ class ChatWindow(QMainWindow, Observer):
                     message_content,
                     flags=re.DOTALL | re.IGNORECASE,
                 )
-                if message_content.strip():
+                if (
+                    message_content.strip()
+                    and not message_content.startswith(
+                        "Use user_context_summary to tailor your response"
+                    )
+                    and not message_content.startswith("Content of ")
+                    and not message_content.startswith(
+                        "Need to tailor response bases on this"
+                    )
+                ):
                     self.append_message(
                         message_content, is_user, msg_idx if is_user else None
                     )
@@ -1328,7 +1363,9 @@ class ChatWindow(QMainWindow, Observer):
                 # Fallback for non-JSON serializable data
                 self.add_system_message(f"DEBUG INFO:\n\n{str(data)}")
         elif event == "file_processed":
-            self.add_system_message(f"Processed file: {data['file_path']}")
+            # Create a message bubble for the file
+            file_path = data["file_path"]
+            self.append_file(file_path)
             # Re-enable controls only if not loading a conversation
             if not self.loading_conversation:
                 self.set_input_controls_enabled(True)

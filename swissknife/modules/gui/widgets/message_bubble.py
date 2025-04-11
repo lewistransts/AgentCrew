@@ -1,10 +1,23 @@
 from typing import Optional
 import markdown
+import os
+import mimetypes
 
-from PySide6.QtWidgets import QVBoxLayout, QLabel, QFrame, QSizePolicy, QPushButton
-from PySide6.QtCore import (
-    Qt,
+from PySide6.QtWidgets import (
+    QVBoxLayout,
+    QLabel,
+    QFrame,
+    QSizePolicy,
+    QPushButton,
+    QHBoxLayout,
+    QFileIconProvider,
 )
+from PySide6.QtCore import Qt, QFileInfo
+from PySide6.QtGui import QPixmap, QIcon
+
+# File display constants
+IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]
+MAX_IMAGE_WIDTH = 600  # Maximum width for displayed images
 
 CODE_CSS = """
 pre { line-height: 1; background-color: #F3F4E9; border-radius: 8px; padding: 12px; }
@@ -300,3 +313,96 @@ class MessageBubble(QFrame):
         """Append text to the existing message."""
         self.text_content = text
         self.set_text(self.text_content)
+
+    def display_file(self, file_path: str):
+        """Display a file in the message bubble based on its type."""
+        if not os.path.exists(file_path):
+            self.append_text(f"File not found: {file_path}")
+            return
+
+        # Create a container for the file display
+        file_container = QFrame(self)
+        file_layout = QVBoxLayout(file_container)
+        file_layout.setContentsMargins(1, 1, 1, 1)
+
+        # Get file extension and determine file type
+        _, file_extension = os.path.splitext(file_path)
+        file_extension = file_extension.lower()
+        file_name = os.path.basename(file_path)
+
+        # Handle image files
+        if file_extension in IMAGE_EXTENSIONS:
+            # Create image label
+            image_label = QLabel()
+            pixmap = QPixmap(file_path)
+
+            # Scale image if it's too large
+            if pixmap.width() > MAX_IMAGE_WIDTH:
+                pixmap = pixmap.scaledToWidth(
+                    MAX_IMAGE_WIDTH, Qt.TransformationMode.SmoothTransformation
+                )
+
+            image_label.setPixmap(pixmap)
+            image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            # Add file name above the image
+            name_label = QLabel(file_name)
+            name_label.setStyleSheet("font-weight: bold; color: #1A1C16;")
+            name_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+            file_layout.addWidget(name_label)
+            file_layout.addWidget(image_label)
+        else:
+            # For non-image files, show an icon with the file name
+            file_info = QFileInfo(file_path)
+            icon_provider = QFileIconProvider()
+            file_icon = icon_provider.icon(file_info)
+
+            # Create horizontal layout for icon and file name
+            icon_layout = QHBoxLayout()
+
+            # Create icon label
+            icon_label = QLabel()
+            icon_label.setPixmap(file_icon.pixmap(48, 48))
+
+            # Create file name label
+            name_label = QLabel(file_name)
+            name_label.setStyleSheet(
+                "font-weight: bold; color: #1A1C16; padding-left: 10px;"
+            )
+
+            icon_layout.addWidget(icon_label)
+            icon_layout.addWidget(name_label)
+            icon_layout.addStretch(1)
+
+            file_layout.addLayout(icon_layout)
+
+            # Add file size and type information
+            file_size = os.path.getsize(file_path)
+            file_type = mimetypes.guess_type(file_path)[0] or "Unknown type"
+
+            size_label = QLabel(f"Size: {self._format_file_size(file_size)}")
+            type_label = QLabel(f"Type: {file_type}")
+
+            size_label.setStyleSheet("color: #44483D;")
+            type_label.setStyleSheet("color: #44483D;")
+
+            file_layout.addWidget(size_label)
+            file_layout.addWidget(type_label)
+
+        # Add the file container to the message layout
+        self.layout().addWidget(file_container)
+
+        # Force update and scroll
+        self.updateGeometry()
+
+    def _format_file_size(self, size_bytes):
+        """Format file size in human-readable format."""
+        if size_bytes < 1024:
+            return f"{size_bytes} bytes"
+        elif size_bytes < 1024 * 1024:
+            return f"{size_bytes / 1024:.1f} KB"
+        elif size_bytes < 1024 * 1024 * 1024:
+            return f"{size_bytes / (1024 * 1024):.1f} MB"
+        else:
+            return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"

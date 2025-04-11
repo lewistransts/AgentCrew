@@ -436,7 +436,10 @@ class ContextPersistenceService:
                 items_meeting_min_threshold.sort(key=lambda x: x[1], reverse=True)
 
                 # Limit the number of items
-                limited_items = items_meeting_min_threshold[:limit_count_threshold]
+                if category not in ["explicit_preferences", "inferred_behavior"]:
+                    limited_items = items_meeting_min_threshold[:limit_count_threshold]
+                else:
+                    limited_items = items_meeting_min_threshold
 
                 # Extract just the item names from the limited list
                 final_item_list = [item for item, count in limited_items]
@@ -581,45 +584,51 @@ class ContextPersistenceService:
                         history = self._read_json_file(file_path, default_value=[])
                         preview = "Empty Conversation"
                         if isinstance(history, list) and len(history) > 0:
-                            first_user_msg = next(
-                                (
-                                    msg
-                                    for msg in history
-                                    if isinstance(msg, dict)
-                                    and msg.get("role") == "user"
-                                ),
-                                None,
+                            user_msgs = (
+                                msg
+                                for msg in history
+                                if isinstance(msg, dict) and msg.get("role") == "user"
                             )
-                            if first_user_msg:
-                                content = first_user_msg.get("content", "")
-                                if isinstance(content, str) and content:
-                                    preview = (
-                                        (content[:50] + "...")
-                                        if len(content) > 50
-                                        else content
-                                    )
-                                elif isinstance(content, list):
-                                    first_text_block = next(
-                                        (
-                                            block.get("text", "")
-                                            for block in content
-                                            if isinstance(block, dict)
-                                            and block.get("type") == "text"
-                                        ),
-                                        "",
-                                    )
-                                    if first_text_block:
+                            while True:
+                                first_user_msg = next(
+                                    user_msgs,
+                                    None,
+                                )
+                                if first_user_msg:
+                                    content = first_user_msg.get("content", "")
+                                    if isinstance(content, str) and content:
                                         preview = (
-                                            (first_text_block[:50] + "...")
-                                            if len(first_text_block) > 50
-                                            else first_text_block
+                                            (content[:50] + "...")
+                                            if len(content) > 50
+                                            else content
                                         )
+                                    elif isinstance(content, list):
+                                        first_text_block = next(
+                                            (
+                                                block.get("text", "")
+                                                for block in content
+                                                if isinstance(block, dict)
+                                                and block.get("type") == "text"
+                                            ),
+                                            "",
+                                        )
+                                        if first_text_block:
+                                            preview = (
+                                                (first_text_block[:50] + "...")
+                                                if len(first_text_block) > 50
+                                                else first_text_block
+                                            )
+                                        else:
+                                            preview = "[Image/Tool Data]"
                                     else:
-                                        preview = "[Image/Tool Data]"
+                                        preview = "[Non-text Content]"
                                 else:
-                                    preview = "[Non-text Content]"
-                            else:
-                                preview = "[No User Message Found]"
+                                    preview = "[No User Message Found]"
+
+                                if not preview.startswith(
+                                    "Use user_context_summary to tailor your response"
+                                ) and not preview.startswith("Content of "):
+                                    break
 
                         conversations.append(
                             {

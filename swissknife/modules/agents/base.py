@@ -202,9 +202,11 @@ class Agent(ABC):
         system_prompt = self.get_system_prompt()
         if self.custom_system_prompt:
             system_prompt = (
-                # ANALYSIS_PROMPT
-                # + "\n---\n\n"
-                self.get_system_prompt() + "\n---\n\n" + self.custom_system_prompt
+                self.get_system_prompt()
+                + "\n---\n\n"
+                + self.custom_system_prompt
+                + "\n---\n\n"
+                + ANALYSIS_PROMPT
             )
 
         self.llm.set_system_prompt(system_prompt)

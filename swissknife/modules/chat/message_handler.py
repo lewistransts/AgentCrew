@@ -74,6 +74,7 @@ class MessageHandler(Observable):
         self.conversation_turns = []
         self.current_user_input = None
         self.current_user_input_idx = -1
+        self.last_assisstant_response_idx = 0
         self.file_handler = FileHandler()
         self.messages = []  # Initialize empty messages list
         self.current_conversation_id = None  # ID for persistence
@@ -150,19 +151,20 @@ class MessageHandler(Observable):
         if not user_input.startswith("/"):
             self.history_manager.add_entry(user_input)
 
-        # if len(self.messages) == 0:
-        #     self.messages.append(
-        #         {
-        #             "role": "user",
-        #             "content": [
-        #                 {
-        #                     "type": "text",
-        #                     "text": f"""Use user_context_summary to tailor your response:
-        #                     <user_context_summary>{self.persistent_service.get_user_context_json(2, 4)}</user_context_summary>""",
-        #                 }
-        #             ],
-        #         }
-        #     )
+        if len(self.messages) == 0:
+            self.messages.append(
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"""Use user_context_summary to tailor your response:
+                            <user_context_summary>{self.persistent_service.get_user_context_json(2, 3)}</user_context_summary>""",
+                        }
+                    ],
+                }
+            )
+
         # Handle files that were loaded but not yet sent
         if files and not self.messages:
             combined_content = message_content.copy() if message_content else []
@@ -448,18 +450,18 @@ class MessageHandler(Observable):
                     )
 
                     clean_response = assistant_response
-                    # context_data, clean_response = self.llm.parse_user_context_summary(
-                    #     assistant_response
-                    # )
-                    # if context_data and not context_data_processed:
-                    #     # self._notify("debug_requested", context_data)
-                    #     self.persistent_service.store_user_context(context_data)
-                    #     context_data_processed = True
-                    # self.messages.append(
-                    #     self.llm.format_assistant_message(
-                    #         f"""<user_context_summary>{json.dumps(context_data)}</user_context_summary>"""
-                    #     )
-                    # )
+                    context_data, clean_response = self.llm.parse_user_context_summary(
+                        assistant_response
+                    )
+                    if context_data and not context_data_processed:
+                        # self._notify("debug_requested", context_data)
+                        self.persistent_service.store_user_context(context_data)
+                        context_data_processed = True
+                        self.messages.append(
+                            self.llm.format_assistant_message(
+                                f"""Need to tailor response bases on this <user_context_summary>{json.dumps(context_data)}</user_context_summary>"""
+                            )
+                        )
 
                     # Update token counts
                     if chunk_input_tokens > 0:
@@ -575,12 +577,13 @@ class MessageHandler(Observable):
                 )
 
             # --- Start of Persistence Logic ---
-            if self.current_conversation_id and self.current_user_input_idx >= 0:
+            if self.current_conversation_id and self.last_assisstant_response_idx >= 0:
                 try:
                     # Get all messages added since the user input for this turn
                     current_provider = self.llm.provider_name
                     messages_for_this_turn = MessageTransformer.standardize_messages(
-                        self.messages[self.current_user_input_idx :], current_provider
+                        self.messages[self.last_assisstant_response_idx :],
+                        current_provider,
                     )
                     if (
                         messages_for_this_turn
@@ -595,6 +598,7 @@ class MessageHandler(Observable):
                     error_message = f"Failed to save conversation turn to {self.current_conversation_id}: {str(e)}"
                     print(f"ERROR: {error_message}")
                     self._notify("error", {"message": error_message})
+            self.last_assisstant_response_idx = len(self.messages)
             # --- End of Persistence Logic ---
 
             if self.current_user_input and self.current_user_input_idx >= 0:
@@ -672,7 +676,6 @@ class MessageHandler(Observable):
                         # Handle different content structures (standardized format)
                         if isinstance(content, str):
                             message_content = content
-                            # self.append_message(content, is_user=is_user)
                         elif isinstance(content, list) and content:
                             # Assuming the first item in the list contains the primary text
                             first_item = content[0]
@@ -681,10 +684,15 @@ class MessageHandler(Observable):
                                 and first_item.get("type") == "text"
                             ):
                                 message_content = first_item.get("text", "")
-                                # self.append_message(first_item.get("text", ""), is_user=is_user)
-                            # Add more specific handling here if other content types need display
-                        turn = ConversationTurn(message_content, i)
-                        self.conversation_turns.append(turn)
+                        if (
+                            message_content
+                            and not message_content.startswith(
+                                "Use user_context_summary to tailor your response"
+                            )
+                            and not message_content.startswith("Content of ")
+                        ):
+                            turn = ConversationTurn(message_content, i)
+                            self.conversation_turns.append(turn)
 
                 print(f"Loaded conversation {conversation_id}")  # Optional: Debugging
                 self._notify(
