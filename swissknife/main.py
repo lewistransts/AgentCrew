@@ -167,7 +167,7 @@ def setup_agents(services, config_path):
     else:
         config_path = os.getenv("SW_AGENTS_CONFIG")
         if not config_path:
-            config_path = "./agent.toml"
+            config_path = "./agents.toml"
             # If config path doesn't exist, create a default one
         if not os.path.exists(config_path):
             click.echo(
