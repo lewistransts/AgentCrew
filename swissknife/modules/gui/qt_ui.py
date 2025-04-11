@@ -564,7 +564,7 @@ class ChatWindow(QMainWindow, Observer):
             self.chat_scroll.verticalScrollBar().maximum()
         )
 
-    def append_file(self, file_path):
+    def append_file(self, file_path, is_base64=False):
         # Create container for message alignment (similar to append_message)
         container = QWidget()
         container_layout = QHBoxLayout(container)
@@ -574,7 +574,10 @@ class ChatWindow(QMainWindow, Observer):
         message_bubble = MessageBubble("", True, "You")
 
         # Add the file display to the message bubble
-        message_bubble.display_file(file_path)
+        if is_base64:
+            message_bubble.display_base64_img(file_path)
+        else:
+            message_bubble.display_file(file_path)
 
         container_layout.addWidget(message_bubble)
         container_layout.addStretch(1)  # Push to left
@@ -980,6 +983,14 @@ class ChatWindow(QMainWindow, Observer):
                         and first_item.get("type") == "text"
                     ):
                         message_content = first_item.get("text", "")
+                    elif (
+                        isinstance(first_item, dict)
+                        and first_item.get("type") == "image_url"
+                    ):
+                        self.append_file(
+                            first_item.get("image_url", {}).get("url", ""), True
+                        )
+                        continue
                         # self.append_message(first_item.get("text", ""), is_user=is_user)
                     # Add more specific handling here if other content types need display
 

@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QFileIconProvider,
 )
-from PySide6.QtCore import Qt, QFileInfo
+from PySide6.QtCore import Qt, QFileInfo, QByteArray
 from PySide6.QtGui import QPixmap
 
 # File display constants
@@ -406,3 +406,62 @@ class MessageBubble(QFrame):
             return f"{size_bytes / (1024 * 1024):.1f} MB"
         else:
             return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
+
+    def display_base64_img(self, data: str):
+        """
+        Display a base64-encoded image in the message bubble.
+
+        Args:
+            data: Base64 image data in format 'data:mime_type;base64,data'
+        """
+        try:
+            # Parse the data URL format
+            if not data.startswith("data:"):
+                raise ValueError("Invalid data URL format. Must start with 'data:'")
+
+            # Extract mime type and base64 data
+            header, encoded_data = data.split(",", 1)
+            mime_type = header.split(";")[0].split(":")[1]
+
+            if not mime_type.startswith("image/"):
+                raise ValueError(
+                    f"Unsupported mime type: {mime_type}. Only image types are supported."
+                )
+
+            # Create a container for the image display
+            img_container = QFrame(self)
+            img_layout = QVBoxLayout(img_container)
+            img_layout.setContentsMargins(1, 1, 1, 1)
+
+            # Create image label
+            image_label = QLabel()
+            pixmap = QPixmap()
+            pixmap.loadFromData(QByteArray.fromBase64(encoded_data.encode()))
+
+            # Scale image if it's too large
+            if pixmap.width() > MAX_IMAGE_WIDTH:
+                pixmap = pixmap.scaledToWidth(
+                    MAX_IMAGE_WIDTH, Qt.TransformationMode.SmoothTransformation
+                )
+
+            image_label.setPixmap(pixmap)
+            image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            # Add a label indicating it's a base64 image
+            name_label = QLabel("Image")
+            name_label.setStyleSheet("font-weight: bold; color: #1A1C16;")
+            name_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+
+            img_layout.addWidget(name_label)
+            img_layout.addWidget(image_label)
+
+            # Add the image container to the message layout
+            self.layout().addWidget(img_container)
+
+            # Force update and scroll
+            self.updateGeometry()
+
+        except Exception as e:
+            error_msg = f"Error displaying base64 image: {str(e)}"
+            print(error_msg)
+            self.append_text(f"\n\n*{error_msg}*")
