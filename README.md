@@ -5,6 +5,14 @@ experience through a multi-agent architecture and support for multiple LLM
 providers. It features specialized agents, intelligent transfers, file
 integration, web capabilities, and a modular extension system.
 
+## Screenshots
+
+![main chat](./examples/images/chat.png)
+![chat with code format](./examples/images/code_format.png)
+![chat with image file](./examples/images/image_file.png)
+![agent config](./examples/images/agent_config.png)
+![MCP config](./examples/images/mcp_config.png)
+
 ## Installation
 
 ### Prerequisites
