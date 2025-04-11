@@ -461,11 +461,11 @@ class MessageHandler(Observable):
                         # self._notify("debug_requested", context_data)
                         self.persistent_service.store_user_context(context_data)
                         context_data_processed = True
-                        self.messages.append(
-                            self.llm.format_assistant_message(
-                                f"""Need to tailor response bases on this <user_context_summary>{json.dumps(context_data)}</user_context_summary>"""
-                            )
-                        )
+                        # self.messages.append(
+                        #     self.llm.format_assistant_message(
+                        #         f"""Need to tailor response bases on this <user_context_summary>{json.dumps(context_data)}</user_context_summary>"""
+                        #     )
+                        # )
 
                     # Update token counts
                     if chunk_input_tokens > 0:

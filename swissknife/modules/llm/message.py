@@ -1,4 +1,5 @@
-from typing import Dict, List, Any
+import re
+from typing import Dict, List, Any, Union
 from anthropic.types import TextBlockParam
 import json
 
@@ -71,13 +72,22 @@ class MessageTransformer:
                 # For Claude's content array, extract text and other content
                 text_parts = []
                 tool_calls = []
+                image_parts = []
 
                 for item in content:
                     # Check if item is a dictionary or an object
                     if isinstance(item, dict):
                         # Handle dictionary-style items
                         if item.get("type") == "text":
-                            text_parts.append(item.get("text", ""))
+                            text_parts.append(
+                                {"type": "text", "text": item.get("text", "")}
+                            )
+                        elif item.get("type") == "image":
+                            image_parts.append(
+                                MessageTransformer._standardize_claude_image_content(
+                                    item
+                                )
+                            )
                         elif item.get("type") == "tool_use":
                             tool_calls.append(
                                 {
@@ -111,7 +121,15 @@ class MessageTransformer:
                         # Handle object-style items
                         item_type = getattr(item, "type", None)
                         if item_type == "text":
-                            text_parts.append(getattr(item, "text", ""))
+                            text_parts.append(
+                                {"type": "text", "text": item.get("text", "")}
+                            )
+                        elif item.get("type") == "image":
+                            image_parts.append(
+                                MessageTransformer._standardize_claude_image_content(
+                                    item
+                                )
+                            )
                         elif item_type == "tool_use":
                             tool_calls.append(
                                 {
@@ -140,8 +158,10 @@ class MessageTransformer:
                                 "is_error": getattr(item, "is_error", False),
                             }
 
-                if text_parts:
-                    std_msg["content"] = "\n".join(text_parts)
+                if image_parts:
+                    std_msg["content"] = image_parts
+                elif text_parts:
+                    std_msg["content"] = text_parts
                 else:
                     std_msg["content"] = " "
 
@@ -151,6 +171,17 @@ class MessageTransformer:
 
             standardized.append(std_msg)
         return standardized
+
+    @staticmethod
+    def _standardize_claude_image_content(content: Dict[str, Any]):
+        if content.get("type", "image"):
+            return {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{content.get('source', {}).get('media_type', '')};base64,{content.get('source', {}).get('data', '')}"
+                },
+            }
+        return content
 
     @staticmethod
     def _standardize_openai_messages(
@@ -272,7 +303,11 @@ class MessageTransformer:
                             {"type": "text", "text": msg["content"]}
                         ]
                     else:
-                        claude_msg["content"] = msg["content"]
+                        claude_msg["content"] = (
+                            MessageTransformer._convert_content_to_claude_format(
+                                msg["content"]
+                            )
+                        )
 
             # Handle tool results
             if "tool_result" in msg:
@@ -289,6 +324,41 @@ class MessageTransformer:
 
             claude_messages.append(claude_msg)
         return claude_messages
+
+    @staticmethod
+    def _convert_content_to_claude_format(
+        content: Union[Dict[str, Any], List[Dict[str, Any]]],
+    ):
+        new_content = None
+
+        pattern = r"^data:([^;]+);base64,(.*)$"
+        if isinstance(content, Dict):
+            if content.get("type", "text") == "image_url":
+                data_url = content.get("image_url", {}).get("url", "")
+                match = re.match(pattern, data_url, re.DOTALL)
+
+                if match:
+                    mime_type = match.group(1)
+                    base64_data = match.group(2)
+                    new_content = {
+                        "type": "image",
+                        "source": {
+                            "media_type": mime_type,
+                            "data": base64_data,
+                            "type": "base64",
+                        },
+                    }
+                    return new_content
+            else:
+                return content
+        elif isinstance(content, List):
+            new_content = []
+            for c in content:
+                new_content.append(
+                    MessageTransformer._convert_content_to_claude_format(c)
+                )
+            return new_content
+        return content
 
     @staticmethod
     def _convert_to_openai_format(
