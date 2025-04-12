@@ -282,7 +282,11 @@ class MessageHandler(Observable):
             self.conversation_turns = self.conversation_turns[: turn_number - 1]
             if self.current_conversation_id:
                 self.persistent_service.append_conversation_messages(
-                    self.current_conversation_id, self.messages, True
+                    self.current_conversation_id,
+                    MessageTransformer.standardize_messages(
+                        self.messages, self.llm.provider_name
+                    ),
+                    True,
                 )
 
             self._notify(

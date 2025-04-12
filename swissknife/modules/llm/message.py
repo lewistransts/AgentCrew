@@ -293,9 +293,14 @@ class MessageTransformer:
                 if msg.get("role") == "assistant" and "tool_calls" in msg:
                     # For assistant messages with tool calls, we need to format differently
                     # Fix issue with empty content
-                    if msg["content"] == "":
-                        msg["content"] = " "
-                    claude_msg["content"] = [{"type": "text", "text": msg["content"]}]
+                    if isinstance(msg["content"], List):
+                        claude_msg["content"] = msg["content"]
+                    else:
+                        if msg["content"] == "":
+                            msg["content"] = " "
+                        claude_msg["content"] = [
+                            {"type": "text", "text": msg["content"]}
+                        ]
 
                     # Add tool use blocks
                     for tool_call in msg.get("tool_calls", []):
