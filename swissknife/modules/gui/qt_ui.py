@@ -571,7 +571,7 @@ class ChatWindow(QMainWindow, Observer):
         container_layout.setContentsMargins(0, 0, 0, 0)
 
         # Create the message bubble
-        message_bubble = MessageBubble("", True, "You")
+        message_bubble = MessageBubble(None, True, "You")
 
         # Add the file display to the message bubble
         if is_base64:
@@ -891,6 +891,8 @@ class ChatWindow(QMainWindow, Observer):
         turn_number = None
 
         for i, turn in enumerate(self.message_handler.conversation_turns):
+            print(turn.message_index)
+            print(message_bubble.message_index)
             if turn.message_index == message_bubble.message_index:
                 turn_number = i + 1  # Turn numbers are 1-indexed
                 break
@@ -990,6 +992,7 @@ class ChatWindow(QMainWindow, Observer):
                         self.append_file(
                             first_item.get("image_url", {}).get("url", ""), True
                         )
+                        msg_idx += 1
                         continue
                         # self.append_message(first_item.get("text", ""), is_user=is_user)
                     # Add more specific handling here if other content types need display

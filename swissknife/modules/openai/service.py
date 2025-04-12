@@ -120,6 +120,8 @@ class OpenAIService(BaseLLMService):
         mime_type, _ = mimetypes.guess_type(file_path)
 
         if mime_type and mime_type.startswith("image/"):
+            if "vision" not in ModelRegistry.get_model_capabilities(self.model):
+                return None
             image_data = read_binary_file(file_path)
             if image_data:
                 message_content = {

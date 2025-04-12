@@ -2,6 +2,7 @@ import os
 import base64
 import contextlib
 import json
+import mimetypes
 import threading
 import itertools
 import rich
@@ -121,32 +122,46 @@ class GroqService(BaseLLMService):
         """Explain the provided content using Groq."""
         return self._process_content(EXPLAIN_PROMPT, content, max_tokens=1500)
 
-    def process_file_for_message(self, file_path):
-        """Process a file and return the appropriate message content."""
-        content = read_text_file(file_path)
-        if content:
-            print(f"📄 Including text file: {file_path}")
-            return {
-                "type": "text",
-                "text": f"Content of {file_path}:\n\n{content}",
-            }
+    def _process_file(self, file_path):
+        mime_type, _ = mimetypes.guess_type(file_path)
 
-        return None
-
-    def handle_file_command(self, file_path):
-        """Handle the /file command and return message content."""
-        content = read_text_file(file_path)
-        if content:
-            message_content = [
-                {
+        if mime_type and mime_type.startswith("image/"):
+            if "vision" not in ModelRegistry.get_model_capabilities(self.model):
+                return None
+            image_data = read_binary_file(file_path)
+            if image_data:
+                message_content = {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{mime_type};base64,{image_data}",
+                        "detail": "high",
+                    },
+                }
+                return message_content
+        else:
+            content = read_text_file(file_path)
+            if content:
+                message_content = {
                     "type": "text",
                     "text": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
                 }
-            ]
-            print(f"📄 Including text file: {file_path}")
-            return message_content
-        else:
-            return None
+
+                print(f"📄 Including text file: {file_path}")
+                return message_content
+            else:
+                return None
+
+    def process_file_for_message(self, file_path):
+        """Process a file and return the appropriate message content."""
+
+        return self._process_file(file_path)
+
+    def handle_file_command(self, file_path):
+        """Handle the /file command and return message content."""
+        content = self._process_file(file_path)
+        if content:
+            return [content]
+        return None
 
     def _loading_animation(self, stop_event):
         """Display a loading animation in the terminal."""

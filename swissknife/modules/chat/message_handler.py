@@ -195,7 +195,10 @@ class MessageHandler(Observable):
                 )
                 return False, True
             else:
-                self._notify("error", f"Failed to process file {file_path}")
+                self._notify(
+                    "error",
+                    f"Failed to process file {file_path} Or Model is not supported",
+                )
                 return False, True
         else:
             # Add regular text message

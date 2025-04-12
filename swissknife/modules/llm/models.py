@@ -39,6 +39,14 @@ class ModelRegistry:
         self.current_model: Optional[Model] = None
         self._initialize_default_models()
 
+    @classmethod
+    def get_model_capabilities(cls, mode_id):
+        registry = ModelRegistry.get_instance()
+        model = registry.get_model(mode_id)
+        if not model:
+            return []
+        return model.capabilities
+
     def _initialize_default_models(self):
         """Initialize the registry with default models."""
         default_models = [
@@ -130,7 +138,7 @@ class ModelRegistry:
                 provider="groq",
                 name="Llama 4 Scout",
                 description="The Llama 4 collection of models are natively multimodal AI models that enable text and multimodal experiences. These models leverage a mixture-of-experts architecture to offer industry-leading performance in text and image understanding.",
-                capabilities=["tool_use"],
+                capabilities=["tool_use", "vision"],
                 input_token_price_1m=0.11,
                 output_token_price_1m=0.34,
             ),

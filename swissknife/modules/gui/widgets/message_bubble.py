@@ -206,8 +206,9 @@ class MessageBubble(QFrame):
             QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
         )
 
-        # Add to layout
-        layout.addWidget(self.message_label)
+        if text is not None:
+            # Add to layout
+            layout.addWidget(self.message_label)
 
         # Set size policies
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
