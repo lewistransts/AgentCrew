@@ -160,22 +160,6 @@ agents:
 [Current Agent] --> [Transfer Request] --> [New Agent with Context]
 ```
 
-### Multi-Provider LLM Integration
-
-The system supports multiple LLM providers through a unified interface:
-
-- **Anthropic's Claude**: State-of-the-art reasoning and task execution.
-- **OpenAI's GPT Models**: Advanced language understanding and generation.
-- **Groq's LLMs**: High-performance inference options.
-- **Google's Gemini**: Cutting-edge multimodal capabilities.
-
-Key multi-model capabilities:
-
-- Dynamic model switching during sessions with the `/model` command.
-- Provider-specific optimizations and features.
-- Standardized message transformation between providers.
-- Consistent tool integration across all models.
-
 ## Key Features
 
 - **Interactive Chat**: Rich conversation interface with various AI models.
@@ -267,8 +251,7 @@ During an interactive chat session, you can use these commands:
 - `/agent <agent_name>` - Switch to a different specialized agent.
 - `/agents` - List all available specialized agents.
 - `exit` or `quit` - End the chat session.
-- Press `Enter` for a new line, `Ctrl+S` to submit your message.
-- Press `Alt+C` to copy the latest assistant response to clipboard.
+- Press `Enter` for a new line, `Ctrl/Cmd+Enter` to submit your message.
 
 ## Memory System
 
