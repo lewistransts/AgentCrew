@@ -242,7 +242,14 @@ class MessageTransformer:
 
             # Handle content
             if "content" in msg:
-                std_msg["content"] = msg["content"]
+                if (
+                    isinstance(msg["content"], str)
+                    and msg.get("role", "") == "assistant"
+                ):
+                    std_msg["content"] = [{"type": "text", "text": msg["content"]}]
+
+                else:
+                    std_msg["content"] = msg["content"]
 
             # Handle tool calls
             if "tool_calls" in msg:
@@ -434,7 +441,14 @@ class MessageTransformer:
 
             # Handle content
             if "content" in msg:
-                google_msg["content"] = msg["content"]
+                if (
+                    isinstance(msg["content"], List)
+                    and msg["content"]
+                    and google_msg["role"] == "assistant"
+                ):
+                    google_msg["content"] = msg["content"][0]["text"]
+                else:
+                    google_msg["content"] = msg["content"]
 
             # Handle tool calls
             if "tool_calls" in msg:
