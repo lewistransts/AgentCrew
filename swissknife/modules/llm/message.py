@@ -9,7 +9,7 @@ class MessageTransformer:
 
     @staticmethod
     def standardize_messages(
-        messages: List[Dict[str, Any]], source_provider: str
+        messages: List[Dict[str, Any]], source_provider: str, agent: str
     ) -> List[Dict[str, Any]]:
         """
         Convert provider-specific messages to a standard format.
@@ -22,14 +22,13 @@ class MessageTransformer:
             Standardized messages
         """
         if source_provider == "claude":
-            return MessageTransformer._standardize_claude_messages(messages)
-        elif source_provider == "openai" or source_provider == "deepinfra":
-            return MessageTransformer._standardize_openai_messages(messages)
+            return MessageTransformer._standardize_claude_messages(messages, agent)
+        elif source_provider == "openai":
+            return MessageTransformer._standardize_openai_messages(messages, agent)
         elif source_provider == "google":
-            return MessageTransformer._standardize_google_messages(messages)
-        elif source_provider == "groq":
-            return MessageTransformer._standardize_groq_messages(messages)
-        return messages
+            return MessageTransformer._standardize_google_messages(messages, agent)
+        else:
+            return MessageTransformer._standardize_groq_messages(messages, agent)
 
     @staticmethod
     def convert_messages(
@@ -45,24 +44,25 @@ class MessageTransformer:
         Returns:
             Provider-specific messages
         """
+
         if target_provider == "claude":
             return MessageTransformer._convert_to_claude_format(messages)
-        elif target_provider == "openai" or target_provider == "deepinfra":
+        elif target_provider == "openai":
             return MessageTransformer._convert_to_openai_format(messages)
         elif target_provider == "google":
             return MessageTransformer._convert_to_google_format(messages)
-        elif target_provider == "groq":
+        else:
             return MessageTransformer._convert_to_groq_format(messages)
-        return messages
 
     @staticmethod
     def _standardize_claude_messages(
-        messages: List[Dict[str, Any]],
+        messages: List[Dict[str, Any]], agent: str
     ) -> List[Dict[str, Any]]:
         """Convert Claude-specific messages to standard format."""
         standardized = []
         for msg in messages:
             std_msg = {"role": msg.get("role", "")}
+            std_msg["agent"] = agent
 
             # Handle content based on type
             content = msg.get("content", [])
@@ -110,7 +110,6 @@ class MessageTransformer:
                                 else:
                                     content = item["content"]
                             except Exception as e:
-                                print(f"================={str(e)}")
                                 pass
                             std_msg["tool_result"] = {
                                 "tool_use_id": item.get("tool_use_id", ""),
@@ -195,16 +194,24 @@ class MessageTransformer:
 
     @staticmethod
     def _standardize_openai_messages(
-        messages: List[Dict[str, Any]],
+        messages: List[Dict[str, Any]], agent: str
     ) -> List[Dict[str, Any]]:
         """Convert OpenAI-specific messages to standard format."""
         standardized = []
         for msg in messages:
             std_msg = {"role": msg.get("role", "")}
+            std_msg["agent"] = agent
 
             # Handle content
             if "content" in msg:
-                std_msg["content"] = msg["content"]
+                if (
+                    isinstance(msg["content"], str)
+                    and msg.get("role", "") == "assistant"
+                ):
+                    std_msg["content"] = [{"type": "text", "text": msg["content"]}]
+
+                else:
+                    std_msg["content"] = msg["content"]
 
             # Handle tool calls
             if "tool_calls" in msg:
@@ -233,12 +240,13 @@ class MessageTransformer:
 
     @staticmethod
     def _standardize_google_messages(
-        messages: List[Dict[str, Any]],
+        messages: List[Dict[str, Any]], agent: str
     ) -> List[Dict[str, Any]]:
         """Convert OpenAI-specific messages to standard format."""
         standardized = []
         for msg in messages:
             std_msg = {"role": msg.get("role", "")}
+            std_msg["agent"] = agent
 
             # Handle content
             if "content" in msg:
@@ -279,11 +287,50 @@ class MessageTransformer:
 
     @staticmethod
     def _standardize_groq_messages(
-        messages: List[Dict[str, Any]],
+        messages: List[Dict[str, Any]], agent: str
     ) -> List[Dict[str, Any]]:
         """Convert Groq-specific messages to standard format."""
         # Groq uses OpenAI format, so we can reuse that
-        return MessageTransformer._standardize_openai_messages(messages)
+        standardized = []
+        for msg in messages:
+            std_msg = {"role": msg.get("role", "")}
+            std_msg["agent"] = agent
+
+            # Handle content
+            if "content" in msg:
+                if (
+                    isinstance(msg["content"], str)
+                    and msg.get("role", "") == "assistant"
+                ):
+                    std_msg["content"] = [{"type": "text", "text": msg["content"]}]
+
+                else:
+                    std_msg["content"] = msg["content"]
+
+            # Handle tool calls
+            if "tool_calls" in msg:
+                std_msg["tool_calls"] = []
+                for tool_call in msg["tool_calls"]:
+                    std_tool_call = {
+                        "id": tool_call.get("id"),
+                        "name": tool_call.get("function", {}).get("name"),
+                        "arguments": json.loads(
+                            tool_call.get("function", {}).get("arguments")
+                        ),
+                        "type": tool_call.get("type", "function"),
+                    }
+                    std_msg["tool_calls"].append(std_tool_call)
+
+            # Handle tool results
+            if msg.get("role") == "tool":
+                std_msg["tool_result"] = {
+                    "tool_use_id": msg.get("tool_call_id"),
+                    "content": msg.get("content"),
+                    "is_error": msg.get("content", "").startswith("ERROR:"),
+                }
+
+            standardized.append(std_msg)
+        return standardized
 
     @staticmethod
     def _convert_to_claude_format(
@@ -444,7 +491,7 @@ class MessageTransformer:
                 if (
                     isinstance(msg["content"], List)
                     and msg["content"]
-                    and google_msg["role"] == "assistant"
+                    and msg["role"] == "assistant"
                 ):
                     google_msg["content"] = msg["content"][0]["text"]
                 else:
@@ -486,4 +533,54 @@ class MessageTransformer:
     def _convert_to_groq_format(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Convert standard messages to Groq format."""
         # Groq uses OpenAI format, so we can reuse that
-        return MessageTransformer._convert_to_openai_format(messages)
+        groq_messages = []
+        for msg in messages:
+            groq_msg = {"role": msg.get("role", "")}
+
+            # Handle content
+            if "content" in msg:
+                print(msg["content"])
+                if (
+                    isinstance(msg["content"], List)
+                    and len(msg["content"]) > 0
+                    and msg["role"] == "assistant"
+                ):
+                    groq_msg["content"] = msg["content"][0]["text"]
+                else:
+                    groq_msg["content"] = msg["content"]
+
+            # Handle tool calls
+            if "tool_calls" in msg:
+                groq_msg["tool_calls"] = []
+                for tool_call in msg.get("tool_calls", []):
+                    # Convert arguments to JSON string if it's not already a string
+                    arguments = tool_call.get("arguments", {})
+                    if not isinstance(arguments, str):
+                        arguments = json.dumps(arguments)
+
+                    groq_msg["tool_calls"].append(
+                        {
+                            "id": tool_call.get("id", ""),
+                            "type": tool_call.get("type", "function"),
+                            "function": {
+                                "name": tool_call.get("name", ""),
+                                "arguments": arguments,
+                            },
+                        }
+                    )
+
+            if "tool_call_id" in msg:
+                groq_msg["role"] = "tool"
+                groq_msg["tool_call_id"] = msg.get("tool_call_id", "")
+            # Handle tool results
+            if "tool_result" in msg:
+                groq_msg["role"] = "tool"
+                groq_msg["tool_call_id"] = msg["tool_result"].get("tool_use_id", "")
+                groq_msg["content"] = msg["tool_result"].get("content", "")
+
+                if msg["tool_result"].get("is_error", False):
+                    groq_msg["content"] = f"ERROR: {groq_msg['content']}"
+
+            print(groq_msg)
+            groq_messages.append(groq_msg)
+        return groq_messages

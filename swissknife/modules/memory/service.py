@@ -2,7 +2,10 @@ import os
 import chromadb
 import datetime
 import uuid
+import json
 from typing import List, Dict, Any
+
+from swissknife.modules.agents.base import Agent
 
 
 class MemoryService:
@@ -25,6 +28,9 @@ class MemoryService:
 
         # Create or get collection for storing memories
         self.collection = self.client.get_or_create_collection(name=collection_name)
+        self.message_raw_collection = self.client.get_or_create_collection(
+            name="message_raw"
+        )
 
         # Configuration for chunking
         self.chunk_size = 200  # words per chunk
@@ -69,7 +75,7 @@ class MemoryService:
             List of memory IDs created
         """
         # Create the memory document by combining user message and response
-        conversation_text = f"Date: {datetime.datetime.today().strftime('%Y-%m-%d')} User: {user_message}\nAssistant: {assistant_response}"
+        conversation_text = f"Date: {datetime.datetime.today().strftime('%Y-%m-%d')}.\n\n User: {user_message}.\n\nAssistant: {assistant_response}"
 
         # Split into chunks
         chunks = self._create_chunks(conversation_text)

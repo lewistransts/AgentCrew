@@ -1,6 +1,6 @@
 import toml
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from .base import Agent
 
 
@@ -49,7 +49,7 @@ class AgentManager:
         """Initialize the agent manager."""
         if not self._initialized:
             self.agents = {}
-            self.current_agent = None
+            self.current_agent: Optional[Agent] = None
             self.transfer_history = []
             self._initialized = True
 
@@ -90,12 +90,13 @@ class AgentManager:
             # Set the new agent as current
             self.current_agent = new_agent
 
-            if not self.current_agent.custom_system_prompt:
+            if self.current_agent and not self.current_agent.custom_system_prompt:
                 self.current_agent.set_custom_system_prompt(
                     self.get_transfer_system_prompt()
                 )
             # Activate the new agent
-            self.current_agent.activate()
+            if self.current_agent:
+                self.current_agent.activate()
 
             return True
         return False
@@ -112,6 +113,17 @@ class AgentManager:
         """
         return self.agents.get(agent_name)
 
+    def clean_agents_messages(self):
+        for key, agent in self.agents.items():
+            agent.history = []
+            agent.shared_context_pool = {}
+
+    def rebuild_agents_messages(self, streamline_messages):
+        self.clean_agents_messages()
+        for msg in streamline_messages:
+            if msg.get("agent", "") in self.agents:
+                self.agents[msg.get("agent")].history.append(msg)
+
     def get_current_agent(self) -> Agent:
         """
         Get the current agent.
@@ -124,7 +136,7 @@ class AgentManager:
         return self.current_agent
 
     def perform_transfer(
-        self, target_agent_name: str, task: str, context_summary: Optional[str] = None
+        self, target_agent_name: str, task: str, relevant_messages: List[int]
     ) -> Dict[str, Any]:
         """
         Perform a transfer to another agent.
@@ -146,17 +158,46 @@ class AgentManager:
 
         source_agent = self.current_agent
 
+        relevant_data = []
+        if source_agent:
+            if target_agent_name not in source_agent.shared_context_pool:
+                source_agent.shared_context_pool[target_agent_name] = []
+            for i, msg in enumerate(source_agent.history):
+                if (
+                    i in relevant_messages
+                    and i not in source_agent.shared_context_pool[target_agent_name]
+                ):
+                    if "content" in msg:
+                        content = ""
+                        if isinstance(msg["content"], str):
+                            content = msg.get("content", "")
+                        elif (
+                            isinstance(msg["content"], List) and len(msg["content"]) > 0
+                        ):
+                            content = msg.get("content")[0]["text"]
+                        if content:
+                            actor = (
+                                msg.get("agent", "Assistant")
+                                if msg["role"] == "assistant"
+                                else msg.get("role", "")
+                            )
+                            relevant_data.append(
+                                f"----Message from {actor}----\n{content}\n----End message from {actor}----"
+                            )
+                    # Set the new current agent
+                    source_agent.shared_context_pool[target_agent_name].append(i)
+
         # Record the transfer
         transfer_record = {
             "from": source_agent.name if source_agent else "None",
             "to": target_agent_name,
             "reason": task,
-            "context_summary": context_summary,
+            "relevant_data": relevant_data,
         }
-        self.transfer_history.append(transfer_record)
-
         # Set the new current agent
         self.select_agent(target_agent_name)
+
+        self.transfer_history.append(transfer_record)
 
         return {"success": True, "transfer": transfer_record}
 

@@ -30,6 +30,8 @@ class Agent(ABC):
         self.tools: List[str] = tools  # List of tool names that the agent needs
         self.system_prompt = None
         self.custom_system_prompt = None
+        self.history = []
+        self.shared_context_pool: Dict[str, List[int]] = {}
         # Store tool definitions in the same format as ToolRegistry
         self.tool_definitions = {}  # {tool_name: (definition_func, handler_factory, service_instance)}
         self.registered_tools = (
@@ -202,11 +204,9 @@ class Agent(ABC):
         system_prompt = self.get_system_prompt()
         if self.custom_system_prompt:
             system_prompt = (
-                self.get_system_prompt()
-                + "\n---\n\n"
-                + self.custom_system_prompt
-                + "\n---\n\n"
-                + ANALYSIS_PROMPT
+                self.get_system_prompt() + "\n---\n\n" + self.custom_system_prompt
+                # + "\n---\n\n"
+                # + ANALYSIS_PROMPT
             )
 
         self.llm.set_system_prompt(system_prompt)
