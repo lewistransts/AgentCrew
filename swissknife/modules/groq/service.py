@@ -251,7 +251,9 @@ class GroqService(BaseLLMService):
             # )
 
         # Add tools if available
-        if self.tools:
+        if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
+            self.model
+        ):
             stream_params["tools"] = self.tools
 
             # Start loading animation for tool-based requests

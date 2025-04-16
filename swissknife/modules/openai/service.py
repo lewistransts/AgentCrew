@@ -220,7 +220,9 @@ class OpenAIService(BaseLLMService):
             ] + messages
 
         # Add tools if available
-        if self.tools:
+        if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
+            self.model
+        ):
             stream_params["tools"] = self.tools
 
         return self.client.chat.completions.create(**stream_params, stream=True)

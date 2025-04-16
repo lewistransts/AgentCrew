@@ -492,6 +492,8 @@ class AnthropicService(BaseLLMService):
         #     stream_params["temperature"] = 0.7
 
         # Add tools if available
-        if self.tools:
+        if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
+            self.model
+        ):
             stream_params["tools"] = self.tools
         return self.client.messages.stream(**stream_params)

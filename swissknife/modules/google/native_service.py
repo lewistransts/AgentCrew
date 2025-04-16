@@ -386,7 +386,9 @@ class GoogleAINativeService(BaseLLMService):
                 config.system_instruction = self.system_prompt
 
             # Add tools if available
-            if self.tools:
+            if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
+                self.model
+            ):
                 config.tools = self.tools
             # Get the stream generator
             stream_generator = self.client.models.generate_content_stream(
