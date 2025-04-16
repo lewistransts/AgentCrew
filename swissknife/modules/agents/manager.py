@@ -258,7 +258,8 @@ class AgentManager:
             "You must transfer to another specialized agent when task is not in your specialized and continue the conversation"
             "You're ONLY able to transfer to one agent at a time"
             "Only set `report_back` to `true` when you need further processing based on target_agent findings"
-            "To perform a transfer, use `transfer` tool with target_agent, task, context_summary arguments. Example:\n\n"
+            "Use relevant messages to provide contexts around task to achieve highest output quality from transfer"
+            "To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments. Example:\n\n"
             # """{'id': 'random id', 'name': 'transfer', 'input': {'target_agent': 'AgentName', 'task': 'Task need to be done', 'report_back': 'true/false', 'context_summary': 'Summary of the context'}, 'type': 'function' }\n"""
             f"Available agents:\n{chr(10).join(agent_descriptions)}\n"
         )

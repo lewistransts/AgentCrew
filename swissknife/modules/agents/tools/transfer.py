@@ -34,7 +34,7 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
         "report_result": {
             "type": "string",
             "default": "",
-            "description": "When `report_back` is `true`, provide the detailed results of the completed task for the original agent. This should include comprehensive information about what was accomplished and any relevant findings.",
+            "description": "Provide the detailed results of the completed task for the original agent. This should include comprehensive information about what was accomplished and any relevant findings.",
         },
     }
     tool_required = ["target_agent", "task", "relevant_messages"]
@@ -111,7 +111,7 @@ def get_transfer_tool_handler(agent_manager) -> Callable:
             response = f"Here is your task from {result['transfer']['from']}: {task}"
 
             if report_back and "transfer" in result:
-                response += f"\n\nTransfer back to {result['transfer']['from']} with detail report for further processing."
+                response += f"\n\nTransfer back to {result['transfer']['from']} with detail report result for further processing."
 
             if report_result.strip():
                 response = response + f"\n\n Task result {report_result}"
