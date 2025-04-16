@@ -159,6 +159,7 @@ class AgentManager:
         source_agent = self.current_agent
 
         relevant_data = []
+        direct_injected_messages = []
         if source_agent:
             if target_agent_name not in source_agent.shared_context_pool:
                 source_agent.shared_context_pool[target_agent_name] = []
@@ -174,7 +175,10 @@ class AgentManager:
                         elif (
                             isinstance(msg["content"], List) and len(msg["content"]) > 0
                         ):
-                            content = msg.get("content")[0]["text"]
+                            if "text" == msg.get("content")[0].get("type", ""):
+                                content = msg.get("content")[0]["text"]
+                            elif msg.get("content")[0].get("type", "") == "image_url":
+                                direct_injected_messages.append(msg)
                         if content:
                             actor = (
                                 msg.get("agent", "Assistant")
@@ -196,6 +200,8 @@ class AgentManager:
         }
         # Set the new current agent
         self.select_agent(target_agent_name)
+        if direct_injected_messages and self.current_agent:
+            self.current_agent.history.extend(direct_injected_messages)
 
         self.transfer_history.append(transfer_record)
 

@@ -209,6 +209,7 @@ class GoogleAINativeService(BaseLLMService):
                     "text": f"Content of {file_path}:\n\n{content}",
                 }
 
+            return None
             # For binary files, encode as base64
             with open(file_path, "rb") as f:
                 content = f.read()

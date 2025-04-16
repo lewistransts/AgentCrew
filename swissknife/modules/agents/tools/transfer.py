@@ -117,7 +117,7 @@ def get_transfer_tool_handler(agent_manager) -> Callable:
                 response = response + f"\n\n Task result {report_result}"
 
             if result["transfer"]["relevant_data"]:
-                response += f"\n\nRelevant messages:\n{'\n'.join(result['transfer']['relevant_data'])}"
+                response += f"\n\nRelevant messages:\n{'\n\n'.join(result['transfer']['relevant_data'])}"
 
             return response
 
