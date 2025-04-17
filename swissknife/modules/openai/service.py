@@ -215,13 +215,11 @@ class OpenAIService(BaseLLMService):
             "stream_options": {"include_usage": True},
             "max_tokens": 16000,
         }
-        if (
-            "thinking" in ModelRegistry.get_model_capabilities(self.model)
-            and self.reasoning_effort
-        ):
-            stream_params["reasoning_effort"] = self.reasoning_effort
+        if "thinking" in ModelRegistry.get_model_capabilities(self.model):
             # stream_params["parallel_tool_calls"] = False
             stream_params.pop("max_tokens", None)
+            if self.reasoning_effort:
+                stream_params["reasoning_effort"] = self.reasoning_effort
         else:
             stream_params["temperature"] = 0.6
             stream_params["top_p"] = 0.9
