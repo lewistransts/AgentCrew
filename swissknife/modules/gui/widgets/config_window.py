@@ -535,7 +535,7 @@ class MCPsConfigTab(QWidget):
         # Add button for env vars
         env_btn_layout = QHBoxLayout()
         self.add_env_btn = QPushButton("Add Environment Variable")
-        self.add_env_btn.clicked.connect(self.add_env_field)
+        self.add_env_btn.clicked.connect(lambda: self.add_env_field("", ""))
         env_btn_layout.addWidget(self.add_env_btn)
         env_btn_layout.addStretch()
 
@@ -700,7 +700,7 @@ class MCPsConfigTab(QWidget):
         env_layout = QHBoxLayout()
 
         key_input = QLineEdit()
-        key_input.setText(key)
+        key_input.setText(str(key))
         key_input.setPlaceholderText("Key")
 
         value_input = QLineEdit()

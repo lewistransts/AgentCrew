@@ -283,7 +283,7 @@ class ConfigManagement:
             The MCP servers configuration data.
         """
         mcp_config_path = os.getenv(
-            "MCP_CONFIG_PATH", os.path.expanduser("./mcp_server.json")
+            "MCP_CONFIG_PATH", os.path.expanduser("./mcp_servers.json")
         )
         try:
             with open(mcp_config_path, "r", encoding="utf-8") as f:
