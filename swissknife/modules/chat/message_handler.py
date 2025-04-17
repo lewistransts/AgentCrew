@@ -132,7 +132,7 @@ class MessageHandler(Observable):
         # Handle think command
         if user_input.lower().startswith("/think "):
             try:
-                budget = int(user_input[7:].strip())
+                budget = user_input[7:].strip()
                 self.llm.set_think(budget)
                 self._notify("think_budget_set", budget)
             except ValueError:

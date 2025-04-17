@@ -83,7 +83,7 @@ class GoogleAINativeService(BaseLLMService):
         self._provider_name = "google"
         self.system_prompt = CHAT_SYSTEM_PROMPT
 
-    def set_think(self, budget_tokens: int) -> bool:
+    def set_think(self, budget_tokens) -> bool:
         """
         Enable or disable thinking mode with the specified token budget.
         Currently not supported in Google GenAI.

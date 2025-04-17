@@ -184,7 +184,7 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
-    def set_think(self, budget_tokens: int) -> bool:
+    def set_think(self, budget_tokens) -> bool:
         """
         Enable or disable thinking mode with the specified token budget.
 

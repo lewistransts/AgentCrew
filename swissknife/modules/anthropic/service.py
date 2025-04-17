@@ -440,7 +440,7 @@ class AnthropicService(BaseLLMService):
         self.tools = []
         self.tool_handlers = {}
 
-    def set_think(self, budget_tokens: int) -> bool:
+    def set_think(self, budget_tokens) -> bool:
         """
         Enable or disable thinking mode with the specified token budget.
 
@@ -450,6 +450,7 @@ class AnthropicService(BaseLLMService):
         Returns:
             bool: True if thinking mode is supported and successfully set, False otherwise.
         """
+        budget_tokens = int(budget_tokens)
         if budget_tokens == 0:
             self.thinking_enabled = False
             self.thinking_budget = 0

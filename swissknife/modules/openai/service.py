@@ -54,8 +54,9 @@ class OpenAIService(BaseLLMService):
         self.tool_handlers = {}  # Map tool names to handler functions
         self._provider_name = "openai"
         self.system_prompt = CHAT_SYSTEM_PROMPT
+        self.reasoning_effort = None
 
-    def set_think(self, budget_tokens: int) -> bool:
+    def set_think(self, budget_tokens) -> bool:
         """
         Enable or disable thinking mode with the specified token budget.
 
@@ -65,6 +66,14 @@ class OpenAIService(BaseLLMService):
         Returns:
             bool: True if thinking mode is supported and successfully set, False otherwise.
         """
+        if "thinking" in ModelRegistry.get_model_capabilities(self.model):
+            if budget_tokens == "0":
+                self.reasoning_effort = None
+            if budget_tokens not in ["low", "medium", "high"]:
+                raise ValueError("budget_tokens must be low, medium or high")
+
+            self.reasoning_effort = budget_tokens
+            return True
         print("Thinking mode is not supported for OpenAI models.")
         return False
 
@@ -206,9 +215,13 @@ class OpenAIService(BaseLLMService):
             "stream_options": {"include_usage": True},
             "max_tokens": 16000,
         }
-        if self.model.startswith("o3"):
-            stream_params["reasoning_effort"] = "high"
-            stream_params["parallel_tool_calls"] = False
+        if (
+            "thinking" in ModelRegistry.get_model_capabilities(self.model)
+            and self.reasoning_effort
+        ):
+            stream_params["reasoning_effort"] = self.reasoning_effort
+            # stream_params["parallel_tool_calls"] = False
+            stream_params.pop("max_tokens", None)
         else:
             stream_params["temperature"] = 0.6
             stream_params["top_p"] = 0.9
