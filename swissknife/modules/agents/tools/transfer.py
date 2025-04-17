@@ -24,7 +24,7 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
         "relevant_messages": {
             "type": "array",
             "items": {"type": "integer"},
-            "description": "MUST include 0-based index of previous chat messages relates to this task, user messages, tool use results, assistant messages",
+            "description": "MUST include 0-based index of conversation's chat messages relate to this task including user messages, tool use results, assistant messages",
         },
         # "chain_agent": {
         #     "type": "string",
@@ -83,8 +83,6 @@ def get_transfer_tool_handler(agent_manager) -> Callable:
         target_agent = params.get("target_agent")
         task = params.get("task")
         relevant_messages = params.get("relevant_messages", [])
-        report_back = params.get("report_back", True)
-        report_result = params.get("report_result", "")
 
         if not target_agent:
             raise ValueError("Error: No target agent specified")
@@ -102,13 +100,7 @@ def get_transfer_tool_handler(agent_manager) -> Callable:
         response = ""
 
         if result["success"] and result["transfer"]["from"] != "None":
-            response = f"Task from {result['transfer']['from']}: {task}"
-
-            # if report_back and "transfer" in result:
-            #     response += f"\n\nTransfer back to {result['transfer']['from']} with detail report result for further processing."
-
-            if report_result.strip():
-                response = response + f"\n\n Task result {report_result}"
+            response = f"I am {result['transfer']['from']}, Help me {task}"
 
             if result["transfer"]["relevant_data"]:
                 response += f"\n\nRelevant messages:\n{'\n\n'.join(result['transfer']['relevant_data'])}"

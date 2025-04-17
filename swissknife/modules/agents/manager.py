@@ -248,22 +248,25 @@ class AgentManager:
                 continue
             agent_desc = ""
             if hasattr(agent, "description") and agent.description:
-                agent_desc = f"- {name}: {agent.description}"
+                agent_desc = f"    <agent>\n      <name>{name}</name>\n      <description>{agent.description}</description>"
             else:
-                agent_desc = f"- {name}"
+                agent_desc = f"    <agent>\n      <name>{name}</name>"
             if len(agent.tools) > 0:
-                agent_desc += f" - available tools: {', '.join(agent.tools)}"
+                agent_desc += f"\n      <tools>\n        <tool>{'</tool>\n        <tool>'.join(agent.tools)}</tool>\n      </tools>\n    </agent>"
+            else:
+                agent_desc += "\n    </agent>"
             agent_descriptions.append(agent_desc)
 
-        transfer_prompt = (
-            "## Agents\n\n"
-            "You must transfer to another specialized agent when task is not in your specialized and continue the conversation"
-            "You're ONLY able to transfer to one agent at a time"
-            # "Only set `report_back` to `true` when you need further processing based on target_agent findings"
-            "Use `relevant_messages` to provide any messages (files content, tool results, user messages) related to the task"
-            "To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments. Example:\n\n"
-            # """{'id': 'random id', 'name': 'transfer', 'input': {'target_agent': 'AgentName', 'task': 'Task need to be done', 'report_back': 'true/false', 'context_summary': 'Summary of the context'}, 'type': 'function' }\n"""
-            f"Available agents:\n{chr(10).join(agent_descriptions)}\n"
-        )
+        transfer_prompt = f"""<AGENTS_TEAM>
+  <instructions>
+    - You must transfer to another specialized agent when task is not in your specialized and continue the conversation.
+    - You're ONLY able to transfer to one agent at a time.
+    - Use `relevant_messages` to provide any messages index (files content, tool results, user messages) related to the task.
+    - To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments.
+  </instructions>
+  <agent_list>
+  {"\n".join(agent_descriptions)}
+  </agent_list>
+</AGENTS_TEAM>"""
 
         return transfer_prompt

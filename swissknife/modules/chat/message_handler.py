@@ -472,9 +472,9 @@ class MessageHandler(Observable):
             )
         return transfered_agent
 
-    def _post_tool_transfer(self, tool_result, transfered_agent):
+    def _post_tool_transfer(self, tool_result, owner_agent):
         if (
-            transfered_agent
+            owner_agent
             and self.current_conversation_id
             and self.last_assisstant_response_idx >= 0
         ):
@@ -483,7 +483,7 @@ class MessageHandler(Observable):
                 MessageTransformer.standardize_messages(
                     self.messages[self.last_assisstant_response_idx :],
                     self.llm.provider_name,
-                    transfered_agent.name,
+                    owner_agent.name,
                 ),
             )
 
@@ -502,6 +502,20 @@ class MessageHandler(Observable):
                 "content": [{"type": "text", "text": tool_result}],
             }
         )
+        if self.current_conversation_id:
+            related_mesages_idx = tool_result.find("Relevant messages:")
+            if related_mesages_idx >= 0:
+                tool_result = tool_result[:related_mesages_idx]
+            self.persistent_service.append_conversation_messages(
+                self.current_conversation_id,
+                [
+                    {
+                        "role": "user",
+                        "agent": self.agent_name,
+                        "content": [{"type": "text", "text": tool_result}],
+                    }
+                ],
+            )
         self.last_assisstant_response_idx = len(self.messages)
 
         self._notify("agent_changed_by_transfer", self.agent_name)
@@ -609,16 +623,16 @@ class MessageHandler(Observable):
                     self._notify("tool_use", tool_use)
 
                     try:
-                        transfered_agent = None
+                        owner_agent = None
                         if tool_use["name"] == "transfer":
-                            transfered_agent = self._pre_tool_transfer()
+                            owner_agent = self._pre_tool_transfer()
 
                         tool_result = self.llm.execute_tool(
                             tool_use["name"], tool_use["input"]
                         )
 
                         if tool_use["name"] == "transfer":
-                            self._post_tool_transfer(tool_result, transfered_agent)
+                            self._post_tool_transfer(tool_result, owner_agent)
 
                         else:
                             tool_result_message = self.llm.format_tool_result(

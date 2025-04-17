@@ -111,6 +111,7 @@ class MessageTransformer:
                                     content = item["content"]
                             except Exception as e:
                                 pass
+                            std_msg["role"] = "tool"
                             std_msg["tool_result"] = {
                                 "tool_use_id": item.get("tool_use_id", ""),
                                 "content": content,
