@@ -234,6 +234,8 @@ class MessageTransformer:
                     "content": msg.get("content"),
                     "is_error": msg.get("content", "").startswith("ERROR:"),
                 }
+                # Reduce double token
+                std_msg["content"] = " "
 
             standardized.append(std_msg)
         return standardized
@@ -281,6 +283,8 @@ class MessageTransformer:
                     "content": msg.get("content"),
                     "is_error": msg.get("content", "").startswith("ERROR:"),
                 }
+                # Reduce double token
+                std_msg["content"] = " "
 
             standardized.append(std_msg)
         return standardized
@@ -328,6 +332,8 @@ class MessageTransformer:
                     "content": msg.get("content"),
                     "is_error": msg.get("content", "").startswith("ERROR:"),
                 }
+                # Reduce double token
+                std_msg["content"] = " "
 
             standardized.append(std_msg)
         return standardized

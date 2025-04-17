@@ -179,7 +179,9 @@ class AgentManager:
                                 content = msg.get("content")[0]["text"]
                             elif msg.get("content")[0].get("type", "") == "image_url":
                                 direct_injected_messages.append(msg)
-                        if content:
+                        if msg.get("role", "") == "tool":
+                            content = msg.get("tool_result", {}).get("content", "")
+                        if content.strip():
                             actor = (
                                 msg.get("agent", "Assistant")
                                 if msg["role"] == "assistant"
@@ -257,8 +259,8 @@ class AgentManager:
             "## Agents\n\n"
             "You must transfer to another specialized agent when task is not in your specialized and continue the conversation"
             "You're ONLY able to transfer to one agent at a time"
-            "Only set `report_back` to `true` when you need further processing based on target_agent findings"
-            "Use relevant messages to provide contexts around task to achieve highest output quality from transfer"
+            # "Only set `report_back` to `true` when you need further processing based on target_agent findings"
+            "Use `relevant_messages` to provide any messages (files content, tool results, user messages) related to the task"
             "To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments. Example:\n\n"
             # """{'id': 'random id', 'name': 'transfer', 'input': {'target_agent': 'AgentName', 'task': 'Task need to be done', 'report_back': 'true/false', 'context_summary': 'Summary of the context'}, 'type': 'function' }\n"""
             f"Available agents:\n{chr(10).join(agent_descriptions)}\n"

@@ -26,16 +26,10 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
             "items": {"type": "integer"},
             "description": "MUST include 0-based index of previous chat messages relates to this task, user messages, tool use results, assistant messages",
         },
-        "report_back": {
-            "type": "boolean",
-            "default": "false",
-            "description": "Indicated task need to transfer back to original Agent for further processing",
-        },
-        "report_result": {
-            "type": "string",
-            "default": "",
-            "description": "Provide the detailed results of the completed task for the original agent. This should include comprehensive information about what was accomplished and any relevant findings.",
-        },
+        # "chain_agent": {
+        #     "type": "string",
+        #     "description": "Optional, Chain the request to other agent for further processing when task is need more ",
+        # },
     }
     tool_required = ["target_agent", "task", "relevant_messages"]
     if provider == "claude":
@@ -93,25 +87,25 @@ def get_transfer_tool_handler(agent_manager) -> Callable:
         report_result = params.get("report_result", "")
 
         if not target_agent:
-            return "Error: No target agent specified"
+            raise ValueError("Error: No target agent specified")
 
         if not task:
-            return "Error: No task specified for the transfer"
+            raise ValueError("Error: No task specified for the transfer")
 
         if target_agent == agent_manager.current_agent.name:
-            return "Error: Cannot transfer to same agent"
+            raise ValueError("Error: Cannot transfer to same agent")
 
         result = agent_manager.perform_transfer(target_agent, task, relevant_messages)
         if target_agent == "None":
-            return "Error: Task is completed. This transfer is invalid"
+            raise ValueError("Error: Task is completed. This transfer is invalid")
 
         response = ""
 
         if result["success"] and result["transfer"]["from"] != "None":
-            response = f"Here is your task from {result['transfer']['from']}: {task}"
+            response = f"Task from {result['transfer']['from']}: {task}"
 
-            if report_back and "transfer" in result:
-                response += f"\n\nTransfer back to {result['transfer']['from']} with detail report result for further processing."
+            # if report_back and "transfer" in result:
+            #     response += f"\n\nTransfer back to {result['transfer']['from']} with detail report result for further processing."
 
             if report_result.strip():
                 response = response + f"\n\n Task result {report_result}"

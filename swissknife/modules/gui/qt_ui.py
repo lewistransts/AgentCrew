@@ -1433,6 +1433,9 @@ class ChatWindow(QMainWindow, Observer):
             self.status_indicator.setText(
                 f"Agent: {data} | Model: {self.message_handler.llm.model}"
             )
+            # Reset the current response bubble so the next agent message starts in a new bubble
+            self.current_response_bubble = None
+            self.current_response_container = None
         elif event == "think_budget_set":
             self.add_system_message(f"Set thinking budget at {data}")
             self.set_input_controls_enabled(True)

@@ -4,6 +4,7 @@ import traceback
 import os
 import time
 
+from swissknife.modules.agents.tools import transfer
 from swissknife.modules.chat.history import ChatHistoryManager, ConversationTurn
 from swissknife.modules.agents import AgentManager
 from swissknife.modules.chat.file_handler import FileHandler
@@ -461,6 +462,50 @@ class MessageHandler(Observable):
                 f"Unknown agent: {agent_name}. Available agents: {available_agents}",
             )
 
+    def _pre_tool_transfer(self):
+        transfered_agent = self.agent_manager.get_current_agent()
+        if transfered_agent:
+            transfered_agent.history = MessageTransformer.standardize_messages(
+                self.messages,
+                self.llm.provider_name,
+                transfered_agent.name,
+            )
+        return transfered_agent
+
+    def _post_tool_transfer(self, tool_result, transfered_agent):
+        if (
+            transfered_agent
+            and self.current_conversation_id
+            and self.last_assisstant_response_idx >= 0
+        ):
+            self.persistent_service.append_conversation_messages(
+                self.current_conversation_id,
+                MessageTransformer.standardize_messages(
+                    self.messages[self.last_assisstant_response_idx :],
+                    self.llm.provider_name,
+                    transfered_agent.name,
+                ),
+            )
+
+        # Update llm service when transfer agent
+        self.llm = self.agent_manager.get_current_agent().llm
+        self.agent_name = self.agent_manager.get_current_agent().name
+
+        self.messages = MessageTransformer.convert_messages(
+            self.agent_manager.get_current_agent().history,
+            self.llm.provider_name,
+        )
+
+        self._messages_append(
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": tool_result}],
+            }
+        )
+        self.last_assisstant_response_idx = len(self.messages)
+
+        self._notify("agent_changed_by_transfer", self.agent_name)
+
     def get_assistant_response(
         self, input_tokens=0, output_tokens=0
     ) -> Tuple[Optional[str], int, int]:
@@ -552,7 +597,8 @@ class MessageHandler(Observable):
 
                 # Format assistant message with the response and tool uses
                 assistant_message = self.llm.format_assistant_message(
-                    assistant_response, tool_uses
+                    assistant_response,
+                    [t for t in tool_uses if t["name"] != "transfer"],
                 )
                 self._messages_append(assistant_message)
                 self._notify("assistant_message_added", assistant_message)
@@ -565,79 +611,48 @@ class MessageHandler(Observable):
                     try:
                         transfered_agent = None
                         if tool_use["name"] == "transfer":
-                            transfered_agent = self.agent_manager.get_current_agent()
-
-                        if transfered_agent:
-                            transfered_agent.history = (
-                                MessageTransformer.standardize_messages(
-                                    self.messages,
-                                    self.llm.provider_name,
-                                    transfered_agent.name,
-                                )
-                            )
+                            transfered_agent = self._pre_tool_transfer()
 
                         tool_result = self.llm.execute_tool(
                             tool_use["name"], tool_use["input"]
                         )
-                        tool_result_message = self.llm.format_tool_result(
-                            tool_use, tool_result
-                        )
-                        self._messages_append(tool_result_message)
 
-                        if transfered_agent:
-                            transfered_agent.history.extend(
-                                MessageTransformer.standardize_messages(
-                                    [tool_result_message],
-                                    self.llm.provider_name,
-                                    transfered_agent.name,
-                                )
-                            )
-                            if (
-                                self.current_conversation_id
-                                and self.last_assisstant_response_idx >= 0
-                            ):
-                                self.persistent_service.append_conversation_messages(
-                                    self.current_conversation_id,
-                                    MessageTransformer.standardize_messages(
-                                        self.messages[
-                                            self.last_assisstant_response_idx :
-                                        ],
-                                        self.llm.provider_name,
-                                        transfered_agent.name,
-                                    ),
-                                )
-                        self._notify(
-                            "tool_result",
-                            {
-                                "tool_use": tool_use,
-                                "tool_result": tool_result,
-                                "message": tool_result_message,
-                            },
-                        )
-
-                        # Update llm service when transfer agent
                         if tool_use["name"] == "transfer":
-                            self.llm = self.agent_manager.get_current_agent().llm
-                            self.agent_name = (
-                                self.agent_manager.get_current_agent().name
-                            )
+                            self._post_tool_transfer(tool_result, transfered_agent)
 
-                            self.messages = MessageTransformer.convert_messages(
-                                self.agent_manager.get_current_agent().history,
-                                self.llm.provider_name,
+                        else:
+                            tool_result_message = self.llm.format_tool_result(
+                                tool_use, tool_result
                             )
-
-                            self._messages_append(
+                            self._messages_append(tool_result_message)
+                            self._notify(
+                                "tool_result",
                                 {
-                                    "role": "user",
-                                    "content": [{"type": "text", "text": tool_result}],
-                                }
+                                    "tool_use": tool_use,
+                                    "tool_result": tool_result,
+                                    "message": tool_result_message,
+                                },
                             )
-                            self.last_assisstant_response_idx = len(self.messages)
 
-                            self._notify("agent_changed_by_transfer", self.agent_name)
+                        # if transfered_agent:
+                        # transfered_agent.history.extend(
+                        #     MessageTransformer.standardize_messages(
+                        #         [tool_result_message],
+                        #         self.llm.provider_name,
+                        #         transfered_agent.name,
+                        #     )
+                        # )
 
                     except Exception as e:
+                        if tool_use["name"] == "transfer":
+                            # if transfer failed we should add the tool_call message back for record
+                            self._messages_append(
+                                self.llm.format_assistant_message(
+                                    assistant_response,
+                                    [tool_use],
+                                )
+                            )
+
                         error_message = self.llm.format_tool_result(
                             tool_use, str(e), is_error=True
                         )
