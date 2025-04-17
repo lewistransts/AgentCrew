@@ -3,6 +3,42 @@ from typing import List, Dict, Any, Optional, Tuple
 from swissknife.modules.tools.registry import ToolRegistry
 import re
 import json
+import base64
+
+
+def read_text_file(file_path):
+    """Read and return the contents of a text file."""
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        # try again with cp1252 encoding
+        try:
+            with open(file_path, "r", encoding="cp1252") as f:
+                return f.read()
+        except Exception as e:
+            print(f"❌ Error reading file {file_path}: {str(e)}")
+            return None
+
+
+def read_binary_file(file_path):
+    """Read a binary file and return base64 encoded content."""
+    try:
+        with open(file_path, "rb") as f:
+            content = f.read()
+        return base64.b64encode(content).decode("utf-8")
+    except Exception as e:
+        print(f"❌ Error reading file {file_path}: {str(e)}")
+        return None
+
+
+def base64_to_bytes(base64_str: str):
+    """Convert a base64 string to bytes."""
+    try:
+        return base64.b64decode(base64_str)
+    except Exception as e:
+        print(f"❌ Error decoding base64: {str(e)}")
+        return None
 
 
 class BaseLLMService(ABC):

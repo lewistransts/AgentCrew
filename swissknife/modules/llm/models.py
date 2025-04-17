@@ -203,7 +203,7 @@ class ModelRegistry:
                 provider="google",
                 name="Gemini 2.5 Pro Thinking",
                 description="Gemini 2.5 Pro with thinking",
-                capabilities=["tool_use", "thinking"],
+                capabilities=["tool_use", "thinking", "vision"],
                 input_token_price_1m=1.25,
                 output_token_price_1m=2.5,
                 default=True,

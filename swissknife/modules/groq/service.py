@@ -12,34 +12,13 @@ from typing import Dict, Any, List, Optional, Tuple
 from groq import Groq
 from dotenv import load_dotenv
 from groq.types.chat import ChatCompletion
-from swissknife.modules.llm.base import BaseLLMService
+from swissknife.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from swissknife.modules.llm.models import ModelRegistry
 from ..prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
     CHAT_SYSTEM_PROMPT,
 )
-
-
-def read_text_file(file_path):
-    """Read and return the contents of a text file."""
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            return f.read()
-    except Exception as e:
-        print(f"❌ Error reading file {file_path}: {str(e)}")
-        return None
-
-
-def read_binary_file(file_path):
-    """Read a binary file and return base64 encoded content."""
-    try:
-        with open(file_path, "rb") as f:
-            content = f.read()
-        return base64.b64encode(content).decode("utf-8")
-    except Exception as e:
-        print(f"❌ Error reading file {file_path}: {str(e)}")
-        return None
 
 
 class GroqService(BaseLLMService):

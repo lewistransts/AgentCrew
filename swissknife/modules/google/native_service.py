@@ -1,14 +1,18 @@
 import os
 import re
 import json
-import base64
 import mimetypes
 from typing import Dict, Any, List, Optional, Tuple
 from dotenv import load_dotenv
 from google import genai
 from swissknife.modules.llm.models import ModelRegistry
 from google.genai import types
-from swissknife.modules.llm.base import BaseLLMService
+from swissknife.modules.llm.base import (
+    BaseLLMService,
+    read_binary_file,
+    read_text_file,
+    base64_to_bytes,
+)
 from swissknife.modules.prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
@@ -194,36 +198,33 @@ class GoogleAINativeService(BaseLLMService):
         Returns:
             Optional[Dict[str, Any]]: The message content or None if processing failed
         """
-        try:
-            mime_type, _ = mimetypes.guess_type(file_path)
-            if not mime_type:
-                mime_type = "application/octet-stream"
+        mime_type, _ = mimetypes.guess_type(file_path)
 
-            # For text files, read directly
-            if mime_type.startswith("text/"):
-                with open(file_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-                print(f"📄 Including text file: {file_path}")
-                return {
+        if mime_type and mime_type.startswith("image/"):
+            if "vision" not in ModelRegistry.get_model_capabilities(self.model):
+                return None
+            image_data = read_binary_file(file_path)
+            if image_data:
+                message_content = {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{mime_type};base64,{image_data}",
+                        "detail": "high",
+                    },
+                }
+                return message_content
+        else:
+            content = read_text_file(file_path)
+            if content:
+                message_content = {
                     "type": "text",
-                    "text": f"Content of {file_path}:\n\n{content}",
+                    "text": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
                 }
 
-            return None
-            # For binary files, encode as base64
-            with open(file_path, "rb") as f:
-                content = f.read()
-            encoded = base64.b64encode(content).decode("utf-8")
-
-            print(f"📄 Including file: {file_path} (MIME type: {mime_type})")
-            return {
-                "mime_type": mime_type,
-                "data": encoded,
-                "file_name": os.path.basename(file_path),
-            }
-        except Exception as e:
-            print(f"❌ Error processing file {file_path}: {str(e)}")
-            return None
+                print(f"📄 Including text file: {file_path}")
+                return message_content
+            else:
+                return None
 
     def handle_file_command(self, file_path: str) -> Optional[List[Dict[str, Any]]]:
         """
@@ -441,9 +442,25 @@ class GoogleAINativeService(BaseLLMService):
                     for c in content:
                         if google_content.parts is not None:
                             if isinstance(c, dict):
-                                google_content.parts.append(
-                                    Part.from_text(text=c.get("text", ""))
-                                )
+                                if c.get("type", "") == "image_url":
+                                    pattern = r"^data:([^;]+);base64,(.*)$"
+                                    data_url = c.get("image_url", {}).get("url", "")
+                                    match = re.match(pattern, data_url, re.DOTALL)
+                                    if match:
+                                        mime_type = match.group(1)
+                                        base64_data = match.group(2)
+                                        data = base64_to_bytes(base64_data)
+                                        if data:
+                                            google_content.parts.append(
+                                                Part.from_bytes(
+                                                    data=data,
+                                                    mime_type=mime_type,
+                                                )
+                                            )
+                                else:
+                                    google_content.parts.append(
+                                        Part.from_text(text=c.get("text", ""))
+                                    )
                             else:
                                 google_content.parts.append(Part.from_text(text=c))
                 else:
