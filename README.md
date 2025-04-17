@@ -100,6 +100,21 @@ swissknife chat --provider deepinfra
 swissknife chat --agent-config path/to/custom_agents.toml
 ```
 
+## Security & Responsibility Notice
+
+Swissknife gives you powerful control over AI agents and external tools.
+
+- You are responsible for the content of agent system prompts.
+- You are responsible for which external tools (MCP, file, clipboard) you
+  enable.
+- Unsafe prompts or tools may result in data leaks, loss, or unwanted actions.
+- Always review prompts and tool settings before use.
+- Use safe defaults unless you understand the risks of advanced configurations.
+  For maximum safety:
+- Limit tool permissions to only what is needed.
+- Never include passwords or sensitive data in prompts or config files.
+- Confirm before enabling tools with file system or network access.
+
 ## Core Architecture
 
 ### Multi-Agent System
@@ -242,7 +257,8 @@ which allows the AI to:
 - Allocate a specific token budget for the thinking process.
 
 Enable thinking mode during chat with `/think <budget>` command, where budget is
-the token allocation (minimum 1024 tokens).
+the token allocation (minimum 1024 tokens). Support reasoning effort of openai,
+`budget` can be `low`, `medium` or `high` when using openai reasoning model
 
 ## Chat Commands
 
