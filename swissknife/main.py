@@ -269,16 +269,17 @@ def discover_and_register_tools(services=None):
 
 
 @cli.command()
-@click.option("--message", help="Initial message to start the chat")
-@click.option("--files", multiple=True, help="Files to include in the initial message")
 @click.option(
     "--provider",
     type=click.Choice(["claude", "groq", "openai", "google", "deepinfra"]),
-    default="claude",
-    help="LLM provider to use (claude, groq, or openai)",
+    default=None,
+    help="LLM provider to use (claude, groq, openai, google, or deepinfra)",
 )
 @click.option(
     "--agent-config", default=None, help="Path to the agent configuration file."
+)
+@click.option(
+    "--mcp-config", default=None, help="Path to the mcp servers configuration file."
 )
 @click.option(
     "--console",
@@ -286,24 +287,29 @@ def discover_and_register_tools(services=None):
     default=False,
     help="Use GUI interface instead of console",
 )
-def chat(message, files, provider, agent_config, console):
+def chat(provider, agent_config, mcp_config, console):
     """Start an interactive chat session with LLM"""
     try:
-        if os.getenv("ANTHROPIC_API_KEY"):
-            provider = "claude"
-        elif os.getenv("GEMINI_API_KEY"):
-            provider = "google"
-        elif os.getenv("OPENAI_API_KEY"):
-            provider = "openai"
-        elif os.getenv("GROQ_API_KEY"):
-            provider = "groq"
-        elif os.getenv("DEEPINFRA_API_KEY"):
-            provider = "deepinfra"
-        else:
-            raise ValueError(
-                "NO {LLM}_API_KEY Found. please set either ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, DEEPINFRA_API_KEY"
-            )
+        # Only check environment variables if provider wasn't explicitly specified
+        if provider is None:
+            if os.getenv("ANTHROPIC_API_KEY"):
+                provider = "claude"
+            elif os.getenv("GEMINI_API_KEY"):
+                provider = "google"
+            elif os.getenv("OPENAI_API_KEY"):
+                provider = "openai"
+            elif os.getenv("GROQ_API_KEY"):
+                provider = "groq"
+            elif os.getenv("DEEPINFRA_API_KEY"):
+                provider = "deepinfra"
+            else:
+                raise ValueError(
+                    "No LLM API key found. Please set either ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, or DEEPINFRA_API_KEY"
+                )
         services = setup_services(provider)
+
+        if mcp_config:
+            os.environ["MCP_CONFIG_PATH"] = mcp_config
 
         # Set up the agent system
         setup_agents(services, agent_config)
