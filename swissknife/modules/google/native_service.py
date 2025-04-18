@@ -83,6 +83,9 @@ class GoogleAINativeService(BaseLLMService):
         self.tool_handlers = {}
         self.tool_definitions = []  # Keep original definitions for reference
 
+        self.thinking_enabled = False
+        self.thinking_budget = 0
+
         # Provider name and system prompt
         self._provider_name = "google"
         self.system_prompt = CHAT_SYSTEM_PROMPT
@@ -98,8 +101,25 @@ class GoogleAINativeService(BaseLLMService):
         Returns:
             bool: True if thinking mode is supported and successfully set, False otherwise.
         """
-        print("Thinking mode is not supported for Google GenAI models.")
-        return False
+        budget_tokens = int(budget_tokens)
+        if budget_tokens == 0:
+            self.thinking_enabled = False
+            self.thinking_budget = 0
+            print("Thinking mode disabled.")
+            return True
+        if not self.model.startswith("claude-3-7-sonnet"):
+            print("Thinking mode is disabled for this model.")
+            return False
+
+        # Ensure minimum budget is 1024 tokens
+        if budget_tokens < 1024:
+            print("Warning: Minimum thinking budget is 1024 tokens. Setting to 1024.")
+            budget_tokens = 1024
+
+        self.thinking_enabled = True
+        self.thinking_budget = budget_tokens
+        print(f"Thinking mode enabled with budget of {budget_tokens} tokens.")
+        return True
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         """
@@ -391,6 +411,12 @@ class GoogleAINativeService(BaseLLMService):
                 self.model
             ):
                 config.tools = self.tools
+
+            if self.thinking_enabled and self.thinking_budget > 0:
+                config.thinking_config = types.ThinkingConfig(
+                    thinking_budget=self.thinking_budget
+                )
+
             # Get the stream generator
             stream_generator = self.client.models.generate_content_stream(
                 model=self.model, contents=google_messages, config=config

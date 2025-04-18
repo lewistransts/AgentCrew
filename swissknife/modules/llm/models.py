@@ -199,6 +199,15 @@ class ModelRegistry:
                 output_token_price_1m=0.4,
             ),
             Model(
+                id="gemini-2.5-flash-preview-04-17",
+                provider="google",
+                name="Gemini 2.5 Flash Preview",
+                description="Gemini 2.5 Flash is Google's first fully hybrid reasoning AI model, designed for high speed and cost-efficiency, allowing developers to toggle advanced reasoning on or off as needed.",
+                capabilities=["tool_use", "vision", "thinking"],
+                input_token_price_1m=0.15,
+                output_token_price_1m=3.5,
+            ),
+            Model(
                 id="gemini-2.5-pro-preview-03-25",
                 provider="google",
                 name="Gemini 2.5 Pro Thinking",
