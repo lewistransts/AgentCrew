@@ -100,10 +100,10 @@ def get_transfer_tool_handler(agent_manager) -> Callable:
         response = ""
 
         if result["success"] and result["transfer"]["from"] != "None":
-            response = f"I am {result['transfer']['from']}, Help me {task}"
+            response = f"I'm giving you task from {result['transfer']['from']}  \n---\n\n{task}\n---"
 
             if result["transfer"]["relevant_data"]:
-                response += f"\n\nRelevant messages:\n{'\n\n'.join(result['transfer']['relevant_data'])}"
+                response += f"\n### Relevant messages:\n{'\n\n'.join(result['transfer']['relevant_data'])}"
 
             return response
 
