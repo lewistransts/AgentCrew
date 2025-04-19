@@ -200,7 +200,7 @@ class OpenAIService(BaseLLMService):
                 stream_params["reasoning_effort"] = self.reasoning_effort
         else:
             stream_params["temperature"] = 0.6
-            stream_params["top_p"] = 0.9
+            stream_params["top_p"] = 0.95
 
         # Add system message if provided
         if self.system_prompt:

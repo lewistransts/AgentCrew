@@ -454,6 +454,8 @@ class AnthropicService(BaseLLMService):
             "max_tokens": 8192,
             "system": self.system_prompt,
             "messages": messages,
+            "top_p": 0.95,
+            "temperature": 0.6,
         }
 
         # Add thinking configuration if enabled
@@ -462,6 +464,8 @@ class AnthropicService(BaseLLMService):
                 "type": "enabled",
                 "budget_tokens": self.thinking_budget,
             }
+            stream_params.pop("top_p", None)
+            stream_params.pop("temperature", None)
         # else:
         #     stream_params["temperature"] = 0.7
 
