@@ -1,7 +1,7 @@
 from prompt_toolkit.completion import Completer, PathCompleter
 from prompt_toolkit.document import Document
 from prompt_toolkit.completion import Completion
-from swissknife.modules.llm.models import ModelRegistry
+from swissknife.modules.llm.model_registry import ModelRegistry
 import os
 import re
 

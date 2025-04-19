@@ -5,7 +5,7 @@ import mimetypes
 from typing import Dict, Any, List, Optional, Tuple
 from dotenv import load_dotenv
 from google import genai
-from swissknife.modules.llm.models import ModelRegistry
+from swissknife.modules.llm.model_registry import ModelRegistry
 from google.genai import types
 from swissknife.modules.llm.base import (
     BaseLLMService,

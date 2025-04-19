@@ -1,4 +1,4 @@
-from swissknife.modules.llm.models import ModelRegistry
+from swissknife.modules.llm.model_registry import ModelRegistry
 from swissknife.modules.openai import OpenAIService
 from typing import Dict, Any, List, Optional, Tuple
 import json

@@ -27,7 +27,7 @@ from PySide6.QtCore import (
     Signal,
     QStringListModel,
 )
-from swissknife.modules.llm.models import ModelRegistry
+from swissknife.modules.llm.model_registry import ModelRegistry
 from swissknife.modules.agents.manager import AgentManager
 from PySide6.QtGui import (
     QKeySequence,

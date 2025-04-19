@@ -9,7 +9,7 @@ from openai.types.chat.chat_completion import Choice
 from contextlib import _GeneratorContextManager
 from openai import Stream
 from swissknife.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
-from swissknife.modules.llm.models import ModelRegistry
+from swissknife.modules.llm.model_registry import ModelRegistry
 from ..prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,

@@ -13,7 +13,7 @@ from groq import Groq
 from dotenv import load_dotenv
 from groq.types.chat import ChatCompletion
 from swissknife.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
-from swissknife.modules.llm.models import ModelRegistry
+from swissknife.modules.llm.model_registry import ModelRegistry
 from ..prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,

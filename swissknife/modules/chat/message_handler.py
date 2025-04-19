@@ -7,7 +7,7 @@ import time
 from swissknife.modules.chat.history import ChatHistoryManager, ConversationTurn
 from swissknife.modules.agents import AgentManager
 from swissknife.modules.chat.file_handler import FileHandler
-from swissknife.modules.llm.models import ModelRegistry
+from swissknife.modules.llm.model_registry import ModelRegistry
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.message import MessageTransformer
 from swissknife.modules.memory import MemoryService, ContextPersistenceService

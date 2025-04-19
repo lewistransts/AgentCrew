@@ -257,7 +257,12 @@ class AgentManager:
                 agent_desc += "\n    </agent>"
             agent_descriptions.append(agent_desc)
 
-        transfer_prompt = f"""<AGENTS_TEAM>
+        transfer_prompt = f"""<Agents>
+  <memory>
+    - Agents share same persistent memory space.
+    - Memories are all of the conversation within last month.
+    - Use `retrieve_memory` tool if available when you need more historical context with keywords
+  </memory>
   <instructions>
     - You must transfer to another specialized agent when task is not in your specialized and continue the conversation.
     - You're ONLY able to transfer to one agent at a time.
@@ -267,6 +272,6 @@ class AgentManager:
   <agent_list>
   {"\n".join(agent_descriptions)}
   </agent_list>
-</AGENTS_TEAM>"""
+</Agents>"""
 
         return transfer_prompt

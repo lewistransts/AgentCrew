@@ -111,9 +111,9 @@ Swissknife gives you powerful control over AI agents and external tools.
 - Always review prompts and tool settings before use.
 - Use safe defaults unless you understand the risks of advanced configurations.
   For maximum safety:
-- Limit tool permissions to only what is needed.
-- Never include passwords or sensitive data in prompts or config files.
-- Confirm before enabling tools with file system or network access.
+  - Limit tool permissions to only what is needed.
+  - Never include passwords or sensitive data in prompts or config files.
+  - Confirm before enabling tools with file system or network access.
 
 ## Core Architecture
 
@@ -267,7 +267,8 @@ During an interactive chat session, you can use these commands:
 - `/file <file_path>` - Include a file in your message.
 - `/clear` - Clear the conversation history.
 - `/think <budget>` - Enable extended thinking mode with specified token budget
-  (min 1024).
+  (min 1024). for openai reasoning model, `<budget>` can be `low`, `medium`,
+  `high`
 - `/think 0` - Disable thinking mode.
 - `/model <model_id>` - Switch to a different AI model during your chat session.
 - `/models` - List all available models you can switch to.
@@ -328,6 +329,8 @@ The following features are planned for future releases:
       with the `/think` command.
 - [x] **Agents through config**: Dynamic agents configurations through config
       file
+- [ ] **Google A2A Compatible**: Support Google A2A protocol for both client and
+      server
 
 ### Advanced Personalization
 
