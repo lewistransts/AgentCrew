@@ -9,7 +9,6 @@ from swissknife.modules.llm.model_registry import ModelRegistry
 from ..prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
-    CHAT_SYSTEM_PROMPT,
 )
 
 
@@ -30,7 +29,7 @@ class AnthropicService(BaseLLMService):
         self.thinking_budget = 0
         self.caching_blocks = 0
         self._provider_name = "claude"
-        self.system_prompt = CHAT_SYSTEM_PROMPT
+        self.system_prompt = ""
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         current_model = ModelRegistry.get_instance().get_model(self.model)

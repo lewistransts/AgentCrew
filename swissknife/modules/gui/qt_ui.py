@@ -1313,7 +1313,7 @@ class ChatWindow(QMainWindow, Observer):
         if hasattr(self, "current_thinking_bubble") and self.current_thinking_bubble:
             # Append to the thinking content
             self.thinking_content += chunk
-            self.current_thinking_bubble.append_text(chunk)
+            self.current_thinking_bubble.append_text(self.thinking_content)
 
             # Force update and scroll
             QApplication.processEvents()

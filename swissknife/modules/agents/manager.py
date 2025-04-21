@@ -100,6 +100,7 @@ class AgentManager:
             # Activate the new agent
             if self.current_agent:
                 self.current_agent.activate()
+            print(self.current_agent.llm.system_prompt)
 
             return True
         return False
@@ -280,19 +281,19 @@ class AgentManager:
             agent_descriptions.append(agent_desc)
 
         transfer_prompt = f"""<Agents>
-  <memory>
+  <memory_rules>
     - Agents share same persistent memory space.
     - Memories are all of the conversation within last month.
     - Use `retrieve_memory` tool if available when you need more historical context with keywords
-  </memory>
-  <instructions>
-    - You must transfer to another specialized agent when task is not in your specialized and continue the conversation.
+  </memory_rules>
+  <agent_transfer_rules>
+    - You must transfer to another specialized agent in <other_agents> tags when task is not in your specialized and continue the conversation.
     - You're ONLY able to transfer to one agent at a time.
     - Use `relevant_messages` to provide any messages index (files content, tool results, user messages) related to the task.
     - To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments.
-  </instructions>
+  </agent_transfer_rules>
   <other_agents>
-  {"\n".join(agent_descriptions)}
+{"\n".join(agent_descriptions)}
   </other_agents>
 </Agents>"""
 

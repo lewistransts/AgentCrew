@@ -558,7 +558,7 @@ class MessageHandler(Observable):
                 self.agent.get_process_result()
             )
             input_tokens += input_tokens_in_turn
-            output_tokens_in_turn += output_tokens_in_turn
+            output_tokens += output_tokens_in_turn
             # Handle tool use if needed
             if tool_uses and len(tool_uses) > 0:
                 # Add thinking content as a separate message if available

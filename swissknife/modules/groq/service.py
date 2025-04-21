@@ -16,7 +16,6 @@ from swissknife.modules.llm.model_registry import ModelRegistry
 from ..prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
-    CHAT_SYSTEM_PROMPT,
 )
 
 
@@ -36,7 +35,7 @@ class GroqService(BaseLLMService):
         self._provider_name = "groq"
         self.current_input_tokens = 0
         self.current_output_tokens = 0
-        self.system_prompt = CHAT_SYSTEM_PROMPT
+        self.system_prompt = ""
         self._is_stream = False
 
     def set_think(self, budget_tokens) -> bool:

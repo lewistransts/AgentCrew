@@ -16,7 +16,6 @@ from swissknife.modules.llm.base import (
 from swissknife.modules.prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
-    CHAT_SYSTEM_PROMPT,
 )
 
 
@@ -88,7 +87,7 @@ class GoogleAINativeService(BaseLLMService):
 
         # Provider name and system prompt
         self._provider_name = "google"
-        self.system_prompt = CHAT_SYSTEM_PROMPT
+        self.system_prompt = ""
 
     def set_think(self, budget_tokens) -> bool:
         """
