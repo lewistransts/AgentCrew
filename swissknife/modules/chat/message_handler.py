@@ -4,6 +4,7 @@ import traceback
 import os
 import time
 
+from swissknife.modules.agents.base import MessageType
 from swissknife.modules.chat.history import ChatHistoryManager, ConversationTurn
 from swissknife.modules.agents import AgentManager
 from swissknife.modules.chat.file_handler import FileHandler
@@ -65,8 +66,8 @@ class MessageHandler(Observable):
         """
         super().__init__()
         self.agent_manager = AgentManager.get_instance()
-        self.llm = self.agent_manager.get_current_agent().llm
-        self.agent_name = self.agent_manager.get_current_agent().name
+        self.agent = self.agent_manager.get_current_agent()
+        # self.llm = self.agent_manager.get_current_agent().llm
         self.memory_service = memory_service
         self.persistent_service = context_persistent_service
         self.history_manager = ChatHistoryManager()
@@ -76,24 +77,22 @@ class MessageHandler(Observable):
         self.current_user_input_idx = -1
         self.last_assisstant_response_idx = -1
         self.file_handler = FileHandler()
-        self.messages = []  # Initialize empty messages list
+        # self.messages = []  # Initialize empty messages list
         self.streamline_messages = []
         self.current_conversation_id = None  # ID for persistence
         self.start_new_conversation()  # Initialize first conversation
 
     def _messages_append(self, message):
-        self.messages.append(message)
+        self.agent.history.append(message)
 
         std_msg = MessageTransformer.standardize_messages(
-            [message], self.llm.provider_name, self.agent_name
+            [message], self.agent.get_provider(), self.agent.name
         )
         self.streamline_messages.extend(std_msg)
 
     def process_user_input(
         self,
         user_input: str,
-        message_content: Optional[List[Dict]] = None,  # deprecated
-        files: Optional[List[str]] = None,  # deprecated
     ) -> Tuple[bool, bool]:
         """
         Processes user input, handles commands, and updates message history.
@@ -124,7 +123,7 @@ class MessageHandler(Observable):
 
         # Handle debug command
         if user_input.lower() == "/debug":
-            self._notify("debug_requested", self.messages)
+            self._notify("debug_requested", self.agent.history)
             self._notify("debug_requested", self.streamline_messages)
             return False, True
 
@@ -132,7 +131,7 @@ class MessageHandler(Observable):
         if user_input.lower().startswith("/think "):
             try:
                 budget = user_input[7:].strip()
-                self.llm.set_think(budget)
+                self.agent.configure_think(budget)
                 self._notify("think_budget_set", budget)
             except ValueError:
                 self._notify("error", "Invalid budget value. Please provide a number.")
@@ -161,8 +160,8 @@ class MessageHandler(Observable):
         if not user_input.startswith("/"):
             self.history_manager.add_entry(user_input)
 
-        # if len(self.messages) == 0:
-        #     self.messages.append(
+        # if len(self.agent.history) == 0:
+        #     self.agent.history.append(
         #         {
         #             "role": "user",
         #             "content": [
@@ -185,7 +184,9 @@ class MessageHandler(Observable):
             file_content = self.file_handler.process_file(file_path)
             # Fallback to llm handle
             if not file_content:
-                file_content = self.llm.process_file_for_message(file_path)
+                file_content = self.agent.format_message(
+                    MessageType.FileContent, {"file_uri": file_path}
+                )
 
             if file_content:
                 self._messages_append({"role": "user", "content": [file_content]})
@@ -196,7 +197,7 @@ class MessageHandler(Observable):
                     )
                 self._notify(
                     "file_processed",
-                    {"file_path": file_path, "message": self.messages[-1]},
+                    {"file_path": file_path, "message": self.agent.history[-1]},
                 )
                 return False, True
             else:
@@ -210,11 +211,11 @@ class MessageHandler(Observable):
             self._messages_append(
                 {"role": "user", "content": [{"type": "text", "text": user_input}]}
             )
-            self.current_user_input = self.messages[-1]
+            self.current_user_input = self.agent.history[-1]
             self.current_user_input_idx = len(self.streamline_messages) - 1
             self._notify(
                 "user_message_created",
-                {"message": self.messages[-1], "with_files": False},
+                {"message": self.agent.history[-1], "with_files": False},
             )
 
         return False, False
@@ -232,7 +233,7 @@ class MessageHandler(Observable):
                 )
 
             self.current_conversation_id = self.persistent_service.start_conversation()
-            self.messages = []  # Clear in-memory message list
+            # self.messages = []  # Clear in-memory message list
             self.agent_manager.clean_agents_messages()
             self.streamline_messages = []
             self.conversation_turns = []  # Clear jump history
@@ -309,17 +310,18 @@ class MessageHandler(Observable):
             if last_assistant_message and last_assistant_message.get("agent", ""):
                 self._handle_agent_command(f"/agent {last_assistant_message['agent']}")
 
-            self.messages = MessageTransformer.convert_messages(
-                [
-                    msg
-                    for msg in self.streamline_messages
-                    if msg["role"] != "assistant" or msg["agent"] == self.agent_name
-                ],
-                self.llm.provider_name,
-            )
+            # TODO: Check this part when we already rebuild messages for agents
+            # self.agent.history = MessageTransformer.convert_messages(
+            #     [
+            #         msg
+            #         for msg in self.streamline_messages
+            #         if msg["role"] != "assistant" or msg["agent"] == self.agent.name
+            #     ],
+            #     self.agent.llm.provider_name,
+            # )
             self.agent_manager.rebuild_agents_messages(self.streamline_messages)
             self.conversation_turns = self.conversation_turns[: turn_number - 1]
-            self.last_assisstant_response_idx = len(self.messages)
+            self.last_assisstant_response_idx = len(self.agent.history)
 
             self._notify(
                 "jump_performed",
@@ -376,20 +378,6 @@ class MessageHandler(Observable):
         if registry.set_current_model(model_id):
             model = registry.get_current_model()
             if model:
-                # Get the current provider
-                current_provider = self.llm.provider_name
-
-                # If we're switching providers, convert messages
-                if current_provider != model.provider:
-                    # Standardize messages from current provider
-                    std_messages = MessageTransformer.standardize_messages(
-                        self.messages, current_provider, self.agent_name
-                    )
-                    # Convert to new provider format
-                    self.messages = MessageTransformer.convert_messages(
-                        std_messages, model.provider
-                    )
-
                 # Update the LLM service
                 manager.set_model(model.provider, model.id)
 
@@ -400,7 +388,7 @@ class MessageHandler(Observable):
                 self.agent_manager.update_llm_service(new_llm_service)
 
                 # Update our reference to the LLM
-                self.llm = self.agent_manager.get_current_agent().llm
+                # self..llm = self.agent_manager.get_current_agent().llm
 
                 self._notify(
                     "model_changed",
@@ -428,15 +416,13 @@ class MessageHandler(Observable):
         # If no agent name is provided, list available agents
         if len(parts) == 1:
             available_agents = list(self.agent_manager.agents.keys())
-            current_agent = self.agent_manager.get_current_agent()
-            current_agent_name = current_agent.name if current_agent else "None"
 
-            agents_info = {"current": current_agent_name, "available": {}}
+            agents_info = {"current": self.agent.name, "available": {}}
 
             for agent_name, agent in self.agent_manager.agents.items():
                 agents_info["available"][agent_name] = {
                     "description": agent.description,
-                    "current": (current_agent and current_agent.name == agent_name),
+                    "current": (self.agent and self.agent.name == agent_name),
                 }
 
             self._notify("agents_listed", agents_info)
@@ -446,8 +432,8 @@ class MessageHandler(Observable):
         agent_name = parts[1]
         if self.agent_manager.select_agent(agent_name):
             # Update the LLM reference to the new agent's LLM
-            self.llm = self.agent_manager.get_current_agent().llm
-            self.agent_name = agent_name
+            # self.llm = self.agent_manager.get_current_agent().llm
+            self.agent = self.agent_manager.get_current_agent()
             self._notify("agent_changed", agent_name)
             return True, f"Switched to {agent_name} agent"
         else:
@@ -462,14 +448,15 @@ class MessageHandler(Observable):
             )
 
     def _pre_tool_transfer(self):
-        transfered_agent = self.agent_manager.get_current_agent()
-        if transfered_agent:
-            transfered_agent.history = MessageTransformer.standardize_messages(
-                self.messages,
-                self.llm.provider_name,
-                transfered_agent.name,
-            )
-        return transfered_agent
+        pass
+        # transfered_agent = self.agent_manager.get_current_agent()
+        # if transfered_agent:
+        #     transfered_agent.history = MessageTransformer.standardize_messages(
+        #         self.messages,
+        #         self.agent.llm.provider_name,
+        #         transfered_agent.name,
+        #     )
+        # return transfered_agent
 
     def _post_tool_transfer(self, tool_result, owner_agent):
         if (
@@ -480,20 +467,20 @@ class MessageHandler(Observable):
             self.persistent_service.append_conversation_messages(
                 self.current_conversation_id,
                 MessageTransformer.standardize_messages(
-                    self.messages[self.last_assisstant_response_idx :],
-                    self.llm.provider_name,
+                    self.agent.history[self.last_assisstant_response_idx :],
+                    self.agent.get_provider(),
                     owner_agent.name,
                 ),
             )
 
         # Update llm service when transfer agent
-        self.llm = self.agent_manager.get_current_agent().llm
-        self.agent_name = self.agent_manager.get_current_agent().name
+        self.agent = self.agent_manager.get_current_agent()
+        # self.llm = self.agent_manager.get_current_agent().llm
 
-        self.messages = MessageTransformer.convert_messages(
-            self.agent_manager.get_current_agent().history,
-            self.llm.provider_name,
-        )
+        # self.agent.history = MessageTransformer.convert_messages(
+        #     self.agent_manager.get_current_agent().history,
+        #     self.agent.llm.provider_name,
+        # )
 
         self._messages_append(
             {
@@ -510,14 +497,14 @@ class MessageHandler(Observable):
                 [
                     {
                         "role": "user",
-                        "agent": self.agent_name,
+                        "agent": self.agent.name,
                         "content": [{"type": "text", "text": tool_result}],
                     }
                 ],
             )
-        self.last_assisstant_response_idx = len(self.messages)
+        self.last_assisstant_response_idx = len(self.agent.history)
 
-        self._notify("agent_changed_by_transfer", self.agent_name)
+        self._notify("agent_changed_by_transfer", self.agent.name)
 
     def get_assistant_response(
         self, input_tokens=0, output_tokens=0
@@ -534,84 +521,64 @@ class MessageHandler(Observable):
         thinking_signature = ""  # Store the signature
         start_thinking = False
         end_thinking = False
-        context_data_processed = False
         try:
-            with self.llm.stream_assistant_response(self.messages) as stream:
-                for chunk in stream:
-                    # Process the chunk using the LLM service
-                    (
-                        assistant_response,
-                        tool_uses,
-                        chunk_input_tokens,
-                        chunk_output_tokens,
-                        chunk_text,
-                        thinking_chunk,
-                    ) = self.llm.process_stream_chunk(
-                        chunk, assistant_response, tool_uses
-                    )
+            for (
+                assistant_response,
+                chunk_text,
+                thinking_chunk,
+            ) in self.agent.process_messages():
+                # Accumulate thinking content if available
+                if thinking_chunk:
+                    think_text_chunk, signature = thinking_chunk
 
-                    clean_response = assistant_response
-                    # context_data, clean_response = self.llm.parse_user_context_summary(
-                    #     assistant_response
-                    # )
-                    # if context_data and not context_data_processed:
-                    #     # self._notify("debug_requested", context_data)
-                    #     self.persistent_service.store_user_context(context_data)
-                    #     context_data_processed = True
-                    #     # self.messages.append(
-                    #     #     self.llm.format_assistant_message(
-                    #     #         f"""Need to tailor response bases on this <user_context_summary>{json.dumps(context_data)}</user_context_summary>"""
-                    #     #     )
-                    #     # )
-
-                    # Update token counts
-                    if chunk_input_tokens > 0:
-                        input_tokens = chunk_input_tokens
-                    if chunk_output_tokens > 0:
-                        output_tokens = chunk_output_tokens
-
-                    # Accumulate thinking content if available
-                    if thinking_chunk:
-                        think_text_chunk, signature = thinking_chunk
-
-                        if not start_thinking:
-                            # Notify about thinking process
-                            self._notify("thinking_started", self.agent_name)
-                            if not self.llm.is_stream:
-                                # Delays it a bit when using without stream
-                                time.sleep(0.5)
-                            start_thinking = True
-                        if think_text_chunk:
-                            thinking_content += think_text_chunk
-                            self._notify("thinking_chunk", think_text_chunk)
-                        if signature:
-                            thinking_signature += signature
-                    if chunk_text:
-                        # End thinking when chunk_text start
-                        if not end_thinking and start_thinking:
-                            self._notify("thinking_completed")
-                            end_thinking = True
-                        # Notify about response progress
-                        if not self.llm.is_stream:
+                    if not start_thinking:
+                        # Notify about thinking process
+                        self._notify("thinking_started", self.agent.name)
+                        if not self.agent.is_streaming():
                             # Delays it a bit when using without stream
                             time.sleep(0.5)
-                        self._notify("response_chunk", (chunk_text, clean_response))
+                        start_thinking = True
+                    if think_text_chunk:
+                        thinking_content += think_text_chunk
+                        self._notify("thinking_chunk", think_text_chunk)
+                    if signature:
+                        thinking_signature += signature
+                if chunk_text:
+                    # End thinking when chunk_text start
+                    if not end_thinking and start_thinking:
+                        self._notify("thinking_completed")
+                        end_thinking = True
+                    # Notify about response progress
+                    if not self.agent.is_streaming():
+                        # Delays it a bit when using without stream
+                        time.sleep(0.5)
+                    self._notify("response_chunk", (chunk_text, assistant_response))
 
+            tool_uses, input_tokens_in_turn, output_tokens_in_turn = (
+                self.agent.get_process_result()
+            )
+            input_tokens += input_tokens_in_turn
+            output_tokens_in_turn += output_tokens_in_turn
             # Handle tool use if needed
             if tool_uses and len(tool_uses) > 0:
                 # Add thinking content as a separate message if available
                 thinking_data = (
                     (thinking_content, thinking_signature) if thinking_content else None
                 )
-                thinking_message = self.llm.format_thinking_message(thinking_data)
+                thinking_message = self.agent.format_message(
+                    MessageType.Thinking, {"thinking": thinking_data}
+                )
                 if thinking_message:
                     self._messages_append(thinking_message)
                     self._notify("thinking_message_added", thinking_message)
 
                 # Format assistant message with the response and tool uses
-                assistant_message = self.llm.format_assistant_message(
-                    assistant_response,
-                    [t for t in tool_uses if t["name"] != "transfer"],
+                assistant_message = self.agent.format_message(
+                    MessageType.Assistant,
+                    {
+                        "message": assistant_response,
+                        "tool_uses": [t for t in tool_uses if t["name"] != "transfer"],
+                    },
                 )
                 self._messages_append(assistant_message)
                 self._notify("assistant_message_added", assistant_message)
@@ -626,7 +593,7 @@ class MessageHandler(Observable):
                         if tool_use["name"] == "transfer":
                             owner_agent = self._pre_tool_transfer()
 
-                        tool_result = self.llm.execute_tool(
+                        tool_result = self.agent.execute_tool_call(
                             tool_use["name"], tool_use["input"]
                         )
 
@@ -634,8 +601,9 @@ class MessageHandler(Observable):
                             self._post_tool_transfer(tool_result, owner_agent)
 
                         else:
-                            tool_result_message = self.llm.format_tool_result(
-                                tool_use, tool_result
+                            tool_result_message = self.agent.format_message(
+                                MessageType.ToolResult,
+                                {"tool_use": tool_use, "tool_result": tool_result},
                             )
                             self._messages_append(tool_result_message)
                             self._notify(
@@ -651,7 +619,7 @@ class MessageHandler(Observable):
                         # transfered_agent.history.extend(
                         #     MessageTransformer.standardize_messages(
                         #         [tool_result_message],
-                        #         self.llm.provider_name,
+                        #         self.agent.llm.provider_name,
                         #         transfered_agent.name,
                         #     )
                         # )
@@ -660,14 +628,22 @@ class MessageHandler(Observable):
                         if tool_use["name"] == "transfer":
                             # if transfer failed we should add the tool_call message back for record
                             self._messages_append(
-                                self.llm.format_assistant_message(
-                                    assistant_response,
-                                    [tool_use],
+                                self.agent.format_message(
+                                    MessageType.Assistant,
+                                    {
+                                        "message": assistant_response,
+                                        "tool_uses": [tool_use],
+                                    },
                                 )
                             )
 
-                        error_message = self.llm.format_tool_result(
-                            tool_use, str(e), is_error=True
+                        error_message = self.agent.format_message(
+                            MessageType.ToolResult,
+                            {
+                                "tool_use": tool_use,
+                                "tool_result": str(e),
+                                "is_error": True,
+                            },
                         )
                         self._messages_append(error_message)
                         self._notify(
@@ -683,7 +659,7 @@ class MessageHandler(Observable):
 
             if thinking_content:
                 # self._notify("thinking_completed")
-                self._notify("agent_continue", self.agent_name)
+                self._notify("agent_continue", self.agent.name)
 
             # Final assistant message
             self._notify("response_completed", assistant_response)
@@ -694,7 +670,9 @@ class MessageHandler(Observable):
             # Add assistant response to messages
             if assistant_response:
                 self._messages_append(
-                    self.llm.format_assistant_message(assistant_response)
+                    self.agent.format_message(
+                        MessageType.Assistant, {"message": assistant_response}
+                    )
                 )
 
             if self.current_user_input and self.current_user_input_idx >= 0:
@@ -732,11 +710,11 @@ class MessageHandler(Observable):
             if self.current_conversation_id and self.last_assisstant_response_idx >= 0:
                 try:
                     # Get all messages added since the user input for this turn
-                    current_provider = self.llm.provider_name
+                    current_provider = self.agent.get_provider()
                     messages_for_this_turn = MessageTransformer.standardize_messages(
-                        self.messages[self.last_assisstant_response_idx :],
+                        self.agent.history[self.last_assisstant_response_idx :],
                         current_provider,
-                        self.agent_name,
+                        self.agent.name,
                     )
                     if (
                         messages_for_this_turn
@@ -751,7 +729,7 @@ class MessageHandler(Observable):
                     error_message = f"Failed to save conversation turn to {self.current_conversation_id}: {str(e)}"
                     print(f"ERROR: {error_message}")
                     self._notify("error", {"message": error_message})
-            self.last_assisstant_response_idx = len(self.messages)
+            self.last_assisstant_response_idx = len(self.agent.history)
             # --- End of Persistence Logic ---
 
             return assistant_response, input_tokens, output_tokens
@@ -764,7 +742,7 @@ class MessageHandler(Observable):
                 {
                     "message": error_message,
                     "traceback": traceback_str,
-                    "messages": self.messages,
+                    "messages": self.agent.history,
                 },
             )
             return None, 0, 0
@@ -786,18 +764,27 @@ class MessageHandler(Observable):
             history = self.persistent_service.get_conversation_history(conversation_id)
             if history:
                 self.current_conversation_id = conversation_id
-                current_provider = self.llm.provider_name
-                self.messages = MessageTransformer.convert_messages(
-                    [msg for msg in history if msg.get("agent", "") == self.agent_name],
-                    current_provider,
-                )
-                self.last_assisstant_response_idx = len(self.messages)
+                last_agent_name = history[-1].get("agent", "")
+                if last_agent_name and self.agent_manager.select_agent(last_agent_name):
+                    self.agent = self.agent_manager.get_current_agent()
+                    self._notify("agent_changed", last_agent_name)
+                current_provider = self.agent.get_provider()
+                # self.messages = MessageTransformer.convert_messages(
+                #     [msg for msg in history if msg.get("agent", "") == self.agent.name],
+                #     current_provider,
+                # )
                 self.streamline_messages = history
                 for message in self.streamline_messages:
                     if message.get("agent", ""):
                         agent = self.agent_manager.get_agent(message.get("agent", ""))
                         if agent:
-                            agent.history.append(message)
+                            agent.history.extend(
+                                MessageTransformer.convert_messages(
+                                    [message], current_provider
+                                )
+                            )
+
+                self.last_assisstant_response_idx = len(self.agent.history)
 
                 for i, message in enumerate(self.streamline_messages):
                     role = message.get("role")
