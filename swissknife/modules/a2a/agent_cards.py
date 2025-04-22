@@ -76,7 +76,7 @@ def create_agent_card(agent: LocalAgent, base_url: str) -> AgentCard:
     # Create provider info
     provider = AgentProvider(
         organization="SwissKnife",
-        url="https://github.com/yourusername/swissknife",  # Update with actual URL
+        url="https://github.com/daltonnyx/swissknife",  # Update with actual URL
     )
 
     return AgentCard(
