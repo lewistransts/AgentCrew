@@ -25,7 +25,7 @@ from PySide6.QtWidgets import QApplication
 
 @click.group()
 def cli():
-    """URL to Markdown conversion tool with LLM integration"""
+    """SwissKnife - AI Assistant and Agent Framework"""
     pass
 
 
