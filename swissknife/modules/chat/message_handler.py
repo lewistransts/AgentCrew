@@ -447,40 +447,19 @@ class MessageHandler(Observable):
                 f"Unknown agent: {agent_name}. Available agents: {available_agents}",
             )
 
-    def _pre_tool_transfer(self):
-        pass
-        # transfered_agent = self.agent_manager.get_current_agent()
-        # if transfered_agent:
-        #     transfered_agent.history = MessageTransformer.standardize_messages(
-        #         self.messages,
-        #         self.agent.llm.provider_name,
-        #         transfered_agent.name,
-        #     )
-        # return transfered_agent
-
-    def _post_tool_transfer(self, tool_result, owner_agent):
-        if (
-            owner_agent
-            and self.current_conversation_id
-            and self.last_assisstant_response_idx >= 0
-        ):
+    def _post_tool_transfer(self, tool_result):
+        if self.current_conversation_id and self.last_assisstant_response_idx >= 0:
             self.persistent_service.append_conversation_messages(
                 self.current_conversation_id,
                 MessageTransformer.standardize_messages(
                     self.agent.history[self.last_assisstant_response_idx :],
                     self.agent.get_provider(),
-                    owner_agent.name,
+                    self.agent.name,
                 ),
             )
 
         # Update llm service when transfer agent
         self.agent = self.agent_manager.get_current_agent()
-        # self.llm = self.agent_manager.get_current_agent().llm
-
-        # self.agent.history = MessageTransformer.convert_messages(
-        #     self.agent_manager.get_current_agent().history,
-        #     self.agent.llm.provider_name,
-        # )
 
         self._messages_append(
             {
@@ -589,16 +568,12 @@ class MessageHandler(Observable):
                     self._notify("tool_use", tool_use)
 
                     try:
-                        owner_agent = None
-                        if tool_use["name"] == "transfer":
-                            owner_agent = self._pre_tool_transfer()
-
                         tool_result = self.agent.execute_tool_call(
                             tool_use["name"], tool_use["input"]
                         )
 
                         if tool_use["name"] == "transfer":
-                            self._post_tool_transfer(tool_result, owner_agent)
+                            self._post_tool_transfer(tool_result)
 
                         else:
                             tool_result_message = self.agent.format_message(
@@ -614,15 +589,6 @@ class MessageHandler(Observable):
                                     "message": tool_result_message,
                                 },
                             )
-
-                        # if transfered_agent:
-                        # transfered_agent.history.extend(
-                        #     MessageTransformer.standardize_messages(
-                        #         [tool_result_message],
-                        #         self.agent.llm.provider_name,
-                        #         transfered_agent.name,
-                        #     )
-                        # )
 
                     except Exception as e:
                         if tool_use["name"] == "transfer":

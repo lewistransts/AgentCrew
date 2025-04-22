@@ -853,23 +853,24 @@ class ChatWindow(QMainWindow, Observer):
 
     def browse_file(self):
         """Open file dialog and process selected file."""
-        file_path, _ = QFileDialog.getOpenFileName(
+        file_paths, _ = QFileDialog.getOpenFileNames(
             self,
             "Select File",
             "",
             "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf);;Word Files (*.docx)",
         )
 
-        if file_path:
-            # Disable input controls while processing file
-            self.set_input_controls_enabled(False)
+        for file_path in file_paths:
+            if file_path and os.path.isfile(file_path):
+                # Disable input controls while processing file
+                self.set_input_controls_enabled(False)
 
-            # Process the file using the /file command
-            file_command = f"/file {file_path}"
-            self.display_status_message(f"Processing file: {file_path}")
+                # Process the file using the /file command
+                file_command = f"/file {file_path}"
+                self.display_status_message(f"Processing file: {file_path}")
 
-            # Send the file command to the worker thread
-            self.llm_worker.process_request.emit(file_command)
+                # Send the file command to the worker thread
+                self.llm_worker.process_request.emit(file_command)
 
     def show_context_menu(self, position):
         """Show context menu with options."""
