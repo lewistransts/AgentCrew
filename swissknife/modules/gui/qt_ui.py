@@ -899,8 +899,6 @@ class ChatWindow(QMainWindow, Observer):
         turn_number = None
 
         for i, turn in enumerate(self.message_handler.conversation_turns):
-            print(turn.message_index)
-            print(message_bubble.message_index)
             if turn.message_index == message_bubble.message_index:
                 turn_number = i + 1  # Turn numbers are 1-indexed
                 break

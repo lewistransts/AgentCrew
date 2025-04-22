@@ -546,7 +546,6 @@ class MessageTransformer:
 
             # Handle content
             if "content" in msg:
-                print(msg["content"])
                 if (
                     isinstance(msg["content"], List)
                     and len(msg["content"]) > 0
@@ -588,6 +587,5 @@ class MessageTransformer:
                 if msg["tool_result"].get("is_error", False):
                     groq_msg["content"] = f"ERROR: {groq_msg['content']}"
 
-            print(groq_msg)
             groq_messages.append(groq_msg)
         return groq_messages

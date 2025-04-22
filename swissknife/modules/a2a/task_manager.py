@@ -84,7 +84,6 @@ class AgentTaskManager:
             task: The task object to update
         """
         try:
-            print(message)
             # Add message to agent history
             agent.history.append(message)
 

@@ -171,7 +171,6 @@ class A2AServer:
 
                     async def event_generator():
                         async for item in result_stream:
-                            print(item)
                             yield {
                                 "data": json.dumps(item.model_dump(exclude_none=True))
                             }
