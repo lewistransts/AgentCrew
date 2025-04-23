@@ -57,8 +57,6 @@ class ServiceManager:
         if provider not in self.services:
             try:
                 self.services[provider] = self.service_classes[provider]()
-                # Register tools with the new service
-                self.services[provider].register_all_tools()
             except Exception as e:
                 raise RuntimeError(f"Failed to initialize {provider} service: {str(e)}")
 
