@@ -394,6 +394,7 @@ class AgentsConfigTab(QWidget):
             self.system_prompt_input.clear()
             for checkbox in self.tool_checkboxes.values():
                 checkbox.setChecked(False)
+            self.save_all_agents()
 
     def save_agent(self):
         """Save the current agent configuration."""
