@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QSplitter,
 )
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QDoubleValidator
 
 from swissknife.modules.config.config_management import ConfigManagement
 from swissknife.modules.agents.manager import AgentManager
@@ -244,6 +245,14 @@ class AgentsConfigTab(QWidget):
         self.description_input = QLineEdit()
         form_layout.addRow("Description:", self.description_input)
 
+        # Temperature field
+        self.temperature_input = QLineEdit()
+        self.temperature_input.setValidator(
+            QDoubleValidator(0.0, 2.0, 1)
+        )  # Range 0-2, 1 decimal
+        self.temperature_input.setPlaceholderText("0.0 - 2.0")
+        form_layout.addRow("Temperature:", self.temperature_input)
+
         # Tools selection
         tools_group = QGroupBox("Tools")
         tools_layout = QVBoxLayout()
@@ -315,6 +324,7 @@ class AgentsConfigTab(QWidget):
         # Populate form
         self.name_input.setText(agent_data.get("name", ""))
         self.description_input.setText(agent_data.get("description", ""))
+        self.temperature_input.setText(str(agent_data.get("temperature", "0.5")))
 
         # Set tool checkboxes
         tools = agent_data.get("tools", [])
@@ -328,6 +338,7 @@ class AgentsConfigTab(QWidget):
         """Enable or disable the editor form."""
         self.name_input.setEnabled(enabled)
         self.description_input.setEnabled(enabled)
+        self.temperature_input.setEnabled(enabled)
         self.system_prompt_input.setEnabled(enabled)
         self.save_btn.setEnabled(enabled)
 
@@ -340,6 +351,7 @@ class AgentsConfigTab(QWidget):
         new_agent = {
             "name": "New Agent",
             "description": "Description for the new agent",
+            "temperature": 0.5,
             "tools": ["memory", "clipboard"],
             "system_prompt": "You are a helpful assistant. Today is {current_date}.",
         }
@@ -394,6 +406,13 @@ class AgentsConfigTab(QWidget):
         description = self.description_input.text().strip()
         system_prompt = self.system_prompt_input.toPlainText().strip()
 
+        # Get and validate temperature
+        try:
+            temperature = float(self.temperature_input.text().strip() or "0.5")
+            temperature = max(0.0, min(2.0, temperature))  # Clamp between 0 and 2
+        except ValueError:
+            temperature = 0.5  # Default value if invalid
+
         # Validate
         if not name:
             QMessageBox.warning(self, "Validation Error", "Agent name cannot be empty.")
@@ -410,6 +429,7 @@ class AgentsConfigTab(QWidget):
         agent_data = {
             "name": name,
             "description": description,
+            "temperature": temperature,
             "tools": tools,
             "system_prompt": system_prompt,
         }

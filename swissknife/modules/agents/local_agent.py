@@ -214,8 +214,7 @@ class LocalAgent(BaseAgent):
             )
 
         self.llm.set_system_prompt(system_prompt)
-        if self.temperature:
-            self.llm.temperature = self.temperature
+        self.llm.temperature = self.temperature or 0.4
         self.is_active = True
         return True
 
@@ -362,8 +361,6 @@ class LocalAgent(BaseAgent):
 
         # Update the LLM service
         self.llm = new_llm_service
-        if self.temperature:
-            self.llm.temperature = self.temperature
 
         # Reactivate with the new LLM if it was active before
         if was_active:
