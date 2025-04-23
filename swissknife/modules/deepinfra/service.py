@@ -24,6 +24,7 @@ class DeepInfraService(OpenAIService):
         self.current_output_tokens = 0
         self.temperature = 0.4
         self._is_stream = False
+        print("Initialized DeepInfra Service")
 
     def format_tool_result(
         self, tool_use: Dict, tool_result: Any, is_error: bool = False

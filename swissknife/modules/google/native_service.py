@@ -89,6 +89,7 @@ class GoogleAINativeService(BaseLLMService):
         self._provider_name = "google"
         self.system_prompt = ""
         self.temperature = 0.4
+        print("Initialized Google Service")
 
     def set_think(self, budget_tokens) -> bool:
         """

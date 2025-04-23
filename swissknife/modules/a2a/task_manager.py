@@ -6,6 +6,7 @@ import asyncio
 from datetime import datetime
 from typing import Dict, AsyncIterable, Optional, Any
 from swissknife.modules.agents import AgentManager, LocalAgent
+from swissknife.modules.agents.base import MessageType
 from .types import (
     JSONRPCError,
     Task,
@@ -55,6 +56,7 @@ class AgentTaskManager:
                 ),
             )
 
+        agent.activate()
         # Convert A2A message to SwissKnife format
         message = convert_a2a_message_to_swissknife(request.params.message)
 
@@ -90,53 +92,124 @@ class AgentTaskManager:
             # # Select the agent
             # self.agent_manager.select_agent(self.agent_name)
 
-            # Process with agent
-            response_generator = agent.process_messages()
-
-            # Create artifacts from response
             artifacts = []
-            current_response = ""
 
-            for response_chunk, chunk_text, thinking_chunk in response_generator:
-                # Update current response
-                if chunk_text:
-                    current_response = response_chunk
+            async def _process_task():
+                # Process with agent
+                response_generator = agent.process_messages()
 
-                # Update task status
-                task.status.state = TaskState.WORKING
-                task.status.timestamp = datetime.now()
+                # Create artifacts from response
+                current_response = ""
+                response_message = ""
+                thinking_content = ""
+                thinking_signature = ""
+                print(agent.history)
 
-                # If this is a streaming task, send updates
-                if task.id in self.streaming_tasks:
-                    queue = self.streaming_tasks[task.id]
-
-                    # Send thinking update if available
-                    if thinking_chunk:
-                        await queue.put(
-                            TaskStatusUpdateEvent(
-                                id=task.id,
-                                status=TaskStatus(
-                                    state=TaskState.WORKING,
-                                    message=convert_swissknife_message_to_a2a(
-                                        {"role": "agent", "content": thinking_chunk}
-                                    ),
-                                ),
-                                final=False,
-                            )
-                        )
-
-                    # Send chunk update
+                for response_message, chunk_text, thinking_chunk in response_generator:
+                    # Update current response
                     if chunk_text:
-                        artifact = convert_swissknife_response_to_a2a(current_response)
-                        await queue.put(
-                            TaskArtifactUpdateEvent(id=task.id, artifact=artifact)
-                        )
+                        current_response = response_message
 
-            # Get final result
-            tool_uses, input_tokens, output_tokens = agent.get_process_result()
+                    # Update task status
+                    task.status.state = TaskState.WORKING
+                    task.status.timestamp = datetime.now()
+
+                    # If this is a streaming task, send updates
+                    if task.id in self.streaming_tasks:
+                        queue = self.streaming_tasks[task.id]
+
+                        # Send thinking update if available
+                        if thinking_chunk:
+                            think_text_chunk, signature = thinking_chunk
+                            if think_text_chunk:
+                                thinking_content += think_text_chunk
+                                await queue.put(
+                                    TaskStatusUpdateEvent(
+                                        id=task.id,
+                                        status=TaskStatus(
+                                            state=TaskState.WORKING,
+                                            message=convert_swissknife_message_to_a2a(
+                                                {
+                                                    "role": "agent",
+                                                    "content": think_text_chunk,
+                                                }
+                                            ),
+                                        ),
+                                        final=False,
+                                    )
+                                )
+                            if signature:
+                                thinking_signature += signature
+
+                        # Send chunk update
+                        if chunk_text:
+                            artifact = convert_swissknife_response_to_a2a(
+                                current_response
+                            )
+                            await queue.put(
+                                TaskArtifactUpdateEvent(id=task.id, artifact=artifact)
+                            )
+
+                # Get final result
+                tool_uses, input_tokens, output_tokens = agent.get_process_result()
+                if tool_uses and len(tool_uses) > 0:
+                    # Add thinking content as a separate message if available
+                    thinking_data = (
+                        (thinking_content, thinking_signature)
+                        if thinking_content
+                        else None
+                    )
+                    thinking_message = agent.format_message(
+                        MessageType.Thinking, {"thinking": thinking_data}
+                    )
+                    if thinking_message:
+                        agent.history.append(thinking_message)
+
+                    # Format assistant message with the response and tool uses
+                    assistant_message = agent.format_message(
+                        MessageType.Assistant,
+                        {
+                            "message": response_message,
+                            "tool_uses": [
+                                t for t in tool_uses if t["name"] != "transfer"
+                            ],
+                        },
+                    )
+                    if assistant_message:
+                        agent.history.append(assistant_message)
+
+                    # Process each tool use
+                    for tool_use in tool_uses:
+                        try:
+                            tool_result = agent.execute_tool_call(
+                                tool_use["name"], tool_use["input"]
+                            )
+
+                            tool_result_message = agent.format_message(
+                                MessageType.ToolResult,
+                                {"tool_use": tool_use, "tool_result": tool_result},
+                            )
+                            if tool_result_message:
+                                agent.history.append(tool_result_message)
+
+                        except Exception as e:
+                            error_message = agent.format_message(
+                                MessageType.ToolResult,
+                                {
+                                    "tool_use": tool_use,
+                                    "tool_result": str(e),
+                                    "is_error": True,
+                                },
+                            )
+                            if error_message:
+                                agent.history.append(error_message)
+                    await _process_task()
+                return current_response
+
+            current_response = await _process_task()
 
             # Create artifact from final response
-            artifact = convert_swissknife_response_to_a2a(current_response, tool_uses)
+            artifact = convert_swissknife_response_to_a2a(current_response)
             artifacts.append(artifact)
 
             # Update task with final state

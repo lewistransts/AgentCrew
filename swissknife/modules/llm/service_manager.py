@@ -35,6 +35,9 @@ class ServiceManager:
             "deepinfra": DeepInfraService,
         }
 
+    def initialize_standalone_service(self, provider: str):
+        return self.service_classes[provider]()
+
     def get_service(self, provider: str) -> BaseLLMService:
         """
         Get or create a service instance for the specified provider.

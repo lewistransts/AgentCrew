@@ -38,6 +38,7 @@ class GroqService(BaseLLMService):
         self.system_prompt = ""
         self.temperature = 0.4
         self._is_stream = False
+        print("Initialized Groq Service")
 
     def set_think(self, budget_tokens) -> bool:
         """

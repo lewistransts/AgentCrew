@@ -33,6 +33,7 @@ class OpenAIService(BaseLLMService):
         self.system_prompt = ""
         self.temperature = 0.4
         self.reasoning_effort = None
+        print("Initialized OpenAI Service")
 
     def set_think(self, budget_tokens) -> bool:
         """

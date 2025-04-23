@@ -85,7 +85,7 @@ def get_url(url: str, output_file: str, summarize: bool, explain: bool):
 def setup_services(provider):
     # Initialize the model registry and service manager
     registry = ModelRegistry.get_instance()
-    manager = ServiceManager.get_instance()
+    llm_manager = ServiceManager.get_instance()
 
     # Set the current model based on provider
     models = registry.get_models_by_provider(provider)
@@ -95,7 +95,7 @@ def setup_services(provider):
         registry.set_current_model(default_model.id)
 
     # Get the LLM service from the manager
-    llm_service = manager.get_service(provider)
+    llm_service = llm_manager.get_service(provider)
 
     # Initialize services
     memory_service = MemoryService()
@@ -144,7 +144,7 @@ def setup_services(provider):
     return services
 
 
-def setup_agents(services, config_path):
+def setup_agents(services, config_path, standalone_provider=None):
     """
     Set up the agent system with specialized agents.
 
@@ -153,6 +153,7 @@ def setup_agents(services, config_path):
     """
     # Get the singleton instance of agent manager
     agent_manager = AgentManager.get_instance()
+    llm_manager = ServiceManager.get_instance()
 
     # Add agent_manager to services for tool registration
     services["agent_manager"] = agent_manager
@@ -193,9 +194,10 @@ tools = ["memory", "clipboard", "web_search", "code_analysis"]
     agent_definitions = AgentManager.load_agents_from_config(config_path)
     first_agent_name = None
     for agent_def in agent_definitions:
-        llm_service = services["llm"]
         if not first_agent_name:
             first_agent_name = agent_def["name"]
+        if standalone_provider:
+            llm_service = llm_manager.initialize_standalone_service(standalone_provider)
         agent = LocalAgent(
             name=agent_def["name"],
             description=agent_def["description"],
@@ -349,7 +351,10 @@ def chat(provider, agent_config, mcp_config, console):
     help="LLM provider to use (claude, groq, openai, google, or deepinfra)",
 )
 @click.option("--agent-config", default=None, help="Path to agent configuration file")
-def a2a_server(host, port, base_url, provider, agent_config):
+@click.option(
+    "--mcp-config", default=None, help="Path to the mcp servers configuration file."
+)
+def a2a_server(host, port, base_url, provider, agent_config, mcp_config):
     """Start an A2A server exposing all SwissKnife agents"""
     try:
         # Set default base URL if not provided
@@ -371,10 +376,13 @@ def a2a_server(host, port, base_url, provider, agent_config):
                 raise ValueError(
                     "No LLM API key found. Please set either ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, or DEEPINFRA_API_KEY"
                 )
+
+        if mcp_config:
+            os.environ["MCP_CONFIG_PATH"] = mcp_config
         services = setup_services(provider)
 
         # Set up agents from configuration
-        setup_agents(services, agent_config)
+        setup_agents(services, agent_config, provider)
 
         # Get agent manager
         agent_manager = AgentManager.get_instance()

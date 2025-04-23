@@ -31,6 +31,7 @@ class AnthropicService(BaseLLMService):
         self._provider_name = "claude"
         self.temperature = 0.4
         self.system_prompt = ""
+        print("Initialized Anthropic Service")
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         current_model = ModelRegistry.get_instance().get_model(self.model)
@@ -455,7 +456,7 @@ class AnthropicService(BaseLLMService):
             "system": self.system_prompt,
             "messages": messages,
             "top_p": 0.95,
-            "temperature": self.temperature if self.temperature <= 1 else 1,
+            "temperature": self.temperature / 2,  # agent temperature scales at 2,
         }
 
         # Add thinking configuration if enabled
