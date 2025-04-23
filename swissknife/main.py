@@ -191,17 +191,18 @@ tools = ["memory", "clipboard", "web_search", "code_analysis"]
             click.echo(f"Created default agent configuration at {config_path}")
     # Load agents from configuration
     agent_definitions = AgentManager.load_agents_from_config(config_path)
-    agent_name = None
+    first_agent_name = None
     for agent_def in agent_definitions:
         llm_service = services["llm"]
-        if not agent_name:
-            agent_name = agent_def["name"]
+        if not first_agent_name:
+            first_agent_name = agent_def["name"]
         agent = LocalAgent(
             name=agent_def["name"],
             description=agent_def["description"],
             llm_service=llm_service,
             services=services,
             tools=agent_def["tools"],
+            temperature=agent_def.get("temperature", None),
         )
         agent.set_system_prompt(
             agent_def["system_prompt"].replace(
@@ -215,11 +216,11 @@ tools = ["memory", "clipboard", "web_search", "code_analysis"]
     mcp_register()
 
     # Select the initial agent if specified
-    if agent_name:
-        if not agent_manager.select_agent(agent_name):
+    if first_agent_name:
+        if not agent_manager.select_agent(first_agent_name):
             available_agents = ", ".join(agent_manager.agents.keys())
             click.echo(
-                f"⚠️ Unknown agent: {agent_name}. Using default agent. Available agents: {available_agents}"
+                f"⚠️ Unknown agent: {first_agent_name}. Using default agent. Available agents: {available_agents}"
             )
 
 

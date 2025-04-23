@@ -14,6 +14,7 @@ class LocalAgent(BaseAgent):
         llm_service: BaseLLMService,
         services: Dict[str, Any],
         tools: List[str],
+        temperature: Optional[float] = None,
     ):
         """
         Initialize a new agent.
@@ -28,6 +29,7 @@ class LocalAgent(BaseAgent):
         # self.name = name
         # self.description = description
         self.llm = llm_service
+        self.temperature = temperature
         self.services = services
         self.tools: List[str] = tools  # List of tool names that the agent needs
         self.system_prompt = None
@@ -212,6 +214,8 @@ class LocalAgent(BaseAgent):
             )
 
         self.llm.set_system_prompt(system_prompt)
+        if self.temperature:
+            self.llm.temperature = self.temperature
         self.is_active = True
         return True
 
@@ -358,6 +362,8 @@ class LocalAgent(BaseAgent):
 
         # Update the LLM service
         self.llm = new_llm_service
+        if self.temperature:
+            self.llm.temperature = self.temperature
 
         # Reactivate with the new LLM if it was active before
         if was_active:
