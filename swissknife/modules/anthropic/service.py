@@ -455,7 +455,7 @@ class AnthropicService(BaseLLMService):
             "system": self.system_prompt,
             "messages": messages,
             "top_p": 0.95,
-            "temperature": self.temperature,
+            "temperature": self.temperature if self.temperature <= 1 else 1,
         }
 
         # Add thinking configuration if enabled

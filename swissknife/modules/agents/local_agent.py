@@ -214,7 +214,7 @@ class LocalAgent(BaseAgent):
             )
 
         self.llm.set_system_prompt(system_prompt)
-        self.llm.temperature = self.temperature or 0.4
+        self.llm.temperature = self.temperature if self.temperature is not None else 0.4
         self.is_active = True
         return True
 

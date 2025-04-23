@@ -501,7 +501,7 @@ class ContextPersistenceService:
                 f"Invalid new_messages format for {conversation_id} (must be a list of dicts). Aborting append."
             )
 
-        if not new_messages:
+        if not new_messages and not force:
             # print(
             #     f"INFO: No new messages provided for {conversation_id}. Nothing to append."
             # )
