@@ -59,20 +59,6 @@ class BaseLLMService(ABC):
         """Get the provider name for this service."""
         return getattr(self, "_is_stream", True)
 
-    def register_all_tools(self):
-        """Register all available tools with this LLM service"""
-        registry = ToolRegistry.get_instance()
-        tool_definitions = registry.get_tool_definitions(self.provider_name)
-        registered_tool = []
-        for tool_def in tool_definitions:
-            tool_name = self._extract_tool_name(tool_def)
-            handler = registry.get_tool_handler(tool_name)
-            if handler:
-                self.register_tool(tool_def, handler)
-                registered_tool.append(tool_name)
-        if len(registered_tool) > 0:
-            print(f"🔧 Available tools: {', '.join(registered_tool)}")
-
     def _extract_tool_name(self, tool_def):
         """Extract tool name from definition regardless of format"""
         if "name" in tool_def:
