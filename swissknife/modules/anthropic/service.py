@@ -29,6 +29,7 @@ class AnthropicService(BaseLLMService):
         self.thinking_budget = 0
         self.caching_blocks = 0
         self._provider_name = "claude"
+        self.temperature = 0.4
         self.system_prompt = ""
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
@@ -454,7 +455,7 @@ class AnthropicService(BaseLLMService):
             "system": self.system_prompt,
             "messages": messages,
             "top_p": 0.95,
-            "temperature": 0.6,
+            "temperature": self.temperature,
         }
 
         # Add thinking configuration if enabled

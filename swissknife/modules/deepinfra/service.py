@@ -22,6 +22,7 @@ class DeepInfraService(OpenAIService):
         self.current_input_tokens = 0
         self._provider_name = "deepinfra"
         self.current_output_tokens = 0
+        self.temperature = 0.4
         self._is_stream = False
 
     def format_tool_result(
@@ -60,7 +61,7 @@ class DeepInfraService(OpenAIService):
             # "stream_options": {"include_usage": True},
             "max_tokens": 8192,
         }
-        stream_params["temperature"] = 0.6
+        stream_params["temperature"] = self.temperature
         stream_params["extra_body"] = {"min_p": 0.1}
 
         # Add system message if provided

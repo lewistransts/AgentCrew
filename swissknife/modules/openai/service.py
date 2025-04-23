@@ -31,6 +31,7 @@ class OpenAIService(BaseLLMService):
         self.tool_handlers = {}  # Map tool names to handler functions
         self._provider_name = "openai"
         self.system_prompt = ""
+        self.temperature = 0.4
         self.reasoning_effort = None
 
     def set_think(self, budget_tokens) -> bool:
@@ -198,7 +199,7 @@ class OpenAIService(BaseLLMService):
             if self.reasoning_effort:
                 stream_params["reasoning_effort"] = self.reasoning_effort
         else:
-            stream_params["temperature"] = 0.6
+            stream_params["temperature"] = self.temperature
             stream_params["top_p"] = 0.95
 
         # Add system message if provided

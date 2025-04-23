@@ -36,6 +36,7 @@ class GroqService(BaseLLMService):
         self.current_input_tokens = 0
         self.current_output_tokens = 0
         self.system_prompt = ""
+        self.temperature = 0.4
         self._is_stream = False
 
     def set_think(self, budget_tokens) -> bool:
@@ -206,7 +207,7 @@ class GroqService(BaseLLMService):
             "model": self.model,
             "max_completion_tokens": 4096,
             "messages": messages,
-            "temperature": 0.6,
+            "temperature": 0.4,
             "top_p": 0.95,
         }
 

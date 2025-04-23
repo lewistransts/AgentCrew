@@ -88,6 +88,7 @@ class GoogleAINativeService(BaseLLMService):
         # Provider name and system prompt
         self._provider_name = "google"
         self.system_prompt = ""
+        self.temperature = 0.4
 
     def set_think(self, budget_tokens) -> bool:
         """
@@ -396,7 +397,7 @@ class GoogleAINativeService(BaseLLMService):
 
             # Create configuration with tools
             config = types.GenerateContentConfig(
-                temperature=0.6,
+                temperature=self.temperature,
                 top_p=0.95,
                 # max_output_tokens=8192,
             )
