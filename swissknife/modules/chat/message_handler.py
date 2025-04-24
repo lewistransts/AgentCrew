@@ -160,20 +160,6 @@ class MessageHandler(Observable):
         if not user_input.startswith("/"):
             self.history_manager.add_entry(user_input)
 
-        # if len(self.agent.history) == 0:
-        #     self.agent.history.append(
-        #         {
-        #             "role": "user",
-        #             "content": [
-        #                 {
-        #                     "type": "text",
-        #                     "text": f"""Use user_context_summary to tailor your response:
-        #                     <user_context_summary>{self.persistent_service.get_user_context_json(2, 3)}</user_context_summary>""",
-        #                 }
-        #             ],
-        #         }
-        #     )
-
         # Handle files that were loaded but not yet sent
         # Handle file command
         if user_input.startswith("/file "):
@@ -207,6 +193,20 @@ class MessageHandler(Observable):
                 )
                 return False, True
         else:
+            # RAG base on user query
+            if self.last_assisstant_response_idx == 0:
+                self.agent.history.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": f"""Use user_context_summary to tailor your response:
+                                {self.agent.llm.analyze_user_summary(self.memory_service.retrieve_memory(user_input, 10))}""",
+                            }
+                        ],
+                    }
+                )
             # Add regular text message
             self._messages_append(
                 {"role": "user", "content": [{"type": "text", "text": user_input}]}

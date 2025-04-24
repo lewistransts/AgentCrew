@@ -75,7 +75,9 @@ class BaseAgent(ABC):
         pass
 
     @abstractmethod
-    def process_messages(self) -> Generator:
+    def process_messages(
+        self, messages: Optional[List[Dict[str, Any]]] = None
+    ) -> Generator:
         """
         Process messages using this agent.
 

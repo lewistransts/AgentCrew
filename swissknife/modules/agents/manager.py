@@ -281,9 +281,9 @@ class AgentManager:
 
         transfer_prompt = f"""<Agents>
   <memory_rules>
-    - Agents share same persistent memory space.
+    - Agents have same persistent memory space.
     - Memory is the conversations of all agents in last month.
-    - Priotize using `retrieve_memory` tool when available if task requires more context from old conversation
+    - Priotize using `retrieve_memory` tool when available if task requires more context from old conversation.
   </memory_rules>
   <agent_transfer_rules>
     - You must transfer to another specialized agent in <other_agents> tags when task is not in your specialized and continue the conversation.

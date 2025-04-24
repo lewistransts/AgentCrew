@@ -75,33 +75,49 @@ class MemoryService:
         conversation_text = f"Date: {datetime.datetime.today().strftime('%Y-%m-%d')}.\n\n User: {user_message}.\n\nAssistant: {assistant_response}"
 
         # Split into chunks
-        chunks = self._create_chunks(conversation_text)
+        # chunks = self._create_chunks(conversation_text)
 
         # Store each chunk with metadata
         memory_ids = []
         timestamp = datetime.datetime.now().isoformat()
 
-        for i, chunk in enumerate(chunks):
-            memory_id = str(uuid.uuid4())
-            memory_ids.append(memory_id)
+        memory_id = str(uuid.uuid4())
+        memory_ids.append(memory_id)
 
-            # Add to ChromaDB collection
-            self.collection.add(
-                documents=[chunk],
-                metadatas=[
-                    {
-                        "timestamp": timestamp,
-                        "chunk_index": i,
-                        "total_chunks": len(chunks),
-                        "conversation_id": memory_ids[
-                            0
-                        ],  # First ID is the conversation ID
-                        "type": "conversation",
-                    }
-                ],
-                ids=[memory_id],
-            )
+        # Add to ChromaDB collection
+        self.collection.add(
+            documents=[conversation_text],
+            metadatas=[
+                {
+                    "timestamp": timestamp,
+                    "conversation_id": memory_id,  # First ID is the conversation ID
+                    "type": "conversation",
+                }
+            ],
+            ids=[memory_id],
+        )
 
+        # for i, chunk in enumerate(chunks):
+        #     memory_id = str(uuid.uuid4())
+        #     memory_ids.append(memory_id)
+        #
+        #     # Add to ChromaDB collection
+        #     self.collection.add(
+        #         documents=[chunk],
+        #         metadatas=[
+        #             {
+        #                 "timestamp": timestamp,
+        #                 "chunk_index": i,
+        #                 "total_chunks": len(chunks),
+        #                 "conversation_id": memory_ids[
+        #                     0
+        #                 ],  # First ID is the conversation ID
+        #                 "type": "conversation",
+        #             }
+        #         ],
+        #         ids=[memory_id],
+        #     )
+        #
         return memory_ids
 
     def retrieve_memory(self, keywords: str, limit: int = 5) -> str:

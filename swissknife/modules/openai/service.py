@@ -10,10 +10,7 @@ from contextlib import _GeneratorContextManager
 from openai import Stream
 from swissknife.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from swissknife.modules.llm.model_registry import ModelRegistry
-from ..prompts.constants import (
-    EXPLAIN_PROMPT,
-    SUMMARIZE_PROMPT,
-)
+from swissknife.modules.prompts.constants import ANALYSIS_PROMPT
 
 
 class OpenAIService(BaseLLMService):
@@ -67,16 +64,17 @@ class OpenAIService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def _process_content(self, prompt_template, content, max_tokens=2048):
-        """Process content with a given prompt template."""
+    def analyze_user_summary(self, conversation_history: str) -> str:
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
-                max_tokens=max_tokens,
+                max_tokens=3000,
                 messages=[
                     {
                         "role": "user",
-                        "content": prompt_template.format(content=content),
+                        "content": ANALYSIS_PROMPT.replace(
+                            "{conversation_history}", conversation_history
+                        ),
                     }
                 ],
             )
@@ -92,17 +90,9 @@ class OpenAIService(BaseLLMService):
             print(f"Total tokens: {input_tokens + output_tokens:,}")
             print(f"Estimated cost: ${total_cost:.4f}")
 
-            return response.choices[0].message.content
+            return response.choices[0].message.content or ""
         except Exception as e:
             raise Exception(f"Failed to process content: {str(e)}")
-
-    def summarize_content(self, content: str) -> str:
-        """Summarize the provided content using OpenAI."""
-        return self._process_content(SUMMARIZE_PROMPT, content, max_tokens=2048)
-
-    def explain_content(self, content: str) -> str:
-        """Explain the provided content using OpenAI."""
-        return self._process_content(EXPLAIN_PROMPT, content, max_tokens=1500)
 
     def _process_file(self, file_path):
         mime_type, _ = mimetypes.guess_type(file_path)

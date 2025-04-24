@@ -13,10 +13,7 @@ from swissknife.modules.llm.base import (
     read_text_file,
     base64_to_bytes,
 )
-from swissknife.modules.prompts.constants import (
-    EXPLAIN_PROMPT,
-    SUMMARIZE_PROMPT,
-)
+from swissknife.modules.prompts.constants import ANALYSIS_PROMPT
 
 
 class GoogleStreamAdapter:
@@ -108,7 +105,7 @@ class GoogleAINativeService(BaseLLMService):
             self.thinking_budget = 0
             print("Thinking mode disabled.")
             return True
-        if not self.model.startswith("claude-3-7-sonnet"):
+        if "thinking" not in ModelRegistry.get_model_capabilities(self.model):
             print("Thinking mode is disabled for this model.")
             return False
 
@@ -143,25 +140,14 @@ class GoogleAINativeService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def _process_content(self, prompt_template, content, max_tokens=2048):
-        """
-        Process content with a given prompt template.
-
-        Args:
-            prompt_template (str): The template with {content} placeholder
-            content (str): The content to process
-            max_tokens (int): Maximum tokens for the response
-
-        Returns:
-            str: The processed content
-        """
+    def analyze_user_summary(self, conversation_history: str) -> str:
         try:
             response = self.client.models.generate_content(
                 model=self.model,
-                contents=prompt_template.format(content=content),
-                config=types.GenerateContentConfig(
-                    max_output_tokens=max_tokens, temperature=0.2
+                contents=ANALYSIS_PROMPT.replace(
+                    "{conversation_history}", conversation_history
                 ),
+                config=types.GenerateContentConfig(max_output_tokens=3000),
             )
 
             # Get token usage if available
@@ -180,34 +166,13 @@ class GoogleAINativeService(BaseLLMService):
             print(f"Output tokens: {output_tokens:,}")
             print(f"Total tokens: {input_tokens + output_tokens:,}")
             print(f"Estimated cost: ${total_cost:.4f}")
+            print(
+                ANALYSIS_PROMPT.replace("{conversation_history}", conversation_history)
+            )
 
             return response.text or ""
         except Exception as e:
             raise Exception(f"Failed to process content: {str(e)}")
-
-    def summarize_content(self, content: str) -> str:
-        """
-        Summarize the provided content using Google GenAI.
-
-        Args:
-            content (str): The content to summarize
-
-        Returns:
-            str: The summarized content
-        """
-        return self._process_content(SUMMARIZE_PROMPT, content, max_tokens=2048)
-
-    def explain_content(self, content: str) -> str:
-        """
-        Explain the provided content using Google GenAI.
-
-        Args:
-            content (str): The content to explain
-
-        Returns:
-            str: The explained content
-        """
-        return self._process_content(EXPLAIN_PROMPT, content, max_tokens=1500)
 
     def process_file_for_message(self, file_path: str) -> Optional[Dict[str, Any]]:
         """

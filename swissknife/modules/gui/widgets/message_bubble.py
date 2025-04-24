@@ -296,7 +296,13 @@ class MessageBubble(QFrame):
             html_content = markdown.markdown(
                 text,
                 output_format="html",
-                extensions=["tables", "fenced_code", "codehilite", "nl2br"],
+                extensions=[
+                    "tables",
+                    "fenced_code",
+                    "codehilite",
+                    "nl2br",
+                    "sane_lists",
+                ],
             )
             html_content = (
                 f"""<style>

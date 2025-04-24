@@ -156,13 +156,8 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
-    def summarize_content(self, content: str) -> str:
-        """Summarize the provided content."""
-        pass
-
-    @abstractmethod
-    def explain_content(self, content: str) -> str:
-        """Explain the provided content."""
+    def analyze_user_summary(self, conversation_history: str) -> str:
+        """Analyze user behavior based on conversation history"""
         pass
 
     @abstractmethod

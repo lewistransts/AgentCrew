@@ -87,6 +87,7 @@ class AgentTaskManager:
         """
         try:
             # Add message to agent history
+            # TODO: message should from task not agent for scaling
             agent.history.append(message)
 
             # # Select the agent

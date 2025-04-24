@@ -368,7 +368,7 @@ class LocalAgent(BaseAgent):
 
         return True
 
-    def process_messages(self):
+    def process_messages(self, messages: Optional[List[Dict[str, Any]]] = None):
         """
         Process messages using this agent.
 
@@ -383,7 +383,9 @@ class LocalAgent(BaseAgent):
         self.input_tokens_usage = 0
         self.output_tokens_usage = 0
         # Ensure the first message is a system message with the agent's prompt
-        with self.llm.stream_assistant_response(self.history) as stream:
+        if not messages:
+            messages = self.history
+        with self.llm.stream_assistant_response(messages) as stream:
             for chunk in stream:
                 # Process the chunk using the LLM service
                 (
@@ -398,9 +400,9 @@ class LocalAgent(BaseAgent):
                 )
                 self.tool_uses = tool_uses
                 if chunk_input_tokens > 0:
-                    self.input_tokens_usage += chunk_input_tokens
+                    self.input_tokens_usage = chunk_input_tokens
                 if chunk_output_tokens > 0:
-                    self.output_tokens_usage += chunk_output_tokens
+                    self.output_tokens_usage = chunk_output_tokens
                 yield (assistant_response, chunk_text, thinking_chunk)
 
     def get_process_result(self):

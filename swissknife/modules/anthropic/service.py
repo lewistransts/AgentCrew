@@ -7,8 +7,7 @@ from dotenv import load_dotenv
 from swissknife.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from swissknife.modules.llm.model_registry import ModelRegistry
 from ..prompts.constants import (
-    EXPLAIN_PROMPT,
-    SUMMARIZE_PROMPT,
+    ANALYSIS_PROMPT,
 )
 
 
@@ -43,17 +42,20 @@ class AnthropicService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def _process_content(self, prompt_template, content, max_tokens=2048):
-        """Process content with a given prompt template."""
+    def analyze_user_summary(self, conversation_history: str) -> str:
+        """Summarize the provided content using Claude."""
         try:
             message = self.client.messages.create(
                 model=self.model,
-                max_tokens=max_tokens,
+                max_tokens=3000,
                 messages=[
                     {
                         "role": "user",
-                        "content": prompt_template.format(content=content),
-                    }
+                        "content": ANALYSIS_PROMPT.replace(
+                            "{conversation_history}", conversation_history
+                        ),
+                    },
+                    {"role": "assistant", "content": "<user_context_summary>"},
                 ],
             )
 
@@ -77,14 +79,6 @@ class AnthropicService(BaseLLMService):
             return content_block.text
         except Exception as e:
             raise Exception(f"Failed to process content: {str(e)}")
-
-    def summarize_content(self, content: str) -> str:
-        """Summarize the provided content using Claude."""
-        return self._process_content(SUMMARIZE_PROMPT, content, max_tokens=2048)
-
-    def explain_content(self, content: str) -> str:
-        """Explain the provided content using Claude."""
-        return self._process_content(EXPLAIN_PROMPT, content, max_tokens=1500)
 
     def _process_file(self, file_path, for_command=False):
         """
@@ -430,7 +424,7 @@ class AnthropicService(BaseLLMService):
             self.thinking_budget = 0
             print("Thinking mode disabled.")
             return True
-        if not self.model.startswith("claude-3-7-sonnet"):
+        if "thinking" not in ModelRegistry.get_model_capabilities(self.model):
             print("Thinking mode is disabled for this model.")
             return False
 

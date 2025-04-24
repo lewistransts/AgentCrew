@@ -4,9 +4,7 @@ from datetime import datetime
 ANALYSIS_PROMPT = """
 <user_context_analysis>
 <instruction>
-**Mandatory:** At the absolute beginning of EVERY response, you MUST generate a 'User Context Summary'. 
-Use this <user_context_summary> to tailor your response.   
-1.  Analyze the available conversation history to gather user information.
+1.  Analyze the <conversation_history> to gather user information.
 2.  Format this summary as a JSON object.
 3.  MUST enclose the entire JSON object within `<user_context_summary>` tags.
 4.  Use the following keys in the JSON object: `explicit_preferences`, `topics_of_interest`, `key_facts_entities`, `inferred_behavior`.
@@ -14,8 +12,7 @@ Use this <user_context_summary> to tailor your response.
 6.  the value for `key_facts_entities` MUST be a dictionary with key is a string and value is a array of strings `{"entity1": ["fact about entity1"]}`
 7.  If no information has been identified for a category, use an empty array `[]` as its value.
 8.  Avoid using ambiguous entity key like "./", "this repo", "this file", choose a meaningful entity key.
-9.  Dynamically update the arrays in the JSON object based on new information provided by the user throughout the conversation.
-10. After printing the complete `<user_context_summary>...</user_context_summary>` block, proceed with the main part of your response to the user's query. Ensure there is a clear separation (like a newline) between the summary block and your main answer.
+10. Only response `<user_context_summary>...</user_context_summary>` block
 </instruction>
 
 <output_format_example>
@@ -27,8 +24,6 @@ Use this <user_context_summary> to tailor your response.
   "inferred_behavior": ["Prefers short answers", "Often provides code examples"]
 }
 </user_context_summary>
-
-(Your main response to the user starts here...)
 </output_format_example>
 
 <empty_value_example>
@@ -40,11 +35,12 @@ Use this <user_context_summary> to tailor your response.
   "inferred_behavior": []
 }
 </user_context_summary>
-
-(Your main response to the user starts here...)
 </empty_value_example>
 
 </user_context_analysis>
+<conversation_history>
+{conversation_history}
+</conversation_history>
 """
 
 # Prompt templates
