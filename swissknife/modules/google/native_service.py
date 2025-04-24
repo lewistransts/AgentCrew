@@ -166,9 +166,6 @@ class GoogleAINativeService(BaseLLMService):
             print(f"Output tokens: {output_tokens:,}")
             print(f"Total tokens: {input_tokens + output_tokens:,}")
             print(f"Estimated cost: ${total_cost:.4f}")
-            print(
-                ANALYSIS_PROMPT.replace("{conversation_history}", conversation_history)
-            )
 
             return response.text or ""
         except Exception as e:
