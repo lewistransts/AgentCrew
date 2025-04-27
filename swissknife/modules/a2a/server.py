@@ -15,7 +15,7 @@ from pydantic import ValidationError
 from swissknife.modules.agents import AgentManager
 from .registry import AgentRegistry
 from .task_manager import MultiAgentTaskManager
-from .types import (
+from common.types import (
     A2ARequest,
     JSONRPCError,
     JSONRPCResponse,
@@ -75,24 +75,23 @@ class A2AServer:
         # Add routes for each agent
         for agent_name in self.agent_manager.agents:
             logger.debug(f"Creating routes for agent: {agent_name}")
-            routes.append(
-                Mount(
-                    f"/{agent_name}",
-                    routes=[
-                        Route(
-                            "/.well-known/agent.json",
-                            self._get_agent_card_factory(agent_name),
-                            methods=["GET"],
-                        ),
-                        # Single JSON-RPC endpoint
-                        Route(
-                            "/",
-                            self._process_jsonrpc_request_factory(agent_name),
-                            methods=["POST"],
-                        ),
-                    ],
-                )
+            agent_routes = Mount(
+                f"/{agent_name}",
+                routes=[
+                    Route(
+                        "/.well-known/agent.json",
+                        self._get_agent_card_factory(agent_name),
+                        methods=["GET"],
+                    ),
+                    # Single JSON-RPC endpoint
+                    Route(
+                        "/",
+                        self._process_jsonrpc_request_factory(agent_name),
+                        methods=["POST"],
+                    ),
+                ],
             )
+            routes.append(agent_routes)
 
         return Starlette(routes=routes)
 
@@ -162,12 +161,17 @@ class A2AServer:
 
                 if method == "tasks/send":
                     logger.debug("Handling tasks/send request")
-                    result = await task_manager.send_task(json_rpc_request)
+                    result = await task_manager.on_send_task(json_rpc_request)
                     logger.debug(f"tasks/send result: {result}")
                     return JSONResponse(result.model_dump(exclude_none=True))
 
                 elif method == "tasks/sendSubscribe":
-                    result_stream = task_manager.send_task_subscribe(json_rpc_request)
+                    result_stream = task_manager.on_send_task_subscribe(
+                        json_rpc_request
+                    )
+
+                    if isinstance(result_stream, JSONRPCResponse):
+                        return result_stream
 
                     async def event_generator():
                         async for item in result_stream:
@@ -178,11 +182,11 @@ class A2AServer:
                     return EventSourceResponse(event_generator())
 
                 elif method == "tasks/get":
-                    result = await task_manager.get_task(json_rpc_request)
+                    result = await task_manager.on_get_task(json_rpc_request)
                     return JSONResponse(result.model_dump(exclude_none=True))
 
                 elif method == "tasks/cancel":
-                    result = await task_manager.cancel_task(json_rpc_request)
+                    result = await task_manager.on_cancel_task(json_rpc_request)
                     return JSONResponse(result.model_dump(exclude_none=True))
 
                 else:

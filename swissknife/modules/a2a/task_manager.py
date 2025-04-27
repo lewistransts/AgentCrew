@@ -4,11 +4,23 @@ Task management for A2A protocol implementation.
 
 import asyncio
 from datetime import datetime
-from typing import Dict, AsyncIterable, Optional, Any
+from typing import Dict, AsyncIterable, Optional, Any, Union
 from swissknife.modules.agents import AgentManager, LocalAgent
 from swissknife.modules.agents.base import MessageType
-from .types import (
+
+# from common.types import
+from common.types import (
+    CancelTaskResponse,
+    GetTaskResponse,
     JSONRPCError,
+    SendTaskResponse,
+    SendTaskStreamingRequest,
+    SendTaskStreamingResponse,
+    SetTaskPushNotificationRequest,
+    SetTaskPushNotificationResponse,
+    GetTaskPushNotificationRequest,
+    GetTaskPushNotificationResponse,
+    TaskResubscriptionRequest,
     Task,
     TaskStatus,
     TaskState,
@@ -26,9 +38,10 @@ from .adapters import (
     convert_swissknife_response_to_a2a,
     convert_swissknife_message_to_a2a,
 )
+from common.server.task_manager import TaskManager
 
 
-class AgentTaskManager:
+class AgentTaskManager(TaskManager):
     """Manages tasks for a specific agent"""
 
     def __init__(self, agent_name: str, agent_manager: AgentManager):
@@ -37,7 +50,7 @@ class AgentTaskManager:
         self.tasks: Dict[str, Task] = {}
         self.streaming_tasks: Dict[str, asyncio.Queue] = {}
 
-    async def send_task(self, request: SendTaskRequest) -> JSONRPCResponse:
+    async def on_send_task(self, request: SendTaskRequest) -> SendTaskResponse:
         """
         Handle tasks/send request for this agent.
 
@@ -49,7 +62,7 @@ class AgentTaskManager:
         """
         agent = self.agent_manager.get_agent(self.agent_name)
         if not agent or not isinstance(agent, LocalAgent):
-            return JSONRPCResponse(
+            return SendTaskResponse(
                 id=request.id,
                 error=JSONRPCError(
                     code=-32001, message=f"Agent {self.agent_name} not found"
@@ -72,7 +85,7 @@ class AgentTaskManager:
         asyncio.create_task(self._process_agent_task(agent, message, task))
 
         # Return initial task state
-        return JSONRPCResponse(id=request.id, result=task)
+        return SendTaskResponse(id=request.id, result=task)
 
     async def _process_agent_task(
         self, agent: LocalAgent, message: Dict[str, Any], task: Task
@@ -247,9 +260,9 @@ class AgentTaskManager:
                 )
                 await queue.put(None)
 
-    async def send_task_subscribe(
-        self, request: SendTaskRequest
-    ) -> AsyncIterable[JSONRPCResponse]:
+    async def on_send_task_subscribe(
+        self, request: SendTaskStreamingRequest
+    ) -> Union[AsyncIterable[SendTaskStreamingResponse], JSONRPCResponse]:
         """
         Handle tasks/sendSubscribe request for this agent.
 
@@ -265,11 +278,13 @@ class AgentTaskManager:
 
         try:
             # Start the task
-            response = await self.send_task(request)
+            response = await self.on_send_task(
+                SendTaskRequest(id=request.id, params=request.params)
+            )
 
             # If there was an error, yield it and stop
             if response.error:
-                yield response
+                yield SendTaskStreamingResponse(id=response.id, error=response.error)
                 return
 
             # Yield events from the queue
@@ -277,13 +292,13 @@ class AgentTaskManager:
                 event = await queue.get()
                 if event is None:  # End of stream
                     break
-                yield JSONRPCResponse(id=request.id, result=event)
+                yield SendTaskStreamingResponse(id=request.id, result=event)
 
         finally:
             # Clean up
             self.streaming_tasks.pop(request.params.id, None)
 
-    async def get_task(self, request: GetTaskRequest) -> JSONRPCResponse:
+    async def on_get_task(self, request: GetTaskRequest) -> GetTaskResponse:
         """
         Handle tasks/get request for this agent.
 
@@ -295,11 +310,11 @@ class AgentTaskManager:
         """
         task_id = request.params.id
         if task_id not in self.tasks:
-            return JSONRPCResponse(id=request.id, error=TaskNotFoundError())
+            return GetTaskResponse(id=request.id, error=TaskNotFoundError())
 
-        return JSONRPCResponse(id=request.id, result=self.tasks[task_id])
+        return GetTaskResponse(id=request.id, result=self.tasks[task_id])
 
-    async def cancel_task(self, request: CancelTaskRequest) -> JSONRPCResponse:
+    async def on_cancel_task(self, request: CancelTaskRequest) -> CancelTaskResponse:
         """
         Handle tasks/cancel request for this agent.
 
@@ -311,7 +326,7 @@ class AgentTaskManager:
         """
         task_id = request.params.id
         if task_id not in self.tasks:
-            return JSONRPCResponse(id=request.id, error=TaskNotFoundError())
+            return CancelTaskResponse(id=request.id, error=TaskNotFoundError())
 
         task = self.tasks[task_id]
 
@@ -321,7 +336,7 @@ class AgentTaskManager:
             TaskState.FAILED,
             TaskState.CANCELED,
         ]:
-            return JSONRPCResponse(id=request.id, error=TaskNotCancelableError())
+            return CancelTaskResponse(id=request.id, error=TaskNotCancelableError())
 
         # Update task status
         task.status.state = TaskState.CANCELED
@@ -335,7 +350,22 @@ class AgentTaskManager:
             )
             await queue.put(None)
 
-        return JSONRPCResponse(id=request.id, result=task)
+        return CancelTaskResponse(id=request.id, result=task)
+
+    async def on_set_task_push_notification(
+        self, request: SetTaskPushNotificationRequest
+    ) -> SetTaskPushNotificationResponse:
+        raise NotImplementedError("")
+
+    async def on_get_task_push_notification(
+        self, request: GetTaskPushNotificationRequest
+    ) -> GetTaskPushNotificationResponse:
+        raise NotImplementedError("")
+
+    async def on_resubscribe_to_task(
+        self, request: TaskResubscriptionRequest
+    ) -> Union[AsyncIterable[SendTaskResponse], JSONRPCResponse]:
+        raise NotImplementedError("")
 
 
 class MultiAgentTaskManager:

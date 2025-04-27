@@ -4,7 +4,7 @@ Adapters for converting between SwissKnife and A2A message formats.
 
 import base64
 from typing import Dict, Any, List, Optional
-from .types import Message, TextPart, FilePart, FileContent, Artifact, Part
+from common.types import Message, TextPart, FilePart, FileContent, Artifact, Part
 
 
 # TODO: cover all of cases for images
@@ -103,7 +103,7 @@ def convert_swissknife_message_to_a2a(message: Dict[str, Any]) -> Message:
                     )
                 elif part.get("type") == "data":
                     # Handle structured data
-                    from .types import DataPart
+                    from common.types import DataPart
 
                     parts.append(DataPart(data=part.get("data", {})))
 
