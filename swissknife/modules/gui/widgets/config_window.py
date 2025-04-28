@@ -541,7 +541,7 @@ class MCPsConfigTab(QWidget):
         # Add button for arguments
         args_btn_layout = QHBoxLayout()
         self.add_arg_btn = QPushButton("Add Argument")
-        self.add_arg_btn.clicked.connect(self.add_argument_field)
+        self.add_arg_btn.clicked.connect(lambda: self.add_argument_field(""))
         args_btn_layout.addWidget(self.add_arg_btn)
         args_btn_layout.addStretch()
 
@@ -679,7 +679,7 @@ class MCPsConfigTab(QWidget):
         arg_layout = QHBoxLayout()
 
         arg_input = QLineEdit()
-        arg_input.setText(value)
+        arg_input.setText(str(value))
 
         remove_btn = QPushButton("Remove")
         remove_btn.setMaximumWidth(80)
