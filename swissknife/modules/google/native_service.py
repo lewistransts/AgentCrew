@@ -631,12 +631,11 @@ class GoogleAINativeService(BaseLLMService):
         Returns:
             A formatted message for tool response
         """
-        content = str(tool_result)
         if is_error:
-            content = f"ERROR: {content}"
+            tool_result = f"ERROR: {str(tool_result)}"
 
         # Return in a format expected by the interactive chat
-        return {"role": "tool", "tool_call_id": tool_use["id"], "content": content}
+        return {"role": "tool", "tool_call_id": tool_use["id"], "content": tool_result}
 
     def format_assistant_message(
         self, assistant_response: str, tool_uses: Optional[List[Dict]] = None

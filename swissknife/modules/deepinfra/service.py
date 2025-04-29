@@ -45,12 +45,12 @@ class DeepInfraService(OpenAIService):
             "role": "tool",
             "tool_call_id": tool_use["id"],
             "name": tool_use["name"],
-            "content": str(tool_result),  # Groq expects string content
+            "content": tool_result,  # Groq expects string content
         }
 
         # Add error indication if needed
         if is_error:
-            message["content"] = f"ERROR: {message['content']}"
+            message["content"] = f"ERROR: {str(message['content'])}"
 
         return message
 

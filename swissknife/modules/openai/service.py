@@ -347,12 +347,12 @@ class OpenAIService(BaseLLMService):
         message = {
             "role": "tool",
             "tool_call_id": tool_use["id"],
-            "content": str(tool_result),
+            "content": tool_result,
         }
 
         # Add error indication if needed
         if is_error:
-            message["content"] = f"ERROR: {message['content']}"
+            message["content"] = f"ERROR: {str(message['content'])}"
 
         return message
 

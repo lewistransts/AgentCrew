@@ -3,6 +3,9 @@ from typing import Dict, List, Any, Union
 from anthropic.types import TextBlockParam, ToolUseBlock
 import json
 
+from mcp.types import TextContent
+from pydantic import BaseModel
+
 
 class MessageTransformer:
     """Utility for transforming messages between different provider formats."""
@@ -230,11 +233,25 @@ class MessageTransformer:
 
             # Handle tool results
             if msg.get("role") == "tool":
+                tool_result = msg.get("content", "")
+                if isinstance(tool_result, TextContent):
+                    tool_result = tool_result.model_dump()
+                elif isinstance(tool_result, list):
+                    std_tool_result = []
+                    for tool in tool_result:
+                        if isinstance(tool, BaseModel):
+                            std_tool_result.append(tool.model_dump())
+                        else:
+                            std_tool_result.append(tool)
+                    tool_result = std_tool_result
                 std_msg["tool_result"] = {
                     "tool_use_id": msg.get("tool_call_id"),
-                    "content": msg.get("content"),
-                    "is_error": msg.get("content", "").startswith("ERROR:"),
+                    "content": tool_result,
+                    # "is_error": msg.get("content", "").startswith("ERROR:"),
                 }
+                if isinstance(tool_result, str) and tool_result.startswith("ERROR:"):
+                    std_msg["tool_result"]["is_error"] = True
+
                 # Reduce double token
                 std_msg["content"] = " "
 
@@ -279,11 +296,25 @@ class MessageTransformer:
 
             # Handle tool results
             if msg.get("role") == "tool":
+                tool_result = msg.get("content", "")
+                if isinstance(tool_result, TextContent):
+                    tool_result = tool_result.model_dump()
+                elif isinstance(tool_result, list):
+                    std_tool_result = []
+                    for tool in tool_result:
+                        if isinstance(tool, BaseModel):
+                            std_tool_result.append(tool.model_dump())
+                        else:
+                            std_tool_result.append(tool)
+                    tool_result = std_tool_result
                 std_msg["tool_result"] = {
                     "tool_use_id": msg.get("tool_call_id"),
-                    "content": msg.get("content"),
-                    "is_error": msg.get("content", "").startswith("ERROR:"),
+                    "content": tool_result,
+                    # "is_error": msg.get("content", "").startswith("ERROR:"),
                 }
+                if isinstance(tool_result, str) and tool_result.startswith("ERROR:"):
+                    std_msg["tool_result"]["is_error"] = True
+
                 # Reduce double token
                 std_msg["content"] = " "
 
@@ -327,12 +358,27 @@ class MessageTransformer:
                     std_msg["tool_calls"].append(std_tool_call)
 
             # Handle tool results
+            # Handle tool results
             if msg.get("role") == "tool":
+                tool_result = msg.get("content", "")
+                if isinstance(tool_result, TextContent):
+                    tool_result = tool_result.model_dump()
+                elif isinstance(tool_result, list):
+                    std_tool_result = []
+                    for tool in tool_result:
+                        if isinstance(tool, BaseModel):
+                            std_tool_result.append(tool.model_dump())
+                        else:
+                            std_tool_result.append(tool)
+                    tool_result = std_tool_result
                 std_msg["tool_result"] = {
                     "tool_use_id": msg.get("tool_call_id"),
-                    "content": msg.get("content"),
-                    "is_error": msg.get("content", "").startswith("ERROR:"),
+                    "content": tool_result,
+                    # "is_error": msg.get("content", "").startswith("ERROR:"),
                 }
+                if isinstance(tool_result, str) and tool_result.startswith("ERROR:"):
+                    std_msg["tool_result"]["is_error"] = True
+
                 # Reduce double token
                 std_msg["content"] = " "
 
