@@ -156,7 +156,7 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
-    def analyze_user_summary(self, conversation_history: str) -> str:
+    def analyze_user_summary(self, user_input: str, conversation_history: str) -> str:
         """Analyze user behavior based on conversation history"""
         pass
 

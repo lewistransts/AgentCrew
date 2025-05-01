@@ -11,8 +11,10 @@ ANALYSIS_PROMPT = """
 5.  The value for `explicit_preferences`, `topics_of_interest`, `inferred_behavior` MUST be a JSON array of strings `["item1", "item2", ...]`.
 6.  the value for `key_facts_entities` MUST be a dictionary with key is a string and value is a array of strings `{"entity1": ["fact about entity1"]}`
 7.  If no information has been identified for a category, use an empty array `[]` as its value.
-8.  Avoid using ambiguous entity key like "./", "this repo", "this file", choose a meaningful entity key.
-10. Only response `<user_context_summary>...</user_context_summary>` block
+8.  If there are conflicts between conversation_histories, Choose the latest memory by date. 
+9.  Ignore any conversation_history that is not related to <user_input>
+10. Avoid using ambiguous entity key like "./", "this repo", "this file", choose a meaningful entity key.
+11. Only response `<user_context_summary>...</user_context_summary>` block
 </instruction>
 
 <output_format_example>
@@ -38,6 +40,11 @@ ANALYSIS_PROMPT = """
 </empty_value_example>
 
 </user_context_analysis>
+
+<user_input>
+{user_input}
+</user_input>
+
 <conversation_history>
 {conversation_history}
 </conversation_history>

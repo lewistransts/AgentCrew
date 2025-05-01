@@ -42,7 +42,7 @@ class AnthropicService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def analyze_user_summary(self, conversation_history: str) -> str:
+    def analyze_user_summary(self, user_input: str, conversation_history: str) -> str:
         """Summarize the provided content using Claude."""
         try:
             message = self.client.messages.create(
@@ -53,7 +53,7 @@ class AnthropicService(BaseLLMService):
                         "role": "user",
                         "content": ANALYSIS_PROMPT.replace(
                             "{conversation_history}", conversation_history
-                        ),
+                        ).replace("{user_input}", user_input),
                     },
                     {"role": "assistant", "content": "<user_context_summary>"},
                 ],

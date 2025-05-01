@@ -64,7 +64,7 @@ class OpenAIService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def analyze_user_summary(self, conversation_history: str) -> str:
+    def analyze_user_summary(self, user_input: str, conversation_history: str) -> str:
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -74,7 +74,7 @@ class OpenAIService(BaseLLMService):
                         "role": "user",
                         "content": ANALYSIS_PROMPT.replace(
                             "{conversation_history}", conversation_history
-                        ),
+                        ).replace("{user_input}", user_input),
                     }
                 ],
             )

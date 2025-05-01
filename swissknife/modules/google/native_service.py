@@ -140,13 +140,13 @@ class GoogleAINativeService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def analyze_user_summary(self, conversation_history: str) -> str:
+    def analyze_user_summary(self, user_input: str, conversation_history: str) -> str:
         try:
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=ANALYSIS_PROMPT.replace(
                     "{conversation_history}", conversation_history
-                ),
+                ).replace("{user_input}", user_input),
                 config=types.GenerateContentConfig(max_output_tokens=3000),
             )
 
