@@ -10,6 +10,7 @@ from rich.live import Live
 from typing import Dict, Any, List, Optional, Tuple
 from groq import Groq
 from dotenv import load_dotenv
+from mcp.types import TextContent, ImageContent
 from groq.types.chat import ChatCompletion
 from swissknife.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from swissknife.modules.llm.model_registry import ModelRegistry
@@ -465,17 +466,26 @@ class GroqService(BaseLLMService):
             A formatted message that can be appended to the messages list
         """
         # Groq follows OpenAI format for tool responses
+        if isinstance(tool_result, list):
+            parsed_tool_result = []
+            for res in tool_result:
+                if isinstance(res, TextContent):
+                    parsed_tool_result.append(res.text)
+                if isinstance(res, ImageContent):
+                    parsed_tool_result.append(res.data)
+                else:
+                    parsed_tool_result.append(str(res))
+            tool_result = "\n---\n".join(parsed_tool_result)
         message = {
             "role": "tool",
             "tool_call_id": tool_use["id"],
             "name": tool_use["name"],
-            "content": tool_result,  # Groq expects string content
+            "content": tool_result,  # Groq and deepinfra expects string content
         }
 
-        # Note: OpenAI/Groq format doesn't have a standard way to indicate errors
-        # We could potentially prefix the content with "ERROR: " if needed
+        # Add error indication if needed
         if is_error:
-            message["content"] = f"ERROR: {str(message['content'])}"
+            message["content"] = f"ERROR: {message['content']}"
 
         return message
 
