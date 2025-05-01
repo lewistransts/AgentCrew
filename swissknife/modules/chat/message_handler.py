@@ -195,6 +195,7 @@ class MessageHandler(Observable):
         else:
             # RAG base on user query
             if self.last_assisstant_response_idx == 0:
+                self._notify("user_context_request", None)
                 self.agent.history.append(
                     {
                         "role": "user",
@@ -202,7 +203,7 @@ class MessageHandler(Observable):
                             {
                                 "type": "text",
                                 "text": f"""Use user_context_summary to tailor your response:
-                                {self.agent.llm.analyze_user_summary(self.memory_service.retrieve_memory(user_input, 8))}""",
+                                {self.agent.llm.analyze_user_summary(user_input, self.memory_service.retrieve_memory(user_input, 8))}""",
                             }
                         ],
                     }

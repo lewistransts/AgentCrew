@@ -1445,6 +1445,8 @@ class ChatWindow(QMainWindow, Observer):
             event == "conversation_loaded"
         ):  # Add handler for this event (if loaded via command)
             self.display_status_message(f"Conversation loaded: {data.get('id', 'N/A')}")
+        elif event == "user_context_request":
+            self.add_system_message("Analyzing User Context...")
 
         # --- Ensure controls are re-enabled after most events if not loading ---
         # Place this check strategically if needed, or rely on specific event handlers
