@@ -136,9 +136,10 @@ class ChromaMemoryService(BaseMemoryService):
         Returns:
             Formatted string containing relevant context from past conversations
         """
-        return self.llm_service.analyze_user_summary(
+        analyze_result = self.llm_service.analyze_user_summary(
             user_input, self.retrieve_memory(user_input, 10)
         )
+        return analyze_result
 
     def retrieve_memory(self, keywords: str, limit: int = 5) -> str:
         """

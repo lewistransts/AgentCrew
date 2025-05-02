@@ -196,7 +196,7 @@ class MessageHandler(Observable):
             # RAG base on user query
             if self.last_assisstant_response_idx == 0:
                 self._notify("user_context_request", None)
-                self.agent.history.append(
+                self._messages_append(
                     {
                         "role": "user",
                         "content": [
