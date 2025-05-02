@@ -7,15 +7,14 @@ from datetime import datetime
 from swissknife.modules.chat import ConsoleUI
 from swissknife.modules.gui import ChatWindow
 from swissknife.modules.chat import MessageHandler
-from swissknife.modules.scraping import ScrapingService
 from swissknife.modules.web_search import TavilySearchService
 from swissknife.modules.clipboard import ClipboardService
 from swissknife.modules.memory import (
-    MemoryService,
+    ChromaMemoryService,
+    Mem0MemoryService,
     ContextPersistenceService,
 )
 from swissknife.modules.code_analysis import CodeAnalysisService
-from swissknife.modules.anthropic import AnthropicService
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.model_registry import ModelRegistry
 from swissknife.modules.coder import SpecPromptValidationService
@@ -53,7 +52,7 @@ def setup_services(provider):
     llm_service = llm_manager.get_service(provider)
 
     # Initialize services
-    memory_service = MemoryService()
+    memory_service = Mem0MemoryService()
     context_service = ContextPersistenceService()
     clipboard_service = ClipboardService()
     aider_service = SpecPromptValidationService("groq")

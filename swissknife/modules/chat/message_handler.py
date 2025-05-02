@@ -11,7 +11,7 @@ from swissknife.modules.chat.file_handler import FileHandler
 from swissknife.modules.llm.model_registry import ModelRegistry
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.message import MessageTransformer
-from swissknife.modules.memory import MemoryService, ContextPersistenceService
+from swissknife.modules.memory import BaseMemoryService, ContextPersistenceService
 
 
 class Observable:
@@ -54,7 +54,7 @@ class MessageHandler(Observable):
 
     def __init__(
         self,
-        memory_service: MemoryService,
+        memory_service: BaseMemoryService,
         context_persistent_service: ContextPersistenceService,
     ):
         """

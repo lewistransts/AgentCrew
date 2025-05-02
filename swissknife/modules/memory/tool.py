@@ -1,5 +1,5 @@
 from typing import Dict, Any, Callable
-from .service import MemoryService
+from .base_service import BaseMemoryService
 
 
 def get_memory_forget_tool_definition(provider="claude") -> Dict[str, Any]:
@@ -45,7 +45,7 @@ def get_memory_forget_tool_definition(provider="claude") -> Dict[str, Any]:
         }
 
 
-def get_memory_forget_tool_handler(memory_service: MemoryService) -> Callable:
+def get_memory_forget_tool_handler(memory_service: BaseMemoryService) -> Callable:
     """
     Get the handler function for the memory forget tool.
 
@@ -117,7 +117,7 @@ def get_memory_retrieve_tool_definition(provider="claude") -> Dict[str, Any]:
         }
 
 
-def get_memory_retrieve_tool_handler(memory_service: MemoryService) -> Callable:
+def get_memory_retrieve_tool_handler(memory_service: BaseMemoryService) -> Callable:
     """
     Get the handler function for the memory retrieve tool.
 

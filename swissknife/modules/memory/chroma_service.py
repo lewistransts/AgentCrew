@@ -4,8 +4,10 @@ import datetime
 import uuid
 from typing import List, Dict, Any
 
+from .base_service import BaseMemoryService
 
-class MemoryService:
+
+class ChromaMemoryService(BaseMemoryService):
     """Service for storing and retrieving conversation memory using ChromaDB."""
 
     def __init__(self, collection_name="conversation", persist_directory=None):
