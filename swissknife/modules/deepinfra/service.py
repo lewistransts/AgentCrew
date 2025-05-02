@@ -20,11 +20,11 @@ class DeepInfraService(OpenAIService):
             api_key=api_key,
             base_url="https://api.deepinfra.com/v1/openai",
         )
-        self.model = "deepseek-ai/DeepSeek-V3-0324"
+        self.model = "Qwen/Qwen2.5-72B-Instruct"
         self.current_input_tokens = 0
         self._provider_name = "deepinfra"
         self.current_output_tokens = 0
-        self.temperature = 0.4
+        self.temperature = 0.6
         self._is_stream = True
         self._is_thinking = False
         print("Initialized DeepInfra Service")
