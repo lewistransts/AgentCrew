@@ -556,7 +556,7 @@ class MessageHandler(Observable):
 
                 # Process each tool use
                 for tool_use in tool_uses:
-                    self._notify("response_completed", assistant_response)
+                    # self._notify("response_completed", assistant_response)
                     self._notify("tool_use", tool_use)
 
                     try:

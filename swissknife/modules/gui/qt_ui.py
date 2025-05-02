@@ -293,7 +293,6 @@ class ChatWindow(QMainWindow, Observer):
 
         # Connect worker signals to UI slots
         self.llm_worker.response_ready.connect(self.handle_response)
-        self.llm_worker.response_chunk.connect(self.display_response_chunk)
         self.llm_worker.error.connect(self.display_error)
         self.llm_worker.status_message.connect(self.display_status_message)
         self.llm_worker.token_usage.connect(self.update_token_usage)
@@ -663,9 +662,6 @@ class ChatWindow(QMainWindow, Observer):
                 "total_cost": total_cost,
             }
         )
-
-        # Re-enable input controls
-        self.set_input_controls_enabled(True)
 
     @Slot(str)
     def display_response_chunk(self, chunk: str):
@@ -1447,6 +1443,9 @@ class ChatWindow(QMainWindow, Observer):
             self.display_status_message(f"Conversation loaded: {data.get('id', 'N/A')}")
         elif event == "user_context_request":
             self.add_system_message("Refreshing my memory...")
+        elif event == "response_completed":
+            # Re-enable input controls
+            self.set_input_controls_enabled(True)
 
         # --- Ensure controls are re-enabled after most events if not loading ---
         # Place this check strategically if needed, or rely on specific event handlers

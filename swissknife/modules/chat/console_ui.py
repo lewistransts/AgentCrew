@@ -73,7 +73,8 @@ class ConsoleUI(Observer):
         elif event == "tool_error":
             self.display_tool_error(data)  # data is dict with tool_use and error
         elif event == "response_completed":
-            self.finish_response(data)  # data is the complete response
+            pass
+            # self.finish_response(data)  # data is the complete response
         elif event == "error":
             self.display_error(data)  # data is the error message or dict
         elif event == "clear_requested":

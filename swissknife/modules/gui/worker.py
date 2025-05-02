@@ -13,7 +13,6 @@ class LLMWorker(QObject):
 
     # Signals for thread communication
     response_ready = Signal(str, int, int)  # response, input_tokens, output_tokens
-    response_chunk = Signal(str)
     error = Signal(str)
     status_message = Signal(str)
     token_usage = Signal(dict)
