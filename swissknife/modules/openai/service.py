@@ -233,6 +233,22 @@ class OpenAIService(BaseLLMService):
         output_tokens = 0
         thinking_content = None  # OpenAI doesn't support thinking mode
 
+        # Handle regular content chunks
+        if (
+            len(chunk.choices) > 0
+            and hasattr(chunk.choices[0].delta, "content")
+            and chunk.choices[0].delta.content is not None
+        ):
+            chunk_text = chunk.choices[0].delta.content
+            assistant_response += chunk_text
+
+        # Handle final chunk with usage information
+        if hasattr(chunk, "usage"):
+            if hasattr(chunk.usage, "prompt_tokens"):
+                input_tokens = chunk.usage.prompt_tokens
+            if hasattr(chunk.usage, "completion_tokens"):
+                output_tokens = chunk.usage.completion_tokens
+
         # Handle tool call chunks
         if len(chunk.choices) > 0 and hasattr(chunk.choices[0].delta, "tool_calls"):
             delta_tool_calls = chunk.choices[0].delta.tool_calls
@@ -294,7 +310,6 @@ class OpenAIService(BaseLLMService):
                                 # Arguments JSON is still incomplete, keep accumulating
                                 pass
 
-                # For tool calls, we don't append to assistant_response as it's handled separately
                 return (
                     assistant_response or " ",
                     tool_uses,
@@ -303,22 +318,6 @@ class OpenAIService(BaseLLMService):
                     "",
                     thinking_content,
                 )
-
-        # Handle regular content chunks
-        if (
-            len(chunk.choices) > 0
-            and hasattr(chunk.choices[0].delta, "content")
-            and chunk.choices[0].delta.content is not None
-        ):
-            chunk_text = chunk.choices[0].delta.content
-            assistant_response += chunk_text
-
-        # Handle final chunk with usage information
-        if hasattr(chunk, "usage"):
-            if hasattr(chunk.usage, "prompt_tokens"):
-                input_tokens = chunk.usage.prompt_tokens
-            if hasattr(chunk.usage, "completion_tokens"):
-                output_tokens = chunk.usage.completion_tokens
 
         return (
             assistant_response or " ",

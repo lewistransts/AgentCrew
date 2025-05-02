@@ -230,7 +230,7 @@ _DEEPINFRA_MODELS = [
         provider="deepinfra",
         name="Qwen 3 MoE 235B-22B",
         description="Qwen3 is the latest generation of large language models in Qwen series, offering a comprehensive suite of dense and mixture-of-experts (MoE) models",
-        capabilities=["text-generation", "tool_use"],
+        capabilities=["text-generation", "tool_use", "thinking"],
         input_token_price_1m=0.2,
         output_token_price_1m=0.6,
     ),

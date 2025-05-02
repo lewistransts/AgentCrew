@@ -6,6 +6,7 @@ import json
 import os
 import contextlib
 from openai.types.chat import ChatCompletion
+from swissknife.modules.prompts.constants import ANALYSIS_PROMPT
 from dotenv import load_dotenv
 
 
@@ -24,7 +25,8 @@ class DeepInfraService(OpenAIService):
         self._provider_name = "deepinfra"
         self.current_output_tokens = 0
         self.temperature = 0.4
-        self._is_stream = False
+        self._is_stream = True
+        self._is_thinking = False
         print("Initialized DeepInfra Service")
 
     def format_tool_result(
@@ -65,6 +67,51 @@ class DeepInfraService(OpenAIService):
 
         return message
 
+    def analyze_user_summary(self, user_input: str, conversation_history: str) -> str:
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                max_tokens=3000,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": ANALYSIS_PROMPT.replace(
+                            "{conversation_history}", conversation_history
+                        ).replace("{user_input}", user_input),
+                    }
+                ],
+            )
+
+            # Calculate and log token usage and cost
+            input_tokens = response.usage.prompt_tokens if response.usage else 0
+            output_tokens = response.usage.completion_tokens if response.usage else 0
+            total_cost = self.calculate_cost(input_tokens, output_tokens)
+
+            print("\nToken Usage Statistics:")
+            print(f"Input tokens: {input_tokens:,}")
+            print(f"Output tokens: {output_tokens:,}")
+            print(f"Total tokens: {input_tokens + output_tokens:,}")
+            print(f"Estimated cost: ${total_cost:.4f}")
+            analyze_result = response.choices[0].message.content or ""
+            if "thinking" in ModelRegistry.get_model_capabilities(self.model):
+                THINK_STARTED = "<think>"
+                THINK_STOPED = "</think>"
+
+                if (
+                    analyze_result.find(THINK_STARTED) >= 0
+                    and analyze_result.find(THINK_STOPED) >= 0
+                ):
+                    analyze_result = (
+                        analyze_result[: analyze_result.find(THINK_STARTED)]
+                        + analyze_result[
+                            (analyze_result.find(THINK_STOPED) + len(THINK_STOPED)) :
+                        ]
+                    )
+
+            return analyze_result
+        except Exception as e:
+            raise Exception(f"Failed to process content: {str(e)}")
+
     def stream_assistant_response(self, messages):
         """Stream the assistant's response with tool support."""
         stream_params = {
@@ -89,6 +136,7 @@ class DeepInfraService(OpenAIService):
             stream_params["tools"] = self.tools
 
         if self._is_stream:
+            self._is_thinking = False
             return self.client.chat.completions.create(**stream_params, stream=True)
 
         else:
@@ -250,7 +298,30 @@ class DeepInfraService(OpenAIService):
         chunk_text = None
         input_tokens = 0
         output_tokens = 0
-        # thinking_content = None  # OpenAI doesn't support thinking mode
+        thinking_content = None  # OpenAI doesn't support thinking mode
+
+        # Handle regular content chunks
+        if (
+            len(chunk.choices) > 0
+            and hasattr(chunk.choices[0].delta, "content")
+            and chunk.choices[0].delta.content is not None
+        ):
+            chunk_text = chunk.choices[0].delta.content
+            if "<think>" in chunk_text:
+                self._is_thinking = True
+            if self._is_thinking:
+                thinking_content = chunk_text
+            else:
+                assistant_response += chunk_text
+            if "</think>" in chunk_text:
+                self._is_thinking = False
+
+        # Handle final chunk with usage information
+        if hasattr(chunk, "usage"):
+            if hasattr(chunk.usage, "prompt_tokens"):
+                input_tokens = chunk.usage.prompt_tokens
+            if hasattr(chunk.usage, "completion_tokens"):
+                output_tokens = chunk.usage.completion_tokens
 
         # Handle tool call chunks
         if len(chunk.choices) > 0 and hasattr(chunk.choices[0].delta, "tool_calls"):
@@ -312,37 +383,14 @@ class DeepInfraService(OpenAIService):
                             except json.JSONDecodeError:
                                 # Arguments JSON is still incomplete, keep accumulating
                                 pass
-                if (
-                    hasattr(chunk.choices[0].delta, "content")
-                    and chunk.choices[0].delta.content is not None
-                ):
-                    chunk_text = chunk.choices[0].delta.content
-                    assistant_response += chunk_text
-
                 return (
                     assistant_response or " ",
                     tool_uses,
                     input_tokens,
                     output_tokens,
                     "",
-                    None,
+                    (thinking_content, None),
                 )
-
-        # Handle regular content chunks
-        if (
-            len(chunk.choices) > 0
-            and hasattr(chunk.choices[0].delta, "content")
-            and chunk.choices[0].delta.content is not None
-        ):
-            chunk_text = chunk.choices[0].delta.content
-            assistant_response += chunk_text
-
-        # Handle final chunk with usage information
-        if hasattr(chunk, "usage"):
-            if hasattr(chunk.usage, "prompt_tokens"):
-                input_tokens = chunk.usage.prompt_tokens
-            if hasattr(chunk.usage, "completion_tokens"):
-                output_tokens = chunk.usage.completion_tokens
 
         return (
             assistant_response or " ",
@@ -350,5 +398,5 @@ class DeepInfraService(OpenAIService):
             input_tokens,
             output_tokens,
             chunk_text,
-            None,
+            (thinking_content, None),
         )
