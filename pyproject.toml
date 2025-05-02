@@ -27,6 +27,7 @@ dependencies = [
   "markdown>=3.7",
   "tree-sitter-language-pack>=0.7.0",
   "a2a-samples",
+  "mem0ai>=0.1.95",
 ]
 
 
