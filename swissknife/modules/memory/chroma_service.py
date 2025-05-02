@@ -2,6 +2,7 @@ import os
 import chromadb
 import datetime
 import uuid
+import numpy as np
 from swissknife.modules.openai import OpenAIService
 from typing import List, Dict, Any
 
@@ -43,12 +44,17 @@ class ChromaMemoryService(BaseMemoryService):
             self.collection = self.client.get_or_create_collection(
                 name=collection_name, embedding_function=openai_ef
             )
+            self.embedding_function = openai_ef
         else:
             self.collection = self.client.get_or_create_collection(name=collection_name)
+            self.embedding_function = embedding_functions.DefaultEmbeddingFunction()
 
         # Configuration for chunking
         self.chunk_size = 200  # words per chunk
         self.chunk_overlap = 40  # words overlap between chunks
+        self.current_embedding_context = None
+
+        self.context_embedding = []
 
     def _create_chunks(self, text: str) -> List[str]:
         """
@@ -101,9 +107,15 @@ class ChromaMemoryService(BaseMemoryService):
         memory_id = str(uuid.uuid4())
         memory_ids.append(memory_id)
 
+        conversation_embedding = self.embedding_function([conversation_text])
+        self.context_embedding.append(conversation_embedding)
+        if len(self.context_embedding) > 5:
+            self.context_embedding.pop()
+
         # Add to ChromaDB collection
         self.collection.add(
             documents=[conversation_text],
+            embeddings=conversation_embedding,
             metadatas=[
                 {
                     "timestamp": timestamp,
@@ -136,6 +148,24 @@ class ChromaMemoryService(BaseMemoryService):
         #     )
         #
         return memory_ids
+
+    def need_generate_user_context(self, user_input) -> bool:
+        if not self.current_embedding_context:
+            self.current_embedding_context = self.embedding_function([user_input])
+            return True
+
+        self.current_embedding_context = self.embedding_function([user_input])
+        avg_conversation = np.mean(self.context_embedding, axis=0)
+
+        similarity = self._cosine_similarity(
+            self.current_embedding_context, avg_conversation
+        )
+        print(similarity)
+        return similarity < 0.31
+
+    def clear_conversation_context(self):
+        self.current_embedding_context = None
+        self.context_embedding = []
 
     def generate_user_context(self, user_input: str) -> str:
         """
@@ -209,6 +239,21 @@ class ChromaMemoryService(BaseMemoryService):
             output.append(f"--- Memory from {timestamp} ---\n{conversation_text}")
 
         return "\n\n".join(output)
+
+    def _cosine_similarity(self, vec_a, vec_b):
+        """Calculate cosine similarity between vectors"""
+
+        a = np.array(vec_a, dtype=np.float32)
+        b = np.array(vec_b, dtype=np.float32)
+        # Flatten 2D arrays (e.g., shape (1,1536) -> (1536,))
+        a = a.flatten() if a.ndim > 1 else a
+        b = b.flatten() if b.ndim > 1 else b
+        dot_product = np.dot(a, b)
+        magnitude_a = np.linalg.norm(a)
+        magnitude_b = np.linalg.norm(b)
+        if magnitude_a == 0 or magnitude_b == 0:
+            return 0
+        return dot_product / (magnitude_a * magnitude_b)
 
     def cleanup_old_memories(self, months: int = 1) -> int:
         """

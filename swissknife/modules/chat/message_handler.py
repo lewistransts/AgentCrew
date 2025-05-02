@@ -194,7 +194,7 @@ class MessageHandler(Observable):
                 return False, True
         else:
             # RAG base on user query
-            if self.last_assisstant_response_idx == 0:
+            if self.memory_service.need_generate_user_context(user_input):
                 self._notify("user_context_request", None)
                 self._messages_append(
                     {
@@ -238,6 +238,7 @@ class MessageHandler(Observable):
             self.agent_manager.clean_agents_messages()
             self.streamline_messages = []
             self.conversation_turns = []  # Clear jump history
+            self.memory_service.clear_conversation_context()
             self.last_assisstant_response_idx = 0
             self.current_user_input = None
             self.current_user_input_idx = -1

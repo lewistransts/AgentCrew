@@ -43,6 +43,12 @@ class Mem0MemoryService(BaseMemoryService):
         )
         return []
 
+    def need_generate_user_context(self, user_input) -> bool:
+        return False
+
+    def clear_conversation_context(self):
+        pass
+
     def generate_user_context(self, user_input: str) -> str:
         """
         Generate context based on user input by retrieving relevant memories.

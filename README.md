@@ -345,9 +345,8 @@ The following features are planned for future releases:
 - [ ] **Local Model Support**: Add ONNX runtime integration.
 - [ ] **Advanced Memory Indexing**: Improve memory retrieval accuracy and
       performance.
-- ~~[x] **Adaptive User Context**: Agent can build up a context and knowledge
-  base when interact with user and use it to tailor the response~~ => due to
-  messing around with current request, will comeback on this later
+- [x] **Adaptive User Context**: Agent can build up a context and knowledge base
+      when interact with user and use it to tailor the response
 - [x] **Multi-Agent Collaboration**: Enable multiple agents to work together on
       complex tasks.
 

@@ -22,6 +22,14 @@ class BaseMemoryService(ABC):
         pass
 
     @abstractmethod
+    def need_generate_user_context(self, user_input) -> bool:
+        pass
+
+    @abstractmethod
+    def clear_conversation_context(self):
+        pass
+
+    @abstractmethod
     def generate_user_context(self, user_input: str) -> str:
         """
         Generate context based on user input by retrieving relevant memories.
