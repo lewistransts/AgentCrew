@@ -7,6 +7,8 @@ from typing import List, Dict, Any
 
 from .base_service import BaseMemoryService
 
+import chromadb.utils.embedding_functions as embedding_functions
+
 
 class ChromaMemoryService(BaseMemoryService):
     """Service for storing and retrieving conversation memory using ChromaDB."""
@@ -33,7 +35,16 @@ class ChromaMemoryService(BaseMemoryService):
             self.llm_service = llm_service
 
         # Create or get collection for storing memories
-        self.collection = self.client.get_or_create_collection(name=collection_name)
+        if os.getenv("OPENAI_API_KEY"):
+            openai_ef = embedding_functions.OpenAIEmbeddingFunction(
+                api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-3-small"
+            )
+
+            self.collection = self.client.get_or_create_collection(
+                name=collection_name, embedding_function=openai_ef
+            )
+        else:
+            self.collection = self.client.get_or_create_collection(name=collection_name)
 
         # Configuration for chunking
         self.chunk_size = 200  # words per chunk
