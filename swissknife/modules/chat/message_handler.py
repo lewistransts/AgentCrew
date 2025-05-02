@@ -311,15 +311,6 @@ class MessageHandler(Observable):
             if last_assistant_message and last_assistant_message.get("agent", ""):
                 self._handle_agent_command(f"/agent {last_assistant_message['agent']}")
 
-            # TODO: Check this part when we already rebuild messages for agents
-            # self.agent.history = MessageTransformer.convert_messages(
-            #     [
-            #         msg
-            #         for msg in self.streamline_messages
-            #         if msg["role"] != "assistant" or msg["agent"] == self.agent.name
-            #     ],
-            #     self.agent.llm.provider_name,
-            # )
             self.agent_manager.rebuild_agents_messages(self.streamline_messages)
             self.conversation_turns = self.conversation_turns[: turn_number - 1]
             self.last_assisstant_response_idx = len(self.agent.history)

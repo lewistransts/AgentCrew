@@ -389,7 +389,7 @@ class DeepInfraService(OpenAIService):
                     input_tokens,
                     output_tokens,
                     "",
-                    (thinking_content, None),
+                    (thinking_content, None) if thinking_content else None,
                 )
 
         return (
@@ -398,5 +398,5 @@ class DeepInfraService(OpenAIService):
             input_tokens,
             output_tokens,
             chunk_text,
-            (thinking_content, None),
+            (thinking_content, None) if thinking_content else None,
         )
