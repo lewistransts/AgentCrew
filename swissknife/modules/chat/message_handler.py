@@ -203,7 +203,7 @@ class MessageHandler(Observable):
                             {
                                 "type": "text",
                                 "text": f"""Use user_context_summary to tailor your response:
-                                {self.agent.llm.analyze_user_summary(user_input, self.memory_service.retrieve_memory(user_input, 8))}""",
+                                {self.memory_service.generate_user_context(user_input)}""",
                             }
                         ],
                     }

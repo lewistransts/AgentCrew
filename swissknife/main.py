@@ -52,7 +52,7 @@ def setup_services(provider):
     llm_service = llm_manager.get_service(provider)
 
     # Initialize services
-    memory_service = Mem0MemoryService()
+    memory_service = ChromaMemoryService()
     context_service = ContextPersistenceService()
     clipboard_service = ClipboardService()
     aider_service = SpecPromptValidationService("groq")

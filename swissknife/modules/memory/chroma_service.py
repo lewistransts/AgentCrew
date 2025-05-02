@@ -2,6 +2,7 @@ import os
 import chromadb
 import datetime
 import uuid
+from swissknife.modules.openai import OpenAIService
 from typing import List, Dict, Any
 
 from .base_service import BaseMemoryService
@@ -10,7 +11,7 @@ from .base_service import BaseMemoryService
 class ChromaMemoryService(BaseMemoryService):
     """Service for storing and retrieving conversation memory using ChromaDB."""
 
-    def __init__(self, collection_name="conversation", persist_directory=None):
+    def __init__(self, collection_name="conversation", llm_service=None):
         """
         Initialize the memory service with ChromaDB.
 
@@ -25,11 +26,14 @@ class ChromaMemoryService(BaseMemoryService):
         # Initialize ChromaDB client with persistence
         self.client = chromadb.PersistentClient(path=self.db_path)
 
+        if not llm_service:
+            self.llm_service = OpenAIService()
+            self.llm_service.model = "gpt-4o-mini"
+        else:
+            self.llm_service = llm_service
+
         # Create or get collection for storing memories
         self.collection = self.client.get_or_create_collection(name=collection_name)
-        self.message_raw_collection = self.client.get_or_create_collection(
-            name="message_raw"
-        )
 
         # Configuration for chunking
         self.chunk_size = 200  # words per chunk
@@ -121,6 +125,20 @@ class ChromaMemoryService(BaseMemoryService):
         #     )
         #
         return memory_ids
+
+    def generate_user_context(self, user_input: str) -> str:
+        """
+        Generate context based on user input by retrieving relevant memories.
+
+        Args:
+            user_input: The current user message to generate context for
+
+        Returns:
+            Formatted string containing relevant context from past conversations
+        """
+        return self.llm_service.analyze_user_summary(
+            user_input, self.retrieve_memory(user_input, 10)
+        )
 
     def retrieve_memory(self, keywords: str, limit: int = 5) -> str:
         """

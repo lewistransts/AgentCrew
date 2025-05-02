@@ -43,6 +43,18 @@ class Mem0MemoryService(BaseMemoryService):
         )
         return []
 
+    def generate_user_context(self, user_input: str) -> str:
+        """
+        Generate context based on user input by retrieving relevant memories.
+
+        Args:
+            user_input: The current user message to generate context for
+
+        Returns:
+            Formatted string containing relevant context from past conversations
+        """
+        return self.retrieve_memory(user_input, 8)
+
     def retrieve_memory(self, keywords: str, limit: int = 5) -> str:
         """
         Retrieve relevant memories based on keywords.
