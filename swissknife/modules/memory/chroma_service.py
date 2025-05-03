@@ -110,7 +110,7 @@ class ChromaMemoryService(BaseMemoryService):
         conversation_embedding = self.embedding_function([conversation_text])
         self.context_embedding.append(conversation_embedding)
         if len(self.context_embedding) > 5:
-            self.context_embedding.pop()
+            self.context_embedding.pop(0)
 
         # Add to ChromaDB collection
         self.collection.add(
