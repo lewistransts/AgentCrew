@@ -288,15 +288,15 @@ class AgentManager:
         - Base on current conversation context, decide whether or not need more data to process user request
         - Use `retrieve_memory` tool when available with keywords to get more data or ask user if tool is not available
   </memory_rules>
-  <agent_transfer_rules>
-    - You must transfer to another specialized agent in <other_agents> tags when task is not in your specialized and continue the conversation.
+  <transfer_rules>
+    - When you encounter a task that falls outside your specialized expertise, you must transfer the conversation to a more appropriate agent from the available list. This ensures the user receives the most accurate and helpful assistance possible.
     - You're ONLY able to transfer to one agent at a time.
-    - Use `relevant_messages` to provide any messages index (files content, tool results, user messages) related to the task.
+    - Use `relevant_messages` to provide any messages index (file contents, tool results, user messages) related to the task.
     - To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments.
-  </agent_transfer_rules>
-  <other_agents>
+  </transfer_rules>
+  <agent_lists>
 {"\n".join(agent_descriptions)}
-  </other_agents>
+  </agent_lists>
 </Agents>"""
 
         return transfer_prompt

@@ -401,7 +401,7 @@ class MessageTransformer:
                     # For assistant messages with tool calls, we need to format differently
                     # Fix issue with empty content
                     if isinstance(msg["content"], List):
-                        claude_msg["content"] = msg["content"]
+                        claude_msg["content"] = list(msg["content"])
                     else:
                         if msg["content"] == "":
                             msg["content"] = " "
@@ -493,7 +493,7 @@ class MessageTransformer:
 
             # Handle content
             if "content" in msg:
-                openai_msg["content"] = msg["content"]
+                openai_msg["content"] = list(msg["content"])
 
             # Handle tool calls
             if "tool_calls" in msg:
@@ -548,7 +548,7 @@ class MessageTransformer:
                 ):
                     google_msg["content"] = msg["content"][0]["text"]
                 else:
-                    google_msg["content"] = msg["content"]
+                    google_msg["content"] = list(msg["content"])
 
             # Handle tool calls
             if "tool_calls" in msg:
@@ -599,7 +599,7 @@ class MessageTransformer:
                 ):
                     groq_msg["content"] = msg["content"][0]["text"]
                 else:
-                    groq_msg["content"] = msg["content"]
+                    groq_msg["content"] = list(msg["content"])
 
             # Handle tool calls
             if "tool_calls" in msg:
