@@ -203,7 +203,7 @@ _DEEPINFRA_MODELS = [
         provider="deepinfra",
         name="Gemma 3 27B",
         description="Gemma is a family of lightweight, state-of-the-art open models from Google, built from the same research and technology used to create the Gemini models",
-        capabilities=["text-generation"],
+        capabilities=["text-generation", "tool_use"],
         input_token_price_1m=0.1,
         output_token_price_1m=0.2,
     ),

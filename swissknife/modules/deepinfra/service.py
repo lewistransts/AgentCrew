@@ -302,7 +302,8 @@ class DeepInfraService(OpenAIService):
 
         # Handle regular content chunks
         if (
-            len(chunk.choices) > 0
+            chunk.choices
+            and len(chunk.choices) > 0
             and hasattr(chunk.choices[0].delta, "content")
             and chunk.choices[0].delta.content is not None
         ):
@@ -324,7 +325,11 @@ class DeepInfraService(OpenAIService):
                 output_tokens = chunk.usage.completion_tokens
 
         # Handle tool call chunks
-        if len(chunk.choices) > 0 and hasattr(chunk.choices[0].delta, "tool_calls"):
+        if (
+            chunk.choices
+            and len(chunk.choices) > 0
+            and hasattr(chunk.choices[0].delta, "tool_calls")
+        ):
             delta_tool_calls = chunk.choices[0].delta.tool_calls
             if delta_tool_calls:
                 # Process each tool call in the delta
