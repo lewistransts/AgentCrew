@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Tuple
-from swissknife.modules.tools.registry import ToolRegistry
 import re
 import json
 import base64

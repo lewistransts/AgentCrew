@@ -6,9 +6,6 @@ from anthropic.types import TextBlock
 from dotenv import load_dotenv
 from swissknife.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from swissknife.modules.llm.model_registry import ModelRegistry
-from ..prompts.constants import (
-    ANALYSIS_PROMPT,
-)
 
 
 class AnthropicService(BaseLLMService):

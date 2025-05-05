@@ -626,7 +626,7 @@ class ContextPersistenceService:
                                     preview = "[No User Message Found]"
 
                                 if not preview.startswith(
-                                    "Use user_context_summary to tailor your response"
+                                    "Context from your memory:"
                                 ) and not preview.startswith("Content of "):
                                     break
 

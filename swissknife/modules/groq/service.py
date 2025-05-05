@@ -14,9 +14,6 @@ from mcp.types import TextContent, ImageContent
 from groq.types.chat import ChatCompletion
 from swissknife.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from swissknife.modules.llm.model_registry import ModelRegistry
-from swissknife.modules.prompts.constants import (
-    ANALYSIS_PROMPT,
-)
 
 
 class GroqService(BaseLLMService):
@@ -69,7 +66,6 @@ class GroqService(BaseLLMService):
             response = self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=3000,
-                reasoning_format="parsed",
                 messages=[
                     {
                         "role": "user",
@@ -215,7 +211,7 @@ class GroqService(BaseLLMService):
                 {"role": f"{system_role}", "content": self.system_prompt},
             ] + messages
 
-        if self.model == "qwen-qwq-32b":
+        if "thinking" in ModelRegistry.get_model_capabilities(self.model):
             stream_params["reasoning_format"] = "parsed"
             # stream_params["messages"].append(
             #     {"role": "assistant", "content": "<think>\n"}

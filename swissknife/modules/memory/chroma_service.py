@@ -2,7 +2,7 @@ import os
 import chromadb
 import uuid
 import numpy as np
-from swissknife.modules.openai import OpenAIService
+from swissknife.modules.groq import GroqService
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
 
@@ -30,8 +30,8 @@ class ChromaMemoryService(BaseMemoryService):
         self.client = chromadb.PersistentClient(path=self.db_path)
 
         if not llm_service:
-            self.llm_service = OpenAIService()
-            self.llm_service.model = "gpt-4o-mini"
+            self.llm_service = GroqService()
+            self.llm_service.model = "llama-3.1-8b-instant"
         else:
             self.llm_service = llm_service
 
@@ -94,24 +94,24 @@ class ChromaMemoryService(BaseMemoryService):
         Returns:
             List of memory IDs created
         """
-        # ids = []
-        # if self.llm_service:
-        #     conversation_text = self.llm_service.process_message(
-        #         PRE_ANALYZE_PROMPT.replace(
-        #             "{current_date}", datetime.today().strftime("%Y-%m-%d")
-        #         )
-        #         .replace("{user_message}", user_message)
-        #         .replace("{assistant_response}", assistant_response)
-        #     )
-        #     lines = conversation_text.split("\n")
-        #     for i, line in enumerate(lines):
-        #         if line == "## ID:":
-        #             ids.append(lines[i + 1])
-        #
-        #     print(ids)
-        # else:
-        # Create the memory document by combining user message and response
-        conversation_text = f"Date: {datetime.today().strftime('%Y-%m-%d')}.\n\n User: {user_message}.\n\nAssistant: {assistant_response}"
+        ids = []
+        if self.llm_service:
+            conversation_text = self.llm_service.process_message(
+                PRE_ANALYZE_PROMPT.replace(
+                    "{current_date}", datetime.today().strftime("%Y-%m-%d")
+                )
+                .replace("{user_message}", user_message)
+                .replace("{assistant_response}", assistant_response)
+            )
+            lines = conversation_text.split("\n")
+            for i, line in enumerate(lines):
+                if line == "## ID:":
+                    ids.append(lines[i + 1])
+
+            print(ids)
+        else:
+            # Create the memory document by combining user message and response
+            conversation_text = f"Date: {datetime.today().strftime('%Y-%m-%d')}.\n\n User: {user_message}.\n\nAssistant: {assistant_response}"
 
         # Split into chunks
         # chunks = self._create_chunks(conversation_text)
@@ -129,33 +129,33 @@ class ChromaMemoryService(BaseMemoryService):
             self.context_embedding.pop(0)
 
         # Add to ChromaDB collection
-        # if ids:
-        #     self.collection.upsert(
-        #         ids=ids,
-        #         documents=[conversation_text],
-        #         embeddings=conversation_embedding,
-        #         metadatas=[
-        #             {
-        #                 "timestamp": timestamp,
-        #                 "conversation_id": memory_id,  # First ID is the conversation ID
-        #                 "type": "conversation",
-        #             }
-        #         ],
-        #     )
-        #
-        # else:
-        self.collection.add(
-            documents=[conversation_text],
-            embeddings=conversation_embedding,
-            metadatas=[
-                {
-                    "timestamp": timestamp,
-                    "conversation_id": memory_id,  # First ID is the conversation ID
-                    "type": "conversation",
-                }
-            ],
-            ids=[memory_id],
-        )
+        if ids:
+            self.collection.upsert(
+                ids=ids,
+                documents=[conversation_text],
+                embeddings=conversation_embedding,
+                metadatas=[
+                    {
+                        "timestamp": timestamp,
+                        "conversation_id": memory_id,  # First ID is the conversation ID
+                        "type": "conversation",
+                    }
+                ],
+            )
+
+        else:
+            self.collection.add(
+                documents=[conversation_text],
+                embeddings=conversation_embedding,
+                metadatas=[
+                    {
+                        "timestamp": timestamp,
+                        "conversation_id": memory_id,  # First ID is the conversation ID
+                        "type": "conversation",
+                    }
+                ],
+                ids=[memory_id],
+            )
 
         # for i, chunk in enumerate(chunks):
         #     memory_id = str(uuid.uuid4())

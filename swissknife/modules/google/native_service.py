@@ -13,7 +13,6 @@ from swissknife.modules.llm.base import (
     read_text_file,
     base64_to_bytes,
 )
-from swissknife.modules.prompts.constants import ANALYSIS_PROMPT
 
 
 class GoogleStreamAdapter:

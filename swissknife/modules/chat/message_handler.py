@@ -202,7 +202,7 @@ class MessageHandler(Observable):
                         "content": [
                             {
                                 "type": "text",
-                                "text": f"""Use user_context_summary to tailor your response:
+                                "text": f"""Context from your memory:
                                 {self.memory_service.generate_user_context(user_input)}""",
                             }
                         ],
@@ -765,7 +765,7 @@ class MessageHandler(Observable):
                         if (
                             message_content
                             and not message_content.startswith(
-                                "Use user_context_summary to tailor your response"
+                                "Context from your memory:"
                             )
                             and not message_content.startswith("Content of ")
                         ):

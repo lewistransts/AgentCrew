@@ -11,7 +11,6 @@ from swissknife.modules.web_search import TavilySearchService
 from swissknife.modules.clipboard import ClipboardService
 from swissknife.modules.memory import (
     ChromaMemoryService,
-    Mem0MemoryService,
     ContextPersistenceService,
 )
 from swissknife.modules.code_analysis import CodeAnalysisService

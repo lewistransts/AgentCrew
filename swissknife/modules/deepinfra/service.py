@@ -6,7 +6,6 @@ import json
 import os
 import contextlib
 from openai.types.chat import ChatCompletion
-from swissknife.modules.prompts.constants import ANALYSIS_PROMPT
 from dotenv import load_dotenv
 
 

@@ -1009,9 +1009,7 @@ class ChatWindow(QMainWindow, Observer):
                 )
                 if (
                     message_content.strip()
-                    and not message_content.startswith(
-                        "Use user_context_summary to tailor your response"
-                    )
+                    and not message_content.startswith("Context from your memory:")
                     and not message_content.startswith("Content of ")
                     and not message_content.startswith(
                         "Need to tailor response bases on this"
