@@ -155,7 +155,7 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
-    def process_message(self, prompt: str) -> str:
+    def process_message(self, prompt: str, temperature: float = 0) -> str:
         """
         Process a user message and return the LLM's response.
 

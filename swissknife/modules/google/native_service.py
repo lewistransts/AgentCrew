@@ -139,12 +139,14 @@ class GoogleAINativeService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def process_message(self, prompt: str) -> str:
+    def process_message(self, prompt: str, temperature: float = 0) -> str:
         try:
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=prompt,
-                config=types.GenerateContentConfig(max_output_tokens=3000),
+                config=types.GenerateContentConfig(
+                    max_output_tokens=3000, temperature=temperature
+                ),
             )
 
             # Get token usage if available

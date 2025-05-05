@@ -85,6 +85,10 @@ Enhance this conversation for AI memory storage. Create a single comprehensive t
     Enhanced memory text:
 """
 
+SEMANTIC_EXTRACTING = """
+Extract the core information from the user's message and generate a short sentence or phrase summarizing the main idea or context with key entities. No explanations or additional text
+User input: {user_input}"""
+
 # Prompt templates
 EXPLAIN_PROMPT = """
 Please explain the following markdown content in a way that helps non-experts understand it better.

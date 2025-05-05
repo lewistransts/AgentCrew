@@ -39,11 +39,12 @@ class AnthropicService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def process_message(self, prompt: str) -> str:
+    def process_message(self, prompt: str, temperature: float = 0) -> str:
         """Summarize the provided content using Claude."""
         try:
             message = self.client.messages.create(
                 model=self.model,
+                temperature=temperature,
                 max_tokens=3000,
                 messages=[
                     {

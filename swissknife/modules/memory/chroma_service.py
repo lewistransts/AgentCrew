@@ -7,7 +7,11 @@ from typing import List, Dict, Any
 from datetime import datetime, timedelta
 
 from .base_service import BaseMemoryService
-from swissknife.modules.prompts.constants import ANALYSIS_PROMPT, PRE_ANALYZE_PROMPT
+from swissknife.modules.prompts.constants import (
+    ANALYSIS_PROMPT,
+    SEMANTIC_EXTRACTING,
+    PRE_ANALYZE_PROMPT,
+)
 import chromadb.utils.embedding_functions as embedding_functions
 
 
@@ -180,12 +184,13 @@ class ChromaMemoryService(BaseMemoryService):
         #
         return memory_ids
 
-    def need_generate_user_context(self, user_input) -> bool:
+    def need_generate_user_context(self, user_input: str) -> bool:
+        keywords = self._semantic_extracting(user_input)
         if not self.current_embedding_context:
-            self.current_embedding_context = self.embedding_function([user_input])
+            self.current_embedding_context = self.embedding_function([keywords])
             return True
 
-        self.current_embedding_context = self.embedding_function([user_input])
+        self.current_embedding_context = self.embedding_function([keywords])
         avg_conversation = np.mean(self.context_embedding, axis=0)
 
         similarity = self._cosine_similarity(
@@ -215,6 +220,13 @@ class ChromaMemoryService(BaseMemoryService):
         )
         return analyze_result
 
+    def _semantic_extracting(self, input: str) -> str:
+        keywords = self.llm_service.process_message(
+            SEMANTIC_EXTRACTING.replace("{user_input}", input)
+        )
+        print(keywords)
+        return keywords
+
     def retrieve_memory(self, keywords: str, limit: int = 5) -> str:
         """
         Retrieve relevant memories based on keywords.
@@ -226,7 +238,10 @@ class ChromaMemoryService(BaseMemoryService):
         Returns:
             Formatted string of relevant memories
         """
-        results = self.collection.query(query_texts=[keywords], n_results=limit)
+
+        results = self.collection.query(
+            query_texts=[self._semantic_extracting(keywords)], n_results=limit
+        )
 
         if not results["documents"] or not results["documents"][0]:
             return "No relevant memories found."

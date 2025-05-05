@@ -66,11 +66,12 @@ class DeepInfraService(OpenAIService):
 
         return message
 
-    def process_message(self, prompt: str) -> str:
+    def process_message(self, prompt: str, temperature: float = 0) -> str:
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=3000,
+                temperature=temperature,
                 messages=[
                     {
                         "role": "user",
