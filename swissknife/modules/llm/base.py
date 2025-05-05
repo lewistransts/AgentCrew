@@ -156,8 +156,16 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
-    def analyze_user_summary(self, user_input: str, conversation_history: str) -> str:
-        """Analyze user behavior based on conversation history"""
+    def process_message(self, prompt: str) -> str:
+        """
+        Process a user message and return the LLM's response.
+
+        Args:
+            prompt (str): The user's input message to be processed
+
+        Returns:
+            str: The processed response from the LLM
+        """
         pass
 
     @abstractmethod

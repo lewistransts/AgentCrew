@@ -67,7 +67,7 @@ class DeepInfraService(OpenAIService):
 
         return message
 
-    def analyze_user_summary(self, user_input: str, conversation_history: str) -> str:
+    def process_message(self, prompt: str) -> str:
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -75,9 +75,7 @@ class DeepInfraService(OpenAIService):
                 messages=[
                     {
                         "role": "user",
-                        "content": ANALYSIS_PROMPT.replace(
-                            "{conversation_history}", conversation_history
-                        ).replace("{user_input}", user_input),
+                        "content": prompt,
                     }
                 ],
             )
