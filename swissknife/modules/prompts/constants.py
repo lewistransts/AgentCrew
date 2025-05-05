@@ -50,6 +50,41 @@ ANALYSIS_PROMPT = """
 </conversation_history>
 """
 
+PRE_ANALYZE_PROMPT = """
+Enhance this conversation for AI memory storage. Create a single comprehensive text document that includes ALL of the following sections:
+
+    1. ID: keywords from user_message written as snake_case
+    2. DATE: {current_date}
+    3. SUMMARY: Brief summary of the conversation (1-2 sentences)
+    4. KEY INFORMATION: Essential facts, concepts, or data points discussed
+    5. CONTEXT: Background information relevant to understanding this exchange
+    6. USER PREFERENCES: Any explicit preferences expressed by the user (e.g., "I prefer Python over Java")
+    7. BEHAVIORAL INSIGHTS: Observations about user behavior (e.g., "User asks detailed technical questions")
+    8. ENTITIES: Important people, organizations, products, or concepts mentioned
+    9. DOMAIN: The subject domain(s) this conversation relates to
+    10. FOLLOW-UP POTENTIAL: Possible continuation topics
+
+    USER: {user_message}
+    ASSISTANT: {assistant_response}
+
+    Format each section with its heading in ALL CAPS followed by the content.
+    If a section would be empty, include the heading with "None detected" as the content.
+    Focus on extracting factual information rather than making assumptions.
+
+    Examples:
+
+    ## ID:
+    donald_trump
+
+    ## DATE:
+    2025-01-03
+
+    ## SUMMARY:
+    A summary about Donald Trump
+
+    Enhanced memory text:
+"""
+
 # Prompt templates
 EXPLAIN_PROMPT = """
 Please explain the following markdown content in a way that helps non-experts understand it better.

@@ -1,13 +1,13 @@
 import os
 import chromadb
-import datetime
 import uuid
 import numpy as np
 from swissknife.modules.openai import OpenAIService
 from typing import List, Dict, Any
+from datetime import datetime, timedelta
 
 from .base_service import BaseMemoryService
-
+from swissknife.modules.prompts.constants import ANALYSIS_PROMPT, PRE_ANALYZE_PROMPT
 import chromadb.utils.embedding_functions as embedding_functions
 
 
@@ -94,15 +94,31 @@ class ChromaMemoryService(BaseMemoryService):
         Returns:
             List of memory IDs created
         """
+        # ids = []
+        # if self.llm_service:
+        #     conversation_text = self.llm_service.process_message(
+        #         PRE_ANALYZE_PROMPT.replace(
+        #             "{current_date}", datetime.today().strftime("%Y-%m-%d")
+        #         )
+        #         .replace("{user_message}", user_message)
+        #         .replace("{assistant_response}", assistant_response)
+        #     )
+        #     lines = conversation_text.split("\n")
+        #     for i, line in enumerate(lines):
+        #         if line == "## ID:":
+        #             ids.append(lines[i + 1])
+        #
+        #     print(ids)
+        # else:
         # Create the memory document by combining user message and response
-        conversation_text = f"Date: {datetime.datetime.today().strftime('%Y-%m-%d')}.\n\n User: {user_message}.\n\nAssistant: {assistant_response}"
+        conversation_text = f"Date: {datetime.today().strftime('%Y-%m-%d')}.\n\n User: {user_message}.\n\nAssistant: {assistant_response}"
 
         # Split into chunks
         # chunks = self._create_chunks(conversation_text)
 
         # Store each chunk with metadata
         memory_ids = []
-        timestamp = datetime.datetime.now().isoformat()
+        timestamp = datetime.now().isoformat()
 
         memory_id = str(uuid.uuid4())
         memory_ids.append(memory_id)
@@ -113,6 +129,21 @@ class ChromaMemoryService(BaseMemoryService):
             self.context_embedding.pop(0)
 
         # Add to ChromaDB collection
+        # if ids:
+        #     self.collection.upsert(
+        #         ids=ids,
+        #         documents=[conversation_text],
+        #         embeddings=conversation_embedding,
+        #         metadatas=[
+        #             {
+        #                 "timestamp": timestamp,
+        #                 "conversation_id": memory_id,  # First ID is the conversation ID
+        #                 "type": "conversation",
+        #             }
+        #         ],
+        #     )
+        #
+        # else:
         self.collection.add(
             documents=[conversation_text],
             embeddings=conversation_embedding,
@@ -160,7 +191,6 @@ class ChromaMemoryService(BaseMemoryService):
         similarity = self._cosine_similarity(
             self.current_embedding_context, avg_conversation
         )
-        print(similarity)
         return similarity < 0.31
 
     def clear_conversation_context(self):
@@ -177,8 +207,11 @@ class ChromaMemoryService(BaseMemoryService):
         Returns:
             Formatted string containing relevant context from past conversations
         """
-        analyze_result = self.llm_service.analyze_user_summary(
-            user_input, self.retrieve_memory(user_input, 10)
+        # return self.retrieve_memory(user_input, 5)
+        analyze_result = self.llm_service.process_message(
+            ANALYSIS_PROMPT.replace(
+                "{conversation_history}", self.retrieve_memory(user_input, 10)
+            ).replace("{user_input}", user_input)
         )
         return analyze_result
 
@@ -231,7 +264,7 @@ class ChromaMemoryService(BaseMemoryService):
             timestamp = "Unknown time"
             if conv_data["timestamp"] != "unknown":
                 try:
-                    dt = datetime.datetime.fromisoformat(conv_data["timestamp"])
+                    dt = datetime.fromisoformat(conv_data["timestamp"])
                     timestamp = dt.strftime("%Y-%m-%d %H:%M")
                 except Exception:
                     timestamp = conv_data["timestamp"]
@@ -266,7 +299,7 @@ class ChromaMemoryService(BaseMemoryService):
             Number of memories removed
         """
         # Calculate the cutoff date
-        cutoff_date = datetime.datetime.now() - datetime.timedelta(days=30 * months)
+        cutoff_date = datetime.now() - timedelta(days=30 * months)
 
         # Get all memories
         all_memories = self.collection.get()
@@ -275,11 +308,9 @@ class ChromaMemoryService(BaseMemoryService):
         ids_to_remove = []
         for i, metadata in enumerate(all_memories["metadatas"]):
             # Parse timestamp string to datetime object for proper comparison
-            timestamp_str = metadata.get(
-                "timestamp", datetime.datetime.now().isoformat()
-            )
+            timestamp_str = metadata.get("timestamp", datetime.now().isoformat())
             try:
-                timestamp_dt = datetime.datetime.fromisoformat(timestamp_str)
+                timestamp_dt = datetime.fromisoformat(timestamp_str)
                 if timestamp_dt < cutoff_date:
                     ids_to_remove.append(all_memories["ids"][i])
             except ValueError:
