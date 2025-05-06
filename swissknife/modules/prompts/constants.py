@@ -5,14 +5,14 @@ ANALYSIS_PROMPT = """
 <user_context_analysis>
 <instruction>
 1.  Analyze the <conversation_history> to gather user information.
-2.  Format this summary as a JSON object.
-3.  MUST enclose the entire JSON object within `<user_context_summary>` tags.
-4.  Use the following keys in the JSON object: `explicit_preferences`, `topics_of_interest`, `key_facts_entities`, `inferred_behavior`.
-5.  The value for `explicit_preferences`, `topics_of_interest`, `inferred_behavior` MUST be a JSON array of strings `["item1", "item2", ...]`.
-6.  the value for `key_facts_entities` MUST be a dictionary with key is a string and value is a array of strings `{"entity1": ["fact about entity1"]}`
-7.  If no information has been identified for a category, use an empty array `[]` as its value.
-8.  If there are conflicts between conversation_histories, Choose the latest memory by date. 
-9.  Ignore any conversation_history that is not related to <user_input>
+2.  ONLY INCLUDE information that is related to <user_input>
+3.  Format this summary as a JSON object.
+4.  MUST enclose the entire JSON object within `<user_context_summary>` tags.
+5.  Use the following keys in the JSON object: `explicit_preferences`, `topics_of_interest`, `key_facts_entities`, `inferred_behavior`.
+6.  The value for `explicit_preferences`, `topics_of_interest`, `inferred_behavior` MUST be a JSON array of strings `["item1", "item2", ...]`.
+7.  the value for `key_facts_entities` MUST be a dictionary with key is a string and value is a array of strings `{"entity1": ["fact about entity1"]}`
+8.  If no information has been identified for a category, use an empty array `[]` as its value.
+9.  If there are conflicts between conversation_histories, Choose the latest memory by date. 
 10. Avoid using ambiguous entity key like "./", "this repo", "this file", choose a meaningful entity key.
 11. Only response `<user_context_summary>...</user_context_summary>` block
 </instruction>
@@ -56,13 +56,11 @@ Enhance this conversation for AI memory storage. Create a single comprehensive t
     1. ID: keywords from user_message written as snake_case
     2. DATE: {current_date}
     3. SUMMARY: Brief summary of the conversation (1-2 sentences)
-    4. KEY INFORMATION: Essential facts, concepts, or data points discussed
-    5. CONTEXT: Background information relevant to understanding this exchange
-    6. USER PREFERENCES: Any explicit preferences expressed by the user (e.g., "I prefer Python over Java")
-    7. BEHAVIORAL INSIGHTS: Observations about user behavior (e.g., "User asks detailed technical questions")
-    8. ENTITIES: Important people, organizations, products, or concepts mentioned
-    9. DOMAIN: The subject domain(s) this conversation relates to
-    10. FOLLOW-UP POTENTIAL: Possible continuation topics
+    4. CONTEXT: Background information relevant to understanding this exchange
+    5. ENTITIES: Important people, organizations, products, or concepts mentioned including essential facts, concepts, or data points discussed about that entity
+    6. DOMAIN: The subject domain(s) this conversation relates to
+    7. USER PREFERENCES: Any explicit preferences expressed by the user (e.g., "I prefer Python over Java")
+    8. BEHAVIORAL INSIGHTS: Observations about user behavior (e.g., "User asks detailed technical questions")
 
     USER: {user_message}
     ASSISTANT: {assistant_response}
@@ -70,6 +68,7 @@ Enhance this conversation for AI memory storage. Create a single comprehensive t
     Format each section with its heading in ALL CAPS followed by the content.
     If a section would be empty, include the heading with "None detected" as the content.
     Focus on extracting factual information rather than making assumptions.
+    No explanations or additional text.
 
     Examples:
 

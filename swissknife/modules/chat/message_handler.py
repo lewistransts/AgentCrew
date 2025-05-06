@@ -423,10 +423,15 @@ class MessageHandler(Observable):
 
         # If an agent name is provided, try to switch to that agent
         agent_name = parts[1]
+        old_agent_name = self.agent_manager.get_current_agent().name
         if self.agent_manager.select_agent(agent_name):
             # Update the LLM reference to the new agent's LLM
             # self.llm = self.agent_manager.get_current_agent().llm
             self.agent = self.agent_manager.get_current_agent()
+            old_agent = self.agent_manager.get_agent(old_agent_name)
+            if old_agent:
+                self.agent.history = list(old_agent.history)
+                old_agent.history = []
             self._notify("agent_changed", agent_name)
             return True, f"Switched to {agent_name} agent"
         else:

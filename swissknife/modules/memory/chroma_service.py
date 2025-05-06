@@ -120,6 +120,7 @@ class ChromaMemoryService(BaseMemoryService):
         # Split into chunks
         # chunks = self._create_chunks(conversation_text)
 
+        print(conversation_text)
         # Store each chunk with metadata
         memory_ids = []
         timestamp = datetime.now().isoformat()
@@ -215,7 +216,7 @@ class ChromaMemoryService(BaseMemoryService):
         # return self.retrieve_memory(user_input, 5)
         analyze_result = self.llm_service.process_message(
             ANALYSIS_PROMPT.replace(
-                "{conversation_history}", self.retrieve_memory(user_input, 10)
+                "{conversation_history}", self.retrieve_memory(user_input, 5)
             ).replace("{user_input}", user_input)
         )
         return analyze_result
