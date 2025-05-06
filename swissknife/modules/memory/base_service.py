@@ -5,6 +5,16 @@ from abc import ABC, abstractmethod
 class BaseMemoryService(ABC):
     """Service for storing and retrieving conversation memory."""
 
+    @property
+    def session_id(self) -> str:
+        """Get the provider name for this service."""
+        return getattr(self, "_provider_name", "unknown")
+
+    @session_id.setter
+    def session_id(self, value: str):
+        """Set the provider name for this service."""
+        self._session_id = value
+
     @abstractmethod
     def store_conversation(
         self, user_message: str, assistant_response: str

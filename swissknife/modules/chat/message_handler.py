@@ -234,6 +234,7 @@ class MessageHandler(Observable):
                 )
 
             self.current_conversation_id = self.persistent_service.start_conversation()
+            self.memory_service.session_id = self.current_conversation_id
             # self.messages = []  # Clear in-memory message list
             self.agent_manager.clean_agents_messages()
             self.streamline_messages = []
@@ -728,6 +729,7 @@ class MessageHandler(Observable):
             history = self.persistent_service.get_conversation_history(conversation_id)
             if history:
                 self.current_conversation_id = conversation_id
+                self.memory_service.session_id = self.current_conversation_id
                 last_agent_name = history[-1].get("agent", "")
                 if last_agent_name and self.agent_manager.select_agent(last_agent_name):
                     self.agent = self.agent_manager.get_current_agent()

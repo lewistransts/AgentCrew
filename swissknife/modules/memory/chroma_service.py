@@ -143,6 +143,7 @@ class ChromaMemoryService(BaseMemoryService):
                     {
                         "timestamp": timestamp,
                         "conversation_id": memory_id,  # First ID is the conversation ID
+                        "session_id": self.session_id,
                         "type": "conversation",
                     }
                 ],
@@ -156,6 +157,7 @@ class ChromaMemoryService(BaseMemoryService):
                     {
                         "timestamp": timestamp,
                         "conversation_id": memory_id,  # First ID is the conversation ID
+                        "session_id": self.session_id,
                         "type": "conversation",
                     }
                 ],
@@ -241,7 +243,9 @@ class ChromaMemoryService(BaseMemoryService):
         """
 
         results = self.collection.query(
-            query_texts=[self._semantic_extracting(keywords)], n_results=limit
+            query_texts=[self._semantic_extracting(keywords)],
+            n_results=limit,
+            where={"session_id": {"$ne": self.session_id}},
         )
 
         if not results["documents"] or not results["documents"][0]:
