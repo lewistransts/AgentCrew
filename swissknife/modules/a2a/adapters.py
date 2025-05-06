@@ -4,7 +4,17 @@ Adapters for converting between SwissKnife and A2A message formats.
 
 import base64
 from typing import Dict, Any, List, Optional
-from common.types import Message, TextPart, FilePart, FileContent, Artifact, Part
+from common.types import (
+    GetTaskResponse,
+    Message,
+    TextPart,
+    FilePart,
+    FileContent,
+    Artifact,
+    Part,
+    SendTaskResponse,
+    SendTaskStreamingResponse,
+)
 
 
 # TODO: cover all of cases for images
@@ -163,3 +173,16 @@ def convert_file_to_a2a_part(
     return FilePart(
         file=FileContent(name=file_name, mimeType=mime_type, bytes=base64_content)
     )
+
+
+def convert_a2a_send_task_response_to_swissknife_message(
+    response: SendTaskResponse | GetTaskResponse, agent_name: str
+) -> Optional[str]:
+    if not response or not response.result or not response.result.artifacts:
+        return None
+    assistant_a2a_message = response.result.artifacts[-1]
+    content_parts = []
+    for part in assistant_a2a_message.parts:
+        if part.type == "text":
+            content_parts.append(part.text)
+    return "\n".join(content_parts)

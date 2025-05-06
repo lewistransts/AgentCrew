@@ -84,11 +84,11 @@ def get_memory_retrieve_tool_definition(provider="claude") -> Dict[str, Any]:
     Returns:
         Dict containing the tool definition
     """
-    tool_description = "Retrieves relevant information from past conversations and stored knowledge, based on keywords. ALWAYS use this tool as a primary method for finding relevant information and context. Use specific keywords for best results. Consider the likely topics and key terms from prior interactions when formulating your keywords."
+    tool_description = "Retrieves relevant information from past conversations and stored knowledge, based on semantic keywords. ALWAYS use this tool as a primary method for finding relevant information and context. Use specific semantic keywords for best results."
     tool_arguments = {
         "keywords": {
             "type": "string",
-            "description": "Keywords used to search for relevant information in memory. Use specific and descriptive terms to narrow the search and retrieve the most useful results. Consider synonyms and related terms to broaden the search.",
+            "description": "Semantic Keywords used to search for relevant information in memory. Use specific and descriptive terms to narrow the search and retrieve the most useful results. Consider synonyms and related terms to broaden the search.",
         },
     }
     tool_required = ["keywords"]

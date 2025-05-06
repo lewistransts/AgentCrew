@@ -117,7 +117,6 @@ class AgentTaskManager(TaskManager):
                 response_message = ""
                 thinking_content = ""
                 thinking_signature = ""
-                print(agent.history)
 
                 for response_message, chunk_text, thinking_chunk in response_generator:
                     # Update current response

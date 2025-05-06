@@ -17,7 +17,7 @@ from swissknife.modules.code_analysis import CodeAnalysisService
 from swissknife.modules.llm.service_manager import ServiceManager
 from swissknife.modules.llm.model_registry import ModelRegistry
 from swissknife.modules.coder import SpecPromptValidationService
-from swissknife.modules.agents import AgentManager, LocalAgent
+from swissknife.modules.agents import AgentManager, LocalAgent, RemoteAgent
 from PySide6.QtWidgets import QApplication
 
 
@@ -147,23 +147,28 @@ tools = ["memory", "clipboard", "web_search", "code_analysis"]
     agent_definitions = AgentManager.load_agents_from_config(config_path)
     first_agent_name = None
     for agent_def in agent_definitions:
-        if not first_agent_name:
-            first_agent_name = agent_def["name"]
-        if standalone_provider:
-            llm_service = llm_manager.initialize_standalone_service(standalone_provider)
-        agent = LocalAgent(
-            name=agent_def["name"],
-            description=agent_def["description"],
-            llm_service=llm_service,
-            services=services,
-            tools=agent_def["tools"],
-            temperature=agent_def.get("temperature", None),
-        )
-        agent.set_system_prompt(
-            agent_def["system_prompt"].replace(
-                "{current_date}", datetime.today().strftime("%Y-%m-%d")
+        if agent_def.get("base_url", ""):
+            agent = RemoteAgent(agent_def["name"], agent_def.get("base_url"))
+        else:
+            if not first_agent_name:
+                first_agent_name = agent_def["name"]
+            if standalone_provider:
+                llm_service = llm_manager.initialize_standalone_service(
+                    standalone_provider
+                )
+            agent = LocalAgent(
+                name=agent_def["name"],
+                description=agent_def["description"],
+                llm_service=llm_service,
+                services=services,
+                tools=agent_def["tools"],
+                temperature=agent_def.get("temperature", None),
             )
-        )
+            agent.set_system_prompt(
+                agent_def["system_prompt"].replace(
+                    "{current_date}", datetime.today().strftime("%Y-%m-%d")
+                )
+            )
         agent_manager.register_agent(agent)
 
     from swissknife.modules.mcpclient.tool import register as mcp_register

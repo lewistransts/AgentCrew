@@ -45,7 +45,7 @@ class AgentManager:
         except (toml.TomlDecodeError, json.JSONDecodeError):
             raise ValueError("Invalid configuration file format.")
 
-        return config.get("agents", [])
+        return config.get("agents", []) + config.get("remote_agents", [])
 
     def __init__(self, config_path: Optional[str] = None):
         """Initialize the agent manager."""
@@ -280,18 +280,11 @@ class AgentManager:
             agent_descriptions.append(agent_desc)
 
         transfer_prompt = f"""<Agents>
-  <memory_rules>
-    - Agents share the same persistent memory space.
-    - Memory is the conversations of all agents in last month.
-    - Follow these steps before response:
-        - Identify the keywords in user request.
-        - Base on current conversation context, decide whether or not need more data to process user request
-        - Use `retrieve_memory` tool when available with keywords to get more data or ask user if tool is not available
-  </memory_rules>
   <transfer_rules>
     - When you encounter a task that falls outside your specialized expertise, you must transfer the conversation to a more appropriate agent from the available list. This ensures the user receives the most accurate and helpful assistance possible.
     - You're ONLY able to transfer to one agent at a time.
-    - Use `relevant_messages` to provide any messages index (file contents, tool results, user messages) related to the task.
+    - Agents DO NOT share same conversation to user with others.
+    - Use `relevant_messages` to provide necessary message indices related to the task from your conversation history.
     - To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments.
   </transfer_rules>
   <agent_lists>

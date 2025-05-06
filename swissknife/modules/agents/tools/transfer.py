@@ -26,10 +26,10 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
             "items": {"type": "integer"},
             "description": "MUST include 0-based index of conversation's chat messages relate to this task including user messages, tool use results, assistant messages",
         },
-        # "chain_agent": {
-        #     "type": "string",
-        #     "description": "Optional, Chain the request to other agent for further processing when task is need more ",
-        # },
+        "chain_agent": {
+            "type": "string",
+            "description": "Optional, Chain the request to other agent for further processing when necessary",
+        },
     }
     tool_required = ["target_agent", "task", "relevant_messages"]
     if provider == "claude":
@@ -83,6 +83,7 @@ def get_transfer_tool_handler(agent_manager) -> Callable:
         target_agent = params.get("target_agent")
         task = params.get("task")
         relevant_messages = params.get("relevant_messages", [])
+        next_agent = params.get("chain_agent", "")
 
         if not target_agent:
             raise ValueError("Error: No target agent specified")
@@ -101,6 +102,9 @@ def get_transfer_tool_handler(agent_manager) -> Callable:
 
         if result["success"] and result["transfer"]["from"] != "None":
             response = f"I'm giving you task from {result['transfer']['from']}  \n---\n\n{task}\n---"
+
+            if next_agent:
+                response += f"\nTransfer to {next_agent} with relevant messages for further processing.  \n"
 
             if result["transfer"]["relevant_data"]:
                 response += f"\n### Relevant messages:\n{'\n\n'.join(result['transfer']['relevant_data'])}"
