@@ -16,7 +16,7 @@ class BaseMemoryService(ABC):
         self._session_id = value
 
     @abstractmethod
-    def store_conversation(
+    async def store_conversation(
         self, user_message: str, assistant_response: str
     ) -> List[str]:
         """
@@ -32,7 +32,7 @@ class BaseMemoryService(ABC):
         pass
 
     @abstractmethod
-    def need_generate_user_context(self, user_input) -> bool:
+    async def need_generate_user_context(self, user_input) -> bool:
         pass
 
     @abstractmethod
@@ -40,7 +40,7 @@ class BaseMemoryService(ABC):
         pass
 
     @abstractmethod
-    def generate_user_context(self, user_input: str) -> str:
+    async def generate_user_context(self, user_input: str) -> str:
         """
         Generate context based on user input by retrieving relevant memories.
 
@@ -53,7 +53,7 @@ class BaseMemoryService(ABC):
         pass
 
     @abstractmethod
-    def retrieve_memory(self, keywords: str, limit: int = 5) -> str:
+    async def retrieve_memory(self, keywords: str, limit: int = 5) -> str:
         """
         Retrieve relevant memories based on keywords.
 

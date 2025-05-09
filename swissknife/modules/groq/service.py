@@ -8,7 +8,7 @@ import rich
 import re
 from rich.live import Live
 from typing import Dict, Any, List, Optional, Tuple
-from groq import Groq
+from groq import AsyncGroq
 from dotenv import load_dotenv
 from mcp.types import TextContent, ImageContent
 from groq.types.chat import ChatCompletion
@@ -24,7 +24,7 @@ class GroqService(BaseLLMService):
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
             raise ValueError("GROQ_API_KEY not found in environment variables")
-        self.client = Groq(api_key=api_key)
+        self.client = AsyncGroq(api_key=api_key)
         # Set default model - can be updated based on Groq's available models
         self.model = "qwen-qwq-32b"
         self.tools = []  # Initialize empty tools list
@@ -61,9 +61,9 @@ class GroqService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def process_message(self, prompt: str, temperature: float = 0) -> str:
+    async def process_message(self, prompt: str, temperature: float = 0) -> str:
         try:
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=3000,
                 temperature=temperature,
@@ -173,7 +173,7 @@ class GroqService(BaseLLMService):
         self.tool_handlers[tool_definition["function"]["name"]] = handler_function
         print(f"🔧 Registered tool: {tool_definition['function']['name']}")
 
-    def execute_tool(self, tool_name, tool_params):
+    async def execute_tool(self, tool_name, tool_params):
         """
         Execute a registered tool with the given parameters.
 
@@ -191,7 +191,7 @@ class GroqService(BaseLLMService):
         result = handler(**tool_params)
         return result
 
-    def stream_assistant_response(self, messages):
+    async def stream_assistant_response(self, messages):
         """Stream the assistant's response with tool support."""
         stream_params = {
             "model": self.model,
@@ -234,14 +234,14 @@ class GroqService(BaseLLMService):
 
             try:
                 # Use non-streaming mode for tool support
-                response = self.client.chat.completions.create(**stream_params)
+                response = await self.client.chat.completions.create(**stream_params)
             finally:
                 # Stop the animation when response is received
                 stop_animation.set()
                 animation_thread.join()
 
-            @contextlib.contextmanager
-            def simulate_stream(data: ChatCompletion):
+            @contextlib.asynccontextmanager
+            async def simulate_stream(data: ChatCompletion):
                 self.current_input_tokens = (
                     data.usage.prompt_tokens if data.usage else 0
                 )
@@ -254,7 +254,9 @@ class GroqService(BaseLLMService):
             return simulate_stream(response)
         else:
             # Use actual streaming when no tools are needed
-            return self.client.chat.completions.create(**stream_params, stream=True)
+            return await self.client.chat.completions.create(
+                **stream_params, stream=True
+            )
 
     def process_stream_chunk(
         self, chunk, assistant_response, tool_uses
@@ -525,7 +527,7 @@ class GroqService(BaseLLMService):
         # Groq doesn't support thinking blocks, so we return None
         return None
 
-    def validate_spec(self, prompt: str) -> str:
+    async def validate_spec(self, prompt: str) -> str:
         """
         Validate a specification prompt using Groq.
 
@@ -537,7 +539,7 @@ class GroqService(BaseLLMService):
         """
 
         try:
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.model,
                 max_completion_tokens=8192,
                 temperature=0.6,

@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import time
 import pyperclip
@@ -565,8 +566,8 @@ class ConsoleUI(Observer):
 
             # Process user input and commands
             # self.start_streaming_response(self.message_handler.agent_name)
-            should_exit, was_cleared = self.message_handler.process_user_input(
-                user_input
+            should_exit, was_cleared = asyncio.run(
+                self.message_handler.process_user_input(user_input)
             )
 
             # Exit if requested
@@ -585,7 +586,7 @@ class ConsoleUI(Observer):
             # self.start_streaming_response(self.message_handler.agent_name)
 
             # Get assistant response
-            assistant_response, input_tokens, output_tokens = (
+            assistant_response, input_tokens, output_tokens = asyncio.run(
                 self.message_handler.get_assistant_response()
             )
 

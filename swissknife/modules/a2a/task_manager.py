@@ -110,7 +110,6 @@ class AgentTaskManager(TaskManager):
 
             async def _process_task():
                 # Process with agent
-                response_generator = await asyncio.to_thread(agent.process_messages)
 
                 # Create artifacts from response
                 current_response = ""
@@ -118,7 +117,11 @@ class AgentTaskManager(TaskManager):
                 thinking_content = ""
                 thinking_signature = ""
 
-                for response_message, chunk_text, thinking_chunk in response_generator:
+                async for (
+                    response_message,
+                    chunk_text,
+                    thinking_chunk,
+                ) in agent.process_messages():
                     # Update current response
                     if chunk_text:
                         current_response = response_message
@@ -194,8 +197,7 @@ class AgentTaskManager(TaskManager):
                     # Process each tool use
                     for tool_use in tool_uses:
                         try:
-                            tool_result = await asyncio.to_thread(
-                                agent.execute_tool_call,
+                            tool_result = await agent.execute_tool_call(
                                 tool_use["name"],
                                 tool_use["input"],
                             )

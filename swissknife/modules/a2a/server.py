@@ -166,7 +166,7 @@ class A2AServer:
                     return JSONResponse(result.model_dump(exclude_none=True))
 
                 elif method == "tasks/sendSubscribe":
-                    result_stream = task_manager.on_send_task_subscribe(
+                    result_stream = await task_manager.on_send_task_subscribe(
                         json_rpc_request
                     )
 

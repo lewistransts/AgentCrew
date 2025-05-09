@@ -66,9 +66,9 @@ class DeepInfraService(OpenAIService):
 
         return message
 
-    def process_message(self, prompt: str, temperature: float = 0) -> str:
+    async def process_message(self, prompt: str, temperature: float = 0) -> str:
         try:
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=3000,
                 temperature=temperature,
@@ -110,7 +110,7 @@ class DeepInfraService(OpenAIService):
         except Exception as e:
             raise Exception(f"Failed to process content: {str(e)}")
 
-    def stream_assistant_response(self, messages):
+    async def stream_assistant_response(self, messages):
         """Stream the assistant's response with tool support."""
         stream_params = {
             "model": self.model,
@@ -135,15 +135,17 @@ class DeepInfraService(OpenAIService):
 
         if self._is_stream:
             self._is_thinking = False
-            return self.client.chat.completions.create(**stream_params, stream=True)
+            return await self.client.chat.completions.create(
+                **stream_params, stream=True
+            )
 
         else:
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 **stream_params, stream=False
             )
 
-            @contextlib.contextmanager
-            def simulate_stream(data: ChatCompletion):
+            @contextlib.asynccontextmanager
+            async def simulate_stream(data: ChatCompletion):
                 if data.usage:
                     self.current_input_tokens = data.usage.prompt_tokens
                     self.current_output_tokens = data.usage.completion_tokens

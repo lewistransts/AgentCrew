@@ -155,7 +155,7 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
-    def process_message(self, prompt: str, temperature: float = 0) -> str:
+    async def process_message(self, prompt: str, temperature: float = 0) -> str:
         """
         Process a user message and return the LLM's response.
 
@@ -178,7 +178,7 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
-    def stream_assistant_response(self, messages: List[Dict[str, Any]]) -> Any:
+    async def stream_assistant_response(self, messages: List[Dict[str, Any]]) -> Any:
         """Stream the assistant's response."""
         pass
 
@@ -194,7 +194,7 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
-    def execute_tool(self, tool_name, tool_params) -> Any:
+    async def execute_tool(self, tool_name, tool_params) -> Any:
         """
         Execute a registered tool with the given parameters.
 
@@ -292,7 +292,7 @@ class BaseLLMService(ABC):
         pass
 
     @abstractmethod
-    def validate_spec(self, prompt: str) -> str:
+    async def validate_spec(self, prompt: str) -> str:
         """
         Validate a specification prompt using the LLM.
 

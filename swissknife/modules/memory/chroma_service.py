@@ -85,7 +85,7 @@ class ChromaMemoryService(BaseMemoryService):
 
         return chunks
 
-    def store_conversation(
+    async def store_conversation(
         self, user_message: str, assistant_response: str
     ) -> List[str]:
         """
@@ -100,7 +100,7 @@ class ChromaMemoryService(BaseMemoryService):
         """
         ids = []
         if self.llm_service:
-            conversation_text = self.llm_service.process_message(
+            conversation_text = await self.llm_service.process_message(
                 PRE_ANALYZE_PROMPT.replace(
                     "{current_date}", datetime.today().strftime("%Y-%m-%d")
                 )
@@ -187,8 +187,8 @@ class ChromaMemoryService(BaseMemoryService):
         #
         return memory_ids
 
-    def need_generate_user_context(self, user_input: str) -> bool:
-        keywords = self._semantic_extracting(user_input)
+    async def need_generate_user_context(self, user_input: str) -> bool:
+        keywords = await self._semantic_extracting(user_input)
         if not self.current_embedding_context:
             self.current_embedding_context = self.embedding_function([keywords])
             return True
@@ -205,7 +205,7 @@ class ChromaMemoryService(BaseMemoryService):
         self.current_embedding_context = None
         self.context_embedding = []
 
-    def generate_user_context(self, user_input: str) -> str:
+    async def generate_user_context(self, user_input: str) -> str:
         """
         Generate context based on user input by retrieving relevant memories.
 
@@ -216,21 +216,21 @@ class ChromaMemoryService(BaseMemoryService):
             Formatted string containing relevant context from past conversations
         """
         # return self.retrieve_memory(user_input, 5)
-        analyze_result = self.llm_service.process_message(
+        analyze_result = await self.llm_service.process_message(
             ANALYSIS_PROMPT.replace(
-                "{conversation_history}", self.retrieve_memory(user_input, 5)
+                "{conversation_history}", await self.retrieve_memory(user_input, 5)
             ).replace("{user_input}", user_input)
         )
         return analyze_result
 
-    def _semantic_extracting(self, input: str) -> str:
-        keywords = self.llm_service.process_message(
+    async def _semantic_extracting(self, input: str) -> str:
+        keywords = await self.llm_service.process_message(
             SEMANTIC_EXTRACTING.replace("{user_input}", input)
         )
         print(keywords)
         return keywords
 
-    def retrieve_memory(self, keywords: str, limit: int = 5) -> str:
+    async def retrieve_memory(self, keywords: str, limit: int = 5) -> str:
         """
         Retrieve relevant memories based on keywords.
 
@@ -243,7 +243,7 @@ class ChromaMemoryService(BaseMemoryService):
         """
 
         results = self.collection.query(
-            query_texts=[self._semantic_extracting(keywords)],
+            query_texts=[await self._semantic_extracting(keywords)],
             n_results=limit,
             where={"session_id": {"$ne": self.session_id}},
         )

@@ -90,7 +90,7 @@ class MessageHandler(Observable):
         )
         self.streamline_messages.extend(std_msg)
 
-    def process_user_input(
+    async def process_user_input(
         self,
         user_input: str,
     ) -> Tuple[bool, bool]:
@@ -178,7 +178,7 @@ class MessageHandler(Observable):
                 self._messages_append({"role": "user", "content": [file_content]})
                 if file_content.get("type", "") == "text":
                     # TODO: For testing retrieve with keywords when transfer
-                    self.memory_service.store_conversation(
+                    await self.memory_service.store_conversation(
                         file_content.get("text", ""), ""
                     )
                 self._notify(
@@ -194,7 +194,7 @@ class MessageHandler(Observable):
                 return False, True
         else:
             # RAG base on user query
-            if self.memory_service.need_generate_user_context(user_input):
+            if await self.memory_service.need_generate_user_context(user_input):
                 self._notify("user_context_request", None)
                 self._messages_append(
                     {
@@ -203,7 +203,7 @@ class MessageHandler(Observable):
                             {
                                 "type": "text",
                                 "text": f"""Context from your memory:
-                                {self.memory_service.generate_user_context(user_input)}""",
+                                {await self.memory_service.generate_user_context(user_input)}""",
                             }
                         ],
                     }
@@ -484,7 +484,7 @@ class MessageHandler(Observable):
 
         self._notify("agent_changed_by_transfer", self.agent.name)
 
-    def get_assistant_response(
+    async def get_assistant_response(
         self, input_tokens=0, output_tokens=0
     ) -> Tuple[Optional[str], int, int]:
         """
@@ -500,7 +500,7 @@ class MessageHandler(Observable):
         start_thinking = False
         end_thinking = False
         try:
-            for (
+            async for (
                 assistant_response,
                 chunk_text,
                 thinking_chunk,
@@ -567,7 +567,7 @@ class MessageHandler(Observable):
                     self._notify("tool_use", tool_use)
 
                     try:
-                        tool_result = self.agent.execute_tool_call(
+                        tool_result = await self.agent.execute_tool_call(
                             tool_use["name"], tool_use["input"]
                         )
 
@@ -620,7 +620,7 @@ class MessageHandler(Observable):
                             },
                         )
 
-                return self.get_assistant_response(input_tokens, output_tokens)
+                return await self.get_assistant_response(input_tokens, output_tokens)
 
             if thinking_content:
                 # self._notify("thinking_completed")
@@ -655,7 +655,7 @@ class MessageHandler(Observable):
                         user_input = user_message["content"]
 
                     try:
-                        self.memory_service.store_conversation(
+                        await self.memory_service.store_conversation(
                             user_input, assistant_response
                         )
                     except Exception as e:

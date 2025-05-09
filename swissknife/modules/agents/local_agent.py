@@ -320,8 +320,8 @@ class LocalAgent(BaseAgent):
     def configure_think(self, think_setting):
         self.llm.set_think(think_setting)
 
-    def execute_tool_call(self, tool_name: str, tool_input: Dict) -> Any:
-        return self.llm.execute_tool(tool_name, tool_input)
+    async def execute_tool_call(self, tool_name: str, tool_input: Dict) -> Any:
+        return await self.llm.execute_tool(tool_name, tool_input)
 
     def calculate_usage_cost(self, input_tokens, output_tokens) -> float:
         return self.llm.calculate_cost(input_tokens, output_tokens)
@@ -368,7 +368,7 @@ class LocalAgent(BaseAgent):
 
         return True
 
-    def process_messages(self, messages: Optional[List[Dict[str, Any]]] = None):
+    async def process_messages(self, messages: Optional[List[Dict[str, Any]]] = None):
         """
         Process messages using this agent.
 
@@ -385,8 +385,8 @@ class LocalAgent(BaseAgent):
         # Ensure the first message is a system message with the agent's prompt
         if not messages:
             messages = self.history
-        with self.llm.stream_assistant_response(messages) as stream:
-            for chunk in stream:
+        async with await self.llm.stream_assistant_response(messages) as stream:
+            async for chunk in stream:
                 # Process the chunk using the LLM service
                 (
                     assistant_response,

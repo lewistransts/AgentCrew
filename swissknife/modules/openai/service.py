@@ -2,12 +2,12 @@ import os
 import json
 import mimetypes
 from typing import Dict, Any, List, Optional, Tuple
-from openai import OpenAI
+from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from openai.types.chat import ChatCompletionChunk
 from openai.types.chat.chat_completion import Choice
-from contextlib import _GeneratorContextManager
-from openai import Stream
+from contextlib import _AsyncGeneratorContextManager
+from openai import AsyncStream
 from swissknife.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from swissknife.modules.llm.model_registry import ModelRegistry
 
@@ -20,7 +20,7 @@ class OpenAIService(BaseLLMService):
         api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables")
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         # Set default model
         self.model = "gpt-4o"
         self.tools = []  # Initialize empty tools list
@@ -63,9 +63,9 @@ class OpenAIService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def process_message(self, prompt: str, temperature: float = 0) -> str:
+    async def process_message(self, prompt: str, temperature: float = 0) -> str:
         try:
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=3000,
                 temperature=temperature,
@@ -154,7 +154,7 @@ class OpenAIService(BaseLLMService):
         self.tool_handlers[tool_name] = handler_function
         print(f"🔧 Registered tool: {tool_name}")
 
-    def execute_tool(self, tool_name, tool_params):
+    async def execute_tool(self, tool_name, tool_params):
         """
         Execute a registered tool with the given parameters.
 
@@ -172,9 +172,9 @@ class OpenAIService(BaseLLMService):
         result = handler(**tool_params)
         return result
 
-    def stream_assistant_response(
+    async def stream_assistant_response(
         self, messages
-    ) -> Stream[ChatCompletionChunk] | _GeneratorContextManager[List[Choice]]:
+    ) -> AsyncStream[ChatCompletionChunk] | _AsyncGeneratorContextManager[List[Choice]]:
         """Stream the assistant's response with tool support."""
         stream_params = {
             "model": self.model,
@@ -203,7 +203,7 @@ class OpenAIService(BaseLLMService):
         ):
             stream_params["tools"] = self.tools
 
-        return self.client.chat.completions.create(**stream_params, stream=True)
+        return await self.client.chat.completions.create(**stream_params, stream=True)
 
     def process_stream_chunk(
         self, chunk, assistant_response: str, tool_uses: List[Dict]
@@ -403,7 +403,7 @@ class OpenAIService(BaseLLMService):
         # OpenAI doesn't support thinking blocks, so we return None
         return None
 
-    def validate_spec(self, prompt: str) -> str:
+    async def validate_spec(self, prompt: str) -> str:
         """
         Validate a specification prompt using OpenAI.
 
@@ -415,7 +415,7 @@ class OpenAIService(BaseLLMService):
         """
 
         try:
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {

@@ -1,6 +1,6 @@
 import traceback
 from swissknife.modules.chat.message_handler import MessageHandler
-
+import asyncio
 from PySide6.QtCore import (
     Slot,
     QObject,
@@ -48,7 +48,9 @@ class LLMWorker(QObject):
                 return
 
             # Process user input (commands, etc.)
-            exit_flag, clear_flag = self.message_handler.process_user_input(user_input)
+            exit_flag, clear_flag = asyncio.run(
+                self.message_handler.process_user_input(user_input)
+            )
 
             # Handle command results
             if exit_flag:
@@ -61,9 +63,11 @@ class LLMWorker(QObject):
                 return  # Skip further processing if chat was cleared
 
             # Get assistant response
-            assistant_response, input_tokens, output_tokens = (
-                self.message_handler.get_assistant_response()
-            )
+            (
+                assistant_response,
+                input_tokens,
+                output_tokens,
+            ) = asyncio.run(self.message_handler.get_assistant_response())
 
             # Emit the response
             if assistant_response:

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Tuple, Dict, List, Optional, Any
+from typing import AsyncGenerator, Tuple, Dict, List, Optional, Any
 from enum import Enum
 
 
@@ -63,7 +63,7 @@ class BaseAgent(ABC):
         pass
 
     @abstractmethod
-    def execute_tool_call(self, tool_name: str, tool_input: Dict) -> Any:
+    async def execute_tool_call(self, tool_name: str, tool_input: Dict) -> Any:
         pass
 
     @abstractmethod
@@ -75,9 +75,9 @@ class BaseAgent(ABC):
         pass
 
     @abstractmethod
-    def process_messages(
+    async def process_messages(
         self, messages: Optional[List[Dict[str, Any]]] = None
-    ) -> Generator:
+    ) -> AsyncGenerator:
         """
         Process messages using this agent.
 
@@ -87,7 +87,7 @@ class BaseAgent(ABC):
         Returns:
             The processed messages with the agent's response
         """
-        pass
+        yield
 
     @abstractmethod
     def get_process_result(self) -> Tuple:

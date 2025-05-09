@@ -139,9 +139,9 @@ class GoogleAINativeService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def process_message(self, prompt: str, temperature: float = 0) -> str:
+    async def process_message(self, prompt: str, temperature: float = 0) -> str:
         try:
-            response = self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
@@ -342,7 +342,7 @@ class GoogleAINativeService(BaseLLMService):
         except Exception as e:
             return f"Error executing tool {tool_name}: {str(e)}"
 
-    def stream_assistant_response(self, messages: List[Dict[str, Any]]) -> Any:
+    async def stream_assistant_response(self, messages: List[Dict[str, Any]]) -> Any:
         """
         Stream the assistant's response with tool support.
         Returns a context manager compatible adapter around the Google GenAI stream.
@@ -380,7 +380,7 @@ class GoogleAINativeService(BaseLLMService):
                 )
 
             # Get the stream generator
-            stream_generator = self.client.models.generate_content_stream(
+            stream_generator = await self.client.aio.models.generate_content_stream(
                 model=self.model, contents=google_messages, config=config
             )
 
@@ -684,7 +684,7 @@ class GoogleAINativeService(BaseLLMService):
         # Google doesn't support thinking blocks
         return None
 
-    def validate_spec(self, prompt: str) -> str:
+    async def validate_spec(self, prompt: str) -> str:
         """
         Validate a specification prompt using Google GenAI.
 
@@ -696,7 +696,7 @@ class GoogleAINativeService(BaseLLMService):
         """
         try:
             # Request JSON response
-            response = self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model,
                 contents=prompt,
                 config=types.GenerateContentConfig(

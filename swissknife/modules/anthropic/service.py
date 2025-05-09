@@ -1,7 +1,7 @@
 import os
 import mimetypes
 from typing import Dict, Any, Optional
-from anthropic import Anthropic
+from anthropic import AsyncAnthropic
 from anthropic.types import TextBlock
 from dotenv import load_dotenv
 from swissknife.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
@@ -16,7 +16,7 @@ class AnthropicService(BaseLLMService):
         api_key = os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
-        self.client = Anthropic(api_key=api_key)
+        self.client = AsyncAnthropic(api_key=api_key)
         self.model = "claude-3-7-sonnet-latest"
         # self.model = "claude-3-5-haiku-latest"
         self.tools = []  # Initialize empty tools list
@@ -39,10 +39,10 @@ class AnthropicService(BaseLLMService):
             return input_cost + output_cost
         return 0.0
 
-    def process_message(self, prompt: str, temperature: float = 0) -> str:
+    async def process_message(self, prompt: str, temperature: float = 0) -> str:
         """Summarize the provided content using Claude."""
         try:
-            message = self.client.messages.create(
+            message = await self.client.messages.create(
                 model=self.model,
                 temperature=temperature,
                 max_tokens=3000,
@@ -151,7 +151,7 @@ class AnthropicService(BaseLLMService):
         self.tool_handlers[tool_definition["name"]] = handler_function
         print(f"🔧 Registered tool: {tool_definition['name']}")
 
-    def execute_tool(self, tool_name, tool_params):
+    async def execute_tool(self, tool_name, tool_params):
         """
         Execute a registered tool with the given parameters.
 
@@ -343,7 +343,7 @@ class AnthropicService(BaseLLMService):
 
         return {"role": "assistant", "content": [thinking_block]}
 
-    def validate_spec(self, prompt: str) -> str:
+    async def validate_spec(self, prompt: str) -> str:
         """
         Validate a specification prompt using Anthropic Claude.
 
@@ -355,7 +355,7 @@ class AnthropicService(BaseLLMService):
         """
 
         try:
-            message = self.client.messages.create(
+            message = await self.client.messages.create(
                 model=self.model,
                 max_tokens=4096,
                 messages=[
@@ -433,7 +433,7 @@ class AnthropicService(BaseLLMService):
         print(f"Thinking mode enabled with budget of {budget_tokens} tokens.")
         return True
 
-    def stream_assistant_response(self, messages):
+    async def stream_assistant_response(self, messages):
         """Stream the assistant's response with tool support."""
         # first cache for system prompt and tool
         if self.caching_blocks == 0:

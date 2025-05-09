@@ -11,7 +11,6 @@ from swissknife.modules.llm.message import MessageTransformer
 from swissknife.modules.agents.base import BaseAgent, MessageType
 from common.client import A2ACardResolver, A2AClient
 from common.types import TaskSendParams, SendTaskResponse, TaskState
-import asyncio
 
 
 class RemoteAgent(BaseAgent):
@@ -89,7 +88,7 @@ class RemoteAgent(BaseAgent):
     def calculate_usage_cost(self, input_tokens, output_tokens) -> float:
         return 0.0
 
-    def process_messages(self, messages: Optional[List[Dict[str, Any]]] = None):
+    async def process_messages(self, messages: Optional[List[Dict[str, Any]]] = None):
         if not self.client or not self.agent_card:
             raise ValidationError(
                 f"RemoteAgent '{self.name}' not properly initialized."
@@ -105,7 +104,7 @@ class RemoteAgent(BaseAgent):
             id=str(uuid4()),
             message=a2a_message,
         )
-        response_data = asyncio.run(self.client.send_task(a2a_payload.model_dump()))
+        response_data = await self.client.send_task(a2a_payload.model_dump())
         while response_data.result and response_data.result.status.state not in [
             TaskState.COMPLETED,
             TaskState.INPUT_REQUIRED,
@@ -113,7 +112,7 @@ class RemoteAgent(BaseAgent):
             TaskState.FAILED,
         ]:
             time.sleep(1)
-            response_data = asyncio.run(self.client.get_task({"id": a2a_payload.id}))
+            response_data = await self.client.get_task({"id": a2a_payload.id})
             print(response_data)
 
         assistant_message = convert_a2a_send_task_response_to_swissknife_message(
