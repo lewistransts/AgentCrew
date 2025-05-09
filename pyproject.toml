@@ -1,6 +1,6 @@
 [project]
 name = "swissknife"
-version = "0.3.3"
+version = "0.3.5"
 requires-python = ">=3.12"
 classifiers = ["Private :: Do not upload"]
 description = "Claude AI Interactive Chat Tool"
@@ -32,7 +32,7 @@ dependencies = [
 
 
 [tool.uv.sources]
-a2a-samples = { git = "https://github.com/daltonnyx/A2A.git", subdirectory = "samples/python", rev = "bug/timeout-undefined" }
+a2a-samples = { git = "https://github.com/google/A2A.git", subdirectory = "samples/python" }
 
 [build-system]
 requires = ["setuptools>=61.0"]

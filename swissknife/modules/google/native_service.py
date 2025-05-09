@@ -17,7 +17,7 @@ from swissknife.modules.llm.base import (
 
 class GoogleStreamAdapter:
     """
-    Adapter class that wraps Google GenAI streaming response to support context manager protocol.
+    Adapter class that wraps Google GenAI streaming response to support async context manager protocol.
     """
 
     def __init__(self, stream_generator):
@@ -29,29 +29,29 @@ class GoogleStreamAdapter:
         """
         self.stream_generator = stream_generator
 
-    def __enter__(self):
-        """Enter the context manager, returning self as the iterable."""
+    async def __aenter__(self):
+        """Enter the async context manager, returning self as the async iterable."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit the context manager, handling cleanup if needed."""
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Exit the async context manager, handling cleanup if needed."""
         # No specific cleanup needed for Google GenAI stream
         pass
 
-    def __iter__(self):
-        """Return an iterator for the stream."""
+    def __aiter__(self):
+        """Return an async iterator for the stream."""
         return self
 
-    def __next__(self):
+    async def __anext__(self):
         """Get the next chunk from the stream generator."""
         try:
-            return next(self.stream_generator)
-        except StopIteration:
+            return await self.stream_generator.__anext__()
+        except StopAsyncIteration:
             raise
         except Exception as e:
             # Handle any Google GenAI specific exceptions
             print(f"Error in Google GenAI stream: {str(e)}")
-            raise StopIteration
+            raise StopAsyncIteration
 
 
 class GoogleAINativeService(BaseLLMService):
@@ -71,7 +71,7 @@ class GoogleAINativeService(BaseLLMService):
         self.client = genai.Client(api_key=api_key)
 
         # Default model
-        self.model = "gemini-2.5-pro-preview-03-25"
+        self.model = "gemini-2.5-pro-preview-05-06"
 
         # Initialize tools and handlers
         self.tools = []
@@ -321,7 +321,7 @@ class GoogleAINativeService(BaseLLMService):
 
         print(f"🔧 Registered tool: {tool_name}")
 
-    def execute_tool(self, tool_name, tool_params) -> Any:
+    async def execute_tool(self, tool_name, tool_params) -> Any:
         """
         Execute a registered tool with the given parameters.
 

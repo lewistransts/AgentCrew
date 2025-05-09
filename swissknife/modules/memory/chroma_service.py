@@ -112,7 +112,6 @@ class ChromaMemoryService(BaseMemoryService):
                 if line == "## ID:":
                     ids.append(lines[i + 1])
 
-            print(ids)
         else:
             # Create the memory document by combining user message and response
             conversation_text = f"Date: {datetime.today().strftime('%Y-%m-%d')}.\n\n User: {user_message}.\n\nAssistant: {assistant_response}"
@@ -120,7 +119,6 @@ class ChromaMemoryService(BaseMemoryService):
         # Split into chunks
         # chunks = self._create_chunks(conversation_text)
 
-        print(conversation_text)
         # Store each chunk with metadata
         memory_ids = []
         timestamp = datetime.now().isoformat()
@@ -227,7 +225,6 @@ class ChromaMemoryService(BaseMemoryService):
         keywords = await self.llm_service.process_message(
             SEMANTIC_EXTRACTING.replace("{user_input}", input)
         )
-        print(keywords)
         return keywords
 
     async def retrieve_memory(self, keywords: str, limit: int = 5) -> str:

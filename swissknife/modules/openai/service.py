@@ -22,7 +22,7 @@ class OpenAIService(BaseLLMService):
             raise ValueError("OPENAI_API_KEY not found in environment variables")
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         # Set default model
-        self.model = "gpt-4o"
+        self.model = "gpt-4.1"
         self.tools = []  # Initialize empty tools list
         self.tool_handlers = {}  # Map tool names to handler functions
         self._provider_name = "openai"
