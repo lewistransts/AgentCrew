@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict, Any, Callable
 from .base_service import BaseMemoryService
 
@@ -136,7 +137,10 @@ def get_memory_retrieve_tool_handler(memory_service: BaseMemoryService) -> Calla
             return "Error: Keywords are required for memory retrieval."
 
         try:
-            result = memory_service.retrieve_memory(keywords, limit)
+            import nest_asyncio
+
+            nest_asyncio.apply()
+            result = asyncio.run(memory_service.retrieve_memory(keywords, limit))
             return result
         except Exception as e:
             return f"Error retrieving memories: {str(e)}"
