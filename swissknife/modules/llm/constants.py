@@ -177,7 +177,7 @@ _GOOGLE_MODELS = [
         output_token_price_1m=3.5,
     ),
     Model(
-        id="gemini-2.5-pro-preview-03-25",
+        id="gemini-2.5-pro-preview-05-06",
         provider="google",
         name="Gemini 2.5 Pro Thinking",
         description="Gemini 2.5 Pro with thinking",

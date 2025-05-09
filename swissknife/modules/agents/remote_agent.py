@@ -18,7 +18,7 @@ class RemoteAgent(BaseAgent):
     def __init__(self, name: str, agent_url: str):
         self.card_resolver = A2ACardResolver(agent_url)
         self.agent_card = self.card_resolver.get_agent_card()
-        self.client = A2AClient(self.agent_card)
+        self.client = A2AClient(self.agent_card, timeout=600)
         self.name = name
         self.description = self.agent_card.description
         self.history = []
@@ -56,7 +56,7 @@ class RemoteAgent(BaseAgent):
         )
 
     def get_model(self) -> str:
-        return self.agent_card.version
+        return self.get_provider() + "-" + self.agent_card.version
 
     def is_streaming(self) -> bool:
         return False

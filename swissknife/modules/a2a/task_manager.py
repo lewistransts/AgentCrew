@@ -110,7 +110,7 @@ class AgentTaskManager(TaskManager):
 
             async def _process_task():
                 # Process with agent
-                response_generator = agent.process_messages()
+                response_generator = await asyncio.to_thread(agent.process_messages)
 
                 # Create artifacts from response
                 current_response = ""
@@ -194,8 +194,10 @@ class AgentTaskManager(TaskManager):
                     # Process each tool use
                     for tool_use in tool_uses:
                         try:
-                            tool_result = agent.execute_tool_call(
-                                tool_use["name"], tool_use["input"]
+                            tool_result = await asyncio.to_thread(
+                                agent.execute_tool_call,
+                                tool_use["name"],
+                                tool_use["input"],
                             )
 
                             tool_result_message = agent.format_message(
