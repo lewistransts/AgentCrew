@@ -39,7 +39,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-AgentCrew = "AgentCrew.main:cli_prod"
+agentcrew = "AgentCrew.main:cli_prod"
 
 [tool.setuptools]
 include-package-data = true
