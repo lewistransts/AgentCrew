@@ -28,10 +28,10 @@ def cli():
 
 
 def cli_prod():
-    os.environ["MEMORYDB_PATH"] = os.path.expanduser("~/.AgentCrew.memorydb")
-    os.environ["MCP_CONFIG_PATH"] = os.path.expanduser("~/.AgentCrew.mcp_server.json")
-    os.environ["SW_AGENTS_CONFIG"] = os.path.expanduser("~/.AgentCrew.agents.toml")
-    os.environ["PERSISTENCE_DIR"] = os.path.expanduser("~/.AgentCrew.persistents")
+    os.environ["MEMORYDB_PATH"] = os.path.expanduser("~/.AgentCrew/memorydb")
+    os.environ["MCP_CONFIG_PATH"] = os.path.expanduser("~/.AgentCrew/mcp_server.json")
+    os.environ["SW_AGENTS_CONFIG"] = os.path.expanduser("~/.AgentCrew/agents.toml")
+    os.environ["PERSISTENCE_DIR"] = os.path.expanduser("~/.AgentCrew/persistents")
     cli()  # Delegate to main CLI function
 
 
