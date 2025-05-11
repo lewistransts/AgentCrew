@@ -1,4 +1,4 @@
-from swissknife.modules.code_analysis import CodeAnalysisService
+from AgentCrew.modules.code_analysis import CodeAnalysisService
 
 
 if __name__ == "__main__":

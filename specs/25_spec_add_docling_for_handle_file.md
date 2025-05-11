@@ -14,8 +14,8 @@
 
 ## 2. Contexts
 
-* `swissknife/modules/chat/interactive.py`: Contains the `InteractiveChat` class and methods for processing user input.
-* `swissknife/modules/chat/file_handler.py`: (To be created) A new module to encapsulate Docling functionality.
+* `AgentCrew.modules/chat/interactive.py`: Contains the `InteractiveChat` class and methods for processing user input.
+* `AgentCrew.modules/chat/file_handler.py`: (To be created) A new module to encapsulate Docling functionality.
 
 ## 3. Low-Level Tasks
 
@@ -32,10 +32,10 @@
 
 2. **Create File Handling Module**:
 
-    * Create a new module `swissknife/modules/chat/file_handler.py` with the following content:
+    * Create a new module `AgentCrew.modules/chat/file_handler.py` with the following content:
 
     ```python
-    # swissknife/modules/chat/file_handler.py
+    # AgentCrew.modules/chat/file_handler.py
 
     import os
     import mimetypes
@@ -215,12 +215,12 @@
 
 3. **Integrate with Interactive Chat**:
 
-    * Modify the `InteractiveChat` class in `swissknife/modules/chat/interactive.py` to use the new file handling module:
+    * Modify the `InteractiveChat` class in `AgentCrew.modules/chat/interactive.py` to use the new file handling module:
 
     ```python
-    # swissknife/modules/chat/interactive.py
+    # AgentCrew.modules/chat/interactive.py
 
-    from swissknife.modules.chat.file_handler import FileHandler
+    from AgentCrew.modules.chat.file_handler import FileHandler
 
     class InteractiveChat:
         # ... existing code ...
@@ -266,7 +266,7 @@
 
 4. **Enhance Error Handling and User Feedback**:
 
-    * Add the following helper function to `swissknife/modules/chat/interactive.py`:
+    * Add the following helper function to `AgentCrew.modules/chat/interactive.py`:
 
     ```python
     # Add to interactive.py

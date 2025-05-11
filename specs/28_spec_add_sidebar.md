@@ -13,13 +13,13 @@
 
 ## Contexts
 
-- swissknife/modules/gui/qt_ui.py (main implementation file)
+- AgentCrew.modules/gui/qt_ui.py (main implementation file)
 - MessageHandler provides list_conversations() and load_conversation()
 - ContextPersistenceService stores the conversation data
 
 ## Low-level Tasks
 
-- UPDATE swissknife/modules/gui/qt_ui.py:
+- UPDATE AgentCrew.modules/gui/qt_ui.py:
   - Add ConversationSidebar class with:
     - conversation_selected signal
     - update_conversation_list() method

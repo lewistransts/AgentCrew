@@ -1,7 +1,7 @@
 Here's a complete implementation of the GoogleAINativeService class that uses the native Google GenAI SDK:
 
 ```python
-# swissknife/modules/google/native_service.py
+# AgentCrew.modules/google/native_service.py
 import os
 import json
 import base64
@@ -10,9 +10,9 @@ from typing import Dict, Any, List, Optional, Tuple
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from swissknife.modules.llm.base import BaseLLMService
-from swissknife.modules.llm.message import MessageTransformer
-from swissknife.modules.prompts.constants import (
+from AgentCrew.modules.llm.base import BaseLLMService
+from AgentCrew.modules.llm.message import MessageTransformer
+from AgentCrew.modules.prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
     CHAT_SYSTEM_PROMPT,
@@ -615,7 +615,7 @@ def setup_services(provider):
     llm_service = None
     if provider == "google_native":
         try:
-            from swissknife.modules.google.native_service import GoogleAINativeService
+            from AgentCrew.modules.google.native_service import GoogleAINativeService
             llm_service = GoogleAINativeService()
         except Exception as e:
             click.echo(f"❌ Error initializing Google AI native service: {str(e)}", err=True)
@@ -675,7 +675,7 @@ def chat(message, files, provider, agent):
 You'll also need to update the message transformer to properly handle the Google native format:
 
 ```python
-# Add to swissknife/modules/llm/message.py
+# Add to AgentCrew.modules/llm/message.py
 
 @staticmethod
 def standardize_google_native_messages(messages):
@@ -767,14 +767,14 @@ def convert_to_google_native_format(messages):
 Finally, you should also update the service_manager.py to be aware of this new service:
 
 ```python
-# Update in swissknife/modules/llm/service_manager.py
+# Update in AgentCrew.modules/llm/service_manager.py
 
 def get_service(self, provider: str):
     """Get the LLM service for the specified provider."""
     if provider == "google_native":
         # Special case for native Google service
         try:
-            from swissknife.modules.google.native_service import GoogleAINativeService
+            from AgentCrew.modules.google.native_service import GoogleAINativeService
             return GoogleAINativeService()
         except ImportError:
             print("❌ Google GenAI native service not available")
@@ -809,7 +809,7 @@ with self.llm.stream_assistant_response(messages) as stream:
 Let's now revise the GoogleAINativeService implementation to properly support the context manager protocol for streaming responses:
 
 ```python
-# swissknife/modules/google/native_service.py
+# AgentCrew.modules/google/native_service.py
 import os
 import json
 import base64
@@ -819,9 +819,9 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from contextlib import contextmanager
-from swissknife.modules.llm.base import BaseLLMService
-from swissknife.modules.llm.message import MessageTransformer
-from swissknife.modules.prompts.constants import (
+from AgentCrew.modules.llm.base import BaseLLMService
+from AgentCrew.modules.llm.message import MessageTransformer
+from AgentCrew.modules.prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
     CHAT_SYSTEM_PROMPT,
@@ -1572,7 +1572,7 @@ def _convert_messages_to_google_format(self, messages: List[Dict[str, Any]]):
 Let's update the entire implementation to fix this issue and ensure proper message handling:
 
 ```python
-# swissknife/modules/google/native_service.py
+# AgentCrew.modules/google/native_service.py
 import os
 import json
 import base64
@@ -1582,9 +1582,9 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from contextlib import contextmanager
-from swissknife.modules.llm.base import BaseLLMService
-from swissknife.modules.llm.message import MessageTransformer
-from swissknife.modules.prompts.constants import (
+from AgentCrew.modules.llm.base import BaseLLMService
+from AgentCrew.modules.llm.message import MessageTransformer
+from AgentCrew.modules.prompts.constants import (
     EXPLAIN_PROMPT,
     SUMMARIZE_PROMPT,
     CHAT_SYSTEM_PROMPT,

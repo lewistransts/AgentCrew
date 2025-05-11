@@ -2,9 +2,9 @@ import os
 import pytest
 import json
 from unittest.mock import MagicMock, patch, AsyncMock
-from swissknife.modules.mcpclient.config import MCPConfigManager, MCPServerConfig
-from swissknife.modules.mcpclient.service import MCPService
-from swissknife.modules.mcpclient.manager import MCPSessionManager
+from AgentCrew.modules.mcpclient.config import MCPConfigManager, MCPServerConfig
+from AgentCrew.modules.mcpclient.service import MCPService
+from AgentCrew.modules.mcpclient.manager import MCPSessionManager
 
 
 @pytest.fixture

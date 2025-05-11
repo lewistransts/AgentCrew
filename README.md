@@ -30,8 +30,8 @@ integration, web capabilities, and a modular extension system.
 1. Clone this repository:
 
    ```bash
-   git clone https://github.com/daltonnyx/swissknife.git
-   cd swissknife
+   git clone https://github.com/daltonnyx/AgentCrew.git
+   cd AgentCrew
    ```
 
 2. Install the package:
@@ -66,49 +66,49 @@ integration, web capabilities, and a modular extension system.
 ### Start an Interactive Chat
 
 ```bash
-swissknife chat
+agentcrew chat
 ```
 
 ### Start an Interactive Chat with TUI
 
 ```bash
-swissknife chat --console
+agentcrew chat --console
 ```
 
 ### Start a Chat with Different Providers
 
 ```bash
 # Use Claude models from Anthropic
-swissknife chat --provider claude
+agentcrew chat --provider claude
 
 # Use LLM models from Groq
-swissknife chat --provider groq
+agentcrew chat --provider groq
 
 # Use GPT models from OpenAI
-swissknife chat --provider openai
+agentcrew chat --provider openai
 
 # Use Gemini models from Google
-swissknife chat --provider gemini
+agentcrew chat --provider gemini
 
 # Use LLM models from Deepinfra
-swissknife chat --provider deepinfra
+agentcrew chat --provider deepinfra
 ```
 
 ### Start chat with different agent config
 
 ```bash
-swissknife chat --agent-config path/to/custom_agents.toml
+agentcrew chat --agent-config path/to/custom_agents.toml
 ```
 
 ### Start Google A2A server for remote connection
 
 ```bash
-uv run swissknife/main.py a2a-server --provider google --agent-config ~/.swissknife/agents.toml --port 41241
+agentcrew a2a-server --provider google --agent-config ~/.AgentCrew.agents.toml --port 41241
 ```
 
 ## Security & Responsibility Notice
 
-Swissknife gives you powerful control over AI agents and external tools.
+AgentCrew gives you powerful control over AI agents and external tools.
 
 - You are responsible for the content of agent system prompts.
 - You are responsible for which external tools (MCP, file, clipboard) you

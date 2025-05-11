@@ -1,4 +1,4 @@
-from swissknife.modules.scraping import Scraper
+from AgentCrew.modules.scraping import Scraper
 
 
 def test_scrape_url():

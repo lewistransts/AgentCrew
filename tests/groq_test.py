@@ -1,7 +1,7 @@
 import os
 import pytest
 from dotenv import load_dotenv
-from swissknife.modules.groq.service import GroqService
+from AgentCrew.modules.groq.service import GroqService
 
 # Load environment variables
 load_dotenv()

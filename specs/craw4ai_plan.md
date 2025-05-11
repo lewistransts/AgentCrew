@@ -29,7 +29,7 @@ Crawl4AI offers significant improvements:
 ### 1. Module Structure Update
 
 ```
-swissknife/
+AgentCrew.
 ├── modules/
 │   ├── scraping/
 │   │   ├── __init__.py
@@ -297,7 +297,7 @@ def register(service_instance=None, agent=None):
         service_instance: The scraping service instance
         agent: Agent instance to register with directly (optional)
     """
-    from swissknife.modules.tools.registration import register_tool
+    from AgentCrew.modules.tools.registration import register_tool
     
     register_tool(
         get_scraping_tool_definition, 
@@ -363,7 +363,7 @@ class ScrapingConfig:
 ### 5. Integration in Main Module
 
 ```python
-# swissknife/main.py (partial update)
+# AgentCrew.main.py (partial update)
 
 def setup_services(provider):
     """Set up and return service instances"""
@@ -373,8 +373,8 @@ def setup_services(provider):
     memory_service = MemoryService()
     
     # Initialize scraping service with default configuration
-    from swissknife.modules.scraping.config import ScrapingConfig
-    from swissknife.modules.scraping.service import ScrapingService
+    from AgentCrew.modules.scraping.config import ScrapingConfig
+    from AgentCrew.modules.scraping.service import ScrapingService
     
     scraping_config = ScrapingConfig()
     scraping_service = ScrapingService(config=scraping_config.to_dict())
@@ -474,18 +474,18 @@ This migration aligns with SwissKnife's architecture and will enhance the capabi
 
 ## Contexts
 
-- ./swissknife/modules/scraping/service.py: Current scraping service implementation using FirecrawlApp
-- ./swissknife/modules/scraping/tool.py: Current tool definition and handler implementation
-- ./swissknife/modules/tools/registration.py: Tool registration utility
-- ./swissknife/main.py: Main application file for service initialization
+- ./AgentCrew.modules/scraping/service.py: Current scraping service implementation using FirecrawlApp
+- ./AgentCrew.modules/scraping/tool.py: Current tool definition and handler implementation
+- ./AgentCrew.modules/tools/registration.py: Tool registration utility
+- ./AgentCrew.main.py: Main application file for service initialization
 
 ## Low-level Tasks
 
-1. CREATE ./swissknife/modules/scraping/config.py:
+1. CREATE ./AgentCrew.modules/scraping/config.py:
    - Create a ScrapingConfig dataclass with browser and content filtering configuration options
    - Implement to_dict method to convert configuration to dictionary format
 
-2. UPDATE ./swissknife/modules/scraping/service.py:
+2. UPDATE ./AgentCrew.modules/scraping/service.py:
    - Replace FirecrawlApp with AsyncWebCrawler from Crawl4AI
    - Implement initialization with configurable options
    - Create async crawler management methods
@@ -494,7 +494,7 @@ This migration aligns with SwissKnife's architecture and will enhance the capabi
    - Maintain the existing file URL detection functionality
    - Add proper error handling and cleanup methods
 
-3. UPDATE ./swissknife/modules/scraping/tool.py:
+3. UPDATE ./AgentCrew.modules/scraping/tool.py:
    - Enhance the tool definition with support for output format and media extraction options
    - Update the scraping handler to work with the new async service
    - Implement a synchronous wrapper for the async scrape_url method

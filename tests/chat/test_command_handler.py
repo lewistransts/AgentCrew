@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from swissknife.modules.chat.command_handler import CommandHandler
-from swissknife.modules.chat.types import CommandType
-from swissknife.modules.llm.base import BaseLLMService
-from swissknife.modules.agents import AgentManager
+from AgentCrew.modules.chat.command_handler import CommandHandler
+from AgentCrew.modules.chat.types import CommandType
+from AgentCrew.modules.llm.base import BaseLLMService
+from AgentCrew.modules.agents import AgentManager
 
 
 class TestCommandHandler(unittest.TestCase):
