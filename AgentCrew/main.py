@@ -16,7 +16,7 @@ from AgentCrew.modules.memory import (
 from AgentCrew.modules.code_analysis import CodeAnalysisService
 from AgentCrew.modules.llm.service_manager import ServiceManager
 from AgentCrew.modules.llm.model_registry import ModelRegistry
-from AgentCrew.modules.coder import SpecPromptValidationService
+from AgentCrew.modules.coding import SpecPromptValidationService
 from AgentCrew.modules.agents import AgentManager, LocalAgent, RemoteAgent
 from PySide6.QtWidgets import QApplication
 
@@ -214,7 +214,7 @@ def discover_and_register_tools(services=None):
         ("modules.code_analysis.tool", "code_analysis"),
         ("modules.clipboard.tool", "clipboard"),
         ("modules.web_search.tool", "web_search"),
-        ("modules.coder.tool", "aider"),
+        ("modules.coding.tool", "aider"),
     ]
 
     for module_name, service_key in tool_modules:

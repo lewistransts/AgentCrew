@@ -109,7 +109,7 @@ class LocalAgent(BaseAgent):
 
                         register_web_search(service, self)
                     elif tool_name == "aider":
-                        from AgentCrew.modules.coder.tool import (
+                        from AgentCrew.modules.coding.tool import (
                             register as register_spec_validator,
                         )
 

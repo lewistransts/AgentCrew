@@ -1,7 +1,7 @@
 import subprocess
 import pytest
 from unittest.mock import patch, MagicMock
-from AgentCrew.modules.coder.service import CodeAssistant
+from AgentCrew.modules.coding.service import AiderConfig, CodeAssistant
 
 
 class TestCodeAssistant:
@@ -33,7 +33,13 @@ class TestCodeAssistant:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(stdout="Test output")
-            ca.generate_implementation("test spec", str(tmp_path))
+            ca.generate_implementation(
+                "test spec",
+                str(tmp_path),
+                aider_config=AiderConfig(
+                    "claude-3-7-sonnet-latest", "claude-3-5-sonnet-latest"
+                ),
+            )
 
             # Verify the custom path was used
             args, kwargs = mock_run.call_args
