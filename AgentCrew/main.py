@@ -20,6 +20,10 @@ from AgentCrew.modules.coder import SpecPromptValidationService
 from AgentCrew.modules.agents import AgentManager, LocalAgent, RemoteAgent
 from PySide6.QtWidgets import QApplication
 
+import nest_asyncio
+
+nest_asyncio.apply()
+
 
 @click.group()
 def cli():
