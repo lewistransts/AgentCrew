@@ -5,7 +5,6 @@ requires-python = ">=3.12"
 classifiers = ["Private :: Do not upload"]
 description = "Multi-Agents Interactive Chat Tool"
 dependencies = [
-  "firecrawl",
   "click",
   "python-dotenv",
   "anthropic",
@@ -28,6 +27,7 @@ dependencies = [
   "tree-sitter-language-pack>=0.7.0",
   "a2a-samples",
   "mem0ai>=0.1.95",
+  "nest-asyncio>=1.6.0",
 ]
 
 

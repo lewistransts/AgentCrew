@@ -1,7 +1,7 @@
 from typing import Dict, Any, Callable
 import os
 from .spec_validation import SpecPromptValidationService
-from .service import CodeAssistant
+from .service import CodeAssistant, AiderConfig
 
 
 def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
@@ -98,6 +98,26 @@ def get_implement_spec_prompt_tool_definition(provider="claude") -> Dict[str, An
             "type": "string",
             "description": "The Aider prompt that instructs Aider to implement",
         },
+        "planner_model": {
+            "type": "string",
+            "description": "LLM model use for architect mode. Should be a powerful model",
+            "enum": [
+                "gemini/gemini-2.5-pro-preview-05-06",
+                "claude-3-7-sonnet-latest",
+                "o4-mini",
+            ],
+            "default": "gemini/gemini-2.5-pro-preview-05-06",
+        },
+        "coder_model": {
+            "type": "string",
+            "description": "LLM model use for executing plan and writing code. Should be a fast model",
+            "enum": [
+                "gemini-2.5-flash-preview-04-17",
+                "claude-3-5-sonnet-latest",
+                "gpt-4.1",
+            ],
+            "default": "claude-3-5-sonnet-latest",
+        },
         "repo_path": {
             "type": "string",
             "description": "The repository path where code should be implemented",
@@ -142,12 +162,23 @@ def get_implement_spec_prompt_tool_handler(
     def handle_implement_spec_prompt(**params) -> str:
         spec_prompt = params.get("aider_prompt", "")
         repo_path = params.get("repo_path", "")
+        planner_model = params.get(
+            "planner_model", "gemini/gemini-2.5-pro-preview-05-06"
+        )  # Default from tool definition
+        coder_model = params.get(
+            "coder_model", "claude-3-5-sonnet-latest"
+        )  # Default from tool definition
 
         if not spec_prompt or not repo_path:
             return "Error: Both aider_prompt and repo_path are required."
 
         try:
-            result = code_assistant.generate_implementation(spec_prompt, repo_path)
+            aider_config = AiderConfig(
+                architect_model=planner_model, coder_model=coder_model
+            )
+            result = code_assistant.generate_implementation(
+                spec_prompt, repo_path, aider_config
+            )
             return result
         except Exception as e:
             return f"Error implementing spec prompt: {str(e)}"

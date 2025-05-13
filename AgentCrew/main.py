@@ -96,7 +96,6 @@ def setup_services(provider):
         "web_search": search_service,
         "aider": aider_service,
         "context_persistent": context_service,
-        # "scraping": scraping_service,
     }
     return services
 

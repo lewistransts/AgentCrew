@@ -10,6 +10,12 @@ class SecurityException(Exception):
     pass
 
 
+class AiderConfig:
+    def __init__(self, architect_model: str, coder_model: str) -> None:
+        self.architect_model = architect_model
+        self.coder_model = coder_model
+
+
 class CodeAssistant:
     """Service for executing aider commands to implement code from spec prompts."""
 
@@ -40,13 +46,16 @@ class CodeAssistant:
 
         return provided_path
 
-    def generate_implementation(self, spec_prompt: str, repo_path: str) -> str:
+    def generate_implementation(
+        self, spec_prompt: str, repo_path: str, aider_config: AiderConfig
+    ) -> str:
         """
         Generate code implementation using aider based on a spec prompt.
 
         Args:
             spec_prompt: The specification prompt to implement
             repo_path: Path to the repository where code should be implemented
+            aider_config: Configuration for Aider, including models to use
 
         Returns:
             Output from the aider command execution
@@ -71,7 +80,9 @@ class CodeAssistant:
             "generate",
             "--no-auto-commits",
             "--model",
-            "openai/gpt-4o-mini",
+            aider_config.architect_model,
+            "--editor-model",
+            aider_config.coder_model,  # Use coder_model from AiderConfig
             "--no-detect-urls",
             "--yes-always",
             "--message-file",
