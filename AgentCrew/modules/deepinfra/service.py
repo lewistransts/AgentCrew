@@ -133,6 +133,9 @@ class DeepInfraService(OpenAIService):
         ):
             stream_params["tools"] = self.tools
 
+        if self.reasoning_effort is None:
+            stream_params["reasoning_effort"] = "none"
+
         if self._is_stream:
             self._is_thinking = False
             return await self.client.chat.completions.create(

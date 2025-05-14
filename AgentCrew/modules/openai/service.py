@@ -42,7 +42,7 @@ class OpenAIService(BaseLLMService):
             bool: True if thinking mode is supported and successfully set, False otherwise.
         """
         if "thinking" in ModelRegistry.get_model_capabilities(self.model):
-            if budget_tokens == "0":
+            if budget_tokens == "0" or budget_tokens == "none":
                 self.reasoning_effort = None
             if budget_tokens not in ["low", "medium", "high"]:
                 raise ValueError("budget_tokens must be low, medium or high")
