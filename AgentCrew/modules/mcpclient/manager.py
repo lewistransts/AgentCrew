@@ -22,74 +22,86 @@ class MCPSessionManager:
         self.mcp_service = MCPService()
         self.initialized = False
 
-    def initialize(self) -> Dict[str, bool]:
-        """Synchronous initialization method"""
+    def initialize(self) -> None:
+        """Synchronous initialization method to start MCPService and initiate server connections."""
         if self.initialized:
-            return {}
+            print("MCPSessionManager: Already initialized.")
+            return
 
-        # Start the MCP service
+        print("MCPSessionManager: Initializing...")
+        # Start the MCP service's event loop thread
         self.mcp_service.start()
 
-        # Initialize servers using the service's event loop
-        return self.mcp_service._run_async(self.initialize_servers())
+        # Initialize server connections asynchronously on the mcp_service's loop
+        # This call will block until initialize_servers_async is scheduled and returns.
+        # The actual connections will happen in background tasks within MCPService.
+        try:
+            self.mcp_service._run_async(self.initialize_servers_async())
+            self.initialized = True
+            print("MCPSessionManager: Initialization process started.")
+        except Exception as e:
+            print(f"MCPSessionManager: Error during async initialization: {e}")
+            # Potentially stop mcp_service if its start was successful but async part failed
+            self.mcp_service.stop()
+            self.initialized = False # Ensure it's marked as not initialized
 
-    async def initialize_servers(self) -> Dict[str, bool]:
+    async def initialize_servers_async(self) -> None:
         """
-        Initialize connections to all enabled MCP servers.
-
-        Returns:
-            Dictionary mapping server IDs to connection status (True if connected, False otherwise)
+        Asynchronously starts the connection management for all enabled MCP servers.
+        This method is intended to be run on the MCPService's event loop.
         """
         # Load server configurations
-        self.config_manager.load_config()
+        self.config_manager.load_config() # Ensure configs are loaded
         enabled_servers = self.config_manager.get_enabled_servers()
 
         if not enabled_servers:
-            print("No enabled MCP servers found in configuration")
-            return {}
+            print("MCPSessionManager: No enabled MCP servers found in configuration.")
+            return
 
-        # Connect to each enabled server
-        connection_results = {}
-        connection_tasks = []
-
+        print(f"MCPSessionManager: Found {len(enabled_servers)} enabled MCP servers. Requesting MCPService to manage connections...")
+        
         for server_id, config in enabled_servers.items():
-            connection_tasks.append(self._connect_to_server(server_id, config))
-
-        # Wait for all connections to complete
-        results = await asyncio.gather(*connection_tasks, return_exceptions=True)
-
-        # Process results
-        for i, (server_id, _) in enumerate(enabled_servers.items()):
-            result = results[i]
-            if isinstance(result, Exception):
-                print(f"Error connecting to server '{server_id}': {str(result)}")
-                connection_results[server_id] = False
-            else:
-                connection_results[server_id] = result
-
-        self.initialized = True
-        return connection_results
-
-    async def _connect_to_server(self, server_id: str, config: MCPServerConfig) -> bool:
-        """
-        Connect to a single MCP server.
-
-        Args:
-            server_id: ID of the server to connect to
-            config: Configuration for the server
-
-        Returns:
-            True if connection was successful, False otherwise
-        """
-        try:
-            return await self.mcp_service.connect_to_server(config)
-        except Exception as e:
-            print(f"Error connecting to server '{server_id}': {str(e)}")
-            return False
+            print(f"MCPSessionManager: Requesting MCPService to manage connection for {server_id}")
+            # This is an async call. Since this method itself runs on the MCPService's loop (via _run_async),
+            # we can directly await it.
+            await self.mcp_service.start_server_connection_management(config)
+        
+        print("MCPSessionManager: Finished requesting connection management for all enabled servers.")
+        # Note: Actual connections are managed by background tasks in MCPService.
 
     def cleanup(self):
-        """Clean up all resources."""
-        if self.initialized:
-            self.mcp_service._run_async(self.mcp_service.cleanup())
-            # self.mcp_service.stop()
+        """Clean up all resources, including stopping MCP service and connections."""
+        if not self.initialized and not (hasattr(self.mcp_service, 'loop_thread') and self.mcp_service.loop_thread.is_alive()):
+            print("MCPSessionManager: Cleanup called but not initialized or service not running. Skipping.")
+            return
+
+        print("MCPSessionManager: Starting cleanup...")
+        try:
+            # Signal all server connections to shut down and wait for them.
+            # This needs to run on the MCPService's event loop.
+            if hasattr(self.mcp_service, 'loop') and self.mcp_service.loop.is_running():
+                 print("MCPSessionManager: Running shutdown_all_server_connections on MCPService loop.")
+                 self.mcp_service._run_async(self.mcp_service.shutdown_all_server_connections())
+            elif hasattr(self.mcp_service, 'loop_thread') and self.mcp_service.loop_thread.is_alive():
+                 print("MCPSessionManager: MCPService loop not running but thread alive. Attempting async shutdown.")
+                 # This case is tricky, _run_async might fail if loop isn't running.
+                 # However, shutdown_all_server_connections primarily sets events and gathers tasks
+                 # that might still be on a non-closed loop.
+                 try:
+                    self.mcp_service._run_async(self.mcp_service.shutdown_all_server_connections())
+                 except Exception as e_async_shutdown:
+                    print(f"MCPSessionManager: Exception during _run_async for shutdown: {e_async_shutdown}")
+            else:
+                print("MCPSessionManager: MCPService loop not running/thread not alive, cannot run async shutdown. Resources might not be fully cleaned.")
+
+            # Stop the MCPService's event loop and thread
+            print("MCPSessionManager: Stopping MCPService.")
+            self.mcp_service.stop() # This will join the thread
+            
+        except Exception as e:
+            print(f"MCPSessionManager: Error during cleanup: {e}")
+            import traceback
+            traceback.print_exc()
+        finally:
             self.initialized = False
+            print("MCPSessionManager: Cleanup complete.")

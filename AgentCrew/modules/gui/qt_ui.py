@@ -64,18 +64,116 @@ class ChatWindow(QMainWindow, Observer):
         self.setStyleSheet(
             """
             QMainWindow {
-                background-color: #F9FAEF;
+                background-color: #1e1e2e; /* Catppuccin Base */
             }
             QScrollArea {
                 border: none;
-                background-color: #FFFFFF;
+                background-color: #181825; /* Catppuccin Mantle */
+            }
+            QWidget#chatContainer { /* Specific ID for chat_container */
+                background-color: #181825; /* Catppuccin Mantle */
             }
             QSplitter::handle {
-                background-color: #E1E4D5;
+                background-color: #313244; /* Catppuccin Surface0 */
+            }
+            QSplitter::handle:hover {
+                background-color: #45475a; /* Catppuccin Surface1 */
+            }
+            QSplitter::handle:pressed {
+                background-color: #585b70; /* Catppuccin Surface2 */
             }
             QStatusBar {
-                background-color: #F3F4E9;
-                color: #1A1C16;
+                background-color: #11111b; /* Catppuccin Crust */
+                color: #cdd6f4; /* Catppuccin Text */
+            }
+            QToolTip {
+                background-color: #313244; /* Catppuccin Surface0 */
+                color: #cdd6f4; /* Catppuccin Text */
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
+                padding: 4px;
+            }
+            QMessageBox {
+                background-color: #181825; /* Catppuccin Mantle */
+            }
+            QMessageBox QLabel { /* For message text in QMessageBox */
+                color: #cdd6f4; /* Catppuccin Text */
+                background-color: transparent; /* Ensure no overriding background */
+            }
+            /* QCompleter's popup is often a QListView */
+            QListView { /* General style for QListView, affects completer */
+                background-color: #313244; /* Catppuccin Surface0 */
+                color: #cdd6f4; /* Catppuccin Text */
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
+                padding: 2px;
+                outline: 0px; /* Remove focus outline if not desired */
+            }
+            QListView::item {
+                padding: 4px 8px;
+                border-radius: 2px; /* Optional: rounded corners for items */
+            }
+            QListView::item:selected {
+                background-color: #585b70; /* Catppuccin Surface2 */
+                color: #b4befe; /* Catppuccin Lavender */
+            }
+            QListView::item:hover {
+                background-color: #45475a; /* Catppuccin Surface1 */
+            }
+
+            /* Modern Scrollbar Styles */
+            QScrollBar:vertical {
+                border: none;
+                background: #181825; /* Catppuccin Mantle - Track background */
+                width: 10px; /* Adjust width for a thinner scrollbar */
+                margin: 0px 0px 0px 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #45475a; /* Catppuccin Surface1 - Handle color */
+                min-height: 20px; /* Minimum handle size */
+                border-radius: 5px; /* Rounded corners for the handle */
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #585b70; /* Catppuccin Surface2 - Handle hover color */
+            }
+            QScrollBar::handle:vertical:pressed {
+                background: #6c7086; /* Catppuccin Overlay0 - Handle pressed color */
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none; /* Hide arrow buttons */
+                height: 0px;
+                subcontrol-position: top;
+                subcontrol-origin: margin;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: none; /* Track area above/below handle */
+            }
+
+            QScrollBar:horizontal {
+                border: none;
+                background: #181825; /* Catppuccin Mantle - Track background */
+                height: 10px; /* Adjust height for a thinner scrollbar */
+                margin: 0px 0px 0px 0px;
+            }
+            QScrollBar::handle:horizontal {
+                background: #45475a; /* Catppuccin Surface1 - Handle color */
+                min-width: 20px; /* Minimum handle size */
+                border-radius: 5px; /* Rounded corners for the handle */
+            }
+            QScrollBar::handle:horizontal:hover {
+                background: #585b70; /* Catppuccin Surface2 - Handle hover color */
+            }
+            QScrollBar::handle:horizontal:pressed {
+                background: #6c7086; /* Catppuccin Overlay0 - Handle pressed color */
+            }
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+                border: none;
+                background: none; /* Hide arrow buttons */
+                width: 0px;
+                subcontrol-position: left;
+                subcontrol-origin: margin;
+            }
+            QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+                background: none; /* Track area left/right of handle */
             }
             """
         )
@@ -94,6 +192,10 @@ class ChatWindow(QMainWindow, Observer):
         # --- Create Chat Area Widgets ---
         # Create widget for chat messages
         self.chat_container = QWidget()
+        self.chat_container.setObjectName(
+            "chatContainer"
+        )  # Set object name for specific styling
+        # self.chat_container.setStyleSheet("background-color: #181825;") # Catppuccin Mantle - Now handled by QWidget#chatContainer
         self.chat_layout = QVBoxLayout(self.chat_container)
         self.chat_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.chat_layout.setSpacing(10)
@@ -118,11 +220,12 @@ class ChatWindow(QMainWindow, Observer):
         )
         self.status_indicator.setStyleSheet(
             """
-            background-color: #E1E4D5; 
-            color: #4C662B;
-            padding: 8px; 
-            border-radius: 4px;
-            font-weight: bold;
+            QLabel {
+                background-color: #313244; /* Catppuccin Surface0 */
+                color: #cdd6f4; /* Catppuccin Text */
+                padding: 8px; 
+                font-weight: bold;
+            }
             """
         )
 
@@ -137,13 +240,14 @@ class ChatWindow(QMainWindow, Observer):
         self.message_input.setStyleSheet(
             """
             QTextEdit {
-                border: 1px solid #C5C8BA;
+                background-color: #313244; /* Catppuccin Surface0 */
+                color: #cdd6f4; /* Catppuccin Text */
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
                 border-radius: 4px;
-                background-color: white;
                 padding: 8px;
             }
             QTextEdit:focus {
-                border: 1px solid #4C662B;
+                border: 1px solid #89b4fa; /* Catppuccin Blue */
             }
             """
         )
@@ -162,6 +266,7 @@ class ChatWindow(QMainWindow, Observer):
 
         # Create buttons layout
         buttons_layout = QVBoxLayout()  # Change to vertical layout for stacking buttons
+        buttons_layout.setContentsMargins(0, 0, 5, 0)  # left, top, right, bottom
 
         # Create Send button
         self.send_button = QPushButton("Send")
@@ -169,21 +274,22 @@ class ChatWindow(QMainWindow, Observer):
         self.send_button.setStyleSheet(
             """
             QPushButton {
-                background-color: #4C662B; 
-                color: white; 
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base (for contrast) */
                 border: none;
                 border-radius: 4px; 
                 padding: 8px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #354E16;
+                background-color: #74c7ec; /* Catppuccin Sapphire */
             }
             QPushButton:pressed {
-                background-color: #102000;
+                background-color: #b4befe; /* Catppuccin Lavender */
             }
             QPushButton:disabled {
-                background-color: #B1D18A;
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
             }
             """
         )
@@ -194,21 +300,22 @@ class ChatWindow(QMainWindow, Observer):
         self.file_button.setStyleSheet(
             """
             QPushButton {
-                background-color: #586249; 
-                color: white; 
+                background-color: #585b70; /* Catppuccin Surface2 */
+                color: #cdd6f4; /* Catppuccin Text */
                 border: none;
                 border-radius: 4px; 
                 padding: 8px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #404A33;
+                background-color: #6c7086; /* Catppuccin Overlay0 */
             }
             QPushButton:pressed {
-                background-color: #2A331E;
+                background-color: #7f849c; /* Catppuccin Overlay1 */
             }
             QPushButton:disabled {
-                background-color: #BFCBAD;
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
             }
             """
         )
@@ -414,91 +521,53 @@ class ChatWindow(QMainWindow, Observer):
             self.send_button.setStyleSheet(
                 """
                 QPushButton {
-                    background-color: #4C662B; 
-                    color: white; 
+                    background-color: #89b4fa; /* Catppuccin Blue */
+                    color: #1e1e2e; /* Catppuccin Base */
                     border: none;
                     border-radius: 4px; 
                     padding: 8px;
                     font-weight: bold;
                 }
                 QPushButton:hover {
-                    background-color: #354E16;
+                    background-color: #74c7ec; /* Catppuccin Sapphire */
                 }
                 QPushButton:pressed {
-                    background-color: #102000;
+                    background-color: #b4befe; /* Catppuccin Lavender */
                 }
                 """
             )
             self.file_button.setStyleSheet(
                 """
                 QPushButton {
-                    background-color: #586249; 
-                    color: white; 
+                    background-color: #585b70; /* Catppuccin Surface2 */
+                    color: #cdd6f4; /* Catppuccin Text */
                     border: none;
                     border-radius: 4px; 
                     padding: 8px;
                     font-weight: bold;
                 }
                 QPushButton:hover {
-                    background-color: #404A33;
+                    background-color: #6c7086; /* Catppuccin Overlay0 */
                 }
                 QPushButton:pressed {
-                    background-color: #2A331E;
+                    background-color: #7f849c; /* Catppuccin Overlay1 */
                 }
                 """
             )
         else:
-            # Use a different style if disabled due to loading vs. waiting for response
-            if self.loading_conversation:
-                self.send_button.setStyleSheet(
-                    """
-                    QPushButton {
-                        background-color: #B1D18A; 
-                        color: white; 
-                        border: none;
-                        border-radius: 4px; 
-                        padding: 8px;
-                        font-weight: bold;
-                    }
-                    """
-                )
-                self.file_button.setStyleSheet(
-                    """
-                    QPushButton {
-                        background-color: #BFCBAD; 
-                        color: white; 
-                        border: none;
-                        border-radius: 4px; 
-                        padding: 8px;
-                        font-weight: bold;
-                    }
-                    """
-                )
-            else:
-                self.send_button.setStyleSheet(
-                    """
-                    QPushButton {
-                        background-color: #CDEDA3; 
-                        color: #354E16; 
-                        border: none;
-                        border-radius: 4px; 
-                        padding: 8px;
-                        font-weight: bold;
-                    }
-                    """
-                )
-                self.file_button.setStyleSheet(
-                    """
-                    QPushButton {
-                        background-color: #DCE7C8; 
-                        color: #404A33; 
-                        border: none;
-                        border-radius: 4px; 
-                        padding: 8px;
-                        font-weight: bold;
-                    }
-                    """
-                )
+            # Common disabled style for both loading and waiting for response
+            disabled_button_style = """
+                QPushButton {{
+                    background-color: #45475a; /* Catppuccin Surface1 */
+                    color: #6c7086; /* Catppuccin Overlay0 */
+                    border: none;
+                    border-radius: 4px; 
+                    padding: 8px;
+                    font-weight: bold;
+                }}
+            """
+            self.send_button.setStyleSheet(disabled_button_style)
+            self.file_button.setStyleSheet(disabled_button_style)
 
         # Update waiting state (only relevant for LLM responses)
         if not self.loading_conversation:
@@ -1128,28 +1197,41 @@ class ChatWindow(QMainWindow, Observer):
         menu_bar.setStyleSheet(
             """
             QMenuBar {
-                background-color: #4C662B;
-                color: white;
+                background-color: #1e1e2e; /* Catppuccin Base */
+                color: #cdd6f4; /* Catppuccin Text */
                 padding: 2px;
             }
             QMenuBar::item {
                 background-color: transparent;
+                color: #cdd6f4; /* Catppuccin Text */
                 padding: 4px 12px;
                 border-radius: 4px;
             }
-            QMenuBar::item:selected {
-                background-color: #354E16;
+            QMenuBar::item:selected { /* When menu is open or item is hovered */
+                background-color: #313244; /* Catppuccin Surface0 */
+            }
+            QMenuBar::item:pressed { /* When menu item is pressed to open the menu */
+                background-color: #45475a; /* Catppuccin Surface1 */
             }
             QMenu {
-                background-color: white;
-                border: 1px solid #C5C8BA;
+                background-color: #181825; /* Catppuccin Mantle */
+                color: #cdd6f4; /* Catppuccin Text */
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
+                padding: 4px;
             }
             QMenu::item {
                 padding: 6px 24px 6px 12px;
+                border-radius: 4px; /* Add border-radius to menu items */
             }
             QMenu::item:selected {
-                background-color: #CDEDA3;
-                color: #354E16;
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #b4befe; /* Catppuccin Lavender */
+            }
+            QMenu::separator {
+                height: 1px;
+                background: #45475a; /* Catppuccin Surface1 */
+                margin-left: 10px;
+                margin-right: 5px;
             }
             """
         )

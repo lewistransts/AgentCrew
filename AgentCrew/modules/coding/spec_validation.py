@@ -3,6 +3,7 @@ from typing import Optional
 from .validation_config import validation_prompt_template
 from AgentCrew.modules.llm.service_manager import ServiceManager
 from AgentCrew.modules.code_analysis import CodeAnalysisService
+import asyncio
 
 
 class SpecPromptValidationService:
@@ -17,7 +18,7 @@ class SpecPromptValidationService:
         """
         self.preferred_provider = (
             preferred_provider or "groq"
-        )  # Default to Claude if not specified
+        )  # Default to groq if not specified
 
     def validate(self, prompt: str, repo_path: str) -> str:
         """
@@ -46,7 +47,9 @@ class SpecPromptValidationService:
             )
 
             # Call the validate_spec method on the LLM service
-            validation_result = llm_service.validate_spec(validation_prompt)
+            validation_result = asyncio.run(
+                llm_service.validate_spec(validation_prompt)
+            )
 
             # Parse and structure the validation result
             return validation_result

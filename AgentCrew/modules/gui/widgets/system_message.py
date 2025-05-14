@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import (
     Qt,
 )
+from .message_bubble import CODE_CSS
 
 
 class SystemMessageWidget(QWidget):
@@ -35,7 +36,9 @@ class SystemMessageWidget(QWidget):
         # Create label with HTML support
         self.message_label = QLabel()
         self.message_label.setTextFormat(Qt.TextFormat.RichText)
-        self.message_label.setStyleSheet("color: #4C662B; padding: 2px;")
+        self.message_label.setStyleSheet(
+            "color: #a6adc8; padding: 2px;"
+        )  # Catppuccin Subtext0
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.message_label.setWordWrap(True)
         self.message_label.setMaximumWidth(1200)  # Increased from 500 to 1200
@@ -45,7 +48,7 @@ class SystemMessageWidget(QWidget):
         )
 
         font = self.message_label.font()
-        font_size = font.pointSizeF() * 1.2  # Increase by 10%
+        font_size = font.pointSizeF() * 1  # Match MessageBubble
         font.setPointSizeF(font_size)
         self.message_label.setFont(font)
 
@@ -53,15 +56,15 @@ class SystemMessageWidget(QWidget):
         self.toggle_button = QPushButton("▼ Show More")
         self.toggle_button.setStyleSheet(
             """
-            QPushButton { 
-                background-color: transparent; 
-                color: #4C662B; 
-                border: none; 
-                text-align: left; 
+            QPushButton {
+                background-color: transparent;
+                color: #94e2d5; /* Catppuccin Teal */
+                border: none;
+                text-align: left;
                 padding: 2px;
             }
             QPushButton:hover {
-                color: #354E16;
+                color: #89dceb; /* Catppuccin Sky */
             }
             """
         )
@@ -81,66 +84,74 @@ class SystemMessageWidget(QWidget):
 
     def set_collapsed_text(self):
         """Set the text to show only 2 lines when collapsed."""
-        # Convert markdown to HTML if the text contains code blocks
-        if "```" in self.full_text:
-            try:
-                html_content = markdown.markdown(
-                    self.full_text, output_format="html", extensions=["fenced_code"]
-                )
+        md_extensions = ["tables", "fenced_code", "codehilite", "nl2br", "sane_lists"]
+        lines = self.full_text.split("\n")
 
-                # Get first two lines (approximate)
-                lines = self.full_text.split("\n")
-                if len(lines) <= 2:
-                    # If there are only 1-2 lines, show everything and hide the button
-                    self.message_label.setText(html_content)
-                    self.toggle_button.hide()
-                    return
+        text_to_render_md = ""
+        add_ellipsis = False
 
-                # Show first two lines
-                collapsed_text = "\n".join(lines[:2])
-                if "```" in collapsed_text and "```" not in collapsed_text + "\n```":
-                    # If we cut in the middle of a code block, add closing ```
-                    collapsed_text += "\n```"
-
-                collapsed_html = markdown.markdown(
-                    collapsed_text, output_format="html", extensions=["fenced_code"]
-                )
-                self.message_label.setText(collapsed_html + "...")
-                self.toggle_button.show()
-            except Exception:
-                # Fallback to simple text truncation
-                lines = self.full_text.split("\n")
-                if len(lines) <= 2:
-                    self.message_label.setText(self.full_text)
-                    self.toggle_button.hide()
-                else:
-                    self.message_label.setText("\n".join(lines[:2]) + "...")
-                    self.toggle_button.show()
+        if len(lines) <= 2:
+            text_to_render_md = self.full_text
+            self.toggle_button.hide()
         else:
-            # Simple text truncation
-            lines = self.full_text.split("\n")
-            if len(lines) <= 2:
-                self.message_label.setText(self.full_text)
-                self.toggle_button.hide()
-            else:
-                self.message_label.setText("\n".join(lines[:2]) + "...")
-                self.toggle_button.show()
+            text_to_render_md = "\n".join(lines[:2])
+            # If original text had code blocks, attempt to fix unclosed ones in snippet
+            if "```" in self.full_text and text_to_render_md.count("```") % 2 != 0:
+                text_to_render_md += "\n```"
+            add_ellipsis = True
+            self.toggle_button.show()
 
-    def set_expanded_text(self):
-        """Set the text to show all content."""
         try:
             html_content = markdown.markdown(
-                self.full_text, output_format="html", extensions=["fenced_code"]
+                text_to_render_md, output_format="html", extensions=md_extensions
             )
+            # Apply CODE_CSS
             html_content = (
-                """<style>
-            pre { white-space: pre-wrap; }
+                f"""<style>
+            pre {{ white-space: pre-wrap; margin-bottom: 0;}}
+                {CODE_CSS}
             </style>"""
                 + html_content
             )
+            if add_ellipsis:
+                # Ensure RichText for the "..." if HTML is used
+                self.message_label.setTextFormat(Qt.TextFormat.RichText)
+                self.message_label.setText(html_content + "...")
+            else:
+                self.message_label.setText(html_content)
+        except Exception as e:
+            print(f"Error rendering collapsed markdown for system message: {e}")
+            # Fallback: use plain text
+            fallback_text = text_to_render_md
+            if add_ellipsis:
+                fallback_text += "..."
+            self.message_label.setTextFormat(
+                Qt.TextFormat.PlainText
+            )  # Set to PlainText for fallback
+            self.message_label.setText(fallback_text)
+
+    def set_expanded_text(self):
+        """Set the text to show all content."""
+        md_extensions = ["tables", "fenced_code", "codehilite", "nl2br", "sane_lists"]
+        try:
+            html_content = markdown.markdown(
+                self.full_text, output_format="html", extensions=md_extensions
+            )
+            html_content = (
+                f"""<style>
+            pre {{ white-space: pre-wrap; margin-bottom: 0;}}
+                {CODE_CSS}
+            </style>"""
+                + html_content
+            )
+            self.message_label.setTextFormat(Qt.TextFormat.RichText)  # Ensure RichText
             self.message_label.setText(html_content)
-        except Exception:
-            self.message_label.setText(self.full_text)
+        except Exception as e:
+            print(f"Error rendering expanded markdown for system message: {e}")
+            self.message_label.setTextFormat(
+                Qt.TextFormat.PlainText
+            )  # Set to PlainText for fallback
+            self.message_label.setText(self.full_text)  # Fallback to full plain text
 
     def toggle_expansion(self):
         """Toggle between expanded and collapsed states."""

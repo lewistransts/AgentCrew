@@ -20,81 +20,81 @@ IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]
 MAX_IMAGE_WIDTH = 600  # Maximum width for displayed images
 
 CODE_CSS = """
-pre { line-height: 1; background-color: #F3F4E9; border-radius: 8px; padding: 12px; }
-td.linenos .normal { color: #44483D; background-color: transparent; padding-left: 5px; padding-right: 5px; }
-span.linenos { color: #44483D; background-color: transparent; padding-left: 5px; padding-right: 5px; }
-td.linenos .special { color: #1A1C16; background-color: #DCE7C8; padding-left: 5px; padding-right: 5px; }
-span.linenos.special { color: #1A1C16; background-color: #DCE7C8; padding-left: 5px; padding-right: 5px; }
-.codehilite .hll { background-color: #CDEDA3 }
-.codehilite { background: #F3F4E9; border-radius: 8px; padding: 10px; }
-.codehilite .c { color: #5C6550; font-style: italic } /* Comment */
-.codehilite .err { border: 1px solid #B00020 } /* Error */
-.codehilite .k { color: #4C662B; font-weight: bold } /* Keyword */
-.codehilite .o { color: #44483D } /* Operator */
-.codehilite .ch { color: #5C6550; font-style: italic } /* Comment.Hashbang */
-.codehilite .cm { color: #5C6550; font-style: italic } /* Comment.Multiline */
-.codehilite .cp { color: #7D5700 } /* Comment.Preproc */
-.codehilite .cpf { color: #5C6550; font-style: italic } /* Comment.PreprocFile */
-.codehilite .c1 { color: #5C6550; font-style: italic } /* Comment.Single */
-.codehilite .cs { color: #5C6550; font-style: italic } /* Comment.Special */
-.codehilite .gd { color: #B00020 } /* Generic.Deleted */
+pre { line-height: 1.2; background-color: #181825; border-radius: 8px; padding: 12px; color: #cdd6f4; white-space: pre-wrap; word-wrap: break-word; } /* Mantle, Text */
+td.linenos .normal { color: #6c7086; background-color: transparent; padding-left: 5px; padding-right: 5px; } /* Overlay0 */
+span.linenos { color: #6c7086; background-color: transparent; padding-left: 5px; padding-right: 5px; } /* Overlay0 */
+td.linenos .special { color: #cdd6f4; background-color: #313244; padding-left: 5px; padding-right: 5px; } /* Text, Surface0 */
+span.linenos.special { color: #cdd6f4; background-color: #313244; padding-left: 5px; padding-right: 5px; } /* Text, Surface0 */
+.codehilite .hll { background-color: #313244 } /* Surface0 */
+.codehilite { background: #181825; border-radius: 8px; padding: 10px; color: #cdd6f4; } /* Mantle, Text */
+.codehilite .c { color: #6c7086; font-style: italic } /* Comment -> Overlay0 */
+.codehilite .err { border: 1px solid #f38ba8; color: #f38ba8; } /* Error -> Red */
+.codehilite .k { color: #cba6f7; font-weight: bold } /* Keyword -> Mauve */
+.codehilite .o { color: #94e2d5 } /* Operator -> Teal */
+.codehilite .ch { color: #6c7086; font-style: italic } /* Comment.Hashbang -> Overlay0 */
+.codehilite .cm { color: #6c7086; font-style: italic } /* Comment.Multiline -> Overlay0 */
+.codehilite .cp { color: #f9e2af } /* Comment.Preproc -> Yellow */
+.codehilite .cpf { color: #6c7086; font-style: italic } /* Comment.PreprocFile -> Overlay0 */
+.codehilite .c1 { color: #6c7086; font-style: italic } /* Comment.Single -> Overlay0 */
+.codehilite .cs { color: #6c7086; font-style: italic } /* Comment.Special -> Overlay0 */
+.codehilite .gd { color: #f38ba8 } /* Generic.Deleted -> Red */
 .codehilite .ge { font-style: italic } /* Generic.Emph */
 .codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
-.codehilite .gr { color: #B00020 } /* Generic.Error */
-.codehilite .gh { color: #354E16; font-weight: bold } /* Generic.Heading */
-.codehilite .gi { color: #4C662B } /* Generic.Inserted */
-.codehilite .go { color: #44483D } /* Generic.Output */
-.codehilite .gp { color: #354E16; font-weight: bold } /* Generic.Prompt */
+.codehilite .gr { color: #f38ba8 } /* Generic.Error -> Red */
+.codehilite .gh { color: #89b4fa; font-weight: bold } /* Generic.Heading -> Blue */
+.codehilite .gi { color: #a6e3a1 } /* Generic.Inserted -> Green */
+.codehilite .go { color: #cdd6f4 } /* Generic.Output -> Text */
+.codehilite .gp { color: #89b4fa; font-weight: bold } /* Generic.Prompt -> Blue */
 .codehilite .gs { font-weight: bold } /* Generic.Strong */
-.codehilite .gu { color: #586249; font-weight: bold } /* Generic.Subheading */
-.codehilite .gt { color: #1B4D90 } /* Generic.Traceback */
-.codehilite .kc { color: #4C662B; font-weight: bold } /* Keyword.Constant */
-.codehilite .kd { color: #4C662B; font-weight: bold } /* Keyword.Declaration */
-.codehilite .kn { color: #4C662B; font-weight: bold } /* Keyword.Namespace */
-.codehilite .kp { color: #4C662B } /* Keyword.Pseudo */
-.codehilite .kr { color: #4C662B; font-weight: bold } /* Keyword.Reserved */
-.codehilite .kt { color: #7D3C00 } /* Keyword.Type */
-.codehilite .m { color: #44483D } /* Literal.Number */
-.codehilite .s { color: #7D3C00 } /* Literal.String */
-.codehilite .na { color: #4C662B } /* Name.Attribute */
-.codehilite .nb { color: #4C662B } /* Name.Builtin */
-.codehilite .nc { color: #1B4D90; font-weight: bold } /* Name.Class */
-.codehilite .no { color: #7D3C00 } /* Name.Constant */
-.codehilite .nd { color: #586249 } /* Name.Decorator */
-.codehilite .ni { color: #44483D; font-weight: bold } /* Name.Entity */
-.codehilite .ne { color: #B00020; font-weight: bold } /* Name.Exception */
-.codehilite .nf { color: #1B4D90 } /* Name.Function */
-.codehilite .nl { color: #4C662B } /* Name.Label */
-.codehilite .nn { color: #1B4D90; font-weight: bold } /* Name.Namespace */
-.codehilite .nt { color: #4C662B; font-weight: bold } /* Name.Tag */
-.codehilite .nv { color: #354E16 } /* Name.Variable */
-.codehilite .ow { color: #586249; font-weight: bold } /* Operator.Word */
-.codehilite .w { color: #C5C8BA } /* Text.Whitespace */
-.codehilite .mb { color: #44483D } /* Literal.Number.Bin */
-.codehilite .mf { color: #44483D } /* Literal.Number.Float */
-.codehilite .mh { color: #44483D } /* Literal.Number.Hex */
-.codehilite .mi { color: #44483D } /* Literal.Number.Integer */
-.codehilite .mo { color: #44483D } /* Literal.Number.Oct */
-.codehilite .sa { color: #7D3C00 } /* Literal.String.Affix */
-.codehilite .sb { color: #7D3C00 } /* Literal.String.Backtick */
-.codehilite .sc { color: #7D3C00 } /* Literal.String.Char */
-.codehilite .dl { color: #7D3C00 } /* Literal.String.Delimiter */
-.codehilite .sd { color: #7D3C00; font-style: italic } /* Literal.String.Doc */
-.codehilite .s2 { color: #7D3C00 } /* Literal.String.Double */
-.codehilite .se { color: #7D5700; font-weight: bold } /* Literal.String.Escape */
-.codehilite .sh { color: #7D3C00 } /* Literal.String.Heredoc */
-.codehilite .si { color: #7D3C00; font-weight: bold } /* Literal.String.Interpol */
-.codehilite .sx { color: #4C662B } /* Literal.String.Other */
-.codehilite .sr { color: #7D3C00 } /* Literal.String.Regex */
-.codehilite .s1 { color: #7D3C00 } /* Literal.String.Single */
-.codehilite .ss { color: #354E16 } /* Literal.String.Symbol */
-.codehilite .bp { color: #4C662B } /* Name.Builtin.Pseudo */
-.codehilite .fm { color: #1B4D90 } /* Name.Function.Magic */
-.codehilite .vc { color: #354E16 } /* Name.Variable.Class */
-.codehilite .vg { color: #354E16 } /* Name.Variable.Global */
-.codehilite .vi { color: #354E16 } /* Name.Variable.Instance */
-.codehilite .vm { color: #354E16 } /* Name.Variable.Magic */
-.codehilite .il { color: #44483D } /* Literal.Number.Integer.Long */
+.codehilite .gu { color: #89b4fa; font-weight: bold } /* Generic.Subheading -> Blue */
+.codehilite .gt { color: #f38ba8 } /* Generic.Traceback -> Red */
+.codehilite .kc { color: #cba6f7; font-weight: bold } /* Keyword.Constant -> Mauve */
+.codehilite .kd { color: #cba6f7; font-weight: bold } /* Keyword.Declaration -> Mauve */
+.codehilite .kn { color: #cba6f7; font-weight: bold } /* Keyword.Namespace -> Mauve */
+.codehilite .kp { color: #cba6f7 } /* Keyword.Pseudo -> Mauve */
+.codehilite .kr { color: #cba6f7; font-weight: bold } /* Keyword.Reserved -> Mauve */
+.codehilite .kt { color: #fab387; font-weight: bold } /* Keyword.Type -> Peach */
+.codehilite .m { color: #fab387 } /* Literal.Number -> Peach */
+.codehilite .s { color: #a6e3a1 } /* Literal.String -> Green */
+.codehilite .na { color: #89dceb } /* Name.Attribute -> Sky */
+.codehilite .nb { color: #89b4fa } /* Name.Builtin -> Blue */
+.codehilite .nc { color: #f9e2af; font-weight: bold } /* Name.Class -> Yellow */
+.codehilite .no { color: #fab387 } /* Name.Constant -> Peach */
+.codehilite .nd { color: #cba6f7 } /* Name.Decorator -> Mauve */
+.codehilite .ni { color: #cdd6f4; font-weight: bold } /* Name.Entity -> Text */
+.codehilite .ne { color: #f38ba8; font-weight: bold } /* Name.Exception -> Red */
+.codehilite .nf { color: #89b4fa; font-weight: bold } /* Name.Function -> Blue */
+.codehilite .nl { color: #cdd6f4 } /* Name.Label -> Text */
+.codehilite .nn { color: #f9e2af; font-weight: bold } /* Name.Namespace -> Yellow */
+.codehilite .nt { color: #cba6f7; font-weight: bold } /* Name.Tag -> Mauve */
+.codehilite .nv { color: #f5e0dc } /* Name.Variable -> Rosewater */
+.codehilite .ow { color: #94e2d5; font-weight: bold } /* Operator.Word -> Teal */
+.codehilite .w { color: #45475a } /* Text.Whitespace -> Surface1 */
+.codehilite .mb { color: #fab387 } /* Literal.Number.Bin -> Peach */
+.codehilite .mf { color: #fab387 } /* Literal.Number.Float -> Peach */
+.codehilite .mh { color: #fab387 } /* Literal.Number.Hex -> Peach */
+.codehilite .mi { color: #fab387 } /* Literal.Number.Integer -> Peach */
+.codehilite .mo { color: #fab387 } /* Literal.Number.Oct -> Peach */
+.codehilite .sa { color: #a6e3a1 } /* Literal.String.Affix -> Green */
+.codehilite .sb { color: #a6e3a1 } /* Literal.String.Backtick -> Green */
+.codehilite .sc { color: #a6e3a1 } /* Literal.String.Char -> Green */
+.codehilite .dl { color: #a6e3a1 } /* Literal.String.Delimiter -> Green */
+.codehilite .sd { color: #6c7086; font-style: italic } /* Literal.String.Doc -> Overlay0 */
+.codehilite .s2 { color: #a6e3a1 } /* Literal.String.Double -> Green */
+.codehilite .se { color: #fab387; font-weight: bold } /* Literal.String.Escape -> Peach */
+.codehilite .sh { color: #a6e3a1 } /* Literal.String.Heredoc -> Green */
+.codehilite .si { color: #a6e3a1; font-weight: bold } /* Literal.String.Interpol -> Green */
+.codehilite .sx { color: #a6e3a1 } /* Literal.String.Other -> Green */
+.codehilite .sr { color: #a6e3a1 } /* Literal.String.Regex -> Green */
+.codehilite .s1 { color: #a6e3a1 } /* Literal.String.Single -> Green */
+.codehilite .ss { color: #a6e3a1 } /* Literal.String.Symbol -> Green */
+.codehilite .bp { color: #89b4fa } /* Name.Builtin.Pseudo -> Blue */
+.codehilite .fm { color: #89b4fa; font-weight: bold } /* Name.Function.Magic -> Blue */
+.codehilite .vc { color: #f5e0dc } /* Name.Variable.Class -> Rosewater */
+.codehilite .vg { color: #f5e0dc } /* Name.Variable.Global -> Rosewater */
+.codehilite .vi { color: #f5e0dc } /* Name.Variable.Instance -> Rosewater */
+.codehilite .vm { color: #f5e0dc } /* Name.Variable.Magic -> Rosewater */
+.codehilite .il { color: #fab387 } /* Literal.Number.Integer.Long -> Peach */
 """
 
 
@@ -129,37 +129,37 @@ class MessageBubble(QFrame):
                 """
                 QFrame { 
                     border-radius: 12px; 
-                    background-color: #CDEDA3; 
+                    background-color: #89b4fa; /* Catppuccin Blue */
                     border: none;
                     padding: 2px;
                 }
                 """
             )
-        else:
+        elif is_thinking: # Check is_thinking before general assistant bubble
             self.setStyleSheet(
                 """
                 QFrame { 
                     border-radius: 12px; 
-                    background-color: #F9FAEF; 
+                    background-color: #45475a; /* Catppuccin Surface1 */
                     border: none;
                     padding: 2px;
                 }
                 """
             )
-
-        # For thinking bubbles, add this condition
-        if is_thinking:
+        else: # Assistant bubble
             self.setStyleSheet(
                 """
                 QFrame { 
                     border-radius: 12px; 
-                    background-color: #DCE7C8; 
+                    background-color: #313244; /* Catppuccin Surface0 */
                     border: none;
                     padding: 2px;
                 }
                 """
             )
-        self.setAutoFillBackground(True)
+        
+        # This setAutoFillBackground(True) might not be necessary if QFrame style is set
+        # self.setAutoFillBackground(True) # You can test if this is needed
 
         # Create layout
         layout = QVBoxLayout(self)
@@ -173,7 +173,10 @@ class MessageBubble(QFrame):
             )
 
         sender_label = QLabel(label_text)
-        sender_label.setStyleSheet("font-weight: bold; color: #1A1C16; padding: 2px;")
+        sender_label_color = "#1e1e2e" if is_user else "#cdd6f4" # Base for user, Text for others
+        if is_thinking:
+             sender_label_color = "#bac2de" # Subtext1 for thinking sender
+        sender_label.setStyleSheet(f"font-weight: bold; color: {sender_label_color}; padding: 2px;")
         layout.addWidget(sender_label)
 
         # Create label with HTML support
@@ -186,17 +189,19 @@ class MessageBubble(QFrame):
             | Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
 
-        # Increase font size by 10%
+        # Increase font size by 10% (original logic was 1.5x, keeping that)
         font = self.message_label.font()
-        font_size = font.pointSizeF() * 1.5  # Increase by 10%
+        font_size = font.pointSizeF() * 1.5
         font.setPointSizeF(font_size)
         self.message_label.setFont(font)
 
-        # Set different text color for thinking content
+        # Set different text color for message content based on bubble type
+        message_text_color = "#1e1e2e" if is_user else "#cdd6f4" # Base for user, Text for assistant
         if is_thinking:
-            self.message_label.setStyleSheet(
-                "color: #44483D;"
-            )  # Updated color for thinking text
+            message_text_color = "#bac2de" # Subtext1 for thinking text
+        self.message_label.setStyleSheet(
+            f"color: {message_text_color};"
+        )
 
         # Set the text content (convert Markdown to HTML)
         self.set_text(text)
@@ -224,15 +229,18 @@ class MessageBubble(QFrame):
             rollback_button = QPushButton("↩ Rollback", self)
             rollback_button.setStyleSheet("""
                 QPushButton {
-                    background-color: #4C662B;
-                    color: white;
+                    background-color: #b4befe; /* Catppuccin Lavender */
+                    color: #1e1e2e; /* Catppuccin Base */
                     border: none;
                     border-radius: 4px;
                     padding: 4px 8px;
                     font-size: 11px;
                 }
                 QPushButton:hover {
-                    background-color: #354E16;
+                    background-color: #cba6f7; /* Catppuccin Mauve */
+                }
+                QPushButton:pressed {
+                    background-color: #f5c2e7; /* Catppuccin Pink */
                 }
             """)
             rollback_button.hide()
@@ -354,7 +362,8 @@ class MessageBubble(QFrame):
 
             # Add file name above the image
             name_label = QLabel(file_name)
-            name_label.setStyleSheet("font-weight: bold; color: #1A1C16;")
+            name_label_color = "#1e1e2e" if self.is_user else "#cdd6f4"
+            name_label.setStyleSheet(f"font-weight: bold; color: {name_label_color};")
             name_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
             file_layout.addWidget(name_label)
@@ -374,8 +383,9 @@ class MessageBubble(QFrame):
 
             # Create file name label
             name_label = QLabel(file_name)
+            name_label_color = "#1e1e2e" if self.is_user else "#cdd6f4"
             name_label.setStyleSheet(
-                "font-weight: bold; color: #1A1C16; padding-left: 10px;"
+                f"font-weight: bold; color: {name_label_color}; padding-left: 10px;"
             )
 
             icon_layout.addWidget(icon_label)
@@ -391,8 +401,12 @@ class MessageBubble(QFrame):
             size_label = QLabel(f"Size: {self._format_file_size(file_size)}")
             type_label = QLabel(f"Type: {file_type}")
 
-            size_label.setStyleSheet("color: #44483D;")
-            type_label.setStyleSheet("color: #44483D;")
+            file_info_color = "#6c7086" # Catppuccin Overlay0
+            if self.is_user: # Adjust for better contrast on user bubble
+                file_info_color = "#313244" # Surface0 might be better on Blue
+
+            size_label.setStyleSheet(f"color: {file_info_color};")
+            type_label.setStyleSheet(f"color: {file_info_color};")
 
             file_layout.addWidget(size_label)
             file_layout.addWidget(type_label)
@@ -456,7 +470,8 @@ class MessageBubble(QFrame):
 
             # Add a label indicating it's a base64 image
             name_label = QLabel("Image")
-            name_label.setStyleSheet("font-weight: bold; color: #1A1C16;")
+            name_label_color = "#1e1e2e" if self.is_user else "#cdd6f4"
+            name_label.setStyleSheet(f"font-weight: bold; color: {name_label_color};")
             name_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
             img_layout.addWidget(name_label)

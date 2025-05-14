@@ -70,91 +70,134 @@ class ConfigWindow(QDialog):
         # Apply styling
         self.setStyleSheet("""
             QDialog {
-                background-color: #F9FAEF;
+                background-color: #1e1e2e; /* Catppuccin Base */
+                color: #cdd6f4; /* Catppuccin Text */
             }
             QTabWidget::pane {
-                border: 1px solid #C5C8BA;
-                background-color: #FFFFFF;
+                border: 1px solid #313244; /* Catppuccin Surface0 */
+                background-color: #181825; /* Catppuccin Mantle */
                 border-radius: 4px;
             }
             QTabBar::tab {
-                background-color: #E1E4D5;
-                color: #4C662B;
+                background-color: #313244; /* Catppuccin Surface0 */
+                color: #cdd6f4; /* Catppuccin Text */
                 padding: 8px 16px;
                 border-top-left-radius: 4px;
                 border-top-right-radius: 4px;
-                border: 1px solid #C5C8BA;
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
                 border-bottom: none;
                 margin-right: 2px;
             }
             QTabBar::tab:selected {
-                background-color: #FFFFFF;
-                border-bottom-color: #FFFFFF;
+                background-color: #181825; /* Catppuccin Mantle (same as pane) */
+                border-bottom-color: #181825; /* Catppuccin Mantle */
+                color: #b4befe; /* Catppuccin Lavender for selected tab text */
+            }
+            QTabBar::tab:hover:!selected {
+                background-color: #45475a; /* Catppuccin Surface1 */
             }
             QPushButton {
-                background-color: #4C662B;
-                color: white;
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
                 border: none;
                 border-radius: 4px;
                 padding: 8px 16px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #354E16;
+                background-color: #74c7ec; /* Catppuccin Sapphire */
             }
             QPushButton:pressed {
-                background-color: #102000;
+                background-color: #b4befe; /* Catppuccin Lavender */
             }
             QPushButton:disabled {
-                background-color: #B1D18A;
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
             }
             QListWidget {
-                background-color: #FFFFFF;
-                border: 1px solid #C5C8BA;
+                background-color: #1e1e2e; /* Catppuccin Base */
+                border: 1px solid #313244; /* Catppuccin Surface0 */
                 border-radius: 4px;
                 padding: 4px;
+                color: #cdd6f4; /* Catppuccin Text */
             }
             QListWidget::item {
                 padding: 6px;
                 border-radius: 2px;
+                color: #cdd6f4; /* Catppuccin Text */
+                background-color: #1e1e2e; /* Catppuccin Base */
             }
             QListWidget::item:selected {
-                background-color: #CDEDA3;
-                color: #354E16;
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #b4befe; /* Catppuccin Lavender */
+            }
+            QListWidget::item:hover:!selected {
+                background-color: #313244; /* Catppuccin Surface0 */
             }
             QLineEdit, QTextEdit {
-                border: 1px solid #C5C8BA;
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
                 border-radius: 4px;
                 padding: 6px;
-                background-color: white;
+                background-color: #313244; /* Catppuccin Surface0 */
+                color: #cdd6f4; /* Catppuccin Text */
             }
             QLineEdit:focus, QTextEdit:focus {
-                border: 1px solid #4C662B;
+                border: 1px solid #89b4fa; /* Catppuccin Blue */
             }
             QCheckBox {
                 spacing: 8px;
+                color: #cdd6f4; /* Catppuccin Text */
             }
             QCheckBox::indicator {
                 width: 16px;
                 height: 16px;
+                border-radius: 2px;
+                background-color: #45475a; /* Catppuccin Surface1 */
+                border: 1px solid #585b70; /* Catppuccin Surface2 */
             }
             QCheckBox::indicator:checked {
-                background-color: #4C662B;
-                border: 1px solid #4C662B;
-                border-radius: 2px;
+                background-color: #89b4fa; /* Catppuccin Blue */
+                border: 1px solid #89b4fa; /* Catppuccin Blue */
+            }
+            QCheckBox::indicator:hover {
+                border: 1px solid #b4befe; /* Catppuccin Lavender */
             }
             QGroupBox {
                 font-weight: bold;
-                border: 1px solid #C5C8BA;
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
                 border-radius: 4px;
                 margin-top: 12px;
-                padding-top: 12px;
+                padding-top: 12px; /* Ensure space for title */
+                background-color: #181825; /* Catppuccin Mantle for groupbox background */
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
-                subcontrol-position: top left;
-                padding: 0 4px;
-                color: #4C662B;
+                subcontrol-position: top left; /* position at the top left */
+                padding: 0 4px 4px 4px; /* padding for title */
+                color: #b4befe; /* Catppuccin Lavender for title */
+                background-color: #181825; /* Match groupbox background */
+                left: 10px; /* Adjust to align with content */
+            }
+            QScrollArea {
+                background-color: #181825; /* Catppuccin Mantle */
+                border: none;
+            }
+            /* Style for the QWidget inside QScrollArea if needed */
+            QScrollArea > QWidget > QWidget { /* Target the editor_widget */
+                 background-color: #181825; /* Catppuccin Mantle */
+            }
+            QLabel {
+                color: #cdd6f4; /* Catppuccin Text */
+                padding: 2px; /* Add some padding to labels */
+            }
+            QSplitter::handle {
+                background-color: #313244; /* Catppuccin Surface0 */
+            }
+            QSplitter::handle:hover {
+                background-color: #45475a; /* Catppuccin Surface1 */
+            }
+            QSplitter::handle:pressed {
+                background-color: #585b70; /* Catppuccin Surface2 */
             }
         """)
 
@@ -207,6 +250,7 @@ class AgentsConfigTab(QWidget):
 
         # Left panel - Agent list
         left_panel = QWidget()
+        left_panel.setStyleSheet("background-color: #181825;") # Catppuccin Mantle
         left_layout = QVBoxLayout(left_panel)
 
         self.agents_list = QListWidget()
@@ -230,8 +274,10 @@ class AgentsConfigTab(QWidget):
         # Right panel - Agent editor
         right_panel = QScrollArea()
         right_panel.setWidgetResizable(True)
+        # right_panel.setStyleSheet("background-color: #181825;") # Set by QDialog stylesheet
 
         self.editor_widget = QWidget()
+        self.editor_widget.setStyleSheet("background-color: #181825;") # Catppuccin Mantle
         self.editor_layout = QVBoxLayout(self.editor_widget)
 
         # Form layout for agent properties
@@ -495,6 +541,7 @@ class MCPsConfigTab(QWidget):
 
         # Left panel - MCP server list
         left_panel = QWidget()
+        left_panel.setStyleSheet("background-color: #181825;") # Catppuccin Mantle
         left_layout = QVBoxLayout(left_panel)
 
         self.mcps_list = QListWidget()
@@ -518,8 +565,10 @@ class MCPsConfigTab(QWidget):
         # Right panel - MCP editor
         right_panel = QScrollArea()
         right_panel.setWidgetResizable(True)
+        # right_panel.setStyleSheet("background-color: #181825;") # Set by QDialog stylesheet
 
         self.editor_widget = QWidget()
+        self.editor_widget.setStyleSheet("background-color: #181825;") # Catppuccin Mantle
         self.editor_layout = QVBoxLayout(self.editor_widget)
 
         # Form layout for MCP properties

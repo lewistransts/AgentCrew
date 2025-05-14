@@ -134,7 +134,7 @@ class ChromaMemoryService(BaseMemoryService):
         # Add to ChromaDB collection
         if ids:
             self.collection.upsert(
-                ids=ids,
+                ids=[ids[0]],
                 documents=[conversation_text],
                 embeddings=conversation_embedding,
                 metadatas=[

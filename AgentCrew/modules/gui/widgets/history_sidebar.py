@@ -33,26 +33,63 @@ class ConversationSidebar(QWidget):
 
     def setup_ui(self):
         self.setFixedWidth(250)
+        self.setStyleSheet("background-color: #181825;") # Catppuccin Mantle
+
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)  # Add some margins
-        layout.setSpacing(5)  # Add spacing
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(5)
 
         # Search box
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Search conversations...")
         self.search_box.textChanged.connect(self.filter_conversations)
+        self.search_box.setStyleSheet(
+            """
+            QLineEdit {
+                background-color: #313244; /* Catppuccin Surface0 */
+                color: #cdd6f4; /* Catppuccin Text */
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
+                border-radius: 4px;
+                padding: 8px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #89b4fa; /* Catppuccin Blue */
+            }
+            """
+        )
         layout.addWidget(self.search_box)
 
         # Conversation list
         self.conversation_list = QListWidget()
         self.conversation_list.itemClicked.connect(self.on_conversation_selected)
-        # --- Start of changes ---
-        self.conversation_list.setAlternatingRowColors(
-            True
-        )  # Keep this for fallback/clarity
-        # --- Start of replacement ---
-        # --- End of replacement ---
-        # --- End of existing changes --- # Note: Adjusted comment slightly to reflect reality
+        self.conversation_list.setAlternatingRowColors(False) # Disable default alternating colors
+        self.conversation_list.setStyleSheet(
+            """
+            QListWidget {
+                background-color: #1e1e2e; /* Catppuccin Base */
+                border: 1px solid #313244; /* Catppuccin Surface0 */
+                border-radius: 4px;
+            }
+            QListWidget::item {
+                color: #cdd6f4; /* Catppuccin Text */
+                background-color: #1e1e2e; /* Catppuccin Base */
+                border: none; /* Remove individual item borders if not desired */
+                border-bottom: 1px solid #313244; /* Surface0 for separator */
+                margin: 0px; /* Remove margin if using border for separation */
+                padding: 8px;
+            }
+            /* QListWidget::item:alternate { */ /* Remove if not using alternating */
+            /*     background-color: #1a1a2e; */ /* Slightly different base if needed */
+            /* } */
+            QListWidget::item:selected {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #b4befe; /* Catppuccin Lavender */
+            }
+            QListWidget::item:hover:!selected {
+                background-color: #313244; /* Catppuccin Surface0 */
+            }
+            """
+        )
         layout.addWidget(self.conversation_list)
 
         # Button row with Refresh and New buttons
@@ -72,63 +109,25 @@ class ConversationSidebar(QWidget):
 
         self.setLayout(layout)
 
-        self.conversation_list.setStyleSheet(
-            """
-            QListWidget {
-                background-color: #F9FAEF;
-                border: none;
-                border-radius: 4px;
-            }
-            QListWidget::item {
-                color: #1A1C16;
-                background-color: #FFFFFF;
-                border: none;
-                border-radius: 4px;
-                margin: 3px 5px;
-                padding: 8px;
-            }
-            QListWidget::item:alternate {
-                background-color: #F3F4E9;
-            }
-            QListWidget::item:selected {
-                background-color: #CDEDA3;
-                color: #354E16;
-            }
-            QListWidget::item:hover:!selected {
-                background-color: #E1E4D5;
-            }
-            """
-        )
-
-        # Also update the search box and refresh button styles
-        self.search_box.setStyleSheet(
-            """
-            QLineEdit {
-                border: 1px solid #C5C8BA;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: white;
-            }
-            QLineEdit:focus {
-                border: 1px solid #4C662B;
-            }
-            """
-        )
-
+        # Common button style
         button_style = """
             QPushButton {
-                background-color: #4C662B;
-                color: white;
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
                 border: none;
                 border-radius: 4px;
                 padding: 8px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #354E16;
+                background-color: #74c7ec; /* Catppuccin Sapphire */
             }
             QPushButton:pressed {
-                background-color: #102000;
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
             }
             """
 
