@@ -48,7 +48,7 @@ class SystemMessageWidget(QWidget):
         )
 
         font = self.message_label.font()
-        font_size = font.pointSizeF() * 1.2  # Match MessageBubble
+        font_size = font.pointSizeF() * 1.3  # Match MessageBubble
         font.setPointSizeF(font_size)
         self.message_label.setFont(font)
 

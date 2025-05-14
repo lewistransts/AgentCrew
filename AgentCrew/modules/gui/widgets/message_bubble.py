@@ -20,7 +20,7 @@ IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]
 MAX_IMAGE_WIDTH = 600  # Maximum width for displayed images
 
 CODE_CSS = """
-pre { line-height: 1.2; background-color: #181825; border-radius: 8px; padding: 12px; color: #cdd6f4; white-space: pre-wrap; word-wrap: break-word; } /* Mantle, Text */
+pre { line-height: 1; background-color: #181825; border-radius: 8px; padding: 12px; color: #cdd6f4; white-space: pre-wrap; word-wrap: break-word; } /* Mantle, Text */
 td.linenos .normal { color: #6c7086; background-color: transparent; padding-left: 5px; padding-right: 5px; } /* Overlay0 */
 span.linenos { color: #6c7086; background-color: transparent; padding-left: 5px; padding-right: 5px; } /* Overlay0 */
 td.linenos .special { color: #cdd6f4; background-color: #313244; padding-left: 5px; padding-right: 5px; } /* Text, Surface0 */
@@ -135,7 +135,7 @@ class MessageBubble(QFrame):
                 }
                 """
             )
-        elif is_thinking: # Check is_thinking before general assistant bubble
+        elif is_thinking:  # Check is_thinking before general assistant bubble
             self.setStyleSheet(
                 """
                 QFrame { 
@@ -146,7 +146,7 @@ class MessageBubble(QFrame):
                 }
                 """
             )
-        else: # Assistant bubble
+        else:  # Assistant bubble
             self.setStyleSheet(
                 """
                 QFrame { 
@@ -157,7 +157,7 @@ class MessageBubble(QFrame):
                 }
                 """
             )
-        
+
         # This setAutoFillBackground(True) might not be necessary if QFrame style is set
         # self.setAutoFillBackground(True) # You can test if this is needed
 
@@ -173,10 +173,14 @@ class MessageBubble(QFrame):
             )
 
         sender_label = QLabel(label_text)
-        sender_label_color = "#1e1e2e" if is_user else "#cdd6f4" # Base for user, Text for others
+        sender_label_color = (
+            "#1e1e2e" if is_user else "#cdd6f4"
+        )  # Base for user, Text for others
         if is_thinking:
-             sender_label_color = "#bac2de" # Subtext1 for thinking sender
-        sender_label.setStyleSheet(f"font-weight: bold; color: {sender_label_color}; padding: 2px;")
+            sender_label_color = "#bac2de"  # Subtext1 for thinking sender
+        sender_label.setStyleSheet(
+            f"font-weight: bold; color: {sender_label_color}; padding: 2px;"
+        )
         layout.addWidget(sender_label)
 
         # Create label with HTML support
@@ -196,12 +200,12 @@ class MessageBubble(QFrame):
         self.message_label.setFont(font)
 
         # Set different text color for message content based on bubble type
-        message_text_color = "#1e1e2e" if is_user else "#cdd6f4" # Base for user, Text for assistant
+        message_text_color = (
+            "#1e1e2e" if is_user else "#cdd6f4"
+        )  # Base for user, Text for assistant
         if is_thinking:
-            message_text_color = "#bac2de" # Subtext1 for thinking text
-        self.message_label.setStyleSheet(
-            f"color: {message_text_color};"
-        )
+            message_text_color = "#bac2de"  # Subtext1 for thinking text
+        self.message_label.setStyleSheet(f"color: {message_text_color};")
 
         # Set the text content (convert Markdown to HTML)
         self.set_text(text)
@@ -401,9 +405,9 @@ class MessageBubble(QFrame):
             size_label = QLabel(f"Size: {self._format_file_size(file_size)}")
             type_label = QLabel(f"Type: {file_type}")
 
-            file_info_color = "#6c7086" # Catppuccin Overlay0
-            if self.is_user: # Adjust for better contrast on user bubble
-                file_info_color = "#313244" # Surface0 might be better on Blue
+            file_info_color = "#6c7086"  # Catppuccin Overlay0
+            if self.is_user:  # Adjust for better contrast on user bubble
+                file_info_color = "#313244"  # Surface0 might be better on Blue
 
             size_label.setStyleSheet(f"color: {file_info_color};")
             type_label.setStyleSheet(f"color: {file_info_color};")
