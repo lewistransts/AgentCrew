@@ -48,4 +48,6 @@ include-package-data = true
 where = ["./"]
 
 [dependency-groups]
-dev = ["pygments>=2.19.1"]
+dev = [
+    "pygments>=2.19.1",
+]
