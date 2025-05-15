@@ -309,28 +309,26 @@ Fields:
 
 Planned enhancements and future development directions:
 
-*(Reformatted your roadmap with ✔️ for completed items and maintaining future plans.)*
-
 ### Enhanced Assistant Capabilities
-*   ✔️ Web Search Integration
-*   ✔️ Conversation Memory
-*   ✔️ Code Analysis
-*   ✔️ Model Context Protocol (MCP) Support
-*   ✔️ Command-line Thinking Mode Options
-*   ✔️ Agents through Config
+*   [x] Web Search Integration
+*   [x] Conversation Memory
+*   [x] Code Analysis
+*   [x] Model Conde text Protocol (MCP) Support
+*   [x] Command-lde ine Thinking Mode Options
+*   [x] Agents thde rough Config
 *   [ ] Google A2A Compatible (Client & Server)
 
 ### Advanced Personalization
 *   [ ] Enhanced Memory Management (Configurable retention/retrieval)
 *   [ ] Local Model Support (e.g., ONNX runtime)
 *   [ ] Advanced Memory Indexing (Improved accuracy/performance)
-*   ✔️ Adaptive User Context
-*   ✔️ Multi-Agent Collaboration (Foundation established)
+*   [x] Adaptive User Context
+*   [x] Multi-Agent Collaboration (Foundation established)
 
 ### User Experience
-*   ✔️ Session Management
-*   ✔️ UI Improvements (Enhanced TUI)
-*   [ ] Configuration Profiles
+*   [x] Session Management
+*   [x] UI Improvements (Enhanced TUI)
+*   [x] Configuration Profiles
 *   [ ] Memory Visualization & Management Tools
 *   [ ] Agent Performance Metrics
 
