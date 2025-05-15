@@ -283,6 +283,7 @@ class AgentManager:
   <transfer_rules>
     - When you encounter a task that falls outside your specialized expertise, you must transfer the conversation to a more appropriate agent from the available list. This ensures the user receives the most accurate and helpful assistance possible.
     - You're ONLY able to transfer to one agent at a time.
+    - When appropriate, transfer to the next agent or requestor agent with your result for smoothing conversation
     - Agents DO NOT share same conversation to user with others.
     - Use `relevant_messages` to provide necessary message indices related to the task from your conversation history.
     - To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments.
