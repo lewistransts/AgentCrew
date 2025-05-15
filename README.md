@@ -12,6 +12,7 @@ integration, web capabilities, and a modular extension system.
 ![chat with image file](./examples/images/image_file.png)
 ![agent config](./examples/images/agent_config.png)
 ![MCP config](./examples/images/mcp_config.png)
+![Global config](./examples/images/global_config.png)
 
 ## Installation
 
