@@ -1279,14 +1279,21 @@ class ChatWindow(QMainWindow, Observer):
         settings_menu = menu_bar.addMenu("Settings")
 
         # Add Agents configuration option
-        agents_config_action = QAction("Agents", self)
+        agents_config_action = QAction("Agents Configuration", self)
         agents_config_action.triggered.connect(self.open_agents_config)
         settings_menu.addAction(agents_config_action)
 
         # Add MCPs configuration option
-        mcps_config_action = QAction("MCP Servers", self)
+        mcps_config_action = QAction("MCP Servers Configuration", self)
         mcps_config_action.triggered.connect(self.open_mcps_config)
         settings_menu.addAction(mcps_config_action)
+
+        settings_menu.addSeparator()  # Add a separator
+
+        # Add Global Settings (API Keys etc.) configuration option
+        global_settings_config_action = QAction("Global Settings", self)
+        global_settings_config_action.triggered.connect(self.open_global_settings_config)
+        settings_menu.addAction(global_settings_config_action)
 
     def change_agent(self, agent_name):
         """Change the current agent"""
@@ -1315,6 +1322,14 @@ class ChatWindow(QMainWindow, Observer):
 
         config_window = ConfigWindow(self)
         config_window.tab_widget.setCurrentIndex(1)  # Show MCPs tab
+        config_window.exec()
+
+    def open_global_settings_config(self):
+        """Open the global settings configuration window (API Keys)."""
+        from AgentCrew.modules.gui.widgets.config_window import ConfigWindow
+
+        config_window = ConfigWindow(self)
+        config_window.tab_widget.setCurrentIndex(2)  # Show Settings tab
         config_window.exec()
 
     def refresh_agent_menu(self):

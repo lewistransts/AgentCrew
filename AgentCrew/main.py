@@ -3,6 +3,7 @@ import importlib
 import os
 import sys
 import traceback
+import json
 from datetime import datetime
 from AgentCrew.modules.chat import ConsoleUI
 from AgentCrew.modules.gui import ChatWindow
@@ -36,8 +37,47 @@ def cli_prod():
     os.environ["MCP_CONFIG_PATH"] = os.path.expanduser("~/.AgentCrew/mcp_server.json")
     os.environ["SW_AGENTS_CONFIG"] = os.path.expanduser("~/.AgentCrew/agents.toml")
     os.environ["PERSISTENCE_DIR"] = os.path.expanduser("~/.AgentCrew/persistents")
+    os.environ["AGENTCREW_CONFIG_PATH"] = os.path.expanduser("~/.AgentCrew/config.json")
     cli()  # Delegate to main CLI function
 
+
+def load_api_keys_from_config():
+    """Loads API keys from the global config file and sets them as environment variables,
+    prioritizing them over any existing environment variables."""
+    
+    config_file_path = os.getenv("AGENTCREW_CONFIG_PATH")
+    if not config_file_path:
+        # Default for when AGENTCREW_CONFIG_PATH is not set (e.g. dev mode, not using cli_prod)
+        config_file_path = "./config.json" 
+    config_file_path = os.path.expanduser(config_file_path)
+
+    api_keys_config = {}
+    if os.path.exists(config_file_path):
+        try:
+            with open(config_file_path, "r", encoding="utf-8") as f:
+                loaded_config = json.load(f)
+                if isinstance(loaded_config, dict) and isinstance(loaded_config.get("api_keys"), dict):
+                    api_keys_config = loaded_config["api_keys"]
+                else:
+                    click.echo(f"⚠️  API keys in {config_file_path} are not in the expected format.", err=True)
+        except json.JSONDecodeError:
+            click.echo(f"⚠️  Error decoding API keys from {config_file_path}.", err=True)
+        except Exception as e:
+            click.echo(f"⚠️  Could not load API keys from {config_file_path}: {e}", err=True)
+            
+    keys_to_check = [
+        "ANTHROPIC_API_KEY",
+        "GEMINI_API_KEY",
+        "OPENAI_API_KEY",
+        "GROQ_API_KEY",
+        "DEEPINFRA_API_KEY",
+        "TAVILY_API_KEY",
+    ]
+    
+    for key_name in keys_to_check:
+        if key_name in api_keys_config and api_keys_config[key_name]:
+            # Prioritize config file over existing environment variables
+            os.environ[key_name] = str(api_keys_config[key_name])
 
 def setup_services(provider):
     # Initialize the model registry and service manager
@@ -254,6 +294,8 @@ def discover_and_register_tools(services=None):
 def chat(provider, agent_config, mcp_config, console):
     """Start an interactive chat session with LLM"""
     try:
+        load_api_keys_from_config()
+        
         # Only check environment variables if provider wasn't explicitly specified
         if provider is None:
             if os.getenv("ANTHROPIC_API_KEY"):
@@ -318,6 +360,8 @@ def chat(provider, agent_config, mcp_config, console):
 def a2a_server(host, port, base_url, provider, agent_config, mcp_config):
     """Start an A2A server exposing all SwissKnife agents"""
     try:
+        load_api_keys_from_config()
+
         # Set default base URL if not provided
         if not base_url:
             base_url = f"http://{host}:{port}"

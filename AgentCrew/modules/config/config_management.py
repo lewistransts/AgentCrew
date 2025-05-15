@@ -215,6 +215,53 @@ class ConfigManagement:
             return True
         return False
 
+    def _get_global_config_file_path(self) -> str:
+        """Determines the path for the global config.json file."""
+        path = os.getenv("AGENTCREW_CONFIG_PATH")
+        if not path:
+            path = "./config.json"  # Default for development if env var not set
+        return os.path.expanduser(path)
+
+    def read_global_config_data(self) -> Dict[str, Any]:
+        """Reads data from the global config.json file."""
+        config_path = self._get_global_config_file_path()
+        try:
+            if not os.path.exists(config_path):
+                return {"api_keys": {}}  # Default structure if file doesn't exist
+            with open(config_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if not isinstance(data, dict):
+                    print(
+                        f"Warning: Global config file {config_path} does not contain a valid JSON object. Returning default."
+                    )
+                    return {"api_keys": {}}
+                # Ensure api_keys key exists and is a dict
+                if "api_keys" not in data or not isinstance(data.get("api_keys"), dict):
+                    data["api_keys"] = {}
+                return data
+        except json.JSONDecodeError:
+            print(
+                f"Warning: Error decoding global config file {config_path}. Returning default config."
+            )
+            return {"api_keys": {}}
+        except Exception as e:
+            print(
+                f"Warning: Could not read global config file {config_path}: {e}. Returning default config."
+            )
+            return {"api_keys": {}}
+
+    def write_global_config_data(self, config_data: Dict[str, Any]) -> None:
+        """Writes data to the global config.json file."""
+        config_path = self._get_global_config_file_path()
+        try:
+            os.makedirs(os.path.dirname(config_path), exist_ok=True)
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config_data, f, indent=2)
+        except Exception as e:
+            raise ValueError(
+                f"Error writing global configuration to {config_path}: {str(e)}"
+            )
+
     def get_sections(self) -> List[str]:
         """
         Get the top-level sections of the configuration.
@@ -300,7 +347,7 @@ class ConfigManagement:
             config_data: The configuration data to write.
         """
         mcp_config_path = os.getenv(
-            "MCP_CONFIG_PATH", os.path.expanduser("./mcp_server.json")
+            "MCP_CONFIG_PATH", os.path.expanduser("~/.AgentCrew/mcp_server.json")
         )
         try:
             # Create directory if it doesn't exist
