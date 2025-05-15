@@ -50,4 +50,5 @@ where = ["./"]
 [dependency-groups]
 dev = [
     "pygments>=2.19.1",
+    "pyinstaller>=6.13.0",
 ]
