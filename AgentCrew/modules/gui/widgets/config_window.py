@@ -81,7 +81,7 @@ class ConfigWindow(QDialog):
             QTabBar::tab {
                 background-color: #313244; /* Catppuccin Surface0 */
                 color: #cdd6f4; /* Catppuccin Text */
-                padding: 8px 16px;
+                padding: 8px;
                 border-top-left-radius: 4px;
                 border-top-right-radius: 4px;
                 border: 1px solid #45475a; /* Catppuccin Surface1 */
@@ -101,7 +101,7 @@ class ConfigWindow(QDialog):
                 color: #1e1e2e; /* Catppuccin Base */
                 border: none;
                 border-radius: 4px;
-                padding: 8px 16px;
+                padding: 8px;
                 font-weight: bold;
             }
             QPushButton:hover {
@@ -250,7 +250,7 @@ class AgentsConfigTab(QWidget):
 
         # Left panel - Agent list
         left_panel = QWidget()
-        left_panel.setStyleSheet("background-color: #181825;") # Catppuccin Mantle
+        left_panel.setStyleSheet("background-color: #181825;")  # Catppuccin Mantle
         left_layout = QVBoxLayout(left_panel)
 
         self.agents_list = QListWidget()
@@ -259,8 +259,48 @@ class AgentsConfigTab(QWidget):
         # Buttons for agent list management
         list_buttons_layout = QHBoxLayout()
         self.add_agent_btn = QPushButton("Add")
+        self.add_agent_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+            QPushButton:pressed {
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
         self.add_agent_btn.clicked.connect(self.add_new_agent)
         self.remove_agent_btn = QPushButton("Remove")
+        self.remove_agent_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f38ba8; /* Catppuccin Red */
+                color: #1e1e2e; /* Catppuccin Base (for contrast) */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #eba0ac; /* Catppuccin Maroon (lighter red for hover) */
+            }
+            QPushButton:pressed {
+                background-color: #e67e8a; /* A slightly darker/more intense red for pressed */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
         self.remove_agent_btn.clicked.connect(self.remove_agent)
         self.remove_agent_btn.setEnabled(False)  # Disable until selection
 
@@ -277,7 +317,9 @@ class AgentsConfigTab(QWidget):
         # right_panel.setStyleSheet("background-color: #181825;") # Set by QDialog stylesheet
 
         self.editor_widget = QWidget()
-        self.editor_widget.setStyleSheet("background-color: #181825;") # Catppuccin Mantle
+        self.editor_widget.setStyleSheet(
+            "background-color: #181825;"
+        )  # Catppuccin Mantle
         self.editor_layout = QVBoxLayout(self.editor_widget)
 
         # Form layout for agent properties
@@ -317,6 +359,26 @@ class AgentsConfigTab(QWidget):
 
         # Save button
         self.save_btn = QPushButton("Save")
+        self.save_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+            QPushButton:pressed {
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
         self.save_btn.clicked.connect(self.save_agent)
         self.save_btn.setEnabled(False)  # Disable until selection
 
@@ -541,7 +603,7 @@ class MCPsConfigTab(QWidget):
 
         # Left panel - MCP server list
         left_panel = QWidget()
-        left_panel.setStyleSheet("background-color: #181825;") # Catppuccin Mantle
+        left_panel.setStyleSheet("background-color: #181825;")  # Catppuccin Mantle
         left_layout = QVBoxLayout(left_panel)
 
         self.mcps_list = QListWidget()
@@ -550,8 +612,48 @@ class MCPsConfigTab(QWidget):
         # Buttons for MCP list management
         list_buttons_layout = QHBoxLayout()
         self.add_mcp_btn = QPushButton("Add")
+        self.add_mcp_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+            QPushButton:pressed {
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
         self.add_mcp_btn.clicked.connect(self.add_new_mcp)
         self.remove_mcp_btn = QPushButton("Remove")
+        self.remove_mcp_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f38ba8; /* Catppuccin Red */
+                color: #1e1e2e; /* Catppuccin Base (for contrast) */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #eba0ac; /* Catppuccin Maroon (lighter red for hover) */
+            }
+            QPushButton:pressed {
+                background-color: #e67e8a; /* A slightly darker/more intense red for pressed */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
         self.remove_mcp_btn.clicked.connect(self.remove_mcp)
         self.remove_mcp_btn.setEnabled(False)  # Disable until selection
 
@@ -568,7 +670,9 @@ class MCPsConfigTab(QWidget):
         # right_panel.setStyleSheet("background-color: #181825;") # Set by QDialog stylesheet
 
         self.editor_widget = QWidget()
-        self.editor_widget.setStyleSheet("background-color: #181825;") # Catppuccin Mantle
+        self.editor_widget.setStyleSheet(
+            "background-color: #181825;"
+        )  # Catppuccin Mantle
         self.editor_layout = QVBoxLayout(self.editor_widget)
 
         # Form layout for MCP properties
@@ -590,6 +694,26 @@ class MCPsConfigTab(QWidget):
         # Add button for arguments
         args_btn_layout = QHBoxLayout()
         self.add_arg_btn = QPushButton("Add Argument")
+        self.add_arg_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+            QPushButton:pressed {
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
         self.add_arg_btn.clicked.connect(lambda: self.add_argument_field(""))
         args_btn_layout.addWidget(self.add_arg_btn)
         args_btn_layout.addStretch()
@@ -605,6 +729,26 @@ class MCPsConfigTab(QWidget):
         # Add button for env vars
         env_btn_layout = QHBoxLayout()
         self.add_env_btn = QPushButton("Add Environment Variable")
+        self.add_env_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+            QPushButton:pressed {
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
         self.add_env_btn.clicked.connect(lambda: self.add_env_field("", ""))
         env_btn_layout.addWidget(self.add_env_btn)
         env_btn_layout.addStretch()
@@ -629,6 +773,26 @@ class MCPsConfigTab(QWidget):
 
         # Save button
         self.save_btn = QPushButton("Save")
+        self.save_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+            QPushButton:pressed {
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
         self.save_btn.clicked.connect(self.save_mcp)
         self.save_btn.setEnabled(False)  # Disable until selection
 
@@ -732,6 +896,26 @@ class MCPsConfigTab(QWidget):
 
         remove_btn = QPushButton("Remove")
         remove_btn.setMaximumWidth(80)
+        remove_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f38ba8; /* Catppuccin Red */
+                color: #1e1e2e; /* Catppuccin Base (for contrast) */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #eba0ac; /* Catppuccin Maroon (lighter red for hover) */
+            }
+            QPushButton:pressed {
+                background-color: #e67e8a; /* A slightly darker/more intense red for pressed */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
 
         arg_layout.addWidget(arg_input)
         arg_layout.addWidget(remove_btn)
@@ -779,6 +963,26 @@ class MCPsConfigTab(QWidget):
 
         remove_btn = QPushButton("Remove")
         remove_btn.setMaximumWidth(80)
+        remove_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f38ba8; /* Catppuccin Red */
+                color: #1e1e2e; /* Catppuccin Base (for contrast) */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #eba0ac; /* Catppuccin Maroon (lighter red for hover) */
+            }
+            QPushButton:pressed {
+                background-color: #e67e8a; /* A slightly darker/more intense red for pressed */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
 
         env_layout.addWidget(key_input)
         env_layout.addWidget(value_input)
