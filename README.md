@@ -25,6 +25,10 @@ System behavior is best illustrated through operational examples:
 *   **System-Wide Configuration:** Interface for global operational parameters.
     ![Global config](./examples/images/global_config.png)
 
+## Multi Agents in Action
+
+https://github.com/user-attachments/assets/43b84b63-027e-4615-8bd1-96211dc9b28e
+
 ## Core Tenets of the AgentCrew Design
 
 AgentCrew was conceptualized not merely as an LLM interface layer, but as a system predicated on the principles of *synergy through specialization*. The limitations of monolithic, generalist AI models are addressed by a distributed architecture of specialized agents.
