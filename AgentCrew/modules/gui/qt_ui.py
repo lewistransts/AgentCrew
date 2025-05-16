@@ -364,6 +364,22 @@ class ChatWindow(QMainWindow, Observer):
         self.splitter.setStretchFactor(1, 1)  # Chat area stretches
         self.splitter.setSizes([250, 750])  # Initial sizes
 
+        # Connect double-click event to toggle sidebar
+        self.splitter.handle(1).installEventFilter(self)
+
+        # Update the splitter style to a darker color
+        self.splitter.setStyleSheet("""
+            QSplitter::handle {
+                background-color: #1e1e2e; /* Darker color (Catppuccin Mantle) */
+            }
+            QSplitter::handle:hover {
+                background-color: #313244; /* Catppuccin Surface0 */
+            }
+            QSplitter::handle:pressed {
+                background-color: #45475a; /* Catppuccin Surface1 */
+            }
+        """)
+
         self.setCentralWidget(self.splitter)
 
         # --- Connect signals and slots (rest of the setup) ---
@@ -1292,7 +1308,9 @@ class ChatWindow(QMainWindow, Observer):
 
         # Add Global Settings (API Keys etc.) configuration option
         global_settings_config_action = QAction("Global Settings", self)
-        global_settings_config_action.triggered.connect(self.open_global_settings_config)
+        global_settings_config_action.triggered.connect(
+            self.open_global_settings_config
+        )
         settings_menu.addAction(global_settings_config_action)
 
     def change_agent(self, agent_name):
@@ -1437,6 +1455,23 @@ class ChatWindow(QMainWindow, Observer):
         )
 
         return message_bubble
+
+    def eventFilter(self, obj, event):
+        """Event filter to handle double-click on splitter handle."""
+        if (
+            obj is self.splitter.handle(1)
+            and event.type() == event.Type.MouseButtonDblClick
+        ):
+            # Get current sizes
+            sizes = self.splitter.sizes()
+            if sizes[0] > 0:
+                # If sidebar is visible, hide it
+                self.splitter.setSizes([0, sum(sizes)])
+            else:
+                # If sidebar is hidden, show it
+                self.splitter.setSizes([250, max(sum(sizes) - 250, 0)])
+            return True
+        return super().eventFilter(obj, event)
 
     @Slot(str, object)
     def handle_event(self, event: str, data: Any):
