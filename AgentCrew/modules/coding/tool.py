@@ -120,7 +120,7 @@ def get_implement_spec_prompt_tool_definition(provider="claude") -> Dict[str, An
         },
         "repo_path": {
             "type": "string",
-            "description": "The repository path where code should be implemented",
+            "description": "the Relative Path to project's git repository",
         },
     }
     tool_required = ["aider_prompt", "repo_path"]
