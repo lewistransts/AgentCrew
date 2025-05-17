@@ -442,6 +442,11 @@ class MessageTransformer:
                 if msg["tool_result"].get("is_error", False):
                     tool_result["is_error"] = True
 
+                if isinstance(tool_result["content"], list):
+                    for content_item in tool_result["content"]:
+                        if isinstance(content_item, dict):
+                            del content_item["annotations"]
+
                 claude_msg["content"] = [tool_result]
 
             claude_messages.append(claude_msg)
