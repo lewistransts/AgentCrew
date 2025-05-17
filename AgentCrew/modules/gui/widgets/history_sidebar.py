@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMenu,
     QMessageBox,
+    QAbstractItemView,
 )
 from PySide6.QtCore import (
     Qt,
@@ -16,6 +17,7 @@ from PySide6.QtCore import (
     Signal,
 )
 from PySide6.QtGui import QAction
+from typing import List
 
 
 class ConversationSidebar(QWidget):
@@ -68,6 +70,7 @@ class ConversationSidebar(QWidget):
         self.conversation_list.setAlternatingRowColors(False) # Disable default alternating colors
         self.conversation_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.conversation_list.customContextMenuRequested.connect(self.show_conversation_context_menu)
+        self.conversation_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.conversation_list.setStyleSheet(
             """
             QListWidget {
@@ -189,17 +192,28 @@ class ConversationSidebar(QWidget):
         self.new_conversation_requested.emit()
 
     def show_conversation_context_menu(self, position):
-        """Shows a context menu for a conversation item."""
-        item = self.conversation_list.itemAt(position)
-        if not item:
-            return
+        """Shows a context menu for selected conversation item(s)."""
+        selected_items = self.conversation_list.selectedItems()
 
-        conversation_id = item.data(Qt.ItemDataRole.UserRole)
-        if not conversation_id:
+        if not selected_items:
+            # If no items are selected, try to get the item under the cursor
+            # This handles the case where a user right-clicks without prior selection
+            item_at_position = self.conversation_list.itemAt(position)
+            if item_at_position:
+                selected_items = [item_at_position]
+            else:
+                return # No item under cursor and no selection
+
+        conversation_ids = []
+        for item in selected_items:
+            conv_id = item.data(Qt.ItemDataRole.UserRole)
+            if conv_id:
+                conversation_ids.append(conv_id)
+
+        if not conversation_ids:
             return
 
         menu = QMenu(self)
-        # Apply stylesheet for white text, consistent with Catppuccin Text
         menu.setStyleSheet("""
             QMenu {
                 background-color: #1e1e2e; /* Catppuccin Base or Mantle */
@@ -216,26 +230,58 @@ class ConversationSidebar(QWidget):
                 color: #b4befe; /* Catppuccin Lavender for selected item text */
             }
         """)
-        delete_action = QAction("Delete Conversation", self)
-        delete_action.triggered.connect(lambda: self.handle_delete_conversation_request(conversation_id))
+
+        num_selected = len(conversation_ids)
+        if num_selected == 1:
+            action_text = "Delete Conversation"
+        else:
+            action_text = f"Delete {num_selected} Conversations"
+
+        delete_action = QAction(action_text, self)
+        delete_action.triggered.connect(lambda: self.handle_delete_conversation_request(conversation_ids))
         menu.addAction(delete_action)
 
         menu.exec_(self.conversation_list.mapToGlobal(position))
 
-    def handle_delete_conversation_request(self, conversation_id: str):
-        """Handles the request to delete a conversation after confirmation."""
+    def handle_delete_conversation_request(self, conversation_ids: List[str]):
+        """Handles the request to delete one or more conversations after confirmation."""
+        if not conversation_ids:
+            return
+
+        num_to_delete = len(conversation_ids)
+        if num_to_delete == 1:
+            conv_id_short = conversation_ids[0][:8]
+            confirm_message = (
+                f"Are you sure you want to delete this conversation ({conv_id_short}...)?\n"
+                "This action cannot be undone."
+            )
+        else:
+            confirm_message = (
+                f"Are you sure you want to delete these {num_to_delete} conversations?\n"
+                "This action cannot be undone."
+            )
+
         reply = QMessageBox.warning(
             self,
             "Confirm Delete",
-            f"Are you sure you want to delete this conversation ({conversation_id[:8]}...)?\nThis action cannot be undone.",
+            confirm_message,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            if not self.message_handler.delete_conversation_by_id(conversation_id):
-                # Error should have been emitted by message_handler, but good to have a fallback
-                self.error_occurred.emit(f"Failed to delete conversation {conversation_id[:8]}...")
+            any_failed = False
+            for conv_id in conversation_ids:
+                if not self.message_handler.delete_conversation_by_id(conv_id):
+                    any_failed = True
+            
+            if any_failed:
+                # MessageHandler already notifies specific errors. 
+                # This is a general notification if any of them failed.
+                self.error_occurred.emit(
+                    "One or more conversations could not be deleted. "
+                    "Check system messages for details."
+                )
 
 
 class ConversationLoader(QThread):
