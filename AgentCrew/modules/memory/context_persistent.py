@@ -479,6 +479,31 @@ class ContextPersistenceService:
         # print(f"INFO: Generated new conversation ID: {conversation_id}")
         return conversation_id
 
+    def delete_conversation(self, conversation_id: str) -> bool:
+        """
+        Deletes a conversation JSON file from the filesystem.
+
+        Args:
+            conversation_id: The ID of the conversation to delete.
+
+        Returns:
+            True if the file was deleted or did not exist, False on error.
+        """
+        file_path = os.path.join(self.conversations_dir, f"{conversation_id}.json")
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"INFO: Deleted conversation file: {file_path}")
+            else:
+                print(f"INFO: Conversation file not found (already deleted?): {file_path}")
+            return True
+        except OSError as e:
+            print(f"ERROR: Failed to delete conversation file {file_path}: {e}")
+            return False
+        except Exception as e:
+            print(f"ERROR: Unexpected error deleting conversation file {file_path}: {e}")
+            return False
+
     def append_conversation_messages(
         self, conversation_id: str, new_messages: List[Dict[str, Any]], force=False
     ):

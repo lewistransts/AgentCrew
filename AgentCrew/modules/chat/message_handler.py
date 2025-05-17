@@ -792,3 +792,29 @@ class MessageHandler(Observable):
         except Exception as e:
             print(f"Error loading conversation {conversation_id}: {e}")
             self._notify("error", f"Failed to load conversation {conversation_id}: {e}")
+            
+    def delete_conversation_by_id(self, conversation_id: str) -> bool:
+        """
+        Deletes a conversation by its ID, handling file deletion and UI updates.
+
+        Args:
+            conversation_id: The ID of the conversation to delete.
+
+        Returns:
+            True if deletion was successful, False otherwise.
+        """
+        print(f"INFO: Attempting to delete conversation: {conversation_id}")
+        if self.persistent_service.delete_conversation(conversation_id):
+            print(f"INFO: Successfully deleted conversation file for ID: {conversation_id}")
+            self._notify("conversations_changed", None)
+            self._notify("system_message", f"Conversation {conversation_id[:8]}... deleted.")
+
+            if self.current_conversation_id == conversation_id:
+                print(f"INFO: Deleted conversation {conversation_id} was the current one. Starting new conversation.")
+                self.start_new_conversation() # This will notify "clear_requested"
+            return True
+        else:
+            error_msg = f"Failed to delete conversation {conversation_id[:8]}..."
+            print(f"ERROR: {error_msg}")
+            self._notify("error", {"message": error_msg})
+            return False

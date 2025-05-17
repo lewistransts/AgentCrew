@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QLineEdit,
+    QMenu,
+    QMessageBox,
 )
 from PySide6.QtCore import (
     Qt,
@@ -13,6 +15,7 @@ from PySide6.QtCore import (
     QThread,
     Signal,
 )
+from PySide6.QtGui import QAction
 
 
 class ConversationSidebar(QWidget):
@@ -63,6 +66,8 @@ class ConversationSidebar(QWidget):
         self.conversation_list = QListWidget()
         self.conversation_list.itemClicked.connect(self.on_conversation_selected)
         self.conversation_list.setAlternatingRowColors(False) # Disable default alternating colors
+        self.conversation_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.conversation_list.customContextMenuRequested.connect(self.show_conversation_context_menu)
         self.conversation_list.setStyleSheet(
             """
             QListWidget {
@@ -182,6 +187,55 @@ class ConversationSidebar(QWidget):
     def request_new_conversation(self):
         """Emit signal to request a new conversation."""
         self.new_conversation_requested.emit()
+
+    def show_conversation_context_menu(self, position):
+        """Shows a context menu for a conversation item."""
+        item = self.conversation_list.itemAt(position)
+        if not item:
+            return
+
+        conversation_id = item.data(Qt.ItemDataRole.UserRole)
+        if not conversation_id:
+            return
+
+        menu = QMenu(self)
+        # Apply stylesheet for white text, consistent with Catppuccin Text
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: #1e1e2e; /* Catppuccin Base or Mantle */
+                color: #cdd6f4; /* Catppuccin Text (white-ish) */
+                border: 1px solid #313244; /* Catppuccin Surface0 */
+            }
+            QMenu::item {
+                background-color: transparent;
+                color: #cdd6f4; /* Catppuccin Text */
+                padding: 5px 20px; /* Adjust padding as needed */
+            }
+            QMenu::item:selected {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #b4befe; /* Catppuccin Lavender for selected item text */
+            }
+        """)
+        delete_action = QAction("Delete Conversation", self)
+        delete_action.triggered.connect(lambda: self.handle_delete_conversation_request(conversation_id))
+        menu.addAction(delete_action)
+
+        menu.exec_(self.conversation_list.mapToGlobal(position))
+
+    def handle_delete_conversation_request(self, conversation_id: str):
+        """Handles the request to delete a conversation after confirmation."""
+        reply = QMessageBox.warning(
+            self,
+            "Confirm Delete",
+            f"Are you sure you want to delete this conversation ({conversation_id[:8]}...)?\nThis action cannot be undone.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            if not self.message_handler.delete_conversation_by_id(conversation_id):
+                # Error should have been emitted by message_handler, but good to have a fallback
+                self.error_occurred.emit(f"Failed to delete conversation {conversation_id[:8]}...")
 
 
 class ConversationLoader(QThread):

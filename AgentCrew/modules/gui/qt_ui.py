@@ -1567,6 +1567,9 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "conversation_saved":  # Add handler for this event
             self.display_status_message(f"Conversation saved: {data.get('id', 'N/A')}")
             self.sidebar.update_conversation_list()  # Refresh sidebar
+        elif event == "conversations_changed":
+            self.display_status_message("Conversation list updated.")
+            self.sidebar.update_conversation_list()
         elif (
             event == "conversation_loaded"
         ):  # Add handler for this event (if loaded via command)
