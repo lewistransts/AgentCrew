@@ -1,8 +1,8 @@
 # AgentCrew: An Architecture for Multi-Agent AI Interaction
 
 [![GitHub stars](https://img.shields.io/github/stars/daltonnyx/AgentCrew)](https://github.com/agentdock/agentdock/stargazers)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/AgentDock/AgentDock/blob/main/LICENSE)
-[![Status: Beta](https://img.shields.io/badge/Status-Beta-blue)](https://github.com/AgentDock/AgentDock/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/daltonnyx/AgentCrew/blob/main/LICENSE)
+[![Status: Beta](https://img.shields.io/badge/Status-Beta-blue)](https://github.com/daltonnyx/AgentCrew/releases)
 
 The development of AgentCrew stems from the objective of creating an AI
 interaction system that transcends rudimentary chatbot functionalities. The

@@ -2,8 +2,20 @@
 name = "AgentCrew"
 version = "0.3.6"
 requires-python = ">=3.12"
-classifiers = ["Private :: Do not upload"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",  # Choose appropriate license
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 description = "Multi-Agents Interactive Chat Tool"
+authors = [
+    {name = "Quy Truong", email = "quytruong851@gmail.com"},
+]
+readme = "README.md"
+
 dependencies = [
   "click",
   "python-dotenv",
@@ -30,6 +42,9 @@ dependencies = [
   "nest-asyncio>=1.6.0",
 ]
 
+[project.urls]
+"Homepage" = "https://github.com/daltonnyx/AgentCrew"
+"Bug Tracker" = "https://github.com/daltonnyx/AgentCrew/issues"
 
 [tool.uv.sources]
 a2a-samples = { git = "https://github.com/google/A2A.git", subdirectory = "samples/python" }
