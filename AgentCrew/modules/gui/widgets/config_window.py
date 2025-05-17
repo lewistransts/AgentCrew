@@ -31,19 +31,43 @@ class SettingsTab(QWidget):
     config_changed = Signal()
 
     API_KEY_DEFINITIONS = [
-        {"label": "Anthropic API Key:", "key_name": "ANTHROPIC_API_KEY", "placeholder": "e.g., sk-ant-..."},
-        {"label": "Gemini API Key:", "key_name": "GEMINI_API_KEY", "placeholder": "e.g., AIzaSy..."},
-        {"label": "OpenAI API Key:", "key_name": "OPENAI_API_KEY", "placeholder": "e.g., sk-..."},
-        {"label": "Groq API Key:", "key_name": "GROQ_API_KEY", "placeholder": "e.g., gsk_..."},
-        {"label": "DeepInfra API Key:", "key_name": "DEEPINFRA_API_KEY", "placeholder": "e.g., ..."},
-        {"label": "Tavily API Key:", "key_name": "TAVILY_API_KEY", "placeholder": "e.g., tvly-..."},
+        {
+            "label": "Anthropic API Key:",
+            "key_name": "ANTHROPIC_API_KEY",
+            "placeholder": "e.g., sk-ant-...",
+        },
+        {
+            "label": "Gemini API Key:",
+            "key_name": "GEMINI_API_KEY",
+            "placeholder": "e.g., AIzaSy...",
+        },
+        {
+            "label": "OpenAI API Key:",
+            "key_name": "OPENAI_API_KEY",
+            "placeholder": "e.g., sk-...",
+        },
+        {
+            "label": "Groq API Key:",
+            "key_name": "GROQ_API_KEY",
+            "placeholder": "e.g., gsk_...",
+        },
+        {
+            "label": "DeepInfra API Key:",
+            "key_name": "DEEPINFRA_API_KEY",
+            "placeholder": "e.g., ...",
+        },
+        {
+            "label": "Tavily API Key:",
+            "key_name": "TAVILY_API_KEY",
+            "placeholder": "e.g., tvly-...",
+        },
     ]
 
     def __init__(self, config_manager: ConfigManagement):
         super().__init__()
         self.config_manager = config_manager
         self.global_config = self.config_manager.read_global_config_data()
-        
+
         self.api_key_inputs = {}
 
         self.init_ui()
@@ -51,7 +75,7 @@ class SettingsTab(QWidget):
 
     def init_ui(self):
         main_layout = QVBoxLayout(self)
-        
+
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setStyleSheet("background-color: #181825; border: none;")
@@ -73,10 +97,10 @@ class SettingsTab(QWidget):
             line_edit.setPlaceholderText(item["placeholder"])
             self.api_key_inputs[item["key_name"]] = line_edit
             api_keys_form_layout.addRow(label, line_edit)
-        
+
         api_keys_group.setLayout(api_keys_form_layout)
         form_layout.addWidget(api_keys_group)
-        
+
         self.save_btn = QPushButton("Save API Keys")
         self.save_btn.setStyleSheet("""
             QPushButton {
@@ -96,7 +120,7 @@ class SettingsTab(QWidget):
             }
         """)
         self.save_btn.clicked.connect(self.save_api_keys)
-        
+
         form_layout.addWidget(self.save_btn)
         editor_widget.setLayout(form_layout)
         scroll_area.setWidget(editor_widget)
@@ -115,7 +139,7 @@ class SettingsTab(QWidget):
 
         for key_name, line_edit in self.api_key_inputs.items():
             self.global_config["api_keys"][key_name] = line_edit.text()
-        
+
         try:
             self.config_manager.write_global_config_data(self.global_config)
             QMessageBox.information(
@@ -1184,6 +1208,7 @@ class MCPsConfigTab(QWidget):
             self.clear_env_fields()
             for checkbox in self.agent_checkboxes.values():
                 checkbox.setChecked(False)
+            self.save_all_mcps()
 
     def save_mcp(self):
         """Save the current MCP server configuration."""
