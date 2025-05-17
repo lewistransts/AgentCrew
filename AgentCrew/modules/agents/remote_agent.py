@@ -1,16 +1,19 @@
 from typing import Dict, Any, Generator, List, Optional, Tuple
 from uuid import uuid4
-import time
 
 from pydantic import ValidationError
 from AgentCrew.modules.a2a.adapters import (
     convert_agent_message_to_a2a,
-    convert_a2a_send_task_response_to_agent_message,
 )
 from AgentCrew.modules.llm.message import MessageTransformer
 from AgentCrew.modules.agents.base import BaseAgent, MessageType
 from common.client import A2ACardResolver, A2AClient
-from common.types import TaskSendParams, SendTaskResponse, TaskState
+from common.types import (
+    TaskSendParams,
+    TaskState,
+    TaskStatusUpdateEvent,
+    TaskArtifactUpdateEvent,
+)
 
 
 class RemoteAgent(BaseAgent):
@@ -58,7 +61,7 @@ class RemoteAgent(BaseAgent):
         return self.get_provider() + "-" + self.agent_card.version
 
     def is_streaming(self) -> bool:
-        return False
+        return True
 
     def format_message(
         self, message_type: MessageType, message_data: Dict[str, Any]
@@ -100,29 +103,61 @@ class RemoteAgent(BaseAgent):
 
         a2a_message = convert_agent_message_to_a2a(last_user_message)
 
-        a2a_payload: TaskSendParams = TaskSendParams(
+        a2a_payload = TaskSendParams(
             id=str(uuid4()),
             message=a2a_message,
+            # acceptedOutputModes can be set here if needed, e.g., based on agent_card.defaultOutputModes
+            # For now, relying on server defaults or agent's capability.
         )
-        response_data = await self.client.send_task(a2a_payload.model_dump())
-        while response_data.result and response_data.result.status.state not in [
-            TaskState.COMPLETED,
-            TaskState.INPUT_REQUIRED,
-            TaskState.CANCELED,
-            TaskState.FAILED,
-        ]:
-            time.sleep(1)
-            response_data = await self.client.get_task({"id": a2a_payload.id})
-            print(response_data)
 
-        assistant_message = convert_a2a_send_task_response_to_agent_message(
-            response_data, self.name
-        )
-        print(assistant_message)
-        if assistant_message:
-            yield (assistant_message, assistant_message, None)
-        else:
-            raise AttributeError("Failed to parse response from remote agent.")
+        full_response_text = ""
+
+        async for stream_response in self.client.send_task_streaming(
+            a2a_payload.model_dump()
+        ):
+            if stream_response.error:
+                raise Exception(
+                    f"Remote agent stream error: {stream_response.error.code} - {stream_response.error.message}"
+                )
+
+            if stream_response.result:
+                event = stream_response.result
+                current_content_chunk_text = ""
+                current_thinking_chunk_text = ""
+
+                if isinstance(event, TaskArtifactUpdateEvent):
+                    for part in event.artifact.parts:
+                        if part.type == "text":
+                            current_content_chunk_text += part.text
+                    if current_content_chunk_text:
+                        full_response_text = current_content_chunk_text
+                        yield (
+                            full_response_text,
+                            current_content_chunk_text,
+                            None,
+                        )
+
+                elif isinstance(event, TaskStatusUpdateEvent):
+                    if event.status.message and event.status.message.parts:
+                        for part in event.status.message.parts:
+                            if part.type == "text":
+                                current_thinking_chunk_text += part.text
+                        if current_thinking_chunk_text:
+                            yield (
+                                full_response_text,
+                                None,
+                                (current_thinking_chunk_text, None),
+                            )
+
+                    if event.final:
+                        # If the final event itself contains text (e.g. in status.message),
+                        # it would have been processed by the thinking_chunk logic.
+                        # The loop will break, and processing is complete.
+                        # If full_response_text is empty, it means a successful completion
+                        # without textual artifacts from TaskArtifactUpdateEvent.
+                        break
+        # After the loop, the generator stops. If full_response_text is empty,
+        # it signifies no textual content was streamed as artifacts.
 
     def get_process_result(self) -> Tuple:
         return ([], 0, 0)

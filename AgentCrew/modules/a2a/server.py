@@ -166,12 +166,12 @@ class A2AServer:
                     return JSONResponse(result.model_dump(exclude_none=True))
 
                 elif method == "tasks/sendSubscribe":
-                    result_stream = await task_manager.on_send_task_subscribe(
+                    result_stream = task_manager.on_send_task_subscribe(
                         json_rpc_request
                     )
 
                     if isinstance(result_stream, JSONRPCResponse):
-                        return result_stream
+                        return JSONResponse(result_stream.model_dump(exclude_none=True))
 
                     async def event_generator():
                         async for item in result_stream:
