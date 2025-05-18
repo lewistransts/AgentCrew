@@ -8,7 +8,7 @@ class BaseMemoryService(ABC):
     @property
     def session_id(self) -> str:
         """Get the provider name for this service."""
-        return getattr(self, "_provider_name", "unknown")
+        return getattr(self, "_session_id", "unknown")
 
     @session_id.setter
     def session_id(self, value: str):
