@@ -14,23 +14,21 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
     Returns:
         Tool definition compatible with the specified provider
     """
-    tool_description = (
-        "Run through a checklist with aider prompt and return refine suggestions"
-    )
+    tool_description = "Run through a checklist with specification prompt and return refine suggestions"
     tool_arguments = {
-        "prompt": {
+        "specification_prompt": {
             "type": "string",
-            "description": "The aider prompt to be reviewed",
+            "description": "The specification prompt to be reviewed",
         },
         "repo_path": {
             "type": "string",
-            "description": "The repo directory path to review aider prompt against",
+            "description": "The repo directory path to review specification prompt against",
         },
     }
     tool_required = ["prompt", "repo_path"]
     if provider == "claude":
         return {
-            "name": "review_aider_prompt",
+            "name": "review_specification_prompt",
             "description": tool_description,
             "input_schema": {
                 "type": "object",
@@ -42,7 +40,7 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
         return {
             "type": "function",
             "function": {
-                "name": "review_aider_prompt",
+                "name": "review_specification_prompt",
                 "description": tool_description,
                 "parameters": {
                     "type": "object",
@@ -67,7 +65,7 @@ def get_spec_validation_tool_handler(
     """
 
     def handle_spec_validation(**params) -> str:
-        prompt = params.get("prompt", "")
+        prompt = params.get("specification_prompt", "")
         repo_path = params.get("repo_path", "")
 
         real_path = os.path.expanduser(repo_path)
@@ -92,15 +90,15 @@ def get_implement_spec_prompt_tool_definition(provider="claude") -> Dict[str, An
     Returns:
         Tool definition compatible with the specified provider
     """
-    tool_description = "NEVER run this without user request explicitly. Generate code implementation via aider using a aider prompt"
+    tool_description = "NEVER run this without user request explicitly. Generate code implementation via coding assistant tool using a specification prompt"
     tool_arguments = {
-        "aider_prompt": {
+        "specification_prompt": {
             "type": "string",
-            "description": "The Aider prompt that instructs Aider to implement",
+            "description": "The specification prompt that instructs Code assistant tool for implementing",
         },
         "planner_model": {
             "type": "string",
-            "description": "LLM model use for architect mode. Should be a powerful model",
+            "description": "LLM model use for planning steps. Should be a powerful model",
             "enum": [
                 "gemini/gemini-2.5-pro-preview-05-06",
                 "claude-3-7-sonnet-latest",
@@ -123,10 +121,10 @@ def get_implement_spec_prompt_tool_definition(provider="claude") -> Dict[str, An
             "description": "the Relative Path to project's git repository",
         },
     }
-    tool_required = ["aider_prompt", "repo_path"]
+    tool_required = ["specification_prompt", "repo_path"]
     if provider == "claude":
         return {
-            "name": "implement_aider_prompt",
+            "name": "implement_specification_prompt",
             "description": tool_description,
             "input_schema": {
                 "type": "object",
@@ -138,7 +136,7 @@ def get_implement_spec_prompt_tool_definition(provider="claude") -> Dict[str, An
         return {
             "type": "function",
             "function": {
-                "name": "implement_aider_prompt",
+                "name": "implement_specification_prompt",
                 "description": tool_description,
                 "parameters": {
                     "type": "object",
@@ -160,7 +158,7 @@ def get_implement_spec_prompt_tool_handler(
     """
 
     def handle_implement_spec_prompt(**params) -> str:
-        spec_prompt = params.get("aider_prompt", "")
+        spec_prompt = params.get("specification_prompt", "")
         repo_path = params.get("repo_path", "")
         planner_model = params.get(
             "planner_model", "gemini/gemini-2.5-pro-preview-05-06"
@@ -170,7 +168,7 @@ def get_implement_spec_prompt_tool_handler(
         )  # Default from tool definition
 
         if not spec_prompt or not repo_path:
-            return "Error: Both aider_prompt and repo_path are required."
+            return "Error: Both specification_prompt and repo_path are required."
 
         try:
             aider_config = AiderConfig(
