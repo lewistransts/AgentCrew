@@ -25,7 +25,7 @@ def get_spec_validation_tool_definition(provider="claude") -> Dict[str, Any]:
             "description": "The repo directory path to review specification prompt against",
         },
     }
-    tool_required = ["prompt", "repo_path"]
+    tool_required = ["specification_prompt", "repo_path"]
     if provider == "claude":
         return {
             "name": "review_specification_prompt",
