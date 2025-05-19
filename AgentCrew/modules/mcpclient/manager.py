@@ -2,6 +2,7 @@ import asyncio
 from typing import Dict
 from .config import MCPConfigManager, MCPServerConfig
 from .service import MCPService
+from AgentCrew.modules import logger
 
 
 class MCPSessionManager:
@@ -25,10 +26,10 @@ class MCPSessionManager:
     def initialize(self) -> None:
         """Synchronous initialization method to start MCPService and initiate server connections."""
         if self.initialized:
-            print("MCPSessionManager: Already initialized.")
+            logger.info("MCPSessionManager: Already initialized.")
             return
 
-        print("MCPSessionManager: Initializing...")
+        logger.info("MCPSessionManager: Initializing...")
         # Start the MCP service's event loop thread
         self.mcp_service.start()
 
@@ -38,9 +39,9 @@ class MCPSessionManager:
         try:
             self.mcp_service._run_async(self.initialize_servers_async())
             self.initialized = True
-            print("MCPSessionManager: Initialization process started.")
+            logger.info("MCPSessionManager: Initialization process started.")
         except Exception as e:
-            print(f"MCPSessionManager: Error during async initialization: {e}")
+            logger.error(f"MCPSessionManager: Error during async initialization: {e}")
             # Potentially stop mcp_service if its start was successful but async part failed
             self.mcp_service.stop()
             self.initialized = False # Ensure it's marked as not initialized
@@ -55,53 +56,51 @@ class MCPSessionManager:
         enabled_servers = self.config_manager.get_enabled_servers()
 
         if not enabled_servers:
-            print("MCPSessionManager: No enabled MCP servers found in configuration.")
+            logger.info("MCPSessionManager: No enabled MCP servers found in configuration.")
             return
 
-        print(f"MCPSessionManager: Found {len(enabled_servers)} enabled MCP servers. Requesting MCPService to manage connections...")
+        logger.info(f"MCPSessionManager: Found {len(enabled_servers)} enabled MCP servers. Requesting MCPService to manage connections...")
         
         for server_id, config in enabled_servers.items():
-            print(f"MCPSessionManager: Requesting MCPService to manage connection for {server_id}")
+            logger.info(f"MCPSessionManager: Requesting MCPService to manage connection for {server_id}")
             # This is an async call. Since this method itself runs on the MCPService's loop (via _run_async),
             # we can directly await it.
             await self.mcp_service.start_server_connection_management(config)
         
-        print("MCPSessionManager: Finished requesting connection management for all enabled servers.")
+        logger.info("MCPSessionManager: Finished requesting connection management for all enabled servers.")
         # Note: Actual connections are managed by background tasks in MCPService.
 
     def cleanup(self):
         """Clean up all resources, including stopping MCP service and connections."""
         if not self.initialized and not (hasattr(self.mcp_service, 'loop_thread') and self.mcp_service.loop_thread.is_alive()):
-            print("MCPSessionManager: Cleanup called but not initialized or service not running. Skipping.")
+            logger.info("MCPSessionManager: Cleanup called but not initialized or service not running. Skipping.")
             return
 
-        print("MCPSessionManager: Starting cleanup...")
+        logger.info("MCPSessionManager: Starting cleanup...")
         try:
             # Signal all server connections to shut down and wait for them.
             # This needs to run on the MCPService's event loop.
             if hasattr(self.mcp_service, 'loop') and self.mcp_service.loop.is_running():
-                 print("MCPSessionManager: Running shutdown_all_server_connections on MCPService loop.")
+                 logger.info("MCPSessionManager: Running shutdown_all_server_connections on MCPService loop.")
                  self.mcp_service._run_async(self.mcp_service.shutdown_all_server_connections())
             elif hasattr(self.mcp_service, 'loop_thread') and self.mcp_service.loop_thread.is_alive():
-                 print("MCPSessionManager: MCPService loop not running but thread alive. Attempting async shutdown.")
+                 logger.warning("MCPSessionManager: MCPService loop not running but thread alive. Attempting async shutdown.")
                  # This case is tricky, _run_async might fail if loop isn't running.
                  # However, shutdown_all_server_connections primarily sets events and gathers tasks
                  # that might still be on a non-closed loop.
                  try:
                     self.mcp_service._run_async(self.mcp_service.shutdown_all_server_connections())
                  except Exception as e_async_shutdown:
-                    print(f"MCPSessionManager: Exception during _run_async for shutdown: {e_async_shutdown}")
+                    logger.error(f"MCPSessionManager: Exception during _run_async for shutdown: {e_async_shutdown}")
             else:
-                print("MCPSessionManager: MCPService loop not running/thread not alive, cannot run async shutdown. Resources might not be fully cleaned.")
+                logger.warning("MCPSessionManager: MCPService loop not running/thread not alive, cannot run async shutdown. Resources might not be fully cleaned.")
 
             # Stop the MCPService's event loop and thread
-            print("MCPSessionManager: Stopping MCPService.")
+            logger.info("MCPSessionManager: Stopping MCPService.")
             self.mcp_service.stop() # This will join the thread
             
         except Exception as e:
-            print(f"MCPSessionManager: Error during cleanup: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.exception("MCPSessionManager: Error during cleanup")
         finally:
             self.initialized = False
-            print("MCPSessionManager: Cleanup complete.")
+            logger.info("MCPSessionManager: Cleanup complete.")

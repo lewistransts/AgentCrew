@@ -13,6 +13,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 
 from AgentCrew.modules.chat.message_handler import MessageHandler, Observer
+from AgentCrew.modules import logger
 from AgentCrew.modules.chat.completers import ChatCompleter
 from AgentCrew.modules.chat.constants import (
     YELLOW,
@@ -74,8 +75,8 @@ class ConsoleUI(Observer):
         elif event == "tool_error":
             self.display_tool_error(data)  # data is dict with tool_use and error
         elif event == "response_completed":
-            pass
-            # self.finish_response(data)  # data is the complete response
+            # pass
+            self.finish_response(data)  # data is the complete response
         elif event == "error":
             self.display_error(data)  # data is the error message or dict
         elif event == "clear_requested":
@@ -124,9 +125,10 @@ class ConsoleUI(Observer):
                 f"{YELLOW}Loaded conversation: {data.get('id', 'N/A')}{RESET}"
             )
         elif event == "conversation_saved":
-            self.display_message(
-                f"{YELLOW}Conversation saved: {data.get('id', 'N/A')}{RESET}"
-            )
+            logger.info(f"Conversation saved: {data.get('id', 'N/A')}")
+            # self.display_message(
+            #     f"{YELLOW}Conversation saved: {data.get('id', 'N/A')}{RESET}"
+            # )
 
     def display_thinking_started(self, agent_name: str):
         """Display the start of the thinking process."""

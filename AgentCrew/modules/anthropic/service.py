@@ -6,6 +6,7 @@ from anthropic.types import TextBlock
 from dotenv import load_dotenv
 from AgentCrew.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from AgentCrew.modules.llm.model_registry import ModelRegistry
+from AgentCrew.modules import logger
 
 
 class AnthropicService(BaseLLMService):
@@ -27,7 +28,7 @@ class AnthropicService(BaseLLMService):
         self._provider_name = "claude"
         self.temperature = 0.4
         self.system_prompt = ""
-        print("Initialized Anthropic Service")
+        logger.info("Initialized Anthropic Service")
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         current_model = ModelRegistry.get_instance().get_model(self.model)
@@ -65,11 +66,11 @@ class AnthropicService(BaseLLMService):
             output_tokens = message.usage.output_tokens
             total_cost = self.calculate_cost(input_tokens, output_tokens)
 
-            print("\nToken Usage Statistics:")
-            print(f"Input tokens: {input_tokens:,}")
-            print(f"Output tokens: {output_tokens:,}")
-            print(f"Total tokens: {input_tokens + output_tokens:,}")
-            print(f"Estimated cost: ${total_cost:.4f}")
+            logger.info("\nToken Usage Statistics:")
+            logger.info(f"Input tokens: {input_tokens:,}")
+            logger.info(f"Output tokens: {output_tokens:,}")
+            logger.info(f"Total tokens: {input_tokens + output_tokens:,}")
+            logger.info(f"Estimated cost: ${total_cost:.4f}")
 
             return content_block.text
         except Exception as e:
@@ -91,7 +92,7 @@ class AnthropicService(BaseLLMService):
         if mime_type == "application/pdf":
             pdf_data = read_binary_file(file_path)
             if pdf_data:
-                print(f"📄 Including PDF document: {file_path}")
+                logger.info(f"📄 Including PDF document: {file_path}")
                 return {
                     "type": "document",
                     "source": {
@@ -105,7 +106,7 @@ class AnthropicService(BaseLLMService):
                 return None
             image_data = read_binary_file(file_path)
             if image_data:
-                print(f"🖼️ Including image: {file_path}")
+                logger.info(f"🖼️ Including image: {file_path}")
                 return {
                     "type": "image",
                     "source": {
@@ -117,7 +118,7 @@ class AnthropicService(BaseLLMService):
         else:
             content = read_text_file(file_path)
             if content:
-                print(f"📄 Including text file: {file_path}")
+                logger.info(f"📄 Including text file: {file_path}")
                 text_prefix = (
                     "I'm sharing this file with you:\n\n" if for_command else ""
                 )
@@ -149,7 +150,7 @@ class AnthropicService(BaseLLMService):
         """
         self.tools.append(tool_definition)
         self.tool_handlers[tool_definition["name"]] = handler_function
-        print(f"🔧 Registered tool: {tool_definition['name']}")
+        logger.info(f"🔧 Registered tool: {tool_definition['name']}")
 
     async def execute_tool(self, tool_name, tool_params):
         """
@@ -377,11 +378,11 @@ class AnthropicService(BaseLLMService):
             output_tokens = message.usage.output_tokens
             total_cost = self.calculate_cost(input_tokens, output_tokens)
 
-            print("\nSpec Validation Token Usage:")
-            print(f"Input tokens: {input_tokens:,}")
-            print(f"Output tokens: {output_tokens:,}")
-            print(f"Total tokens: {input_tokens + output_tokens:,}")
-            print(f"Estimated cost: ${total_cost:.4f}")
+            logger.info("\nSpec Validation Token Usage:")
+            logger.info(f"Input tokens: {input_tokens:,}")
+            logger.info(f"Output tokens: {output_tokens:,}")
+            logger.info(f"Total tokens: {input_tokens + output_tokens:,}")
+            logger.info(f"Estimated cost: ${total_cost:.4f}")
 
             return content_block.text
         except Exception as e:
@@ -417,20 +418,20 @@ class AnthropicService(BaseLLMService):
         if budget_tokens == 0:
             self.thinking_enabled = False
             self.thinking_budget = 0
-            print("Thinking mode disabled.")
+            logger.info("Thinking mode disabled.")
             return True
         if "thinking" not in ModelRegistry.get_model_capabilities(self.model):
-            print("Thinking mode is disabled for this model.")
+            logger.warning("Thinking mode is disabled for this model.")
             return False
 
         # Ensure minimum budget is 1024 tokens
         if budget_tokens < 1024:
-            print("Warning: Minimum thinking budget is 1024 tokens. Setting to 1024.")
+            logger.warning("Minimum thinking budget is 1024 tokens. Setting to 1024.")
             budget_tokens = 1024
 
         self.thinking_enabled = True
         self.thinking_budget = budget_tokens
-        print(f"Thinking mode enabled with budget of {budget_tokens} tokens.")
+        logger.info(f"Thinking mode enabled with budget of {budget_tokens} tokens.")
         return True
 
     async def stream_assistant_response(self, messages):

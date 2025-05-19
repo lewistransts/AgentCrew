@@ -7,8 +7,8 @@ from AgentCrew.modules.a2a.adapters import (
 )
 from AgentCrew.modules.llm.message import MessageTransformer
 from AgentCrew.modules.agents.base import BaseAgent, MessageType
-from common.client import A2ACardResolver, A2AClient
-from common.types import (
+from AgentCrew.modules.a2a.common.client import A2ACardResolver, A2AClient
+from AgentCrew.modules.a2a.common.types import (
     TaskSendParams,
     TaskState,
     TaskStatusUpdateEvent,

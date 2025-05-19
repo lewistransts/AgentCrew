@@ -9,7 +9,7 @@ from AgentCrew.modules.agents import AgentManager, LocalAgent
 from AgentCrew.modules.agents.base import MessageType
 
 # from common.types import
-from common.types import (
+from .common.types import (
     CancelTaskResponse,
     GetTaskResponse,
     JSONRPCError,
@@ -38,7 +38,7 @@ from .adapters import (
     convert_agent_response_to_a2a,
     convert_agent_message_to_a2a,
 )
-from common.server.task_manager import TaskManager
+from .common.server.task_manager import TaskManager
 
 
 class AgentTaskManager(TaskManager):

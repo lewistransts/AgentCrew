@@ -15,7 +15,7 @@ from pydantic import ValidationError
 from AgentCrew.modules.agents import AgentManager
 from .registry import AgentRegistry
 from .task_manager import MultiAgentTaskManager
-from common.types import (
+from .common.types import (
     A2ARequest,
     JSONRPCError,
     JSONRPCResponse,

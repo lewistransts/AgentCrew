@@ -13,6 +13,7 @@ from AgentCrew.modules.llm.base import (
     read_text_file,
     base64_to_bytes,
 )
+from AgentCrew.modules import logger
 
 
 class GoogleStreamAdapter:
@@ -50,7 +51,7 @@ class GoogleStreamAdapter:
             raise
         except Exception as e:
             # Handle any Google GenAI specific exceptions
-            print(f"Error in Google GenAI stream: {str(e)}")
+            logger.error(f"Error in Google GenAI stream: {str(e)}")
             raise StopAsyncIteration
 
 
@@ -85,7 +86,7 @@ class GoogleAINativeService(BaseLLMService):
         self._provider_name = "google"
         self.system_prompt = ""
         self.temperature = 0.4
-        print("Initialized Google Service")
+        logger.info("Initialized Google Service")
 
     def set_think(self, budget_tokens) -> bool:
         """
@@ -102,20 +103,20 @@ class GoogleAINativeService(BaseLLMService):
         if budget_tokens == 0:
             self.thinking_enabled = False
             self.thinking_budget = 0
-            print("Thinking mode disabled.")
+            logger.info("Thinking mode disabled.")
             return True
         if "thinking" not in ModelRegistry.get_model_capabilities(self.model):
-            print("Thinking mode is disabled for this model.")
+            logger.warning("Thinking mode is disabled for this model.")
             return False
 
         # Ensure minimum budget is 1024 tokens
         if budget_tokens < 1024:
-            print("Warning: Minimum thinking budget is 1024 tokens. Setting to 1024.")
+            logger.warning("Warning: Minimum thinking budget is 1024 tokens. Setting to 1024.")
             budget_tokens = 1024
 
         self.thinking_enabled = True
         self.thinking_budget = budget_tokens
-        print(f"Thinking mode enabled with budget of {budget_tokens} tokens.")
+        logger.info(f"Thinking mode enabled with budget of {budget_tokens} tokens.")
         return True
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
@@ -160,11 +161,11 @@ class GoogleAINativeService(BaseLLMService):
 
             # Calculate and log cost
             total_cost = self.calculate_cost(input_tokens, output_tokens)
-            print("\nToken Usage Statistics:")
-            print(f"Input tokens: {input_tokens:,}")
-            print(f"Output tokens: {output_tokens:,}")
-            print(f"Total tokens: {input_tokens + output_tokens:,}")
-            print(f"Estimated cost: ${total_cost:.4f}")
+            logger.info("\nToken Usage Statistics:")
+            logger.info(f"Input tokens: {input_tokens:,}")
+            logger.info(f"Output tokens: {output_tokens:,}")
+            logger.info(f"Total tokens: {input_tokens + output_tokens:,}")
+            logger.info(f"Estimated cost: ${total_cost:.4f}")
 
             return response.text or ""
         except Exception as e:
@@ -203,7 +204,7 @@ class GoogleAINativeService(BaseLLMService):
                     "text": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
                 }
 
-                print(f"📄 Including text file: {file_path}")
+                logger.info(f"📄 Including text file: {file_path}")
                 return message_content
             else:
                 return None
@@ -319,7 +320,7 @@ class GoogleAINativeService(BaseLLMService):
         # Store the handler function
         self.tool_handlers[tool_name] = handler_function
 
-        print(f"🔧 Registered tool: {tool_name}")
+        logger.info(f"🔧 Registered tool: {tool_name}")
 
     async def execute_tool(self, tool_name, tool_params) -> Any:
         """
@@ -387,7 +388,7 @@ class GoogleAINativeService(BaseLLMService):
             # Wrap in adapter that supports context manager protocol
             return GoogleStreamAdapter(stream_generator)
         except Exception as e:
-            print(f"Error creating stream: {str(e)}")
+            logger.error(f"Error creating stream: {str(e)}")
 
             # Create a dummy adapter that returns an empty response
             class EmptyStreamAdapter:
@@ -597,7 +598,7 @@ class GoogleAINativeService(BaseLLMService):
                                 }
                             )
                     except json.JSONDecodeError:
-                        print(f"Failed to parse tool arguments: {tool_args_str}")
+                        logger.error(f"Failed to parse tool arguments: {tool_args_str}")
 
                 assistant_response = re.sub(tool_pattern, "", assistant_response)
         # Process usage information if available
@@ -716,11 +717,11 @@ class GoogleAINativeService(BaseLLMService):
             # Calculate cost
             total_cost = self.calculate_cost(input_tokens, output_tokens)
 
-            print("\nSpec Validation Token Usage:")
-            print(f"Input tokens: {input_tokens:,}")
-            print(f"Output tokens: {output_tokens:,}")
-            print(f"Total tokens: {input_tokens + output_tokens:,}")
-            print(f"Estimated cost: ${total_cost:.4f}")
+            logger.info("\nSpec Validation Token Usage:")
+            logger.info(f"Input tokens: {input_tokens:,}")
+            logger.info(f"Output tokens: {output_tokens:,}")
+            logger.info(f"Total tokens: {input_tokens + output_tokens:,}")
+            logger.info(f"Estimated cost: ${total_cost:.4f}")
 
             # Return the response text (should be JSON)
             return response.text or ""

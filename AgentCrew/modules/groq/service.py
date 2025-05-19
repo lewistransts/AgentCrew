@@ -14,6 +14,7 @@ from mcp.types import TextContent, ImageContent
 from groq.types.chat import ChatCompletion
 from AgentCrew.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from AgentCrew.modules.llm.model_registry import ModelRegistry
+from AgentCrew.modules import logger
 
 
 class GroqService(BaseLLMService):
@@ -35,7 +36,7 @@ class GroqService(BaseLLMService):
         self.system_prompt = ""
         self.temperature = 0.4
         self._is_stream = False
-        print("Initialized Groq Service")
+        logger.info("Initialized Groq Service")
 
     def set_think(self, budget_tokens) -> bool:
         """
@@ -47,7 +48,7 @@ class GroqService(BaseLLMService):
         Returns:
             bool: True if thinking mode is supported and successfully set, False otherwise.
         """
-        print("Thinking mode is not supported for Groq models.")
+        logger.info("Thinking mode is not supported for Groq models.")
         return False
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
@@ -80,11 +81,11 @@ class GroqService(BaseLLMService):
             output_tokens = response.usage.completion_tokens if response.usage else 0
             total_cost = self.calculate_cost(input_tokens, output_tokens)
 
-            print("\nToken Usage Statistics:")
-            print(f"Input tokens: {input_tokens:,}")
-            print(f"Output tokens: {output_tokens:,}")
-            print(f"Total tokens: {input_tokens + output_tokens:,}")
-            print(f"Estimated cost: ${total_cost:.4f}")
+            logger.info("\nToken Usage Statistics:")
+            logger.info(f"Input tokens: {input_tokens:,}")
+            logger.info(f"Output tokens: {output_tokens:,}")
+            logger.info(f"Total tokens: {input_tokens + output_tokens:,}")
+            logger.info(f"Estimated cost: ${total_cost:.4f}")
 
             return response.choices[0].message.content or ""
         except Exception as e:
@@ -114,7 +115,7 @@ class GroqService(BaseLLMService):
                     "text": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
                 }
 
-                print(f"📄 Including text file: {file_path}")
+                logger.info(f"📄 Including text file: {file_path}")
                 return message_content
             else:
                 return None
@@ -171,7 +172,7 @@ class GroqService(BaseLLMService):
         """
         self.tools.append(tool_definition)
         self.tool_handlers[tool_definition["function"]["name"]] = handler_function
-        print(f"🔧 Registered tool: {tool_definition['function']['name']}")
+        logger.info(f"🔧 Registered tool: {tool_definition['function']['name']}")
 
     async def execute_tool(self, tool_name, tool_params):
         """
@@ -559,11 +560,11 @@ class GroqService(BaseLLMService):
             output_tokens = response.usage.completion_tokens if response.usage else 0
             total_cost = self.calculate_cost(input_tokens, output_tokens)
 
-            print("\nSpec Validation Token Usage:")
-            print(f"Input tokens: {input_tokens:,}")
-            print(f"Output tokens: {output_tokens:,}")
-            print(f"Total tokens: {input_tokens + output_tokens:,}")
-            print(f"Estimated cost: ${total_cost:.4f}")
+            logger.info("\nSpec Validation Token Usage:")
+            logger.info(f"Input tokens: {input_tokens:,}")
+            logger.info(f"Output tokens: {output_tokens:,}")
+            logger.info(f"Total tokens: {input_tokens + output_tokens:,}")
+            logger.info(f"Estimated cost: ${total_cost:.4f}")
 
             text = response.choices[0].message.content
             if text is None:

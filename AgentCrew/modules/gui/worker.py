@@ -6,6 +6,7 @@ from PySide6.QtCore import (
     QObject,
     Signal,
 )
+from AgentCrew.modules import logger
 
 
 class LLMWorker(QObject):
@@ -89,11 +90,11 @@ class LLMWorker(QObject):
                     }
                 )
             else:
-                print("No response received from assistant")
+                logger.info("No response received from assistant")
                 self.status_message.emit("No response received")
 
         except Exception as e:
             traceback_str = traceback.format_exc()
             error_msg = f"{str(e)}\n{traceback_str}"
-            print(f"Error in LLMWorker: {error_msg}")  # Console debug
+            logger.error(f"Error in LLMWorker: {error_msg}")
             self.error.emit(error_msg)

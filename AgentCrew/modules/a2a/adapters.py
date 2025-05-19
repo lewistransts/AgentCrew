@@ -4,7 +4,7 @@ Adapters for converting between SwissKnife and A2A message formats.
 
 import base64
 from typing import Dict, Any, List, Optional
-from common.types import (
+from .common.types import (
     GetTaskResponse,
     Message,
     TextPart,
@@ -112,7 +112,7 @@ def convert_agent_message_to_a2a(message: Dict[str, Any]) -> Message:
                     )
                 elif part.get("type") == "data":
                     # Handle structured data
-                    from common.types import DataPart
+                    from .common.types import DataPart
 
                     parts.append(DataPart(data=part.get("data", {})))
 

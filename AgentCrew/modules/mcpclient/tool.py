@@ -2,6 +2,7 @@ import json
 import asyncio
 from typing import Dict, Any
 from AgentCrew.modules.mcpclient import MCPSessionManager
+from AgentCrew.modules import logger
 
 
 def get_mcp_connect_tool_definition():
@@ -114,7 +115,7 @@ def get_mcp_connect_tool_handler():
         # Ensure the MCPConfigManager has loaded configurations.
         # MCPSessionManager.initialize() handles this and starting the service.
         if not manager.initialized:
-            print(
+            logger.info(
                 "MCP Connect Tool: MCPSessionManager not initialized. Initializing now..."
             )
             manager.initialize()  # This is a synchronous call
@@ -142,7 +143,7 @@ def get_mcp_connect_tool_handler():
                 "status": "success",
             }
 
-        print(f"MCP Connect Tool: Attempting to connect to {server_id}...")
+        logger.info(f"MCP Connect Tool: Attempting to connect to {server_id}...")
         try:
             # Run start_server_connection_management on the MCPService's event loop.
             # This will create/start the management task for the server.
@@ -180,7 +181,7 @@ def get_mcp_connect_tool_handler():
         except Exception as e:
             import traceback
 
-            print(f"MCP Connect Tool: Exception - {traceback.format_exc()}")
+            logger.exception("MCP Connect Tool: Error initiating connection")
             return {
                 "content": f"Error initiating connection to MCP server '{server_id}': {str(e)}",
                 "status": "error",
@@ -251,7 +252,7 @@ def get_mcp_list_tools_tool_handler():
 
         # Make sure configuration is loaded and service is running
         if not manager.initialized:
-            print(
+            logger.info(
                 "MCP List Tools Tool: MCPSessionManager not initialized. Initializing now..."
             )
             manager.initialize()
@@ -305,7 +306,7 @@ def get_mcp_call_tool_tool_handler():
 
         # Make sure configuration is loaded and service is running
         if not manager.initialized:
-            print(
+            logger.info(
                 "MCP Call Tool: MCPSessionManager not initialized. Initializing now..."
             )
             manager.initialize()
@@ -363,7 +364,7 @@ def get_mcp_disconnect_tool_handler():
                     "status": "info",
                 }
 
-            print(f"MCP Disconnect Tool: Attempting to disconnect from {server_id}...")
+            logger.info(f"MCP Disconnect Tool: Attempting to disconnect from {server_id}...")
             try:
                 # Run shutdown_single_server_connection on the MCPService's event loop.
                 manager.mcp_service._run_async(
@@ -378,14 +379,14 @@ def get_mcp_disconnect_tool_handler():
             except Exception as e:
                 import traceback
 
-                print(f"MCP Disconnect Tool: Exception - {traceback.format_exc()}")
+                logger.exception(f"MCP Disconnect Tool: Error disconnecting from MCP server '{server_id}'")
                 return {
                     "content": f"Error disconnecting from MCP server '{server_id}': {str(e)}",
                     "status": "error",
                 }
         else:
             # Disconnect from all servers and stop the service
-            print(
+            logger.info(
                 "MCP Disconnect Tool: Attempting to disconnect from all servers and cleanup MCP manager..."
             )
             try:
@@ -397,9 +398,7 @@ def get_mcp_disconnect_tool_handler():
             except Exception as e:
                 import traceback
 
-                print(
-                    f"MCP Disconnect Tool: Exception during full cleanup - {traceback.format_exc()}"
-                )
+                logger.exception("MCP Disconnect Tool: Error during full MCP cleanup")
                 return {
                     "content": f"Error during full MCP cleanup: {str(e)}",
                     "status": "error",
@@ -462,9 +461,9 @@ def register(
     # The call in main.py's setup_agents also does this, so this is a safeguard.
     mcp_manager = MCPSessionManager.get_instance()
     if not mcp_manager.initialized:
-        print(
+        logger.info(
             "MCP Tools: MCPSessionManager not initialized by main flow, initializing now."
         )
         mcp_manager.initialize()
 
-    print("MCP Tools registered.")
+    logger.info("MCP Tools registered.")

@@ -1,6 +1,8 @@
 from contextlib import AsyncExitStack
+from AgentCrew.modules import logger
 from typing import Dict, Any, List, Optional, Callable
 from mcp import ClientSession, StdioServerParameters
+from AgentCrew.modules import logger
 from mcp.types import EmbeddedResource, ImageContent, TextContent
 from mcp.client.stdio import stdio_client
 from AgentCrew.modules.agents import AgentManager
@@ -27,7 +29,7 @@ class MCPService:
         server_id = server_config.name
         shutdown_event = asyncio.Event()
         self._server_shutdown_events[server_id] = shutdown_event
-        print(f"MCPService: Starting connection management for {server_id}")
+        logger.info(f"MCPService: Starting connection management for {server_id}")
 
         try:
             server_params = StdioServerParameters(
@@ -37,38 +39,35 @@ class MCPService:
             )
 
             async with stdio_client(server_params) as (stdio, write_stream):
-                print(f"MCPService: stdio_client established for {server_id}")
+                logger.info(f"MCPService: stdio_client established for {server_id}")
                 async with ClientSession(stdio, write_stream) as session:
-                    print(f"MCPService: ClientSession established for {server_id}")
+                    logger.info(f"MCPService: ClientSession established for {server_id}")
                     await session.initialize()
                     self.sessions[server_id] = session
-                    self.connected_servers[server_id] = True
-                    print(f"MCPService: {server_id} connected. Registering tools...")
+                    self.connected_servers[server_id] = True  # Mark as connected before tool registration
+                    logger.info(f"MCPService: {server_id} connected. Registering tools...")
 
                     for agent_name in server_config.enabledForAgents:
                         await self.register_server_tools(server_id, agent_name)
 
-                    print(
+                    logger.info(
                         f"MCPService: {server_id} setup complete. Waiting for shutdown signal."
                     )
                     await shutdown_event.wait()
 
         except asyncio.CancelledError:
-            print(f"MCPService: Connection task for {server_id} was cancelled.")
+            logger.info(f"MCPService: Connection task for {server_id} was cancelled.")
         except Exception as e:
-            print(
-                f"MCPService: Error in connection management for '{server_id}': {str(e)}"
+            logger.exception(
+                f"MCPService: Error in connection management for '{server_id}'"
             )
-            import traceback
-
-            traceback.print_exc()
         finally:
-            print(f"MCPService: Cleaning up connection for {server_id}.")
+            logger.info(f"MCPService: Cleaning up connection for {server_id}.")
             self.sessions.pop(server_id, None)
             self.connected_servers.pop(server_id, False)
             self.tools_cache.pop(server_id, None)
             self._server_shutdown_events.pop(server_id, None)
-            print(f"MCPService: Cleanup for {server_id} complete.")
+            logger.info(f"MCPService: Cleanup for {server_id} complete.")
 
     async def start_server_connection_management(self, server_config: MCPServerConfig):
         """Starts and manages the connection for a single MCP server."""
@@ -77,16 +76,16 @@ class MCPService:
             server_id in self._server_connection_tasks
             and not self._server_connection_tasks[server_id].done()
         ):
-            print(
+            logger.info(
                 f"MCPService: Connection management for {server_id} already in progress."
             )
             return
 
-        print(
+        logger.info(
             f"MCPService: Creating task for _manage_single_connection for {server_id}"
         )
         if self.loop.is_closed():
-            print(
+            logger.warning(
                 "MCPService: Loop is closed, cannot create task for server connection."
             )
             return
@@ -95,10 +94,10 @@ class MCPService:
 
     async def shutdown_all_server_connections(self):
         """Signals all active server connections to shut down and waits for them."""
-        print("MCPService: Shutting down all server connections...")
+        logger.info("MCPService: Shutting down all server connections...")
         active_tasks = []
         for server_id, event in list(self._server_shutdown_events.items()):
-            print(f"MCPService: Signaling shutdown for {server_id}")
+            logger.info(f"MCPService: Signaling shutdown for {server_id}")
             event.set()
             if server_id in self._server_connection_tasks:
                 task = self._server_connection_tasks[server_id]
@@ -106,51 +105,51 @@ class MCPService:
                     active_tasks.append(task)
 
         if active_tasks:
-            print(
+            logger.info(
                 f"MCPService: Waiting for {len(active_tasks)} connection tasks to complete..."
             )
             await asyncio.gather(*active_tasks, return_exceptions=True)
 
         self._server_connection_tasks.clear()
-        print("MCPService: All server connections shut down process initiated.")
+        logger.info("MCPService: All server connections shut down process initiated.")
 
     async def shutdown_single_server_connection(self, server_id: str):
         """Signals a specific server connection to shut down and waits for it."""
-        print(f"MCPService: Shutting down connection for server {server_id}...")
+        logger.info(f"MCPService: Shutting down connection for server {server_id}...")
         if server_id in self._server_shutdown_events:
             event = self._server_shutdown_events[server_id]
             event.set()
-            print(f"MCPService: Shutdown signal sent to {server_id}.")
+            logger.info(f"MCPService: Shutdown signal sent to {server_id}.")
 
             task = self._server_connection_tasks.get(server_id)
             if task and not task.done():
-                print(
+                logger.info(
                     f"MCPService: Waiting for connection task of {server_id} to complete..."
                 )
                 try:
                     await asyncio.wait_for(
                         task, timeout=10.0
                     )  # Wait for task to finish
-                    print(f"MCPService: Connection task for {server_id} completed.")
+                    logger.info(f"MCPService: Connection task for {server_id} completed.")
                 except asyncio.TimeoutError:
-                    print(
+                    logger.warning(
                         f"MCPService: Timeout waiting for {server_id} connection task to complete. It might be stuck."
                     )
                     task.cancel()  # Force cancel if it didn't finish
                 except Exception as e:
-                    print(f"MCPService: Error waiting for {server_id} task: {e}")
+                    logger.error(f"MCPService: Error waiting for {server_id} task: {e}")
             else:
-                print(
+                logger.info(
                     f"MCPService: No active task found for {server_id} or task already done."
                 )
         else:
-            print(
+            logger.warning(
                 f"MCPService: No shutdown event found for server {server_id}. It might not be running or already shut down."
             )
 
         # Clean up entries related to this server, though _manage_single_connection's finally should handle most
         self._server_connection_tasks.pop(server_id, None)
-        print(f"MCPService: Shutdown process for {server_id} initiated/completed.")
+        logger.info(f"MCPService: Shutdown process for {server_id} initiated/completed.")
 
     async def register_server_tools(
         self, server_id: str, agent_name: Optional[str] = None
@@ -162,7 +161,7 @@ class MCPService:
             server_id: ID of the server to register tools from
         """
         if server_id not in self.sessions or not self.connected_servers.get(server_id):
-            print(f"Cannot register tools: Server '{server_id}' is not connected")
+            logger.warning(f"Cannot register tools: Server '{server_id}' is not connected")
             return
 
         try:
@@ -195,7 +194,7 @@ class MCPService:
                         tool_definition_factory(), handler_factory, self
                     )
         except Exception as e:
-            print(f"Error registering tools from server '{server_id}': {str(e)}")
+            logger.exception(f"Error registering tools from server '{server_id}'")
             self.connected_servers[server_id] = False
 
     def _format_tool_definition(
@@ -312,7 +311,7 @@ class MCPService:
                     for tool in response.tools
                 ]
             except Exception as e:
-                print(f"Error listing tools from server '{server_id}': {str(e)}")
+                logger.exception(f"Error listing tools from server '{server_id}'")
                 self.connected_servers[server_id] = False
                 return []
         else:
@@ -370,12 +369,12 @@ class MCPService:
         """Start the service's event loop in a separate thread"""
 
         def run_loop():
-            print("MCPService: Event loop thread started.")
+            logger.info("MCPService: Event loop thread started.")
             asyncio.set_event_loop(self.loop)
             try:
                 self.loop.run_forever()
             finally:
-                print("MCPService: Event loop stopping...")
+                logger.info("MCPService: Event loop stopping...")
                 # This block executes when loop.stop() is called or run_forever() exits.
                 # Attempt to cancel any remaining tasks.
                 # shutdown_all_server_connections should ideally handle most task terminations gracefully.
@@ -392,7 +391,7 @@ class MCPService:
                         t for t in all_tasks if t is not current_task and not t.done()
                     ]
                     if tasks_to_cancel:
-                        print(
+                        logger.info(
                             f"MCPService: Cancelling {len(tasks_to_cancel)} outstanding tasks in event loop thread."
                         )
                         for task in tasks_to_cancel:
@@ -414,49 +413,49 @@ class MCPService:
                             self.loop.run_until_complete(gather_cancel_tasks())
 
                 except RuntimeError as e:
-                    print(
+                    logger.error(
                         f"MCPService: Runtime error during task cancellation in run_loop finally: {e}"
                     )
                 except Exception as e_final:
-                    print(
+                    logger.error(
                         f"MCPService: General error during task cancellation in run_loop finally: {e_final}"
                     )
 
                 if not self.loop.is_closed():
                     self.loop.close()
-                print("MCPService: Event loop thread stopped and loop closed.")
+                logger.info("MCPService: Event loop thread stopped and loop closed.")
 
         self.loop_thread = threading.Thread(target=run_loop, daemon=True)
         self.loop_thread.start()
 
     def stop(self):
         """Stop the service's event loop"""
-        print("MCPService: Stopping event loop...")
+        logger.info("MCPService: Stopping event loop...")
         if hasattr(self, "loop") and self.loop and not self.loop.is_closed():
             if self.loop.is_running():
-                print("MCPService: Requesting event loop to stop.")
+                logger.info("MCPService: Requesting event loop to stop.")
                 self.loop.call_soon_threadsafe(self.loop.stop)
             # The finally block in run_loop should handle task cleanup and closing the loop.
         else:
-            print(
+            logger.info(
                 "MCPService: Loop not available or already closed when stop() called."
             )
 
         if hasattr(self, "loop_thread") and self.loop_thread.is_alive():
-            print("MCPService: Waiting for event loop thread to join...")
+            logger.info("MCPService: Waiting for event loop thread to join...")
             self.loop_thread.join(timeout=10)
             if self.loop_thread.is_alive():
-                print(
+                logger.warning(
                     "MCPService: Event loop thread did not join in time. Loop might be stuck or tasks not yielding."
                 )
         else:
-            print(
+            logger.info(
                 "MCPService: Loop thread not available or not alive when stop() called."
             )
 
         # Fallback: Ensure loop is closed if thread exited but loop wasn't closed by run_loop's finally
         if hasattr(self, "loop") and self.loop and not self.loop.is_closed():
-            print(
+            logger.warning(
                 "MCPService: Loop was not closed by thread's run_loop, attempting to close now."
             )
             # This is a fallback, ideally run_loop's finally handles this.
@@ -470,7 +469,7 @@ class MCPService:
                         t for t in asyncio.all_tasks(loop=self.loop) if not t.done()
                     ]
                     if tasks:
-                        print(
+                        logger.info(
                             f"MCPService: Running {len(tasks)} pending tasks to completion before closing loop in stop()."
                         )
 
@@ -481,16 +480,16 @@ class MCPService:
             except (
                 RuntimeError
             ) as e:  # e.g. "cannot call run_until_complete() on a running loop"
-                print(
+                logger.error(
                     f"MCPService: Runtime error during final loop cleanup in stop(): {e}"
                 )
             except Exception as e_final_stop:
-                print(
+                logger.error(
                     f"MCPService: General error during final loop cleanup in stop(): {e_final_stop}"
                 )
             finally:
                 if not self.loop.is_closed():  # Check again before closing
                     self.loop.close()
-                    print("MCPService: Loop closed in stop() fallback.")
+                    logger.info("MCPService: Loop closed in stop() fallback.")
 
-        print("MCPService: Stop process complete.")
+        logger.info("MCPService: Stop process complete.")

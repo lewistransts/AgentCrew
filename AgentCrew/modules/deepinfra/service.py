@@ -7,6 +7,7 @@ import os
 import contextlib
 from openai.types.chat import ChatCompletion
 from dotenv import load_dotenv
+from AgentCrew.modules import logger
 
 
 class DeepInfraService(OpenAIService):
@@ -26,7 +27,7 @@ class DeepInfraService(OpenAIService):
         self.temperature = 0.6
         self._is_stream = True
         self._is_thinking = False
-        print("Initialized DeepInfra Service")
+        logger.info("Initialized DeepInfra Service")
 
     def format_tool_result(
         self, tool_use: Dict, tool_result: Any, is_error: bool = False
@@ -85,11 +86,11 @@ class DeepInfraService(OpenAIService):
             output_tokens = response.usage.completion_tokens if response.usage else 0
             total_cost = self.calculate_cost(input_tokens, output_tokens)
 
-            print("\nToken Usage Statistics:")
-            print(f"Input tokens: {input_tokens:,}")
-            print(f"Output tokens: {output_tokens:,}")
-            print(f"Total tokens: {input_tokens + output_tokens:,}")
-            print(f"Estimated cost: ${total_cost:.4f}")
+            logger.info("\nToken Usage Statistics:")
+            logger.info(f"Input tokens: {input_tokens:,}")
+            logger.info(f"Output tokens: {output_tokens:,}")
+            logger.info(f"Total tokens: {input_tokens + output_tokens:,}")
+            logger.info(f"Estimated cost: ${total_cost:.4f}")
             analyze_result = response.choices[0].message.content or ""
             if "thinking" in ModelRegistry.get_model_capabilities(self.model):
                 THINK_STARTED = "<think>"

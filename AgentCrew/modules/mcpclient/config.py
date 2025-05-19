@@ -2,6 +2,7 @@ import json
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional
+from AgentCrew.modules import logger
 
 
 @dataclass
@@ -67,7 +68,7 @@ class MCPConfigManager:
 
             return self.configs
         except Exception as e:
-            print(f"Error loading MCP configuration: {e}")
+            logger.error(f"Error loading MCP configuration: {e}")
             return {}
 
     def get_enabled_servers(self) -> Dict[str, MCPServerConfig]:
