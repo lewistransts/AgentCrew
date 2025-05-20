@@ -428,7 +428,7 @@ Planned enhancements and future development directions:
 ### Advanced Personalization
 
 - [x] Enhanced Memory (Adaptive memory retrieval)
-- [ ] Local Model Support (e.g., ONNX runtime)
+- [x] Custom OpenAI-Compatible Provider support (e.g., ollama, vllm)
 - [ ] Advanced Memory Indexing (Improved accuracy/performance)
 - [x] Adaptive User Context
 - [x] Multi-Agent Collaboration (Foundation established)
