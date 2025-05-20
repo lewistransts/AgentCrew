@@ -17,7 +17,7 @@ class BaseMemoryService(ABC):
 
     @abstractmethod
     async def store_conversation(
-        self, user_message: str, assistant_response: str
+        self, user_message: str, assistant_response: str, agent_name: str = "None"
     ) -> List[str]:
         """
         Store a conversation exchange in memory.
@@ -40,7 +40,9 @@ class BaseMemoryService(ABC):
         pass
 
     @abstractmethod
-    async def generate_user_context(self, user_input: str) -> str:
+    async def generate_user_context(
+        self, user_input: str, agent_name: str = "None"
+    ) -> str:
         """
         Generate context based on user input by retrieving relevant memories.
 
@@ -53,7 +55,9 @@ class BaseMemoryService(ABC):
         pass
 
     @abstractmethod
-    async def retrieve_memory(self, keywords: str, limit: int = 5) -> str:
+    async def retrieve_memory(
+        self, keywords: str, limit: int = 5, agent_name: str = "None"
+    ) -> str:
         """
         Retrieve relevant memories based on keywords.
 
@@ -80,7 +84,7 @@ class BaseMemoryService(ABC):
         pass
 
     @abstractmethod
-    def forget_topic(self, topic: str) -> Dict[str, Any]:
+    def forget_topic(self, topic: str, agent_name: str = "None") -> Dict[str, Any]:
         """
         Remove memories related to a specific topic based on keyword search.
 

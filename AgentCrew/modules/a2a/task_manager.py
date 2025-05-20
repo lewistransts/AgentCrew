@@ -159,7 +159,7 @@ class AgentTaskManager(TaskManager):
 
                         # Send chunk update
                         if chunk_text:
-                            artifact = convert_agent_response_to_a2a(current_response)
+                            artifact = convert_agent_response_to_a2a(chunk_text)
                             await queue.put(
                                 TaskArtifactUpdateEvent(id=task.id, artifact=artifact)
                             )

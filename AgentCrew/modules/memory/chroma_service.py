@@ -86,7 +86,7 @@ class ChromaMemoryService(BaseMemoryService):
         return chunks
 
     async def store_conversation(
-        self, user_message: str, assistant_response: str
+        self, user_message: str, assistant_response: str, agent_name: str = "None"
     ) -> List[str]:
         """
         Store a conversation exchange in memory.
@@ -142,6 +142,7 @@ class ChromaMemoryService(BaseMemoryService):
                         "timestamp": timestamp,
                         "conversation_id": memory_id,  # First ID is the conversation ID
                         "session_id": self.session_id,
+                        "agent": agent_name,
                         "type": "conversation",
                     }
                 ],
@@ -156,6 +157,7 @@ class ChromaMemoryService(BaseMemoryService):
                         "timestamp": timestamp,
                         "conversation_id": memory_id,  # First ID is the conversation ID
                         "session_id": self.session_id,
+                        "agent": agent_name,
                         "type": "conversation",
                     }
                 ],
@@ -203,7 +205,9 @@ class ChromaMemoryService(BaseMemoryService):
         self.current_embedding_context = None
         self.context_embedding = []
 
-    async def generate_user_context(self, user_input: str) -> str:
+    async def generate_user_context(
+        self, user_input: str, agent_name: str = "None"
+    ) -> str:
         """
         Generate context based on user input by retrieving relevant memories.
 
@@ -213,10 +217,10 @@ class ChromaMemoryService(BaseMemoryService):
         Returns:
             Formatted string containing relevant context from past conversations
         """
-        # return self.retrieve_memory(user_input, 5)
         analyze_result = await self.llm_service.process_message(
             ANALYSIS_PROMPT.replace(
-                "{conversation_history}", await self.retrieve_memory(user_input, 5)
+                "{conversation_history}",
+                await self.retrieve_memory(user_input, 5, agent_name=agent_name),
             ).replace("{user_input}", user_input)
         )
         return analyze_result
@@ -227,7 +231,9 @@ class ChromaMemoryService(BaseMemoryService):
         )
         return keywords
 
-    async def retrieve_memory(self, keywords: str, limit: int = 5) -> str:
+    async def retrieve_memory(
+        self, keywords: str, limit: int = 5, agent_name: str = "None"
+    ) -> str:
         """
         Retrieve relevant memories based on keywords.
 
@@ -242,7 +248,12 @@ class ChromaMemoryService(BaseMemoryService):
         results = self.collection.query(
             query_texts=[await self._semantic_extracting(keywords)],
             n_results=limit,
-            where={"session_id": {"$ne": self.session_id}},
+            where={
+                "$and": [
+                    {"session_id": {"$ne": self.session_id}},
+                    {"agent": agent_name},
+                ]
+            },
         )
 
         if not results["documents"] or not results["documents"][0]:
@@ -341,7 +352,7 @@ class ChromaMemoryService(BaseMemoryService):
 
         return len(ids_to_remove)
 
-    def forget_topic(self, topic: str) -> Dict[str, Any]:
+    def forget_topic(self, topic: str, agent_name: str = "None") -> Dict[str, Any]:
         """
         Remove memories related to a specific topic based on keyword search.
 
@@ -353,7 +364,9 @@ class ChromaMemoryService(BaseMemoryService):
         """
         try:
             # Query for memories related to the topic
-            results = self.collection.query(query_texts=[topic], n_results=100)
+            results = self.collection.query(
+                query_texts=[topic], n_results=100, where={"agent": agent_name}
+            )
 
             if not results["documents"] or not results["documents"][0]:
                 return {

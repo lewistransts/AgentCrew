@@ -1,5 +1,7 @@
 import asyncio
 from typing import Dict, Any, Callable
+
+from AgentCrew.modules.agents.manager import AgentManager
 from .base_service import BaseMemoryService
 
 
@@ -59,12 +61,13 @@ def get_memory_forget_tool_handler(memory_service: BaseMemoryService) -> Callabl
 
     def handle_memory_forget(**params) -> str:
         topic = params.get("topic")
+        current_agent = AgentManager.get_instance().get_current_agent()
 
         if not topic:
             return "Error: Topic is required for forgetting memories."
 
         try:
-            result = memory_service.forget_topic(topic)
+            result = memory_service.forget_topic(topic, current_agent.name)
             if result["success"]:
                 return result["message"]
             else:
@@ -133,11 +136,15 @@ def get_memory_retrieve_tool_handler(memory_service: BaseMemoryService) -> Calla
         keywords = params.get("keywords")
         limit = params.get("limit", 10)
 
+        current_agent = AgentManager.get_instance().get_current_agent()
+
         if not keywords:
             return "Error: Keywords are required for memory retrieval."
 
         try:
-            result = asyncio.run(memory_service.retrieve_memory(keywords, limit))
+            result = asyncio.run(
+                memory_service.retrieve_memory(keywords, limit, current_agent.name)
+            )
             return result
         except Exception as e:
             return f"Error retrieving memories: {str(e)}"

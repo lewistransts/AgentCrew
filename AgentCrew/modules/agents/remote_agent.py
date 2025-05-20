@@ -10,7 +10,6 @@ from AgentCrew.modules.agents.base import BaseAgent, MessageType
 from AgentCrew.modules.a2a.common.client import A2ACardResolver, A2AClient
 from AgentCrew.modules.a2a.common.types import (
     TaskSendParams,
-    TaskState,
     TaskStatusUpdateEvent,
     TaskArtifactUpdateEvent,
 )
@@ -130,7 +129,7 @@ class RemoteAgent(BaseAgent):
                         if part.type == "text":
                             current_content_chunk_text += part.text
                     if current_content_chunk_text:
-                        full_response_text = current_content_chunk_text
+                        full_response_text += current_content_chunk_text
                         yield (
                             full_response_text,
                             current_content_chunk_text,

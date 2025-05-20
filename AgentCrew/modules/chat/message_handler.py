@@ -179,7 +179,7 @@ class MessageHandler(Observable):
                 if file_content.get("type", "") == "text":
                     # TODO: For testing retrieve with keywords when transfer
                     await self.memory_service.store_conversation(
-                        file_content.get("text", ""), ""
+                        file_content.get("text", ""), "", self.agent.name
                     )
                 self._notify(
                     "file_processed",
@@ -203,7 +203,11 @@ class MessageHandler(Observable):
                             {
                                 "type": "text",
                                 "text": f"""Context from your memory:
-                                {await self.memory_service.generate_user_context(user_input)}""",
+                                {
+                                    await self.memory_service.generate_user_context(
+                                        user_input, self.agent.name
+                                    )
+                                }""",
                             }
                         ],
                     }
@@ -656,7 +660,7 @@ class MessageHandler(Observable):
 
                     try:
                         await self.memory_service.store_conversation(
-                            user_input, assistant_response
+                            user_input, assistant_response, self.agent.name
                         )
                     except Exception as e:
                         self._notify(
@@ -792,7 +796,7 @@ class MessageHandler(Observable):
         except Exception as e:
             print(f"Error loading conversation {conversation_id}: {e}")
             self._notify("error", f"Failed to load conversation {conversation_id}: {e}")
-            
+
     def delete_conversation_by_id(self, conversation_id: str) -> bool:
         """
         Deletes a conversation by its ID, handling file deletion and UI updates.
@@ -805,13 +809,19 @@ class MessageHandler(Observable):
         """
         print(f"INFO: Attempting to delete conversation: {conversation_id}")
         if self.persistent_service.delete_conversation(conversation_id):
-            print(f"INFO: Successfully deleted conversation file for ID: {conversation_id}")
+            print(
+                f"INFO: Successfully deleted conversation file for ID: {conversation_id}"
+            )
             self._notify("conversations_changed", None)
-            self._notify("system_message", f"Conversation {conversation_id[:8]}... deleted.")
+            self._notify(
+                "system_message", f"Conversation {conversation_id[:8]}... deleted."
+            )
 
             if self.current_conversation_id == conversation_id:
-                print(f"INFO: Deleted conversation {conversation_id} was the current one. Starting new conversation.")
-                self.start_new_conversation() # This will notify "clear_requested"
+                print(
+                    f"INFO: Deleted conversation {conversation_id} was the current one. Starting new conversation."
+                )
+                self.start_new_conversation()  # This will notify "clear_requested"
             return True
         else:
             error_msg = f"Failed to delete conversation {conversation_id[:8]}..."
