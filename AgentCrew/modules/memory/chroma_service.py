@@ -7,6 +7,7 @@ from typing import List, Dict, Any
 from datetime import datetime, timedelta
 
 from .base_service import BaseMemoryService
+from .voyageai_ef import VoyageEmbeddingFunction
 from AgentCrew.modules.prompts.constants import (
     ANALYSIS_PROMPT,
     SEMANTIC_EXTRACTING,
@@ -40,12 +41,12 @@ class ChromaMemoryService(BaseMemoryService):
             self.llm_service = llm_service
 
         # Create or get collection for storing memories
-        if os.getenv("GEMINI_API_KEY"):
-            google_ef = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
-                api_key=os.getenv("GEMINI_API_KEY"),
-                model_name="gemini-embedding-exp-03-07",
+        if os.getenv("VOYAGE_API_KEY"):
+            voyage_ef = VoyageEmbeddingFunction(
+                api_key=os.getenv("VOYAGE_API_KEY"),
+                model_name="voyage-3.5",
             )
-
+            self.embedding_function = voyage_ef
         elif os.getenv("OPENAI_API_KEY"):
             openai_ef = embedding_functions.OpenAIEmbeddingFunction(
                 api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-3-small"
