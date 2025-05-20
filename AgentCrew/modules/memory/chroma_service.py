@@ -40,19 +40,23 @@ class ChromaMemoryService(BaseMemoryService):
             self.llm_service = llm_service
 
         # Create or get collection for storing memories
-        if os.getenv("OPENAI_API_KEY"):
+        if os.getenv("GEMINI_API_KEY"):
+            google_ef = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
+                api_key=os.getenv("GEMINI_API_KEY"),
+                model_name="gemini-embedding-exp-03-07",
+            )
+
+        elif os.getenv("OPENAI_API_KEY"):
             openai_ef = embedding_functions.OpenAIEmbeddingFunction(
                 api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-3-small"
             )
-
-            self.collection = self.client.get_or_create_collection(
-                name=collection_name, embedding_function=openai_ef
-            )
             self.embedding_function = openai_ef
         else:
-            self.collection = self.client.get_or_create_collection(name=collection_name)
             self.embedding_function = embedding_functions.DefaultEmbeddingFunction()
 
+        self.collection = self.client.get_or_create_collection(
+            name=collection_name, embedding_function=self.embedding_function
+        )
         # Configuration for chunking
         self.chunk_size = 200  # words per chunk
         self.chunk_overlap = 40  # words overlap between chunks
