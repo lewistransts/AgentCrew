@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 from .types import Model
 from .constants import AVAILABLE_MODELS
+from AgentCrew.modules.config.config_management import ConfigManagement
 
 
 class ModelRegistry:
@@ -24,7 +25,7 @@ class ModelRegistry:
 
         self.models: Dict[str, Model] = {}
         self.current_model: Optional[Model] = None
-        self._initialize_default_models()
+        self._initialize_models()
 
     @classmethod
     def get_model_capabilities(cls, mode_id):
@@ -34,15 +35,47 @@ class ModelRegistry:
             return []
         return model.capabilities
 
-    def _initialize_default_models(self):
-        """Initialize the registry with default models."""
-        default_models = AVAILABLE_MODELS
+    def _load_custom_models_from_config(self):
+        """Loads models from custom LLM provider configurations and registers them."""
+        try:
+            config_manager = ConfigManagement()
+            custom_providers_config = config_manager.read_custom_llm_providers_config()
 
-        for model in default_models:
+            for provider_config in custom_providers_config:
+                provider_name = provider_config.get("name")
+                for model_data_dict in provider_config.get("available_models", []):
+                    try:
+                        # Ensure provider name from the outer config is used if not in model_data_dict
+                        if "provider" not in model_data_dict or not model_data_dict.get(
+                            "provider"
+                        ):
+                            if provider_name:
+                                model_data_dict["provider"] = provider_name
+                            else:
+                                print(
+                                    f"Warning: Skipping model due to missing provider name in config: ID '{model_data_dict.get('id', 'N/A')}'"
+                                )
+                                continue
+                        model = Model(**model_data_dict)
+                        self.register_model(model)
+                    except Exception as e:
+                        print(
+                            f"Error loading custom model '{model_data_dict.get('id')}' for provider '{provider_name}': {e}"
+                        )
+        except Exception as e:
+            print(f"Error loading custom LLM providers configuration for models: {e}")
+
+    def _initialize_models(self):
+        """Initialize the registry with default and custom models."""
+        # Load and register built-in models
+        for model in AVAILABLE_MODELS:
             self.register_model(model)
 
+        # Load and register custom models from the configuration file
+        self._load_custom_models_from_config()
+
         # Set the default model
-        for model in default_models:
+        for model in self.models.values():
             if model.default:
                 self.current_model = model
                 break
@@ -104,3 +137,15 @@ class ModelRegistry:
             The current model if set, None otherwise
         """
         return self.current_model
+        
+    def get_providers(self) -> List[str]:
+        """
+        Get all unique provider names from the registered models.
+
+        Returns:
+            A list of unique provider names.
+        """
+        providers = set()
+        for model in self.models.values():
+            providers.add(model.provider)
+        return list(providers)

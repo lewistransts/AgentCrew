@@ -1,7 +1,7 @@
 import os
 import json
 import mimetypes
-from typing import Dict, Any, List, Optional, Tuple
+from typing import AsyncIterator, Dict, Any, List, Optional, Tuple
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from openai.types.chat import ChatCompletionChunk
@@ -173,9 +173,7 @@ class OpenAIService(BaseLLMService):
         result = handler(**tool_params)
         return result
 
-    async def stream_assistant_response(
-        self, messages
-    ) -> AsyncStream[ChatCompletionChunk] | _AsyncGeneratorContextManager[List[Choice]]:
+    async def stream_assistant_response(self, messages) -> Any:
         """Stream the assistant's response with tool support."""
         stream_params = {
             "model": self.model,

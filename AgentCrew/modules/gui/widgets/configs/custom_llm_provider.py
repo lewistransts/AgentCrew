@@ -24,21 +24,29 @@ from typing import List, Optional, Dict, Any
 
 
 class ModelEditorDialog(QDialog):
-    def __init__(self, provider_name: str, model_data: Optional[Dict[str, Any]] = None, existing_model_ids: List[str] = None, parent=None):
+    def __init__(
+        self,
+        provider_name: str,
+        model_data: Optional[Dict[str, Any]] = None,
+        existing_model_ids: List[str] = None,
+        parent=None,
+    ):
         super().__init__(parent)
-        self.model_data_to_edit = model_data # Store the original model data for editing
+        self.model_data_to_edit = (
+            model_data  # Store the original model data for editing
+        )
         self.provider_name = provider_name
         # existing_model_ids should be a list of IDs that the new/edited ID cannot conflict with.
         self.existing_model_ids = existing_model_ids if existing_model_ids else []
 
         self.original_model_id = None
-        if self.model_data_to_edit: # Edit mode
+        if self.model_data_to_edit:  # Edit mode
             self.setWindowTitle("Edit Model")
             self.original_model_id = self.model_data_to_edit.get("id")
-        else: # Add mode
+        else:  # Add mode
             self.setWindowTitle("Add Model")
 
-        self.setMinimumWidth(450) # Increased width for better layout
+        self.setMinimumWidth(450)  # Increased width for better layout
 
         layout = QVBoxLayout(self)
         form_layout = QFormLayout()
@@ -48,40 +56,44 @@ class ModelEditorDialog(QDialog):
         self.name_edit = QLineEdit()
         self.description_edit = QTextEdit()
         self.description_edit.setFixedHeight(80)
-        
+
         # Checkboxes for capabilities
         self.capabilities_tool_use_checkbox = QCheckBox("Tool Use")
         self.capabilities_thinking_checkbox = QCheckBox("Thinking")
         self.capabilities_vision_checkbox = QCheckBox("Vision")
-        
+
         self.input_price_edit = QDoubleSpinBox()
-        self.input_price_edit.setDecimals(6) # Increased precision
+        self.input_price_edit.setDecimals(6)  # Increased precision
         self.input_price_edit.setMaximum(999999.0)
         self.input_price_edit.setSingleStep(0.000001)
         self.output_price_edit = QDoubleSpinBox()
-        self.output_price_edit.setDecimals(6) # Increased precision
+        self.output_price_edit.setDecimals(6)  # Increased precision
         self.output_price_edit.setMaximum(999999.0)
         self.output_price_edit.setSingleStep(0.000001)
 
         form_layout.addRow("ID*:", self.id_edit)
-        form_layout.addRow("Provider:", self.provider_display) # This is the custom provider's name
+        form_layout.addRow(
+            "Provider:", self.provider_display
+        )  # This is the custom provider's name
         form_layout.addRow("Name*:", self.name_edit)
         form_layout.addRow("Description:", self.description_edit)
-        
+
         # Add capabilities checkboxes in a horizontal layout
         capabilities_layout = QHBoxLayout()
         capabilities_layout.addWidget(self.capabilities_tool_use_checkbox)
         capabilities_layout.addWidget(self.capabilities_thinking_checkbox)
         capabilities_layout.addWidget(self.capabilities_vision_checkbox)
-        capabilities_layout.addStretch() # To push checkboxes to the left
+        capabilities_layout.addStretch()  # To push checkboxes to the left
         form_layout.addRow("Capabilities:", capabilities_layout)
-        
+
         form_layout.addRow("Input Token Price (per 1M):", self.input_price_edit)
         form_layout.addRow("Output Token Price (per 1M):", self.output_price_edit)
 
         layout.addLayout(form_layout)
 
-        self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         self.button_box.accepted.connect(self.validate_and_accept)
         self.button_box.rejected.connect(self.reject)
         layout.addWidget(self.button_box)
@@ -93,13 +105,17 @@ class ModelEditorDialog(QDialog):
         self.id_edit.setText(data.get("id", ""))
         self.name_edit.setText(data.get("name", ""))
         self.description_edit.setPlainText(data.get("description", ""))
-        
+
         # Set checkbox states based on capabilities list
         current_capabilities = data.get("capabilities", [])
-        self.capabilities_tool_use_checkbox.setChecked("tool_use" in current_capabilities)
-        self.capabilities_thinking_checkbox.setChecked("thinking" in current_capabilities)
+        self.capabilities_tool_use_checkbox.setChecked(
+            "tool_use" in current_capabilities
+        )
+        self.capabilities_thinking_checkbox.setChecked(
+            "thinking" in current_capabilities
+        )
         self.capabilities_vision_checkbox.setChecked("vision" in current_capabilities)
-        
+
         self.input_price_edit.setValue(data.get("input_token_price_1m", 0.0))
         self.output_price_edit.setValue(data.get("output_token_price_1m", 0.0))
         # Model.provider is set by self.provider_name
@@ -114,11 +130,11 @@ class ModelEditorDialog(QDialog):
             capabilities_list.append("thinking")
         if self.capabilities_vision_checkbox.isChecked():
             capabilities_list.append("vision")
-        
+
         # Ensure Model Pydantic types are respected
         return {
             "id": self.id_edit.text().strip(),
-            "provider": self.provider_name, # Name of the custom provider
+            "provider": self.provider_name,  # Name of the custom provider
             "name": self.name_edit.text().strip(),
             "description": self.description_edit.toPlainText().strip(),
             "capabilities": capabilities_list,
@@ -132,16 +148,22 @@ class ModelEditorDialog(QDialog):
         model_name = self.name_edit.text().strip()
 
         if not model_id or not model_name:
-            QMessageBox.warning(self, "Validation Error", "Model ID and Name cannot be empty.")
+            QMessageBox.warning(
+                self, "Validation Error", "Model ID and Name cannot be empty."
+            )
             return
 
         # Check for ID uniqueness:
         # The ID must not exist in self.existing_model_ids.
         # self.existing_model_ids is pre-filtered to exclude the current model's original ID if editing.
         if model_id in self.existing_model_ids:
-            QMessageBox.warning(self, "Validation Error", f"Model ID '{model_id}' already exists for this provider.")
+            QMessageBox.warning(
+                self,
+                "Validation Error",
+                f"Model ID '{model_id}' already exists for this provider.",
+            )
             return
-        
+
         self.accept()
 
 
@@ -168,13 +190,17 @@ class CustomLLMProvidersConfigTab(QWidget):
             # Ensure 'available_models' is a list of dicts (Model-like structures)
             models_list = provider_dict.get("available_models", [])
             if not all(isinstance(m, dict) for m in models_list):
-                logger.warn(f"Provider '{provider_dict.get('name')}' has malformed 'available_models'. Should be list of dicts.")
+                logger.warn(
+                    f"Provider '{provider_dict.get('name')}' has malformed 'available_models'. Should be list of dicts."
+                )
                 # Attempt to fix or skip: for now, log and it might fail later
                 # Or, ensure migration if old format (list of strings) is possible.
                 # Assuming new format (list of dicts) for now.
 
             item = QListWidgetItem(provider_dict.get("name", "Unnamed Provider"))
-            item.setData(Qt.ItemDataRole.UserRole, provider_dict) # Store the whole provider dict
+            item.setData(
+                Qt.ItemDataRole.UserRole, provider_dict
+            )  # Store the whole provider dict
             self.providers_list_widget.addItem(item)
 
         self.clear_and_disable_form()
@@ -183,12 +209,12 @@ class CustomLLMProvidersConfigTab(QWidget):
         """Clear and disable the provider detail form fields and buttons."""
         self.name_edit.clear()
         self.api_base_url_edit.clear()
-        self.api_key_env_var_edit.clear()
+        self.api_key_edit.clear()
         self.default_model_id_edit.clear()
 
         self.name_edit.setEnabled(False)
         self.api_base_url_edit.setEnabled(False)
-        self.api_key_env_var_edit.setEnabled(False)
+        self.api_key_edit.setEnabled(False)
         self.default_model_id_edit.setEnabled(False)
 
         self.save_button.setEnabled(False)
@@ -208,19 +234,21 @@ class CustomLLMProvidersConfigTab(QWidget):
             return
 
         provider_data = current_item.data(Qt.ItemDataRole.UserRole)
-        if not provider_data or not isinstance(provider_data, dict): # Ensure it's a dict
+        if not provider_data or not isinstance(
+            provider_data, dict
+        ):  # Ensure it's a dict
             self.clear_and_disable_form()
             return
 
         self.name_edit.setText(provider_data.get("name", ""))
         # self.type_display is static "openai_compatible"
         self.api_base_url_edit.setText(provider_data.get("api_base_url", ""))
-        self.api_key_env_var_edit.setText(provider_data.get("api_key_env_var", ""))
+        self.api_key_edit.setText(provider_data.get("api_key", ""))
         self.default_model_id_edit.setText(provider_data.get("default_model_id", ""))
 
         self.name_edit.setEnabled(True)
         self.api_base_url_edit.setEnabled(True)
-        self.api_key_env_var_edit.setEnabled(True)
+        self.api_key_edit.setEnabled(True)
         self.default_model_id_edit.setEnabled(True)
 
         self.save_button.setEnabled(True)
@@ -235,11 +263,12 @@ class CustomLLMProvidersConfigTab(QWidget):
                     # Display model ID or name. Using ID for uniqueness.
                     display_text = f"{model_dict.get('id', 'N/A ID')} ({model_dict.get('name', 'N/A Name')})"
                     model_item = QListWidgetItem(display_text)
-                    model_item.setData(Qt.ItemDataRole.UserRole, model_dict) # Store the model dict
+                    model_item.setData(
+                        Qt.ItemDataRole.UserRole, model_dict
+                    )  # Store the model dict
                     self.available_models_list_widget.addItem(model_item)
                 else:
                     logger.warn(f"Skipping malformed model entry: {model_dict}")
-
 
         self.available_models_list_widget.setEnabled(True)
         self.add_model_button.setEnabled(True)
@@ -257,32 +286,32 @@ class CustomLLMProvidersConfigTab(QWidget):
         # Enable fields for new provider entry and clear them
         self.name_edit.setEnabled(True)
         self.name_edit.clear()
-        
+
         self.api_base_url_edit.setEnabled(True)
         self.api_base_url_edit.clear()
 
-        self.api_key_env_var_edit.setEnabled(True)
-        self.api_key_env_var_edit.clear()
+        self.api_key_edit.setEnabled(True)
+        self.api_key_edit.clear()
 
         self.default_model_id_edit.setEnabled(True)
         self.default_model_id_edit.clear()
 
         # Enable the save button for the new provider
         self.save_button.setEnabled(True)
-        
+
         # The "Remove Selected Provider" button (self.remove_button) should remain disabled
         # as no provider is technically selected from the list for removal.
 
         # Enable the available models list and "Add Model" button.
         # The list itself should be empty initially for a new provider.
-        self.available_models_list_widget.clear() # Ensure it's clear
+        self.available_models_list_widget.clear()  # Ensure it's clear
         self.available_models_list_widget.setEnabled(True)
         self.add_model_button.setEnabled(True)
-        
+
         # Edit and Remove model buttons should be disabled as no model is selected yet
         self.edit_model_button.setEnabled(False)
         self.remove_model_button.setEnabled(False)
-        
+
         self.name_edit.setFocus()
 
     def on_available_model_selected(self, current_item, previous_item):
@@ -309,6 +338,7 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.add_button.clicked.connect(self.add_new_provider_triggered)
         self.remove_button = QPushButton("Remove Selected Provider")
         self.remove_button.clicked.connect(self.remove_selected_provider)
+        self.remove_button.setStyleSheet("background-color: #f38ba8;")
         self.remove_button.setEnabled(False)  # Initially disabled
 
         list_buttons_layout.addWidget(self.add_button)
@@ -323,13 +353,13 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.name_edit = QLineEdit()
         self.type_display = QLabel("openai_compatible")  # Read-only type display
         self.api_base_url_edit = QLineEdit()
-        self.api_key_env_var_edit = QLineEdit()
+        self.api_key_edit = QLineEdit()
         self.default_model_id_edit = QLineEdit()
 
         form_layout.addRow("Name:", self.name_edit)
         form_layout.addRow("Type:", self.type_display)
-        form_layout.addRow("API Base URL:", self.api_base_url_edit)
-        form_layout.addRow("API Key Env Var:", self.api_key_env_var_edit)
+        form_layout.addRow("Base URL:", self.api_base_url_edit)
+        form_layout.addRow("API Key:", self.api_key_edit)
         form_layout.addRow("Default Model ID:", self.default_model_id_edit)
 
         editor_layout.addLayout(form_layout)
@@ -342,13 +372,16 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.available_models_list_widget.currentItemChanged.connect(
             self.on_available_model_selected
         )
+        self.available_models_list_widget.itemDoubleClicked.connect(
+            self.edit_model_button_clicked
+        )
         editor_layout.addWidget(self.available_models_list_widget)
 
         model_buttons_layout = QHBoxLayout()
         self.add_model_button = QPushButton("Add Model")
         self.add_model_button.setEnabled(False)
         self.add_model_button.clicked.connect(self.add_model_button_clicked)
-        
+
         self.edit_model_button = QPushButton("Edit Selected Model")
         self.edit_model_button.setEnabled(False)
         self.edit_model_button.clicked.connect(self.edit_model_button_clicked)
@@ -356,7 +389,8 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.remove_model_button = QPushButton("Remove Selected Model")
         self.remove_model_button.setEnabled(False)
         self.remove_model_button.clicked.connect(self.remove_model_button_clicked)
-        
+        self.remove_model_button.setStyleSheet("background-color: #f38ba8;")
+
         model_buttons_layout.addWidget(self.add_model_button)
         model_buttons_layout.addWidget(self.edit_model_button)
         model_buttons_layout.addWidget(self.remove_model_button)
@@ -374,7 +408,7 @@ class CustomLLMProvidersConfigTab(QWidget):
         # Set initial enabled state for editor fields and save button
         self.name_edit.setEnabled(False)
         self.api_base_url_edit.setEnabled(False)
-        self.api_key_env_var_edit.setEnabled(False)
+        self.api_key_edit.setEnabled(False)
         self.default_model_id_edit.setEnabled(False)
         self.save_button.setEnabled(False)
 
@@ -390,25 +424,35 @@ class CustomLLMProvidersConfigTab(QWidget):
                 "Please select or save a provider before adding a model.",
             )
             return
-        
+
         provider_data = current_provider_item.data(Qt.ItemDataRole.UserRole)
-        provider_name = provider_data.get("name", "Unknown Provider") # Get current provider name
+        provider_name = provider_data.get(
+            "name", "Unknown Provider"
+        )  # Get current provider name
 
         existing_model_ids = [
-            self.available_models_list_widget.item(i).data(Qt.ItemDataRole.UserRole)["id"]
+            self.available_models_list_widget.item(i).data(Qt.ItemDataRole.UserRole)[
+                "id"
+            ]
             for i in range(self.available_models_list_widget.count())
         ]
 
-        dialog = ModelEditorDialog(provider_name=provider_name, existing_model_ids=existing_model_ids, parent=self)
+        dialog = ModelEditorDialog(
+            provider_name=provider_name,
+            existing_model_ids=existing_model_ids,
+            parent=self,
+        )
         if dialog.exec():
             new_model_data = dialog.get_model_data()
-            
+
             # Display model ID or name. Using ID for uniqueness.
             display_text = f"{new_model_data.get('id', 'N/A ID')} ({new_model_data.get('name', 'N/A Name')})"
             item = QListWidgetItem(display_text)
             item.setData(Qt.ItemDataRole.UserRole, new_model_data)
             self.available_models_list_widget.addItem(item)
-            self.available_models_list_widget.setCurrentItem(item) # Select the new item
+            self.available_models_list_widget.setCurrentItem(
+                item
+            )  # Select the new item
             # Note: Actual saving to config happens with "Save Changes" for the provider.
 
     def remove_model_button_clicked(self):
@@ -424,21 +468,24 @@ class CustomLLMProvidersConfigTab(QWidget):
         """Handle the 'Edit Selected Model' button click using ModelEditorDialog."""
         current_model_item = self.available_models_list_widget.currentItem()
         if not current_model_item:
-            QMessageBox.warning(self, "No Model Selected", "Please select a model to edit.")
+            QMessageBox.warning(
+                self, "No Model Selected", "Please select a model to edit."
+            )
             return
 
         selected_model_data = current_model_item.data(Qt.ItemDataRole.UserRole)
         if not isinstance(selected_model_data, dict):
-            QMessageBox.critical(self, "Error", "Invalid model data associated with the selected item.")
+            QMessageBox.critical(
+                self, "Error", "Invalid model data associated with the selected item."
+            )
             return
 
         current_provider_item = self.providers_list_widget.currentItem()
-        provider_name = "Unknown Provider" # Default
+        provider_name = "Unknown Provider"  # Default
         if current_provider_item:
             provider_data = current_provider_item.data(Qt.ItemDataRole.UserRole)
             if provider_data and isinstance(provider_data, dict):
-                 provider_name = provider_data.get("name", "Unknown Provider")
-
+                provider_name = provider_data.get("name", "Unknown Provider")
 
         # Collect IDs of other models for uniqueness check
         existing_model_ids_for_dialog = []
@@ -448,12 +495,12 @@ class CustomLLMProvidersConfigTab(QWidget):
             item_data = item.data(Qt.ItemDataRole.UserRole)
             if item_data and item_data.get("id") != original_id_of_editing_model:
                 existing_model_ids_for_dialog.append(item_data.get("id"))
-        
+
         dialog = ModelEditorDialog(
             provider_name=provider_name,
             model_data=selected_model_data,
             existing_model_ids=existing_model_ids_for_dialog,
-            parent=self
+            parent=self,
         )
 
         if dialog.exec():
@@ -467,7 +514,7 @@ class CustomLLMProvidersConfigTab(QWidget):
         """Save the current provider's details or add a new provider."""
         name = self.name_edit.text().strip()
         api_base_url = self.api_base_url_edit.text().strip()
-        api_key_env_var = self.api_key_env_var_edit.text().strip()
+        api_key = self.api_key_edit.text().strip()
         default_model_id = self.default_model_id_edit.text().strip()
 
         if not name or not api_base_url:
@@ -483,30 +530,36 @@ class CustomLLMProvidersConfigTab(QWidget):
         for i in range(self.available_models_list_widget.count()):
             model_item = self.available_models_list_widget.item(i)
             model_dict = model_item.data(Qt.ItemDataRole.UserRole)
-            if isinstance(model_dict, dict): # Ensure it's a dict
+            if isinstance(model_dict, dict):  # Ensure it's a dict
                 available_models_data.append(model_dict)
-            else: # Should not happen if data is correctly set
-                logger.error(f"Corrupted model data in UI list for provider {name}. Skipping item.")
-
+            else:  # Should not happen if data is correctly set
+                logger.error(
+                    f"Corrupted model data in UI list for provider {name}. Skipping item."
+                )
 
         provider_detail = {
             "name": name,
             "type": "openai_compatible",  # As per spec
             "api_base_url": api_base_url,
-            "api_key_env_var": api_key_env_var,
+            "api_key": api_key,
             "default_model_id": default_model_id,
-            "available_models": available_models_data, # List of model dictionaries
+            "available_models": available_models_data,  # List of model dictionaries
         }
 
         # Validate default_model_id against available_models
-        current_default_model_id_val = provider_detail.get("default_model_id", "").strip()
+        current_default_model_id_val = provider_detail.get(
+            "default_model_id", ""
+        ).strip()
         # Extract IDs from the list of model dictionaries
-        current_available_model_ids = [m.get("id") for m in provider_detail.get("available_models", []) if isinstance(m, dict) and m.get("id")]
-
+        current_available_model_ids = [
+            m.get("id")
+            for m in provider_detail.get("available_models", [])
+            if isinstance(m, dict) and m.get("id")
+        ]
 
         if (
             current_default_model_id_val
-            and current_available_model_ids # Check if there are any models to validate against
+            and current_available_model_ids  # Check if there are any models to validate against
             and current_default_model_id_val not in current_available_model_ids
         ):
             QMessageBox.warning(
@@ -527,22 +580,27 @@ class CustomLLMProvidersConfigTab(QWidget):
             # Ensure current_item.data() is the provider dict
             original_provider_data = current_item.data(Qt.ItemDataRole.UserRole)
             if not isinstance(original_provider_data, dict):
-                 QMessageBox.critical(self, "Internal Error", "Provider data mismatch. Cannot save.")
-                 return
+                QMessageBox.critical(
+                    self, "Internal Error", "Provider data mismatch. Cannot save."
+                )
+                return
 
             original_name = original_provider_data.get("name")
             list_widget_index = -1
             # Find the index in self.providers_data by original name or object identity if possible
             # This assumes names are unique, which is enforced.
             for idx, p_data_in_list in enumerate(self.providers_data):
-                if p_data_in_list.get("name") == original_name: # or compare by a unique ID if available
+                if (
+                    p_data_in_list.get("name") == original_name
+                ):  # or compare by a unique ID if available
                     list_widget_index = idx
                     break
-            
-            if list_widget_index == -1 and original_name != name : # If name changed and couldn't find by old name (should not happen if list is in sync)
-                 # Try to find by current list widget selection index if names are unreliable for finding
-                 list_widget_index = self.providers_list_widget.row(current_item)
 
+            if (
+                list_widget_index == -1 and original_name != name
+            ):  # If name changed and couldn't find by old name (should not happen if list is in sync)
+                # Try to find by current list widget selection index if names are unreliable for finding
+                list_widget_index = self.providers_list_widget.row(current_item)
 
             if list_widget_index < 0 or list_widget_index >= len(self.providers_data):
                 logger.error(
@@ -555,9 +613,11 @@ class CustomLLMProvidersConfigTab(QWidget):
 
             # Before replacing, if the name is being changed, check for conflicts with *other* providers.
             new_name_from_form = provider_detail.get("name")
-            if new_name_from_form != original_name: # Name has changed
+            if new_name_from_form != original_name:  # Name has changed
                 for i, p_dict in enumerate(self.providers_data):
-                    if i == list_widget_index:  # Skip comparing with itself (its old version)
+                    if (
+                        i == list_widget_index
+                    ):  # Skip comparing with itself (its old version)
                         continue
                     if p_dict.get("name") == new_name_from_form:
                         QMessageBox.warning(
@@ -588,19 +648,25 @@ class CustomLLMProvidersConfigTab(QWidget):
                 self, "Success", "Provider configuration saved successfully."
             )
 
-            self.load_providers() # Reloads and clears selection
+            self.load_providers()  # Reloads and clears selection
             # Attempt to re-select the saved/edited provider
             for i in range(self.providers_list_widget.count()):
                 item = self.providers_list_widget.item(i)
-                if item.data(Qt.ItemDataRole.UserRole) and item.data(Qt.ItemDataRole.UserRole).get("name") == name:
+                if (
+                    item.data(Qt.ItemDataRole.UserRole)
+                    and item.data(Qt.ItemDataRole.UserRole).get("name") == name
+                ):
                     self.providers_list_widget.setCurrentItem(item)
                     break
-            if self.providers_list_widget.currentItem() is None: # If not found (e.g. new provider, selection lost)
+            if (
+                self.providers_list_widget.currentItem() is None
+            ):  # If not found (e.g. new provider, selection lost)
                 self.clear_and_disable_form()
 
-
         except Exception as e:
-            logger.exception("Error saving provider configuration") # Log with stack trace
+            logger.exception(
+                "Error saving provider configuration"
+            )  # Log with stack trace
             QMessageBox.critical(
                 self, "Error Saving", f"Could not save provider configuration: {str(e)}"
             )

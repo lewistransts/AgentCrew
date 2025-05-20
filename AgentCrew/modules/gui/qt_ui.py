@@ -1277,7 +1277,7 @@ class ChatWindow(QMainWindow, Observer):
         model_registry = ModelRegistry.get_instance()
 
         # Add provider submenus
-        for provider in ["claude", "openai", "groq", "google", "deepinfra"]:
+        for provider in model_registry.get_providers():
             provider_menu = models_menu.addMenu(provider.capitalize())
 
             # Get models for this provider
