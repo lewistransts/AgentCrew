@@ -358,3 +358,30 @@ class ConfigManagement:
                 json.dump(config_data, f, indent=2)
         except Exception as e:
             raise ValueError(f"Error writing MCP configuration: {str(e)}")
+
+    def read_custom_llm_providers_config(self) -> List[Dict[str, Any]]:
+        """
+        Read the custom LLM providers configuration from the global config file.
+
+        Returns:
+            A list of custom LLM provider configurations.
+        """
+        global_config = self.read_global_config_data()
+        providers = global_config.get("custom_llm_providers", [])
+        for provider in providers:
+            if "available_models" not in provider:
+                provider["available_models"] = []
+        return providers
+
+    def write_custom_llm_providers_config(
+        self, providers_data: List[Dict[str, Any]]
+    ) -> None:
+        """
+        Write the custom LLM providers configuration to the global config file.
+
+        Args:
+            providers_data: A list of custom LLM provider configurations.
+        """
+        global_config = self.read_global_config_data()
+        global_config["custom_llm_providers"] = providers_data
+        self.write_global_config_data(global_config)

@@ -1,0 +1,608 @@
+from PySide6.QtWidgets import (
+    QVBoxLayout,
+    QHBoxLayout,
+    QWidget,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QLabel,
+    QLineEdit,
+    QCheckBox,
+    QGroupBox,
+    QFormLayout,
+    QMessageBox,
+    QScrollArea,
+    QSplitter,
+)
+from PySide6.QtCore import Qt, Signal
+
+from AgentCrew.modules.config.config_management import ConfigManagement
+from AgentCrew.modules.agents.manager import AgentManager
+
+
+class MCPsConfigTab(QWidget):
+    """Tab for configuring MCP servers."""
+
+    # Add signal for configuration changes
+    config_changed = Signal()
+
+    def __init__(self, config_manager: ConfigManagement):
+        super().__init__()
+        self.config_manager = config_manager
+        self.agent_manager = AgentManager.get_instance()
+
+        # Load MCP configuration
+        self.mcps_config = self.config_manager.read_mcp_config()
+
+        self.init_ui()
+        self.load_mcps()
+
+    def init_ui(self):
+        """Initialize the UI components."""
+        # Main layout
+        main_layout = QHBoxLayout()
+
+        # Create splitter for resizable panels
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        # Left panel - MCP server list
+        left_panel = QWidget()
+        left_panel.setStyleSheet("background-color: #181825;")  # Catppuccin Mantle
+        left_layout = QVBoxLayout(left_panel)
+
+        self.mcps_list = QListWidget()
+        self.mcps_list.currentItemChanged.connect(self.on_mcp_selected)
+
+        # Buttons for MCP list management
+        list_buttons_layout = QHBoxLayout()
+        self.add_mcp_btn = QPushButton("Add")
+        self.add_mcp_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+            QPushButton:pressed {
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
+        self.add_mcp_btn.clicked.connect(self.add_new_mcp)
+        self.remove_mcp_btn = QPushButton("Remove")
+        self.remove_mcp_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f38ba8; /* Catppuccin Red */
+                color: #1e1e2e; /* Catppuccin Base (for contrast) */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #eba0ac; /* Catppuccin Maroon (lighter red for hover) */
+            }
+            QPushButton:pressed {
+                background-color: #e67e8a; /* A slightly darker/more intense red for pressed */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
+        self.remove_mcp_btn.clicked.connect(self.remove_mcp)
+        self.remove_mcp_btn.setEnabled(False)  # Disable until selection
+
+        list_buttons_layout.addWidget(self.add_mcp_btn)
+        list_buttons_layout.addWidget(self.remove_mcp_btn)
+
+        left_layout.addWidget(QLabel("MCP Servers:"))
+        left_layout.addWidget(self.mcps_list)
+        left_layout.addLayout(list_buttons_layout)
+
+        # Right panel - MCP editor
+        right_panel = QScrollArea()
+        right_panel.setWidgetResizable(True)
+        # right_panel.setStyleSheet("background-color: #181825;") # Set by QDialog stylesheet
+
+        self.editor_widget = QWidget()
+        self.editor_widget.setStyleSheet(
+            "background-color: #181825;"
+        )  # Catppuccin Mantle
+        self.editor_layout = QVBoxLayout(self.editor_widget)
+
+        # Form layout for MCP properties
+        form_layout = QFormLayout()
+
+        # Name field
+        self.name_input = QLineEdit()
+        form_layout.addRow("Name:", self.name_input)
+
+        # Command field
+        self.command_input = QLineEdit()
+        form_layout.addRow("Command:", self.command_input)
+
+        # Arguments section
+        args_group = QGroupBox("Arguments")
+        self.args_layout = QVBoxLayout()
+        self.arg_inputs = []
+
+        # Add button for arguments
+        args_btn_layout = QHBoxLayout()
+        self.add_arg_btn = QPushButton("Add Argument")
+        self.add_arg_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+            QPushButton:pressed {
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
+        self.add_arg_btn.clicked.connect(lambda: self.add_argument_field(""))
+        args_btn_layout.addWidget(self.add_arg_btn)
+        args_btn_layout.addStretch()
+
+        self.args_layout.addLayout(args_btn_layout)
+        args_group.setLayout(self.args_layout)
+
+        # Environment variables section
+        env_group = QGroupBox("Environment Variables")
+        self.env_layout = QVBoxLayout()
+        self.env_inputs = []
+
+        # Add button for env vars
+        env_btn_layout = QHBoxLayout()
+        self.add_env_btn = QPushButton("Add Environment Variable")
+        self.add_env_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+            QPushButton:pressed {
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
+        self.add_env_btn.clicked.connect(lambda: self.add_env_field("", ""))
+        env_btn_layout.addWidget(self.add_env_btn)
+        env_btn_layout.addStretch()
+
+        self.env_layout.addLayout(env_btn_layout)
+        env_group.setLayout(self.env_layout)
+
+        # Enabled for agents section
+        enabled_group = QGroupBox("Enabled For Agents")
+        enabled_layout = QVBoxLayout()
+
+        # Get available agents
+        self.available_agents = list(self.agent_manager.agents.keys())
+
+        self.agent_checkboxes = {}
+        for agent in self.available_agents:
+            checkbox = QCheckBox(agent)
+            self.agent_checkboxes[agent] = checkbox
+            enabled_layout.addWidget(checkbox)
+
+        enabled_group.setLayout(enabled_layout)
+
+        # Save button
+        self.save_btn = QPushButton("Save")
+        self.save_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+            QPushButton:pressed {
+                background-color: #b4befe; /* Catppuccin Lavender */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
+        self.save_btn.clicked.connect(self.save_mcp)
+        self.save_btn.setEnabled(False)  # Disable until selection
+
+        # Add all components to editor layout
+        self.editor_layout.addLayout(form_layout)
+        self.editor_layout.addWidget(args_group)
+        self.editor_layout.addWidget(env_group)
+        self.editor_layout.addWidget(enabled_group)
+        self.editor_layout.addWidget(self.save_btn)
+        self.editor_layout.addStretch()
+
+        right_panel.setWidget(self.editor_widget)
+
+        # Add panels to splitter
+        splitter.addWidget(left_panel)
+        splitter.addWidget(right_panel)
+        splitter.setSizes([200, 600])  # Initial sizes
+
+        # Add splitter to main layout
+        main_layout.addWidget(splitter)
+        self.setLayout(main_layout)
+
+        # Disable editor initially
+        self.set_editor_enabled(False)
+
+    def load_mcps(self):
+        """Load MCP servers from configuration."""
+        self.mcps_list.clear()
+
+        for server_id, server_config in self.mcps_config.items():
+            item = QListWidgetItem(server_config.get("name", server_id))
+            item.setData(Qt.ItemDataRole.UserRole, (server_id, server_config))
+            self.mcps_list.addItem(item)
+
+    def on_mcp_selected(self, current, previous):
+        """Handle MCP server selection."""
+        if current is None:
+            self.set_editor_enabled(False)
+            self.remove_mcp_btn.setEnabled(False)
+            return
+
+        # Enable editor and remove button
+        self.set_editor_enabled(True)
+        self.remove_mcp_btn.setEnabled(True)
+        self.save_btn.setEnabled(True)
+
+        # Get MCP data
+        server_id, server_config = current.data(Qt.ItemDataRole.UserRole)
+
+        # Populate form
+        self.name_input.setText(server_config.get("name", ""))
+        self.command_input.setText(server_config.get("command", ""))
+
+        # Clear existing argument fields
+        self.clear_argument_fields()
+
+        # Add argument fields
+        args = server_config.get("args", [])
+        for arg in args:
+            self.add_argument_field(arg)
+
+        # Clear existing env fields
+        self.clear_env_fields()
+
+        # Add env fields
+        env = server_config.get("env", {})
+        for key, value in env.items():
+            self.add_env_field(key, value)
+
+        # Set agent checkboxes
+        enabled_agents = server_config.get("enabledForAgents", [])
+        for agent, checkbox in self.agent_checkboxes.items():
+            checkbox.setChecked(agent in enabled_agents)
+
+    def set_editor_enabled(self, enabled: bool):
+        """Enable or disable the editor form."""
+        self.name_input.setEnabled(enabled)
+        self.command_input.setEnabled(enabled)
+        self.add_arg_btn.setEnabled(enabled)
+        self.add_env_btn.setEnabled(enabled)
+        self.save_btn.setEnabled(enabled)
+
+        for checkbox in self.agent_checkboxes.values():
+            checkbox.setEnabled(enabled)
+
+        for arg_input in self.arg_inputs:
+            arg_input["input"].setEnabled(enabled)
+            arg_input["remove_btn"].setEnabled(enabled)
+
+        for env_input in self.env_inputs:
+            env_input["key_input"].setEnabled(enabled)
+            env_input["value_input"].setEnabled(enabled)
+            env_input["remove_btn"].setEnabled(enabled)
+
+    def add_argument_field(self, value=""):
+        """Add a field for an argument."""
+        arg_layout = QHBoxLayout()
+
+        arg_input = QLineEdit()
+        arg_input.setText(str(value))
+
+        remove_btn = QPushButton("Remove")
+        remove_btn.setMaximumWidth(80)
+        remove_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f38ba8; /* Catppuccin Red */
+                color: #1e1e2e; /* Catppuccin Base (for contrast) */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #eba0ac; /* Catppuccin Maroon (lighter red for hover) */
+            }
+            QPushButton:pressed {
+                background-color: #e67e8a; /* A slightly darker/more intense red for pressed */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
+
+        arg_layout.addWidget(arg_input)
+        arg_layout.addWidget(remove_btn)
+
+        # Insert before the add button
+        self.args_layout.insertLayout(len(self.arg_inputs), arg_layout)
+
+        # Store references
+        arg_data = {"layout": arg_layout, "input": arg_input, "remove_btn": remove_btn}
+        self.arg_inputs.append(arg_data)
+
+        # Connect remove button
+        remove_btn.clicked.connect(lambda: self.remove_argument_field(arg_data))
+
+        return arg_data
+
+    def remove_argument_field(self, arg_data):
+        """Remove an argument field."""
+        # Remove from layout
+        self.args_layout.removeItem(arg_data["layout"])
+
+        # Delete widgets
+        arg_data["input"].deleteLater()
+        arg_data["remove_btn"].deleteLater()
+
+        # Remove from list
+        self.arg_inputs.remove(arg_data)
+
+    def clear_argument_fields(self):
+        """Clear all argument fields."""
+        while self.arg_inputs:
+            self.remove_argument_field(self.arg_inputs[0])
+
+    def add_env_field(self, key="", value=""):
+        """Add a field for an environment variable."""
+        env_layout = QHBoxLayout()
+
+        key_input = QLineEdit()
+        key_input.setText(str(key))
+        key_input.setPlaceholderText("Key")
+
+        value_input = QLineEdit()
+        value_input.setText(str(value))
+        value_input.setPlaceholderText("Value")
+
+        remove_btn = QPushButton("Remove")
+        remove_btn.setMaximumWidth(80)
+        remove_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f38ba8; /* Catppuccin Red */
+                color: #1e1e2e; /* Catppuccin Base (for contrast) */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #eba0ac; /* Catppuccin Maroon (lighter red for hover) */
+            }
+            QPushButton:pressed {
+                background-color: #e67e8a; /* A slightly darker/more intense red for pressed */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
+
+        env_layout.addWidget(key_input)
+        env_layout.addWidget(value_input)
+        env_layout.addWidget(remove_btn)
+
+        # Insert before the add button
+        self.env_layout.insertLayout(len(self.env_inputs), env_layout)
+
+        # Store references
+        env_data = {
+            "layout": env_layout,
+            "key_input": key_input,
+            "value_input": value_input,
+            "remove_btn": remove_btn,
+        }
+        self.env_inputs.append(env_data)
+
+        # Connect remove button
+        remove_btn.clicked.connect(lambda: self.remove_env_field(env_data))
+
+        return env_data
+
+    def remove_env_field(self, env_data):
+        """Remove an environment variable field."""
+        # Remove from layout
+        self.env_layout.removeItem(env_data["layout"])
+
+        # Delete widgets
+        env_data["key_input"].deleteLater()
+        env_data["value_input"].deleteLater()
+        env_data["remove_btn"].deleteLater()
+
+        # Remove from list
+        self.env_inputs.remove(env_data)
+
+    def clear_env_fields(self):
+        """Clear all environment variable fields."""
+        while self.env_inputs:
+            self.remove_env_field(self.env_inputs[0])
+
+    def add_new_mcp(self):
+        """Add a new MCP server to the configuration."""
+        # Create a new server with default values
+        server_id = f"new_server_{len(self.mcps_config) + 1}"
+        new_server = {
+            "name": "New Server",
+            "command": "docker",
+            "args": ["run", "-i", "--rm"],
+            "env": {},
+            "enabledForAgents": [],
+        }
+
+        # Add to list
+        item = QListWidgetItem(new_server["name"])
+        item.setData(Qt.ItemDataRole.UserRole, (server_id, new_server))
+        self.mcps_list.addItem(item)
+        self.mcps_list.setCurrentItem(item)
+
+        # Focus on name field for immediate editing
+        self.name_input.setFocus()
+        self.name_input.selectAll()
+
+    def remove_mcp(self):
+        """Remove the selected MCP server."""
+        current_item = self.mcps_list.currentItem()
+        if not current_item:
+            return
+
+        server_id, server_config = current_item.data(Qt.ItemDataRole.UserRole)
+        server_name = server_config.get("name", server_id)
+
+        # Confirm deletion
+        reply = QMessageBox.question(
+            self,
+            "Confirm Deletion",
+            f"Are you sure you want to delete the MCP server '{server_name}'?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            # Remove from list
+            row = self.mcps_list.row(current_item)
+            self.mcps_list.takeItem(row)
+
+            # Clear editor
+            self.set_editor_enabled(False)
+            self.name_input.clear()
+            self.command_input.clear()
+            self.clear_argument_fields()
+            self.clear_env_fields()
+            for checkbox in self.agent_checkboxes.values():
+                checkbox.setChecked(False)
+            self.save_all_mcps()
+
+    def save_mcp(self):
+        """Save the current MCP server configuration."""
+        current_item = self.mcps_list.currentItem()
+        if not current_item:
+            return
+
+        server_id, old_config = current_item.data(Qt.ItemDataRole.UserRole)
+
+        # Get values from form
+        name = self.name_input.text().strip()
+        command = self.command_input.text().strip()
+
+        # Validate
+        if not name:
+            QMessageBox.warning(
+                self, "Validation Error", "Server name cannot be empty."
+            )
+            return
+
+        if not command:
+            QMessageBox.warning(self, "Validation Error", "Command cannot be empty.")
+            return
+
+        # Get arguments
+        args = []
+        for arg_data in self.arg_inputs:
+            arg_value = arg_data["input"].text().strip()
+            if arg_value:
+                args.append(arg_value)
+
+        # Get environment variables
+        env = {}
+        for env_data in self.env_inputs:
+            key = env_data["key_input"].text().strip()
+            value = env_data["value_input"].text().strip()
+            if key:
+                env[key] = value
+
+        # Get enabled agents
+        enabled_agents = [
+            agent
+            for agent, checkbox in self.agent_checkboxes.items()
+            if checkbox.isChecked()
+        ]
+
+        # Update server data
+        server_config = {
+            "name": name,
+            "command": command,
+            "args": args,
+            "env": env,
+            "enabledForAgents": enabled_agents,
+        }
+
+        # Update item in list
+        current_item.setText(name)
+        current_item.setData(Qt.ItemDataRole.UserRole, (server_id, server_config))
+
+        # Save all servers to config
+        self.save_all_mcps()
+
+        # Show success message with restart notification
+        QMessageBox.information(
+            self,
+            "Configuration Saved",
+            f"MCP server '{name}' saved successfully.\n\nPlease restart the application for changes to take effect.",
+        )
+
+    def save_all_mcps(self):
+        """Save all MCP servers to the configuration file."""
+        mcps_config = {}
+
+        for i in range(self.mcps_list.count()):
+            item = self.mcps_list.item(i)
+            server_id, server_config = item.data(Qt.ItemDataRole.UserRole)
+            mcps_config[server_id] = server_config
+
+        # Save to file
+        self.config_manager.write_mcp_config(mcps_config)
+
+        # Update local copy
+        self.mcps_config = mcps_config
+
+        # Emit signal that configuration changed
+        self.config_changed.emit()
