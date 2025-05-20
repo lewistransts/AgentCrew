@@ -37,9 +37,14 @@ dependencies = [
   "pyside6>=6.8.3",
   "markdown>=3.7",
   "tree-sitter-language-pack>=0.7.0",
-  "mem0ai>=0.1.95",
   "nest-asyncio>=1.6.0",
   "voyageai>=0.3.2",
+]
+
+[project.optional-dependencies]
+
+mem0ai = [
+  "mem0ai>=0.1.95",
 ]
 
 [project.urls]
