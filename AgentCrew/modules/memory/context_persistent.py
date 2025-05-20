@@ -3,6 +3,7 @@ import os
 import uuid
 import datetime
 from typing import Dict, Any, List, Optional
+from AgentCrew.modules import logger
 
 
 class ContextPersistenceService:
@@ -67,7 +68,7 @@ class ContextPersistenceService:
         # _ensure_dir already raises OSError on failure
         self._ensure_dir(self.base_dir)
         self._ensure_dir(self.conversations_dir)
-        print(
+        logger.info(
             f"INFO: Persistence service initialized. Absolute base directory: {self.base_dir}"
         )
 
@@ -77,7 +78,7 @@ class ContextPersistenceService:
             os.makedirs(dir_path, exist_ok=True)
         except OSError as e:
             # Removed: self.logger.error(...)
-            print(f"ERROR: Failed to create directory {dir_path}: {e}")
+            logger.error(f"ERROR: Failed to create directory {dir_path}: {e}")
             raise  # Re-raise after printing
 
     def _read_json_file(self, file_path: str, default_value: Any = None) -> Any:
@@ -98,18 +99,20 @@ class ContextPersistenceService:
                 content = f.read()
                 if not content:
                     # Treat empty file same as invalid JSON for consistency
-                    print(f"WARNING: File {file_path} is empty. Returning default.")
+                    logger.warning(
+                        f"WARNING: File {file_path} is empty. Returning default."
+                    )
                     return default_value
                 return json.loads(content)
         except (json.JSONDecodeError, IOError, UnicodeDecodeError) as e:
             # Removed: self.logger.warning(...)
-            print(
+            logger.warning(
                 f"WARNING: Could not read or parse {file_path}: {e}. Returning default."
             )
             return default_value
         except Exception as e:
             # Catch unexpected errors during read/parse
-            print(f"ERROR: Unexpected error reading {file_path}: {e}")
+            logger.error(f"ERROR: Unexpected error reading {file_path}: {e}")
             # Decide if unexpected errors should raise or return default.
             # Returning default might hide issues, raising might be better.
             # Let's raise for unexpected errors.
@@ -134,11 +137,11 @@ class ContextPersistenceService:
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except (IOError, TypeError, OSError) as e:
-            print(f"ERROR: Could not write to {file_path}: {e}")
+            logger.error(f"ERROR: Could not write to {file_path}: {e}")
             raise  # Re-raise the caught exception
         except Exception as e:
             # Catch unexpected errors during write/dump
-            print(f"ERROR: Unexpected error writing {file_path}: {e}")
+            logger.error(f"ERROR: Unexpected error writing {file_path}: {e}")
             raise
 
     def _update_rankings(self, current_rankings: dict, new_summary: dict) -> dict:
@@ -163,7 +166,7 @@ class ContextPersistenceService:
                 # Let's stick with shallow copy for now for simplicity. If issues arise, use copy.deepcopy.
                 updated_rankings[category] = items.copy()
             else:
-                print(
+                logger.warning(
                     f"WARNING: Malformed ranking category found: {category}. Resetting."
                 )
                 updated_rankings[category] = {}
@@ -179,7 +182,7 @@ class ContextPersistenceService:
                 if isinstance(items, dict):
                     # Ensure the ranking category itself is a dict
                     if not isinstance(updated_rankings[category], dict):
-                        print(
+                        logger.warning(
                             f"WARNING: Resetting ranking for {category} as it wasn't a dict."
                         )
                         updated_rankings[category] = {}
@@ -197,7 +200,7 @@ class ContextPersistenceService:
 
                         # Ensure the value is a dictionary (might be needed if loaded from corrupt file)
                         if not isinstance(updated_rankings[category][entity_key], dict):
-                            print(
+                            logger.warning(
                                 f"WARNING: Resetting ranking for entity '{entity_key}' as its value wasn't a dict."
                             )
                             updated_rankings[category][entity_key] = {}
@@ -235,7 +238,7 @@ class ContextPersistenceService:
             else:
                 # Ensure the ranking category itself is a dict
                 if not isinstance(updated_rankings[category], dict):
-                    print(
+                    logger.warning(
                         f"WARNING: Resetting ranking for {category} as it wasn't a dict."
                     )
                     updated_rankings[category] = {}
@@ -279,7 +282,7 @@ class ContextPersistenceService:
         )
         # Ensure the structure read from file is valid before proceeding
         if not isinstance(full_data.get("_rankings"), dict):
-            print(
+            logger.warning(
                 f"WARNING: Invalid rankings structure in {self.context_file_path}. Resetting rankings."
             )
             full_data["_rankings"] = {}
@@ -316,7 +319,7 @@ class ContextPersistenceService:
             or not isinstance(data.get("latest_summary"), dict)
             or not isinstance(data.get("_rankings"), dict)
         ):
-            print(
+            logger.warning(
                 f"WARNING: Stored context file {self.context_file_path} is missing or invalid."
             )
             return None  # Return None if invalid or missing
@@ -460,7 +463,7 @@ class ContextPersistenceService:
             )
             return json_string
         except TypeError as e:
-            print(f"ERROR: Failed to serialize filtered data to JSON: {e}")
+            logger.error(f"ERROR: Failed to serialize filtered data to JSON: {e}")
             return "{}"  # Fallback on serialization error
 
     # --- Conversation History Management ---
@@ -493,15 +496,19 @@ class ContextPersistenceService:
         try:
             if os.path.exists(file_path):
                 os.remove(file_path)
-                print(f"INFO: Deleted conversation file: {file_path}")
+                logger.info(f"INFO: Deleted conversation file: {file_path}")
             else:
-                print(f"INFO: Conversation file not found (already deleted?): {file_path}")
+                logger.info(
+                    f"INFO: Conversation file not found (already deleted?): {file_path}"
+                )
             return True
         except OSError as e:
-            print(f"ERROR: Failed to delete conversation file {file_path}: {e}")
+            logger.error(f"ERROR: Failed to delete conversation file {file_path}: {e}")
             return False
         except Exception as e:
-            print(f"ERROR: Unexpected error deleting conversation file {file_path}: {e}")
+            logger.error(
+                f"ERROR: Unexpected error deleting conversation file {file_path}: {e}"
+            )
             return False
 
     def append_conversation_messages(
@@ -539,7 +546,7 @@ class ContextPersistenceService:
             # File exists, read its content
             history = self._read_json_file(file_path, default_value=[])
             if not isinstance(history, list):
-                print(
+                logger.warning(
                     f"WARNING: Conversation file {file_path} was not a list. Resetting history before append."
                 )
                 history = []
@@ -573,7 +580,7 @@ class ContextPersistenceService:
         history = self._read_json_file(file_path, default_value=None)
 
         if history is None or not isinstance(history, list):
-            print(
+            logger.warning(
                 f"WARNING: Conversation history for {conversation_id} not found or invalid."
             )
             return None
@@ -664,23 +671,27 @@ class ContextPersistenceService:
                         )
                     except OSError as e:
                         # Log specific file access errors but continue listing others
-                        print(f"WARNING: Could not access metadata for {filename}: {e}")
+                        logger.warning(
+                            f"WARNING: Could not access metadata for {filename}: {e}"
+                        )
                     except (
                         Exception
                     ) as e:  # Catch other potential errors during preview generation
-                        print(f"WARNING: Error processing {filename} for listing: {e}")
+                        logger.warning(
+                            f"WARNING: Error processing {filename} for listing: {e}"
+                        )
 
             # Sort by timestamp descending (most recent first)
             conversations.sort(key=lambda x: x["timestamp"], reverse=True)
 
         except FileNotFoundError:
             # This case might be less likely now due to __init__ checks, but keep for robustness
-            print(
+            logger.warning(
                 f"WARNING: Conversations directory not found during listing: {self.conversations_dir}"
             )
         except OSError as e:
             # Raise error if listing the directory itself fails
-            print(
+            logger.warning(
                 f"ERROR: Could not list conversations directory {self.conversations_dir}: {e}"
             )
             raise
