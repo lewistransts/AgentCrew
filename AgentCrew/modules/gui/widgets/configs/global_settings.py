@@ -50,6 +50,11 @@ class SettingsTab(QWidget):
             "key_name": "TAVILY_API_KEY",
             "placeholder": "e.g., tvly-...",
         },
+        {
+            "label": "Voyage API Key:",
+            "key_name": "VOYAGE_API_KEY",
+            "placeholder": "e.g., pa-...",
+        },
     ]
 
     def __init__(self, config_manager: ConfigManagement):
