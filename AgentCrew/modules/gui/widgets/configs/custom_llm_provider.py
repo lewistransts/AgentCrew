@@ -211,11 +211,13 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_base_url_edit.clear()
         self.api_key_edit.clear()
         self.default_model_id_edit.clear()
+        self.is_stream_checkbox.setChecked(False)
 
         self.name_edit.setEnabled(False)
         self.api_base_url_edit.setEnabled(False)
         self.api_key_edit.setEnabled(False)
         self.default_model_id_edit.setEnabled(False)
+        self.is_stream_checkbox.setEnabled(False)
 
         self.save_button.setEnabled(False)
         self.remove_button.setEnabled(False)
@@ -245,11 +247,13 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_base_url_edit.setText(provider_data.get("api_base_url", ""))
         self.api_key_edit.setText(provider_data.get("api_key", ""))
         self.default_model_id_edit.setText(provider_data.get("default_model_id", ""))
+        self.is_stream_checkbox.setChecked(provider_data.get("is_stream", False))
 
         self.name_edit.setEnabled(True)
         self.api_base_url_edit.setEnabled(True)
         self.api_key_edit.setEnabled(True)
         self.default_model_id_edit.setEnabled(True)
+        self.is_stream_checkbox.setEnabled(True)
 
         self.save_button.setEnabled(True)
         self.remove_button.setEnabled(True)
@@ -295,6 +299,9 @@ class CustomLLMProvidersConfigTab(QWidget):
 
         self.default_model_id_edit.setEnabled(True)
         self.default_model_id_edit.clear()
+        
+        self.is_stream_checkbox.setEnabled(True)
+        self.is_stream_checkbox.setChecked(False)
 
         # Enable the save button for the new provider
         self.save_button.setEnabled(True)
@@ -355,12 +362,14 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_base_url_edit = QLineEdit()
         self.api_key_edit = QLineEdit()
         self.default_model_id_edit = QLineEdit()
+        self.is_stream_checkbox = QCheckBox("Enable Streaming")
 
         form_layout.addRow("Name:", self.name_edit)
         form_layout.addRow("Type:", self.type_display)
         form_layout.addRow("Base URL:", self.api_base_url_edit)
         form_layout.addRow("API Key:", self.api_key_edit)
         form_layout.addRow("Default Model ID:", self.default_model_id_edit)
+        form_layout.addRow("Streaming:", self.is_stream_checkbox)
 
         editor_layout.addLayout(form_layout)
 
@@ -410,6 +419,7 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_base_url_edit.setEnabled(False)
         self.api_key_edit.setEnabled(False)
         self.default_model_id_edit.setEnabled(False)
+        self.is_stream_checkbox.setEnabled(False)
         self.save_button.setEnabled(False)
 
         self.setLayout(main_layout)
@@ -516,6 +526,7 @@ class CustomLLMProvidersConfigTab(QWidget):
         api_base_url = self.api_base_url_edit.text().strip()
         api_key = self.api_key_edit.text().strip()
         default_model_id = self.default_model_id_edit.text().strip()
+        is_stream = self.is_stream_checkbox.isChecked()
 
         if not name or not api_base_url:
             QMessageBox.warning(
@@ -544,6 +555,7 @@ class CustomLLMProvidersConfigTab(QWidget):
             "api_key": api_key,
             "default_model_id": default_model_id,
             "available_models": available_models_data,  # List of model dictionaries
+            "is_stream": is_stream,
         }
 
         # Validate default_model_id against available_models

@@ -58,6 +58,7 @@ class ServiceManager:
                     self.custom_provider_details[name] = {
                         "api_base_url": provider_config.get("api_base_url"),
                         "api_key": provider_config.get("api_key", ""),
+                        "is_stream": provider_config.get("is_stream", False),
                     }
         except Exception as e:
             print(f"Error loading custom LLM provider configurations for services: {e}")
@@ -70,6 +71,7 @@ class ServiceManager:
         if provider in self.custom_provider_details:
             details = self.custom_provider_details[provider]
             api_key = details.get("api_key", "")
+            is_stream_val = details.get("is_stream", False)
 
             if not details.get("api_base_url"):
                 raise ValueError(
@@ -80,6 +82,7 @@ class ServiceManager:
                 base_url=details["api_base_url"],
                 api_key=api_key,
                 provider_name=provider,
+                is_stream=is_stream_val,
             )
         elif provider in self.service_classes:
             return self.service_classes[provider]()
@@ -110,6 +113,7 @@ class ServiceManager:
         if provider in self.custom_provider_details:
             details = self.custom_provider_details[provider]
             api_key = details.get("api_key", "")
+            is_stream_val = details.get("is_stream", False)
 
             if not details.get("api_base_url"):
                 raise RuntimeError(
@@ -121,6 +125,7 @@ class ServiceManager:
                     base_url=details["api_base_url"],
                     api_key=api_key,
                     provider_name=provider,
+                    is_stream=is_stream_val,
                 )
             except Exception as e:
                 raise RuntimeError(

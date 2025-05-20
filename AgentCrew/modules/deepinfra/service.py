@@ -14,11 +14,11 @@ class DeepInfraService(CustomLLMService):
             api_key=api_key,
             base_url="https://api.deepinfra.com/v1/openai",
             provider_name="deepinfra",
+            is_stream=True,
         )
         self.model = "Qwen/Qwen3-235B-A22B"
         self.current_input_tokens = 0
         self.current_output_tokens = 0
         self.temperature = 0.6
-        self._is_stream = True
         self._is_thinking = False
         logger.info("Initialized DeepInfra Service")

@@ -32,7 +32,7 @@ class AsyncIterator:
 class CustomLLMService(OpenAIService):
     """Custom LLM service that can connect to any OpenAI-compatible API."""
 
-    def __init__(self, base_url: str, api_key: str, provider_name: str):
+    def __init__(self, base_url: str, api_key: str, provider_name: str, is_stream: bool = False):
         """
         Initializes the CustomLLMService.
 
@@ -40,13 +40,14 @@ class CustomLLMService(OpenAIService):
             base_url (str): The base URL of the OpenAI-compatible API.
             api_key (str): The API key for the service.
             provider_name (str): The name of the custom provider.
+            is_stream (bool): Whether to enable streaming responses by default.
         """
         super().__init__(api_key=api_key, base_url=base_url)
         self._provider_name = provider_name
         logger.info(
             f"Initialized Custom LLM Service for provider: {provider_name} at {base_url}"
         )
-        self._is_stream = False
+        self._is_stream = is_stream
 
     def format_tool_result(
         self, tool_use: Dict, tool_result: Any, is_error: bool = False
