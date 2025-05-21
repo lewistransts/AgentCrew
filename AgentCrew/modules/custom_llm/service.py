@@ -20,10 +20,10 @@ class AsyncIterator:
             return next(self.iter)
         except StopIteration:
             raise StopAsyncIteration
-            
+
     async def __aenter__(self):
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         # No specific cleanup is needed for this simple iterator wrapper
         pass
@@ -32,7 +32,9 @@ class AsyncIterator:
 class CustomLLMService(OpenAIService):
     """Custom LLM service that can connect to any OpenAI-compatible API."""
 
-    def __init__(self, base_url: str, api_key: str, provider_name: str, is_stream: bool = False):
+    def __init__(
+        self, base_url: str, api_key: str, provider_name: str, is_stream: bool = False
+    ):
         """
         Initializes the CustomLLMService.
 
@@ -174,7 +176,7 @@ class CustomLLMService(OpenAIService):
             else:
                 self.current_input_tokens = 0
                 self.current_output_tokens = 0
-            
+
             # Return an AsyncIterator wrapping response.choices
             return AsyncIterator(response.choices)
 
@@ -220,6 +222,17 @@ class CustomLLMService(OpenAIService):
             content = message.content or " "
             if hasattr(message, "reasoning") and message.reasoning:
                 thinking_content = (message.reasoning, None)
+            if "thinking" in ModelRegistry.get_model_capabilities(self.model):
+                THINK_STARTED = "<think>"
+                THINK_STOPED = "</think>"
+                think_start_idx = content.find(THINK_STARTED)
+                think_stop_idx = content.find(THINK_STOPED)
+                if think_start_idx >= 0 and think_stop_idx >= 0:
+                    thinking_content = (content[think_start_idx:think_stop_idx], None)
+                    content = (
+                        content[:think_start_idx]
+                        + content[think_stop_idx + len(THINK_STOPED) :]
+                    )
             # Check for tool calls
             if hasattr(message, "tool_calls") and message.tool_calls:
                 for tool_call in message.tool_calls:
