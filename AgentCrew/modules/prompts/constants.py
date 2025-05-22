@@ -84,6 +84,60 @@ Enhance this conversation for AI memory storage. Create a single comprehensive t
     Enhanced memory text:
 """
 
+POST_RETRIEVE_MEMORY = """
+<INPUT_KEYWORDS>
+{keywords}
+</INPUT_KEYWORDS>
+<MEMORY_LIST>
+{memory_list}
+</MEMORY_LIST>
+
+**Task:** As an AI data processor, filter and clean timestamped conversation memory snippets based on `INPUT_KEYWORDS`.
+
+**Goal:** Output a cleaned list of memory snippets that are:
+1.  **Relevant:** Directly relevant to the provided `INPUT_KEYWORDS`.
+2.  **Current & Accurate:** Resolve conflicts using the `DATE` field, prioritizing newer entries.
+3.  **Noise-Free:** Eliminate irrelevant or only vaguely related snippets.
+
+**Input Provided:**
+1.  `INPUT_KEYWORDS`: A string of keywords defining the topic of interest.
+2.  `MEMORY_LIST`: A list of memory snippet objects. Each object includes:
+    *   `ID`: Unique identifier.
+    *   `DATE`: "YYYY-MM-DD" format.
+    *   `SUMMARY`: Brief summary.
+    *   `CONTEXT`: Background information.
+    *   `ENTITIES`: Key people, orgs, products, concepts, facts.
+    *   `DOMAIN`: Subject domain(s).
+    *   `USER_PREFERENCES`: Explicit user preferences.
+    *   `BEHAVIORAL_INSIGHTS`: User behavior observations.
+
+**Processing Instructions:**
+1.  **Relevance Filtering:**
+    *   Keep a snippet only if its `SUMMARY`, `CONTEXT`, or `ENTITIES` fields demonstrate clear and direct relevance to `INPUT_KEYWORDS`.
+    *   Discard snippets that are off-topic, tangentially related, or lack substantial information regarding `INPUT_KEYWORDS`.
+2.  **Recency and Conflict Resolution (Prioritize Newer):**
+    *   When multiple relevant snippets address the *exact same specific fact/entity* related to `INPUT_KEYWORDS`: Retain the snippet with the most recent `DATE` and discard older ones if they present outdated or directly conflicting information on that specific point.
+    *   If relevant snippets discuss *different aspects* or details related to `INPUT_KEYWORDS` and do not directly conflict, they can all be kept if they pass relevance. Do not discard older snippets if they offer unique, still-relevant information not in newer ones.
+3.  **Noise Reduction:**
+    *   After the above filters, review and discard any remaining snippets that technically match keywords but add no real value or insight (e.g., a mere mention without substance).
+
+**Output Format:**
+*   Return a Markdown result containing only the filtered and cleaned memory snippets.
+*   Snippets in the output should retain their original structure.
+*   Maintain the original relative order or order chronologically by `DATE` (oldest relevant to newest relevant).
+
+**Example Scenario:**
+If `INPUT_KEYWORDS` = "Qwen3 model capabilities" and `MEMORY_LIST` contains:
+*   A (`DATE`: "2024-05-01", `SUMMARY`: "Qwen3's context window size.")
+*   B (`DATE`: "2025-03-10", `SUMMARY`: "Qwen3's updated context window.")
+*   C (`DATE`: "2025-01-15", `SUMMARY`: "General LLM context, Qwen2 mentioned.")
+*   D (`DATE`: "2025-03-11", `SUMMARY`: "Qwen3 coding abilities.")
+
+Processing: Snippet C might be discarded (tangential). Snippet A is older; if B supersedes A's info on the *same point* (context window), A is discarded. Snippet D discusses a different capability and is relevant, so B and D would likely be kept.
+
+**Primary Objective:** Distill `MEMORY_LIST` into a concise, relevant, and up-to-date set of information based on `INPUT_KEYWORDS`.
+"""
+
 SEMANTIC_EXTRACTING = """
 Extract the core information from the user's message and generate a short sentence or phrase summarizing the main idea or context with key entities. No explanations or additional text
 User input: {user_input}"""

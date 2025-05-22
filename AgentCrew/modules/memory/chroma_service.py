@@ -14,6 +14,7 @@ from AgentCrew.modules.prompts.constants import (
     ANALYSIS_PROMPT,
     SEMANTIC_EXTRACTING,
     PRE_ANALYZE_PROMPT,
+    POST_RETRIEVE_MEMORY,
 )
 import chromadb.utils.embedding_functions as embedding_functions
 
@@ -235,6 +236,8 @@ class ChromaMemoryService(BaseMemoryService):
         Returns:
             Formatted string containing relevant context from past conversations
         """
+        return await self.retrieve_memory(user_input, 5, agent_name=agent_name)
+
         if self.llm_service:
             analyze_result = await self.llm_service.process_message(
                 ANALYSIS_PROMPT.replace(
@@ -270,7 +273,7 @@ class ChromaMemoryService(BaseMemoryService):
         """
 
         results = self.collection.query(
-            query_texts=[await self._semantic_extracting(keywords)],
+            query_texts=[keywords],
             n_results=limit,
             where={
                 "$and": [
@@ -321,9 +324,17 @@ class ChromaMemoryService(BaseMemoryService):
                 except Exception:
                     timestamp = conv_data["timestamp"]
 
-            output.append(f"--- Memory from {timestamp} ---\n{conversation_text}")
+            output.append(f"--- Memory from {timestamp} ---\n{conversation_text}\n---")
 
-        return "\n\n".join(output)
+        memories = "\n\n".join(output)
+        if self.llm_service:
+            return await self.llm_service.process_message(
+                POST_RETRIEVE_MEMORY.replace("{keywords}", keywords).replace(
+                    "{memory_list}", memories
+                )
+            )
+        else:
+            return memories
 
     def _cosine_similarity(self, vec_a, vec_b):
         """Calculate cosine similarity between vectors"""
