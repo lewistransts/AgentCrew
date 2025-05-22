@@ -88,7 +88,7 @@ def load_api_keys_from_config():
             os.environ[key_name] = str(api_keys_config[key_name])
 
 
-def setup_services(provider):
+def setup_services(provider, memory_llm=None):
     # Initialize the model registry and service manager
     registry = ModelRegistry.get_instance()
     llm_manager = ServiceManager.get_instance()
@@ -105,8 +105,14 @@ def setup_services(provider):
 
     # Initialize services
     # Only use default groq when available
-    if os.getenv("GROQ_API_KEY"):
+    if memory_llm:
+        memory_service = ChromaMemoryService(
+            llm_service=llm_manager.initialize_standalone_service(memory_llm)
+        )
+    # use groq if not defined if available
+    elif os.getenv("GROQ_API_KEY"):
         memory_service = ChromaMemoryService()
+    # fallback to what user have
     else:
         memory_service = ChromaMemoryService(
             llm_service=llm_manager.initialize_standalone_service(provider)
@@ -301,12 +307,18 @@ def discover_and_register_tools(services=None):
     "--mcp-config", default=None, help="Path to the mcp servers configuration file."
 )
 @click.option(
+    "--memory-llm",
+    type=click.Choice(["claude", "groq", "openai", "google"]),
+    default=None,
+    help="LLM Model use for analyzing and processing memory",
+)
+@click.option(
     "--console",
     is_flag=True,
     default=False,
     help="Use GUI interface instead of console",
 )
-def chat(provider, agent_config, mcp_config, console):
+def chat(provider, agent_config, mcp_config, memory_llm, console):
     """Start an interactive chat session with LLM"""
     try:
         load_api_keys_from_config()
@@ -327,7 +339,7 @@ def chat(provider, agent_config, mcp_config, console):
                 raise ValueError(
                     "No LLM API key found. Please set either ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, or DEEPINFRA_API_KEY"
                 )
-        services = setup_services(provider)
+        services = setup_services(provider, memory_llm)
 
         if mcp_config:
             os.environ["MCP_CONFIG_PATH"] = mcp_config
