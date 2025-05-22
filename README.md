@@ -23,8 +23,6 @@ user-friendly GUI.
 
 ## Visualizing AgentCrew Operations
 
-System behavior is best illustrated through operational examples:
-
 - **Central Interaction Interface:** The primary console for AI-driven
   dialogues. ![Main Chat UI](./examples/images/chat.png)
 - **Code Articulation & Generation:** Demonstrating native support for
