@@ -77,7 +77,7 @@ def get_file_content_tool_definition(provider="claude"):
     Returns:
         Dict containing the tool definition
     """
-    tool_description = "Reads the content of a code file, or a specific code element within that file (function or class body). Use this to examine the logic of specific functions, the structure of classes, or the overall content of a file. ALWAYS justify why you're reading the file and what you expect to learn from it. Before using, consider if `analyze_repo` would provide sufficient information at a higher level."
+    tool_description = "Reads the content of a file, or a specific code element within that file (function or class body). Use this to examine the logic of specific functions, the structure of classes, or the overall content of a file."
 
     tool_arguments = {
         "file_path": {
@@ -86,12 +86,12 @@ def get_file_content_tool_definition(provider="claude"):
         },
         "element_type": {
             "type": "string",
-            "description": "The type of code element to extract. ALWAYS use this when targeting a specific element.",
+            "description": "The type of code element to extract. Use this when targeting a specific element.",
             "enum": ["class", "function"],
         },
         "element_name": {
             "type": "string",
-            "description": "The name of the class or function to extract. ALWAYS use this when targeting a specific element. Case-sensitive.",
+            "description": "The name of the class or function to extract. Use this when targeting a specific element. Case-sensitive.",
         },
         "scope_path": {
             "type": "string",
