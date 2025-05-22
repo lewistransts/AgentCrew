@@ -20,6 +20,7 @@ class TavilySearchService:
         self,
         query: str,
         search_depth: str = "basic",
+        topic: str = "general",
         include_domains: List[str] | None = None,
         exclude_domains: List[str] | None = None,
         max_results: int = 5,
@@ -43,6 +44,7 @@ class TavilySearchService:
                 "search_depth": search_depth,
                 "max_results": max_results,
                 "include_answer": search_depth,
+                "topic": topic,
             }
 
             if include_domains:
@@ -79,7 +81,7 @@ class TavilySearchService:
         formatted_text = ""
 
         if "answer" in results:
-            formatted_text += f"**Query's Summary**: {results['answer']}"
+            formatted_text += f"**Query's Summary**: {results['answer']}  \n\n"
 
         formatted_text += "**Search Results**:  \n\n"
 

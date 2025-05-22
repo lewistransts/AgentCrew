@@ -12,8 +12,12 @@ def get_web_search_tool_definition(provider="claude"):
         "search_depth": {
             "type": "string",
             "enum": ["basic", "advanced"],
-            "description": "The depth of the search to perform. 'basic' is faster and suitable for general information. 'advanced' is more thorough and suitable for complex or nuanced queries. Start with 'basic' and only use 'advanced' if initial results are insufficient.",
-            "default": "basic",
+            "description": "The depth of the search to perform. 'basic' is faster and suitable for general information. 'advanced' is more thorough and suitable for complex or nuanced queries.",
+        },
+        "topic": {
+            "type": "string",
+            "enum": ["general", "news", "finance"],
+            "description": "The category of the search.`news` is useful for retrieving real-time updates, particularly about politics, sports, and major current events covered by mainstream media sources. `general` is for broader, more general-purpose searches that may include a wide range of sources.",
         },
         "included_domains": {
             "type": "array",
@@ -28,7 +32,7 @@ def get_web_search_tool_definition(provider="claude"):
             "maximum": 20,
         },
     }
-    tool_required = ["query"]
+    tool_required = ["query", "search_depth", "topic"]
     if provider == "claude":
         return {
             "name": "web_search",
@@ -105,6 +109,7 @@ def get_web_search_tool_handler(tavily_service: TavilySearchService):
         search_depth = params.get("search_depth", "basic")
         max_results = params.get("max_results", 10)
         included_domains = params.get("included_domains", [])
+        topic = params.get("topic", "general")
 
         if not query:
             return "Error: No search query provided."
@@ -112,6 +117,7 @@ def get_web_search_tool_handler(tavily_service: TavilySearchService):
         print(f"🔍 Searching the web for: {query}")
         results = tavily_service.search(
             query=query,
+            topic=topic,
             search_depth=search_depth,
             max_results=max_results,
             include_domains=included_domains,
