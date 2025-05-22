@@ -15,6 +15,11 @@ def get_web_search_tool_definition(provider="claude"):
             "description": "The depth of the search to perform. 'basic' is faster and suitable for general information. 'advanced' is more thorough and suitable for complex or nuanced queries. Start with 'basic' and only use 'advanced' if initial results are insufficient.",
             "default": "basic",
         },
+        "included_domains": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "List of specific domains that search engine will search on",
+        },
         "max_results": {
             "type": "integer",
             "description": "The maximum number of search results to return. A higher number allows for broader coverage but may include less relevant results. (Range: 1-10)",
@@ -99,13 +104,17 @@ def get_web_search_tool_handler(tavily_service: TavilySearchService):
         query = params.get("query")
         search_depth = params.get("search_depth", "basic")
         max_results = params.get("max_results", 10)
+        included_domains = params.get("included_domains", [])
 
         if not query:
             return "Error: No search query provided."
 
         print(f"🔍 Searching the web for: {query}")
         results = tavily_service.search(
-            query=query, search_depth=search_depth, max_results=max_results
+            query=query,
+            search_depth=search_depth,
+            max_results=max_results,
+            include_domains=included_domains,
         )
 
         return tavily_service.format_search_results(results)

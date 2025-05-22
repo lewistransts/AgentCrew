@@ -67,3 +67,4 @@ mcp_servers.json
 .chat_histories
 persistents/
 config.json
+generate
