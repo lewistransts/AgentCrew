@@ -1,49 +1,47 @@
-# AgentCrew: An Architecture for Multi-Agent AI Interaction
+# AgentCrew: Your Multi-Agent AI Assistant Framework
 
-[![GitHub stars](https://img.shields.io/github/stars/daltonnyx/AgentCrew)](https://github.com/agentdock/agentdock/stargazers)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/daltonnyx/AgentCrew/blob/main/LICENSE)
-[![Status: Beta](https://img.shields.io/badge/Status-Beta-blue)](https://github.com/daltonnyx/AgentCrew/releases)
+[![GitHub stars](https://img.shields.io/github/stars/saigontechnology/AgentCrew)](https://github.com/saigontechnology/AgentCrew/stargazers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/saigontechnology/AgentCrew/blob/main/LICENSE)
+[![Status: Beta](https://img.shields.io/badge/Status-Beta-blue)](https://github.com/saigontechnology/AgentCrew/releases)
+[![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/release/python-3120/)
 
-The development of AgentCrew stems from the objective of creating an AI
-interaction system that transcends rudimentary chatbot functionalities. The
-system is engineered as a sophisticated chat application underpinned by a
-multi-agent architecture, designed to support a diverse array of Large Language
-Model (LLM) providers. Key architectural tenets include specialized agent roles,
-intelligent inter-agent task transfer, robust file integration, web interaction
-capabilities, and a modular extension system.
+AgentCrew is a powerful and flexible AI assistant framework, engineered for
+sophisticated AI interaction that transcends rudimentary chatbot
+functionalities. It establishes an ecosystem where specialized AI agents operate
+in a coordinated fashion, governed by a system designed for contextual task
+routing and supporting a diverse array of Large Language Model (LLM) providers.
 
-This project moves beyond simple API aggregation. It establishes an ecosystem
-where specialized AI agents operate in a coordinated fashion, governed by a
-system designed for contextual task routing. The conceptual model is that of a
-distributed expertise network, where individual agents contribute specialized
-capabilities to a unified conversational process.
+The conceptual model is that of a distributed expertise network, where
+individual agents contribute specialized capabilities to a unified
+conversational process, whether through a rich console interface or a
+user-friendly GUI.
 
 ## Visualizing AgentCrew Operations
 
 System behavior is best illustrated through operational examples:
 
 - **Central Interaction Interface:** The primary console for AI-driven
-  dialogues. ![main chat](./examples/images/chat.png)
+  dialogues. ![Main Chat UI](./examples/images/chat.png)
 - **Code Articulation & Generation:** Demonstrating native support for
   code-centric tasks.
-  ![chat with code format](./examples/images/code_format.png)
+  ![Chat with Code Formatting](./examples/images/code_format.png)
 - **Multimedia Context:** Integration of image files within conversational
-  flows. ![chat with image file](./examples/images/image_file.png)
+  flows. ![Chat with Image File](./examples/images/image_file.png)
 - **Agent Specialization:** Configuration interface for defining agent roles and
-  capabilities. ![agent config](./examples/images/agent_config.png)
+  capabilities. ![Agent Configuration UI](./examples/images/agent_config.png)
 - **External Protocol Integration:** Configuration for Model Context Protocol
-  (MCP) servers. ![MCP config](./examples/images/mcp_config.png)
+  (MCP) servers. ![MCP Configuration UI](./examples/images/mcp_config.png)
 - **System-Wide Configuration:** Interface for global operational parameters.
-  ![Global config](./examples/images/global_config.png)
+  ![Global Configuration UI](./examples/images/global_config.png)
 
-## Multi Agents in Action
+### Multi-Agents in Action
 
 <https://github.com/user-attachments/assets/43b84b63-027e-4615-8bd1-96211dc9b28e>
 
 ## Core Tenets of the AgentCrew Design
 
 AgentCrew was conceptualized not merely as an LLM interface layer, but as a
-system predicated on the principles of _synergy through specialization_. The
+system predicated on the principles of **synergy through specialization**. The
 limitations of monolithic, generalist AI models are addressed by a distributed
 architecture of specialized agents.
 
@@ -85,9 +83,10 @@ agents based on evolving conversational context:
 
 1. The active agent assesses its suitability for the current conversational
    turn.
-2. If a different specialization is required, a transfer is initiated.
+2. If a different specialization is required, a transfer is initiated using the
+   `transfer` tool.
 3. The `AgentManager` constructs a new operational context, utilizing relevant
-   message history segments.
+   message history segments from the transferring agent.
 4. The designated target agent is activated with this tailored context.
 
 This process is depicted as follows:
@@ -106,7 +105,7 @@ sequenceDiagram
     Note over agentManager: Utilizes 'relevant_messages' to select pertinent history from Agent A
 
     agentManager->>agentManager: Constructs new context (system prompt + selected messages from Agent A)
-    agentManager->>agentB: Overwrites internal message history of Agent B with new context
+    agentManager->>agentB: Injects new context into Agent B's message history
     agentManager->>agentB: Activates Agent B
     deactivate agentManager
 
@@ -125,138 +124,343 @@ service layer to abstract provider-specific implementations. This design
 ensures:
 
 - Flexibility in selecting LLM providers (Claude, GPT, Groq, Gemini, DeepInfra,
-  etc.).
+  Custom OpenAI-compatible).
 - Utilization of provider-specific functionalities (e.g., Claude's extended
   thinking, OpenAI's function calling) without requiring modifications to the
   core application logic.
 - Enhanced system maintainability and adaptability to future LLM advancements.
 
-## System Capabilities Overview
+## Features
 
-AgentCrew offers a comprehensive suite of features designed for robust and
-flexible AI interaction:
+- **Multi-LLM Provider Support:**
+  - Anthropic (Claude 3.x series)
+  - Google (Gemini 2.x series)
+  - OpenAI (GPT-4o, GPT-4.1, o3/o4 series with "thinking" mode)
+  - Groq (Llama 3.x/4.x, Qwen, Deepseek, including compound models with
+    "thinking")
+  - DeepInfra (Llama 3.x, Gemma 3, Phi-4, Qwen 2.x/3.x)
+  - Custom OpenAI-compatible LLM providers via configuration.
+- **Advanced Agent Framework:**
+  - Define and manage multiple specialized local AI agents.
+  - Support for remote agents via Agent-to-Agent (A2A) protocol.
+  - Dynamic agent selection and contextual task transfer using the `transfer`
+    tool.
+  - Customizable system prompts per agent, including dynamic variables like
+    `{current_date}`.
+- **Rich Tool Integration:**
+  - **Web Search:** Tavily API for up-to-date information and web content
+    extraction.
+  - **Clipboard Interaction:** Read from and write to the system clipboard.
+  - **Memory System:**
+    - ChromaDB for persistent conversation memory and semantic retrieval.
+    - Context persistence service for saving/loading full conversation states,
+      enabling session resumption.
+    - Tools to `retrieve_memory` and `forget_memory_topic`.
+  - **Code Analysis:** Tree-sitter based `analyze_repo` for code structure
+    mapping and `read_file` for specific code element retrieval.
+  - **Coding Assistance (Aider Integration):**
+    - `review_specification_prompt` tool to validate prompts for coding tasks.
+    - `implement_specification_prompt` tool to generate code using Aider based
+      on validated specs.
+  - **Model Context Protocol (MCP) Client:** Connect to and utilize tools from
+    MCP-compliant servers (e.g., for running external processes).
+- **Dual Chat Interfaces:**
+  - **Console UI:** Rich text, command history, completions, and dynamic updates
+    for terminal users.
+  - **Graphical User Interface (GUI):** Built with PySide6 (Qt), offering a
+    user-friendly chat window, conversation history sidebar, and comprehensive
+    configuration dialogues.
+- **Agent-to-Agent (A2A) Communication:**
+  - Run an A2A server to expose your AgentCrew agents to other A2A-compliant
+    systems.
+  - Define remote agents in your configuration to interact with external A2A
+    agents.
+- **Streaming and Thinking Mode:**
+  - Supports streaming responses from LLMs for real-time interaction.
+  - "Thinking mode" support for compatible models (Claude, Gemini, Groq
+    compound, OpenAI o-series), allowing the LLM to show its reasoning process.
+- **Configuration Management:**
+  - Easy configuration via TOML and JSON files.
+  - Environment variables for sensitive data like API keys.
+  - GUI for managing API keys, agent definitions, MCP servers, and custom LLM
+    providers.
+- **Persistent Conversations:**
+  - Save and load entire conversation histories, including messages from all
+    participating agents.
+  - Sidebar in GUI for easy browsing, searching, and loading of past
+    conversations.
+  - Rollback functionality in GUI to rewind conversation state.
+- **File Handling:**
+  - Integrates with `docling` for processing PDF, DOCX, XLSX, PPTX.
+  - Supports direct inclusion of text and image files in chat.
+- **Keyboard Navigation & Shortcuts:** Efficient interaction with `Ctrl+Enter`
+  for send, `Ctrl+Shift+C` for copy, `Ctrl+L` for new chat, and history
+  navigation in console.
 
-- **Dynamic Chat Interface**: Facilitates fluid, multi-turn conversations.
-- **File System Integration**: Allows direct incorporation of PDF and text files
-  into dialogues.
-- **Web Navigation & Processing**: Enables agents to perform web searches, fetch
-  content, and parse web data.
-- **Extensible Tooling**: Supports a growing set of tools, with MCP for external
-  extensions.
-- **Optimized Keyboard Navigation**: Provides shortcuts for efficient message
-  composition and interaction.
-- **Persistent Knowledge Base**: Implements memory for cross-conversational
-  context and learning.
-- **Source Code Analysis**: Offers capabilities for analyzing the structure of
-  code repositories.
+## Prerequisites
 
-## Installation and Configuration
+- Python 3.12+
+- `uv` Python package manager (Install with `pip install uv` or see
+  [official `uv` documentation](https://github.com/astral-sh/uv))
+- Git (required for the code analysis tool to list repository files)
+- API keys for the LLM providers and services you intend to use (e.g., OpenAI,
+  Anthropic, Tavily). At least one LLM provider API key is required.
 
-The following steps detail the setup process for AgentCrew.
+## Installation (using `uv`)
 
-### System Prerequisites
-
-- Python version 3.10 or higher.
-- [uv](https://github.com/astral-sh/uv) package manager.
-- API Keys for desired LLM providers:
-  - Anthropic (Claude)
-  - Groq (Optional)
-  - OpenAI (Optional)
-  - Google Gemini (Optional)
-  - Tavily (Required for web search functionality)
-
-### Setup Procedure
-
-1. **Repository Cloning:**
+1. **Clone the repository:**
 
    ```bash
    git clone https://github.com/daltonnyx/AgentCrew.git
    cd AgentCrew
    ```
 
-2. **Dependency Installation:**
+2. **Create and activate a virtual environment using `uv`:**
 
    ```bash
-   uv sync
+   uv venv
+   source .venv/bin/activate  # On Linux/macOS
+   # .\.venv\Scripts\activate  # On Windows (Command Prompt)
+   # .\.venv\Scripts\Activate.ps1 # On Windows (PowerShell)
    ```
 
-3. **Tool Installation:**
+3. **Install AgentCrew and its dependencies:**
+
+   ```bash
+   uv pip install .
+   ```
+
+   For development, including tools like `pyinstaller` and `pygments`:
+
+   ```bash
+   uv pip install .[dev]
+   ```
+
+   If you want to use the Mem0 memory service (optional alternative to
+   ChromaDB):
+
+   ```bash
+   uv pip install .[mem0ai]
+   ```
+
+4. **Install as a tool (optional, for global access):** This makes the
+   `agentcrew` command available system-wide if your `uv` tools directory is in
+   your PATH.
 
    ```bash
    uv tool install .
    ```
 
-4. **Environment Variable Configuration:** At least one LLM provider API key
-   (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GROQ_API_KEY`, or
-   `DEEPINFRA_API_KEY`) must be configured as an environment variable. Multiple
-   keys can be set to enable model switching.
+## Configuration
+
+AgentCrew uses a combination of environment variables and configuration files,
+primarily stored in `~/.AgentCrew/`.
+
+### API Keys & Global Settings (`~/.AgentCrew/config.json`)
+
+API keys are essential. You can set them as environment variables OR manage them
+through the global `config.json` file using the GUI (Settings -> Global
+Settings).
+
+1. **Environment Variables (Recommended for security in non-GUI setups):** Set
+   these in your shell environment or a `.env` file in the project root
+   (AgentCrew will load it).
 
    ```bash
-   export ANTHROPIC_API_KEY="your_anthropic_api_key"
-   export OPENAI_API_KEY="your_openai_api_key"
-   # Configure other provider keys as needed.
-   export TAVILY_API_KEY="your_tavily_api_key" # Critical for web search.
+   export ANTHROPIC_API_KEY="your_anthropic_key"
+   export GEMINI_API_KEY="your_gemini_key"
+   export OPENAI_API_KEY="your_openai_key"
+   export GROQ_API_KEY="your_groq_key"
+   export DEEPINFRA_API_KEY="your_deepinfra_key"
+   export TAVILY_API_KEY="your_tavily_key" # Required for web search tool
+   export VOYAGE_API_KEY="your_voyage_key" # Optional, for VoyageAI embeddings with ChromaDB
    ```
 
-   Omission of `TAVILY_API_KEY` will disable web search features.
+   **Note:** Keys set in `config.json` via the GUI will take precedence over
+   environment variables.
 
-## Operational Guide
+2. **Global `config.json` File:**
 
-AgentCrew can be initiated using the following command patterns.
+   - **Path:** `~/.AgentCrew/config.json`. Can be overridden by
+     `AGENTCREW_CONFIG_PATH`.
+   - **Purpose:** Stores API keys and configurations for custom LLM providers.
+   - **Management:** Best managed via the GUI (Settings -> Global Settings &
+     Settings -> Custom LLMs).
+   - **Structure Example:**
 
-### Standard Chat Initiation
+     ```json
+     {
+       "api_keys": {
+         "ANTHROPIC_API_KEY": "your_anthropic_key_from_gui",
+         "TAVILY_API_KEY": "your_tavily_key_from_gui"
+       },
+       "custom_llm_providers": [
+         {
+           "name": "MyLocalLLM",
+           "type": "openai_compatible",
+           "api_base_url": "http://localhost:1234/v1",
+           "api_key": "optional_local_key_if_needed",
+           "default_model_id": "local-model-v1",
+           "is_stream": true,
+           "available_models": [
+             {
+               "id": "local-model-v1",
+               "provider": "MyLocalLLM", // Should match the "name" above
+               "name": "Local Model Version 1",
+               "description": "My custom fine-tuned model.",
+               "capabilities": ["tool_use"], // e.g., "tool_use", "vision", "thinking"
+               "input_token_price_1m": 0.0, // Price per 1 million input tokens
+               "output_token_price_1m": 0.0 // Price per 1 million output tokens
+             }
+           ]
+         }
+       ]
+     }
+     ```
+
+### Agent Configuration (`~/.AgentCrew/agents.toml`)
+
+- **Path:** `~/.AgentCrew/agents.toml`. Can be overridden by `SW_AGENTS_CONFIG`
+  or `--agent-config` CLI flag. A default is created if not found.
+- **Purpose:** Defines local and remote agents, system prompts, tools, and
+  temperature.
+- **Management:** Can be managed via the GUI (Settings -> Agents).
+- **Structure Example:** See `examples/agents/agents.toml` or
+  `examples/agents/agents.simple.toml`.
+
+### MCP Server Configuration (`~/.AgentCrew/mcp_servers.json`)
+
+- **Path:** `~/.AgentCrew/mcp_server.json`. Can be overridden by
+  `MCP_CONFIG_PATH` or `--mcp-config` CLI flag.
+- **Purpose:** Configures external Model Context Protocol (MCP) servers.
+- **Management:** Can be managed via the GUI (Settings -> MCP Servers).
+- **Structure Example:** See `mcp_servers.json.example`.
+
+**Other Default Paths:**
+
+- `MEMORYDB_PATH`: `~/.AgentCrew/memorydb` (ChromaDB persistence).
+- `PERSISTENCE_DIR`: `~/.AgentCrew/persistents` (Conversation history, user
+  context).
+- `.chat_histories`: `~/.AgentCrew/.chat_histories` (Console command history).
+
+## Usage
+
+### Interactive Chat (GUI/Console)
+
+The primary way to interact with AgentCrew is through its chat interface.
+
+**1. Using the CLI:** The main command is `agentcrew` (if installed as a tool)
+or `python -m AgentCrew.main` (if running from the cloned repo with `uv sync`).
 
 ```bash
-agentcrew chat
+agentcrew chat [OPTIONS]
 ```
 
-### TUI (Terminal User Interface) Mode
+**Options:** _`--provider [claude|groq|openai|google|deepinfra]`: Specify LLM
+provider. Auto-detects if not set._ `--agent-config PATH`: Path to a custom
+agent configuration file. _`--mcp-config PATH`: Path to a custom MCP server
+configuration file._ `--console`: Use the console UI instead of the default GUI.
 
-For a more structured console view:
+**Examples:** _Start GUI chat (auto-detects provider): `agentcrew chat`_ Start
+console chat with OpenAI: `agentcrew chat --provider openai --console`
+
+**2. Running the GUI Directly (for development):**
 
 ```bash
-agentcrew chat --console
+python AgentCrew/entry.qt.py
 ```
 
-### Provider-Specific Invocation
+(Ensure virtual environment is active and configs/API keys are set up.)
+
+**In-Chat Commands (Console & GUI where applicable):**
+
+- `/clear` or `Ctrl+L` (GUI): Clears current conversation, starts a new one.
+- `/copy` or `Ctrl+Shift+C` (GUI): Copies the last assistant's response.
+- `/file <path/to/file>`: Includes file content in your message.
+- `/model [model_id]`: Lists models or switches model (GUI: Menu -> Models).
+- `/agent [agent_name]`: Lists agents or switches agent (GUI: Menu -> Agents).
+- `/jump <turn_number>` (Console): Rewinds conversation to a previous turn.
+  (GUI: Rollback button on user messages).
+- `/think <budget_or_level>`: Configures "thinking mode" for compatible LLMs
+  (e.g., `/think 1024` for Claude, `/think medium` for OpenAI o-series).
+  `/think 0` or `/think none` disables it.
+- `/list`: Lists saved conversations (GUI: Sidebar).
+- `/load <id_or_number>`: Loads a saved conversation (GUI: Click on conversation
+  in sidebar).
+- `/debug`: Displays raw message history for debugging.
+- `exit` or `quit`: Exits the chat.
+
+### A2A Server
+
+Expose your AgentCrew agents via the A2A protocol:
 
 ```bash
-# Anthropic Claude models
-agentcrew chat --provider claude
-
-# Groq LLM models
-agentcrew chat --provider groq
-
-# OpenAI GPT models
-agentcrew chat --provider openai
-
-# Google Gemini models
-agentcrew chat --provider gemini
-
-# DeepInfra LLM models
-agentcrew chat --provider deepinfra
+agentcrew a2a_server [OPTIONS]
 ```
 
-### Custom Agent Configuration
+**Options:**
 
-Specify a custom `agents.toml` file:
+- `--host TEXT`: Host to bind (default: `0.0.0.0`).
+- `--port INTEGER`: Port to bind (default: `41241`).
+- `--base-url TEXT`: Base URL for agent endpoints.
+- `--provider ...`: LLM provider for served agents.
+- `--agent-config PATH`, `--mcp-config PATH`: Custom config paths.
 
-```bash
-agentcrew chat --agent-config path/to/your/custom_agents.toml
-```
+## Key Concepts
 
-### Google A2A Server Deployment
+### Agents
 
-For remote connectivity via Google's Agent-to-Agent protocol:
+Specialized AI instances, each with:
 
-```bash
-agentcrew a2a-server --provider google --agent-config ~/.AgentCrew.agents.toml --port 41241
-```
+- A unique `name` and `description`.
+- A `system_prompt` defining its persona and instructions (supports
+  `{current_date}`).
+- A list of assigned `tools`.
+- An optional `temperature` for its LLM.
+- Local agents use configured LLM services; remote agents connect to external
+  A2A endpoints.
+
+### Tools
+
+Extend agent capabilities. AgentCrew includes:
+
+- `memory`: For long-term conversation recall (retrieve/forget).
+- `clipboard`: Read/write system clipboard.
+- `web_search`: Tavily-powered web search and content extraction.
+- `code_analysis`: Tree-sitter based code structure analysis (`analyze_repo`)
+  and file/element content retrieval (`read_file`).
+- `aider`: Spec prompt validation (`review_specification_prompt`) and
+  Aider-integrated code generation (`implement_specification_prompt`).
+- `mcpclient_*`: Tools for MCP server interaction (connect, list, call,
+  disconnect), dynamically registered based on `mcp_servers.json`.
+- `transfer`: Enables an agent to delegate the current task and context to
+  another agent.
+
+### LLM Providers & Thinking Mode
+
+AgentCrew abstracts LLM interactions, supporting multiple providers. "Thinking
+Mode" allows compatible LLMs (Claude, some OpenAI/Groq/Gemini models) to
+articulate their reasoning process. This can be configured via the `/think`
+command or model capabilities. For Claude, it uses a token budget; for OpenAI
+o-series, it uses "low", "medium", "high" effort levels.
+
+## Development & Customization
+
+- **Adding New Tools:** Create a module in `AgentCrew/modules/your_tool/` with
+  `service.py` and `tool.py`. Implement `get_your_tool_definition()`,
+  `get_your_tool_handler()`, and `register()` functions. Integrate into
+  `main.py` and `entry.qt.py`.
+- **Adding New LLM Providers:**
+  - **OpenAI-Compatible:** Add to `config.json` under `custom_llm_providers` or
+    via GUI.
+  - **New SDKs:** Create a service class inheriting `BaseLLMService`, integrate
+    into `ServiceManager` and `ModelRegistry`.
+- **Customizing Agents:** Modify `agents.toml` or use the GUI.
 
 ## Security and Responsible Usage Advisory
 
 AgentCrew provides extensive control over AI agents and external tool
-integrations. Users bear sole responsibility for:
+integrations. **Users bear sole responsibility for:**
 
 - The content and implications of agent system prompts.
 - The selection and enablement of external tools (MCP, file access, clipboard).
@@ -275,142 +479,6 @@ with advanced settings are fully understood. For optimal security:
 
 AgentCrew is a powerful system; its responsible operation is paramount.
 
-## Architectural Deep Dive
-
-Further details on the system's internal components:
-
-### The Agent Manager: Orchestration Core
-
-This centralized component is responsible for:
-
-- Maintaining a registry of all defined specialized agents.
-- Dynamically selecting the most appropriate agent for a given task or
-  conversational turn.
-- Managing the context-aware transfer process between agents.
-
-### Agent Activation Protocol
-
-Each agent is defined by:
-
-- A **specialized system prompt** engineered for its designated domain.
-- A **curated suite of tools** relevant to its operational expertise.
-- **Implicit custom reasoning patterns** shaped by its prompt and toolset.
-
-### LLM Provider Abstraction Layer
-
-This layer ensures interoperability across diverse LLM providers by:
-
-- **Standardizing interaction protocols** for a consistent internal API.
-- **Transforming message formats** between AgentCrew's canonical representation
-  and provider-specific schemas.
-- Managing provider-specific authentication mechanisms and API interaction
-  nuances.
-- Ensuring consistent tool registration and execution logic across all supported
-  LLMs.
-
-#### Exploiting Provider-Specific Strengths
-
-- **Claude (Anthropic)**: Leverages extended thinking mode for enhanced complex
-  reasoning.
-- **GPT (OpenAI)**: Utilizes advanced tool invocation and function calling.
-- **Groq**: Optimized for high-throughput, low-latency inference.
-- **DeepInfra**: Provides access to a broader selection of open-source models.
-- **Gemini (Google)**: Supports multimodal inputs and advanced content
-  generation.
-
-## Extended System Functionalities
-
-- **Web Content Ingestion**: Fetches and processes web content into markdown
-  format.
-- **Real-time Web Search**: Enables agents to query search engines for current
-  information.
-- **Targeted URL Content Extraction**: Analyzes and extracts data from specified
-  URLs.
-- **Model Context Protocol (MCP) Integration**: Connects to MCP-compliant
-  servers to augment AI capabilities with external tools.
-- **Persistent Memory System**: Stores, retrieves, and manages conversation
-  histories for contextual continuity.
-- **Code Structure Analysis**: Generates structural representations of source
-  code repositories.
-
-## Chat Interface Features
-
-- **File Attachment**: `/file <path>` integrates local files into the
-  conversation.
-- **Direct Web Operations**: Commands for URL scraping and web searches within
-  the chat.
-- **Clipboard Integration**: `Alt+C` copies AI responses.
-- **Multiline Input**: `Ctrl/Cmd+Enter` for submitting formatted, multi-line
-  messages.
-- **Repository Analysis**: On-demand structural analysis of codebases.
-
-## Extended Thinking Mode Protocol
-
-For tasks demanding deeper cognitive processing, AgentCrew supports an extended
-thinking mode (primary support via Claude, with adaptable "reasoning effort"
-levels for OpenAI). This allows the AI to:
-
-- Engage in step-by-step problem decomposition.
-- Articulate its reasoning process prior to delivering a final output.
-- Utilize a designated token budget for this deliberative phase.
-
-Activation: `/think <budget_or_level>` (e.g., `/think 2048` or `/think high` for
-OpenAI). Deactivation: `/think 0`.
-
-## Command Reference
-
-- `/file <file_path>`: Include specified file.
-- `/clear`: Clear current session history.
-- `/think <budget_or_level>`: Engage/configure extended thinking.
-- `/think 0`: Disable extended thinking.
-- `/model <model_id>`: Switch active AI model.
-- `/models`: List available AI models.
-- `/agent <agent_name>`: Switch active specialized agent.
-- `/agents`: List available specialized agents.
-- `exit` or `quit`: Terminate chat session.
-- **Input Control**: `Enter` for newline; `Ctrl/Cmd+Enter` to submit.
-
-## Memory System Architecture
-
-AgentCrew incorporates a persistent memory system designed to:
-
-- Automatically archive all conversational interactions.
-- Enable AI agents to retrieve relevant past conversations via the
-  `retrieve_memory` tool.
-- Implement automated pruning of conversations exceeding a one-month retention
-  period (future configurability planned).
-- Employ intelligent chunking and storage strategies for efficient and
-  contextually relevant retrieval.
-
-## Universal MCP Server Integration
-
-AgentCrew supports connections to any MCP-compatible server. Configuration is
-managed via `mcp_servers.json`:
-
-```json
-{
-  "unique_server_identifier": {
-    "name": "Descriptive Server Name",
-    "command": "executable_command",
-    "args": ["list", "of", "arguments"],
-    "env": {
-      "ENV_VAR_KEY": "value"
-    },
-    "enabledForAgents": ["AgentName1", "AgentName2"]
-  }
-}
-```
-
-Fields:
-
-- `unique_server_identifier`: A unique key for this server configuration.
-- `name`: A human-readable name.
-- `command`: The server startup command.
-- `args`: A list of arguments for the command.
-- `env`: Environment variables to be set for the server process.
-- `enabledForAgents`: A list of agent names authorized to utilize tools from
-  this MCP server.
-
 ## Development Roadmap
 
 Planned enhancements and future development directions:
@@ -418,38 +486,43 @@ Planned enhancements and future development directions:
 ### Enhanced Assistant Capabilities
 
 - [x] Web Search Integration
-- [x] Conversation Memory
-- [x] Code Analysis
+- [x] Conversation Memory (ChromaDB, Session Persistence)
+- [x] Code Analysis (Tree-sitter)
 - [x] Model Context Protocol (MCP) Support
 - [x] Command-line Thinking Mode Options
 - [x] Agents through Config
 - [x] Google A2A Compatible (Client & Server)
+- [x] GUI for Chat and Configuration
 
 ### Advanced Personalization
 
 - [x] Enhanced Memory (Adaptive memory retrieval)
 - [x] Custom OpenAI-Compatible Provider support (e.g., ollama, vllm)
-- [ ] Advanced Memory Indexing (Improved accuracy/performance)
 - [x] Adaptive User Context
-- [x] Multi-Agent Collaboration (Foundation established)
+- [x] Multi-Agent Collaboration (Foundation established, `transfer` tool)
+- [ ] Advanced Memory Indexing (Improved accuracy/performance)
 
 ### User Experience
 
-- [x] Session Management
-- [x] UI Improvements (Enhanced TUI)
-- [x] Configuration Profiles
+- [x] Session Management (Save/Load Conversations)
+- [x] UI Improvements (PySide6 GUI, Console Enhancements)
+- [x] Configuration Profiles (via environment variables and CLI args)
 - [ ] Memory Visualization & Management Tools
 - [ ] Agent Performance Metrics
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit pull requests or open
+issues for bugs, feature requests, or improvements.
 
 ## License
 
 AgentCrew is distributed under the [MIT License](LICENSE).
 
-## Conclusion: Advancing AI Interaction through AgentCrew
+## Conclusion
 
 AgentCrew represents a significant step towards more sophisticated, adaptable,
 and powerful AI-driven interactive systems. Its architecture prioritizes
-specialization, intelligent orchestration, and provider independence. This
-framework provides a robust foundation for developers to construct and explore
-advanced multi-agent AI applications. The potential applications are extensive,
-and community contributions are encouraged to further evolve its capabilities.
+specialization, intelligent orchestration, and provider independence, providing
+a robust foundation for developers to construct and explore advanced multi-agent
+AI applications.
