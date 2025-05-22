@@ -104,7 +104,11 @@ def setup_services(provider):
     llm_service = llm_manager.get_service(provider)
 
     # Initialize services
-    memory_service = ChromaMemoryService()
+    # Only use default groq when available
+    if os.getenv("GROQ_API_KEY"):
+        memory_service = ChromaMemoryService()
+    else:
+        memory_service = ChromaMemoryService(llm_service=llm_service)
     context_service = ContextPersistenceService()
     clipboard_service = ClipboardService()
     aider_service = SpecPromptValidationService("groq")

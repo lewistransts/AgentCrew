@@ -35,8 +35,9 @@ class ChromaMemoryService(BaseMemoryService):
         self.client = chromadb.PersistentClient(path=self.db_path)
 
         if not llm_service:
-            self.llm_service = GroqService()
-            self.llm_service.model = "llama-3.1-8b-instant"
+            if os.getenv("GROQ_API_KEY"):
+                self.llm_service = GroqService()
+                self.llm_service.model = "llama-3.1-8b-instant"
         else:
             self.llm_service = llm_service
 
@@ -222,19 +223,25 @@ class ChromaMemoryService(BaseMemoryService):
         Returns:
             Formatted string containing relevant context from past conversations
         """
-        analyze_result = await self.llm_service.process_message(
-            ANALYSIS_PROMPT.replace(
-                "{conversation_history}",
-                await self.retrieve_memory(user_input, 5, agent_name=agent_name),
-            ).replace("{user_input}", user_input)
-        )
-        return analyze_result
+        if self.llm_service:
+            analyze_result = await self.llm_service.process_message(
+                ANALYSIS_PROMPT.replace(
+                    "{conversation_history}",
+                    await self.retrieve_memory(user_input, 5, agent_name=agent_name),
+                ).replace("{user_input}", user_input)
+            )
+            return analyze_result
+        else:
+            return "No user context being processed"
 
     async def _semantic_extracting(self, input: str) -> str:
-        keywords = await self.llm_service.process_message(
-            SEMANTIC_EXTRACTING.replace("{user_input}", input)
-        )
-        return keywords
+        if self.llm_service:
+            keywords = await self.llm_service.process_message(
+                SEMANTIC_EXTRACTING.replace("{user_input}", input)
+            )
+            return keywords
+        else:
+            return input
 
     async def retrieve_memory(
         self, keywords: str, limit: int = 5, agent_name: str = "None"
