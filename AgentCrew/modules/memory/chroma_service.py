@@ -3,8 +3,10 @@ import chromadb
 import uuid
 import numpy as np
 from AgentCrew.modules.groq import GroqService
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+
+from AgentCrew.modules.llm.base import BaseLLMService
 
 from .base_service import BaseMemoryService
 from .voyageai_ef import VoyageEmbeddingFunction
@@ -19,7 +21,11 @@ import chromadb.utils.embedding_functions as embedding_functions
 class ChromaMemoryService(BaseMemoryService):
     """Service for storing and retrieving conversation memory using ChromaDB."""
 
-    def __init__(self, collection_name="conversation", llm_service=None):
+    def __init__(
+        self,
+        collection_name="conversation",
+        llm_service: Optional[BaseLLMService] = None,
+    ):
         """
         Initialize the memory service with ChromaDB.
 
@@ -40,6 +46,12 @@ class ChromaMemoryService(BaseMemoryService):
                 self.llm_service.model = "llama-3.1-8b-instant"
         else:
             self.llm_service = llm_service
+            if llm_service.provider_name == "google":
+                self.llm_service.model = "gemini-2.0-flash"
+            elif llm_service.provider_name == "claude":
+                self.llm_service.model = "claude-3-5-haiku-latest"
+            elif llm_service.provider_name == "openai":
+                self.llm_service.model = "gpt-4.1-nano"
 
         # Create or get collection for storing memories
         if os.getenv("VOYAGE_API_KEY"):
