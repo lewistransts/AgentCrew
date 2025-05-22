@@ -1,4 +1,9 @@
-# AgentCrew: Your Multi-Agent AI Assistant Framework
+<p align="center">
+  <a href="https://github.com/daltonnyx/AgentCrew">
+    <img src="https://saigontechnology.com/wp-content/uploads/2024/09/logo-black-1.svg" alt="AgentCrew Logo" width="300">
+  </a>
+</p>
+<h1 align="center">AgentCrew: Your Multi-Agent AI Assistant Framework</h1>
 
 [![GitHub stars](https://img.shields.io/github/stars/saigontechnology/AgentCrew)](https://github.com/saigontechnology/AgentCrew/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/saigontechnology/AgentCrew/blob/main/LICENSE)
