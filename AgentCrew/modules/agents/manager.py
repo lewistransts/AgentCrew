@@ -47,7 +47,7 @@ class AgentManager:
 
         return config.get("agents", []) + config.get("remote_agents", [])
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self):
         """Initialize the agent manager."""
         if not self._initialized:
             self.agents: Dict[str, BaseAgent] = {}
@@ -70,6 +70,15 @@ class AgentManager:
             agent: The agent to register
         """
         self.agents[agent.name] = agent
+
+    def deregister_agent(self, agent_name: str):
+        """
+        Register an agent with the manager.
+
+        Args:
+            agent: The agent to register
+        """
+        del self.agents[agent_name]
 
     def select_agent(self, agent_name: str) -> bool:
         """

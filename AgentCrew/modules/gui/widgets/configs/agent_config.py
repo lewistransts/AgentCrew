@@ -42,6 +42,7 @@ class AgentsConfigTab(QWidget):
 
         # Load agents configuration
         self.agents_config = self.config_manager.read_agents_config()
+        self._is_dirty = False
 
         self.init_ui()
         self.load_agents()
@@ -196,6 +197,14 @@ class AgentsConfigTab(QWidget):
         self.editor_layout.addWidget(self.save_btn)
         self.editor_layout.addStretch()
 
+        # Connect signals for editor fields to handle changes
+        self.name_input.textChanged.connect(self._on_editor_field_changed)
+        self.description_input.textChanged.connect(self._on_editor_field_changed)
+        self.temperature_input.textChanged.connect(self._on_editor_field_changed)
+        self.system_prompt_input.textChanged.connect(self._on_editor_field_changed)
+        for checkbox in self.tool_checkboxes.values():
+            checkbox.stateChanged.connect(self._on_editor_field_changed)
+
         right_panel.setWidget(self.editor_widget)
 
         # Add panels to splitter
@@ -223,17 +232,27 @@ class AgentsConfigTab(QWidget):
     def on_agent_selected(self, current, previous):
         """Handle agent selection."""
         if current is None:
-            self.set_editor_enabled(False)
+            self.set_editor_enabled(False)  # This will disable save_btn and reset dirty flag
             self.remove_agent_btn.setEnabled(False)
             return
 
-        # Enable editor and remove button
-        self.set_editor_enabled(True)
+        # Enable editor fields and remove button
+        self.set_editor_enabled(True)  # Enables fields
         self.remove_agent_btn.setEnabled(True)
-        self.save_btn.setEnabled(True)
 
         # Get agent data
         agent_data = current.data(Qt.ItemDataRole.UserRole)
+
+        # Temporarily block signals while populating form to avoid triggering _on_editor_field_changed
+        editor_widgets = [
+            self.name_input,
+            self.description_input,
+            self.temperature_input,
+            self.system_prompt_input,
+        ] + list(self.tool_checkboxes.values())
+
+        for widget in editor_widgets:
+            widget.blockSignals(True)
 
         # Populate form
         self.name_input.setText(agent_data.get("name", ""))
@@ -248,22 +267,40 @@ class AgentsConfigTab(QWidget):
         # Set system prompt
         self.system_prompt_input.setText(agent_data.get("system_prompt", ""))
 
+        for widget in editor_widgets:
+            widget.blockSignals(False)
+
+        # After loading data, mark as not dirty and disable save until a change is made
+        self._is_dirty = False
+        self.save_btn.setEnabled(False)
+
+    def _on_editor_field_changed(self):
+        """Mark configuration as dirty and enable save if an agent is selected and editor is active."""
+        # Check if an agent is selected and the editor part is enabled
+        if self.agents_list.currentItem() and self.name_input.isEnabled():
+            if not self._is_dirty:
+                self._is_dirty = True
+            self.save_btn.setEnabled(True)
+
     def set_editor_enabled(self, enabled: bool):
         """Enable or disable the editor form."""
         self.name_input.setEnabled(enabled)
         self.description_input.setEnabled(enabled)
         self.temperature_input.setEnabled(enabled)
         self.system_prompt_input.setEnabled(enabled)
-        self.save_btn.setEnabled(enabled)
 
         for checkbox in self.tool_checkboxes.values():
             checkbox.setEnabled(enabled)
+            
+        if not enabled:
+            self.save_btn.setEnabled(False)
+            self._is_dirty = False  # Reset dirty state when editor is disabled
 
     def add_new_agent(self):
         """Add a new agent to the configuration."""
         # Create a new agent with default values
         new_agent = {
-            "name": "New Agent",
+            "name": "NewAgent",
             "description": "Description for the new agent",
             "temperature": 0.5,
             "tools": ["memory", "clipboard"],
@@ -274,7 +311,12 @@ class AgentsConfigTab(QWidget):
         item = QListWidgetItem(new_agent["name"])
         item.setData(Qt.ItemDataRole.UserRole, new_agent)
         self.agents_list.addItem(item)
-        self.agents_list.setCurrentItem(item)
+        self.agents_list.setCurrentItem(item)  # This will trigger on_agent_selected
+
+        # on_agent_selected populates fields, sets _is_dirty = False, and save_btn = False.
+        # For a new agent, it's inherently "dirty" and should be saveable.
+        self._is_dirty = True
+        self.save_btn.setEnabled(True)
 
         # Focus on name field for immediate editing
         self.name_input.setFocus()
@@ -356,12 +398,16 @@ class AgentsConfigTab(QWidget):
         # Save all agents to config
         self.save_all_agents()
 
+        # After saving, mark as not dirty and disable save button
+        self._is_dirty = False
+        self.save_btn.setEnabled(False)
+
         # Show success message with restart notification
-        QMessageBox.information(
-            self,
-            "Configuration Saved",
-            f"Agent '{name}' saved successfully.\n\nPlease restart the application for changes to take effect.",
-        )
+        # QMessageBox.information(
+        #     self,
+        #     "Configuration Saved",
+        #     f"Agent '{name}' saved successfully.\n\nPlease restart the application for changes to take effect.",
+        # )
 
     def save_all_agents(self):
         """Save all agents to the configuration file."""

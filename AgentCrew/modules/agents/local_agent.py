@@ -41,7 +41,6 @@ class LocalAgent(BaseAgent):
         self.registered_tools = (
             set()
         )  # Set of tool names that are registered with the LLM
-        self.is_active = False
 
         self.register_tools()
 

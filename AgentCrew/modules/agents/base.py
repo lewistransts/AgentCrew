@@ -17,6 +17,7 @@ class BaseAgent(ABC):
         self.name = name
         self.description = description
         self.history = []
+        self.is_active = False
         self.shared_context_pool: Dict[str, List[int]] = {}
 
     @abstractmethod

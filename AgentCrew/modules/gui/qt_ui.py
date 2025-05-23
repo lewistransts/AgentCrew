@@ -1376,6 +1376,9 @@ class ChatWindow(QMainWindow, Observer):
                     lambda checked, name=agent_name: self.change_agent(name)
                 )
                 agents_menu.addAction(agent_action)
+            current_agent = agent_manager.get_current_agent()
+            if current_agent.name != self.message_handler.agent.name:
+                self.change_agent(current_agent.name)
 
     def display_debug_info(self):
         """Display debug information about the current messages."""

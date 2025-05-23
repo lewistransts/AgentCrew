@@ -3,6 +3,9 @@ import json
 import toml
 from typing import Dict, Any, Optional, List
 
+from AgentCrew.modules.agents.local_agent import LocalAgent
+from AgentCrew.modules.agents.manager import AgentManager
+
 
 class ConfigManagement:
     """
@@ -314,6 +317,7 @@ class ConfigManagement:
             config = ConfigManagement(agents_config_path)
             config.update_config(config_data, merge=False)
             config.save_config()
+            config.reload_agents_from_config(agents_config_path)
         except FileNotFoundError:
             # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(agents_config_path), exist_ok=True)
@@ -321,6 +325,54 @@ class ConfigManagement:
             # Create new config file
             with open(agents_config_path, "w", encoding="utf-8") as f:
                 toml.dump(config_data, f)
+
+    def reload_agents_from_config(self, agents_config_path):
+        agent_manager = AgentManager.get_instance()
+        new_agents_config = agent_manager.load_agents_from_config(agents_config_path)
+        for agent_cfg in new_agents_config:
+            # Update existing agent
+            agent_name = agent_manager.get_local_agent(agent_cfg["name"])
+            if agent_name:
+                was_actived = False
+                if agent_name.is_active:
+                    was_actived = True
+                    agent_name.deactivate()
+                agent_name.tools = agent_cfg.get("tools", [])
+                agent_name.system_prompt = agent_cfg.get("system_prompt", "")
+                agent_name.temperature = agent_cfg.get("temperature", 0.4)
+                agent_name.tool_definitions = {}
+                agent_name.register_tools()
+                if was_actived:
+                    agent_name.activate()
+            # New Agent
+            else:
+                clone_agent = agent_manager.get_current_agent()
+                if not isinstance(clone_agent, LocalAgent):
+                    clone_agent = [
+                        agent
+                        for agent in agent_manager.agents
+                        if isinstance(agent, LocalAgent)
+                    ][0]
+                agent_name = LocalAgent(
+                    name=agent_cfg["name"],
+                    description=agent_cfg["description"],
+                    llm_service=clone_agent.llm,
+                    services=clone_agent.services,
+                    tools=agent_cfg["tools"],
+                    temperature=agent_cfg.get("temperature", None),
+                )
+                agent_manager.register_agent(agent_name)
+        new_agent_name = [a["name"] for a in new_agents_config]
+        old_agent_name = [
+            n for n in agent_manager.agents.keys() if n not in new_agent_name
+        ]
+        for agent_name in old_agent_name:
+            agent = agent_manager.get_agent(agent_name)
+            if agent and agent.is_active:
+                agent.deactivate()
+                agent_manager.select_agent(new_agent_name[0])
+
+            agent_manager.deregister_agent(agent_name)
 
     def read_mcp_config(self) -> Dict[str, Any]:
         """
