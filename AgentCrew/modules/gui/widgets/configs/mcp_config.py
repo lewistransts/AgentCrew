@@ -30,6 +30,7 @@ class MCPsConfigTab(QWidget):
         super().__init__()
         self.config_manager = config_manager
         self.agent_manager = AgentManager.get_instance()
+        self.is_dirty = False  # Track unsaved changes
 
         # Load MCP configuration
         self.mcps_config = self.config_manager.read_mcp_config()
@@ -124,10 +125,12 @@ class MCPsConfigTab(QWidget):
 
         # Name field
         self.name_input = QLineEdit()
+        self.name_input.textChanged.connect(self._mark_dirty)
         form_layout.addRow("Name:", self.name_input)
 
         # Command field
         self.command_input = QLineEdit()
+        self.command_input.textChanged.connect(self._mark_dirty)
         form_layout.addRow("Command:", self.command_input)
 
         # Arguments section
@@ -210,6 +213,7 @@ class MCPsConfigTab(QWidget):
         self.agent_checkboxes = {}
         for agent in self.available_agents:
             checkbox = QCheckBox(agent)
+            checkbox.stateChanged.connect(self._mark_dirty)
             self.agent_checkboxes[agent] = checkbox
             enabled_layout.addWidget(checkbox)
 
@@ -251,16 +255,31 @@ class MCPsConfigTab(QWidget):
         right_panel.setWidget(self.editor_widget)
 
         # Add panels to splitter
+        splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(left_panel)
         splitter.addWidget(right_panel)
         splitter.setSizes([200, 600])  # Initial sizes
 
         # Add splitter to main layout
+        main_layout = QHBoxLayout()
         main_layout.addWidget(splitter)
         self.setLayout(main_layout)
 
         # Disable editor initially
         self.set_editor_enabled(False)
+
+    def _mark_dirty(self, *args, **kwargs):
+        """Mark the current configuration as dirty and update save button state."""
+        # Check if the editor is supposed to be active for the current item
+        if self.mcps_list.currentItem() and self.name_input.isEnabled():
+            self.is_dirty = True
+            self._update_save_button_state()
+
+    def _update_save_button_state(self):
+        """Enable or disable the save button based on current item and dirty state."""
+        current_item_selected = self.mcps_list.currentItem() is not None
+        can_save = current_item_selected and self.is_dirty
+        self.save_btn.setEnabled(can_save)
 
     def load_mcps(self):
         """Load MCP servers from configuration."""
@@ -281,7 +300,6 @@ class MCPsConfigTab(QWidget):
         # Enable editor and remove button
         self.set_editor_enabled(True)
         self.remove_mcp_btn.setEnabled(True)
-        self.save_btn.setEnabled(True)
 
         # Get MCP data
         server_id, server_config = current.data(Qt.ItemDataRole.UserRole)
@@ -296,7 +314,7 @@ class MCPsConfigTab(QWidget):
         # Add argument fields
         args = server_config.get("args", [])
         for arg in args:
-            self.add_argument_field(arg)
+            self.add_argument_field(arg, mark_dirty_on_add=False)
 
         # Clear existing env fields
         self.clear_env_fields()
@@ -304,12 +322,15 @@ class MCPsConfigTab(QWidget):
         # Add env fields
         env = server_config.get("env", {})
         for key, value in env.items():
-            self.add_env_field(key, value)
+            self.add_env_field(key, value, mark_dirty_on_add=False)
 
         # Set agent checkboxes
         enabled_agents = server_config.get("enabledForAgents", [])
         for agent, checkbox in self.agent_checkboxes.items():
             checkbox.setChecked(agent in enabled_agents)
+
+        self.is_dirty = False
+        self._update_save_button_state()
 
     def set_editor_enabled(self, enabled: bool):
         """Enable or disable the editor form."""
@@ -317,7 +338,6 @@ class MCPsConfigTab(QWidget):
         self.command_input.setEnabled(enabled)
         self.add_arg_btn.setEnabled(enabled)
         self.add_env_btn.setEnabled(enabled)
-        self.save_btn.setEnabled(enabled)
 
         for checkbox in self.agent_checkboxes.values():
             checkbox.setEnabled(enabled)
@@ -331,12 +351,17 @@ class MCPsConfigTab(QWidget):
             env_input["value_input"].setEnabled(enabled)
             env_input["remove_btn"].setEnabled(enabled)
 
-    def add_argument_field(self, value=""):
+        if not enabled:
+            self.is_dirty = False
+        self._update_save_button_state()
+
+    def add_argument_field(self, value="", mark_dirty_on_add=True):
         """Add a field for an argument."""
         arg_layout = QHBoxLayout()
 
         arg_input = QLineEdit()
         arg_input.setText(str(value))
+        arg_input.textChanged.connect(self._mark_dirty)
 
         remove_btn = QPushButton("Remove")
         remove_btn.setMaximumWidth(80)
@@ -374,6 +399,8 @@ class MCPsConfigTab(QWidget):
         # Connect remove button
         remove_btn.clicked.connect(lambda: self.remove_argument_field(arg_data))
 
+        if mark_dirty_on_add:
+            self._mark_dirty()
         return arg_data
 
     def remove_argument_field(self, arg_data):
@@ -387,23 +414,26 @@ class MCPsConfigTab(QWidget):
 
         # Remove from list
         self.arg_inputs.remove(arg_data)
+        self._mark_dirty()
 
     def clear_argument_fields(self):
         """Clear all argument fields."""
         while self.arg_inputs:
             self.remove_argument_field(self.arg_inputs[0])
 
-    def add_env_field(self, key="", value=""):
+    def add_env_field(self, key="", value="", mark_dirty_on_add=True):
         """Add a field for an environment variable."""
         env_layout = QHBoxLayout()
 
         key_input = QLineEdit()
         key_input.setText(str(key))
         key_input.setPlaceholderText("Key")
+        key_input.textChanged.connect(self._mark_dirty)
 
         value_input = QLineEdit()
         value_input.setText(str(value))
         value_input.setPlaceholderText("Value")
+        value_input.textChanged.connect(self._mark_dirty)
 
         remove_btn = QPushButton("Remove")
         remove_btn.setMaximumWidth(80)
@@ -447,6 +477,8 @@ class MCPsConfigTab(QWidget):
         # Connect remove button
         remove_btn.clicked.connect(lambda: self.remove_env_field(env_data))
 
+        if mark_dirty_on_add:
+            self._mark_dirty()
         return env_data
 
     def remove_env_field(self, env_data):
@@ -461,6 +493,7 @@ class MCPsConfigTab(QWidget):
 
         # Remove from list
         self.env_inputs.remove(env_data)
+        self._mark_dirty()
 
     def clear_env_fields(self):
         """Clear all environment variable fields."""
@@ -484,6 +517,10 @@ class MCPsConfigTab(QWidget):
         item.setData(Qt.ItemDataRole.UserRole, (server_id, new_server))
         self.mcps_list.addItem(item)
         self.mcps_list.setCurrentItem(item)
+
+        # Mark as dirty since this is a new item that needs to be saved
+        self.is_dirty = True
+        self._update_save_button_state()
 
         # Focus on name field for immediate editing
         self.name_input.setFocus()
@@ -579,15 +616,12 @@ class MCPsConfigTab(QWidget):
         current_item.setText(name)
         current_item.setData(Qt.ItemDataRole.UserRole, (server_id, server_config))
 
+        # Mark as clean since we just saved
+        self.is_dirty = False
+        self._update_save_button_state()
+
         # Save all servers to config
         self.save_all_mcps()
-
-        # Show success message with restart notification
-        QMessageBox.information(
-            self,
-            "Configuration Saved",
-            f"MCP server '{name}' saved successfully.\n\nPlease restart the application for changes to take effect.",
-        )
 
     def save_all_mcps(self):
         """Save all MCP servers to the configuration file."""
