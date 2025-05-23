@@ -19,7 +19,6 @@ from PySide6.QtCore import Qt, Signal
 from AgentCrew.modules import logger
 
 from AgentCrew.modules.config.config_management import ConfigManagement
-from AgentCrew.modules.llm.types import Model
 from typing import List, Optional, Dict, Any
 
 
@@ -299,7 +298,7 @@ class CustomLLMProvidersConfigTab(QWidget):
 
         self.default_model_id_edit.setEnabled(True)
         self.default_model_id_edit.clear()
-        
+
         self.is_stream_checkbox.setEnabled(True)
         self.is_stream_checkbox.setChecked(False)
 

@@ -38,7 +38,7 @@ class ConversationSidebar(QWidget):
 
     def setup_ui(self):
         self.setFixedWidth(250)
-        self.setStyleSheet("background-color: #181825;") # Catppuccin Mantle
+        self.setStyleSheet("background-color: #181825;")  # Catppuccin Mantle
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
@@ -67,10 +67,18 @@ class ConversationSidebar(QWidget):
         # Conversation list
         self.conversation_list = QListWidget()
         self.conversation_list.itemClicked.connect(self.on_conversation_selected)
-        self.conversation_list.setAlternatingRowColors(False) # Disable default alternating colors
-        self.conversation_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.conversation_list.customContextMenuRequested.connect(self.show_conversation_context_menu)
-        self.conversation_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.conversation_list.setAlternatingRowColors(
+            False
+        )  # Disable default alternating colors
+        self.conversation_list.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.CustomContextMenu
+        )
+        self.conversation_list.customContextMenuRequested.connect(
+            self.show_conversation_context_menu
+        )
+        self.conversation_list.setSelectionMode(
+            QAbstractItemView.SelectionMode.ExtendedSelection
+        )
         self.conversation_list.setStyleSheet(
             """
             QListWidget {
@@ -202,7 +210,7 @@ class ConversationSidebar(QWidget):
             if item_at_position:
                 selected_items = [item_at_position]
             else:
-                return # No item under cursor and no selection
+                return  # No item under cursor and no selection
 
         conversation_ids = []
         for item in selected_items:
@@ -238,7 +246,9 @@ class ConversationSidebar(QWidget):
             action_text = f"Delete {num_selected} Conversations"
 
         delete_action = QAction(action_text, self)
-        delete_action.triggered.connect(lambda: self.handle_delete_conversation_request(conversation_ids))
+        delete_action.triggered.connect(
+            lambda: self.handle_delete_conversation_request(conversation_ids)
+        )
         menu.addAction(delete_action)
 
         menu.exec_(self.conversation_list.mapToGlobal(position))
@@ -274,9 +284,9 @@ class ConversationSidebar(QWidget):
             for conv_id in conversation_ids:
                 if not self.message_handler.delete_conversation_by_id(conv_id):
                     any_failed = True
-            
+
             if any_failed:
-                # MessageHandler already notifies specific errors. 
+                # MessageHandler already notifies specific errors.
                 # This is a general notification if any of them failed.
                 self.error_occurred.emit(
                     "One or more conversations could not be deleted. "

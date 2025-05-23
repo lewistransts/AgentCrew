@@ -179,8 +179,6 @@ def get_mcp_connect_tool_handler():
                     "status": "error",
                 }
         except Exception as e:
-            import traceback
-
             logger.exception("MCP Connect Tool: Error initiating connection")
             return {
                 "content": f"Error initiating connection to MCP server '{server_id}': {str(e)}",
@@ -214,7 +212,6 @@ def get_mcp_list_servers_tool_handler():
         ) in server_configs.items():  # Iterate over all defined servers
             is_connected = connected_servers.get(server_id, False)
             # enabledForAgents might be a list or a single string, ensure consistent check
-            is_enabled_for_any_agent = True if config.enabledForAgents else False
 
             servers_info.append(
                 {
@@ -364,7 +361,9 @@ def get_mcp_disconnect_tool_handler():
                     "status": "info",
                 }
 
-            logger.info(f"MCP Disconnect Tool: Attempting to disconnect from {server_id}...")
+            logger.info(
+                f"MCP Disconnect Tool: Attempting to disconnect from {server_id}..."
+            )
             try:
                 # Run shutdown_single_server_connection on the MCPService's event loop.
                 manager.mcp_service._run_async(
@@ -377,9 +376,9 @@ def get_mcp_disconnect_tool_handler():
                     "status": "success",
                 }
             except Exception as e:
-                import traceback
-
-                logger.exception(f"MCP Disconnect Tool: Error disconnecting from MCP server '{server_id}'")
+                logger.exception(
+                    f"MCP Disconnect Tool: Error disconnecting from MCP server '{server_id}'"
+                )
                 return {
                     "content": f"Error disconnecting from MCP server '{server_id}': {str(e)}",
                     "status": "error",
@@ -396,8 +395,6 @@ def get_mcp_disconnect_tool_handler():
                     "status": "success",
                 }
             except Exception as e:
-                import traceback
-
                 logger.exception("MCP Disconnect Tool: Error during full MCP cleanup")
                 return {
                     "content": f"Error during full MCP cleanup: {str(e)}",

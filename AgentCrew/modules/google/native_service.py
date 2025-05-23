@@ -111,7 +111,9 @@ class GoogleAINativeService(BaseLLMService):
 
         # Ensure minimum budget is 1024 tokens
         if budget_tokens < 1024:
-            logger.warning("Warning: Minimum thinking budget is 1024 tokens. Setting to 1024.")
+            logger.warning(
+                "Warning: Minimum thinking budget is 1024 tokens. Setting to 1024."
+            )
             budget_tokens = 1024
 
         self.thinking_enabled = True

@@ -232,7 +232,9 @@ class AgentsConfigTab(QWidget):
     def on_agent_selected(self, current, previous):
         """Handle agent selection."""
         if current is None:
-            self.set_editor_enabled(False)  # This will disable save_btn and reset dirty flag
+            self.set_editor_enabled(
+                False
+            )  # This will disable save_btn and reset dirty flag
             self.remove_agent_btn.setEnabled(False)
             return
 
@@ -291,7 +293,7 @@ class AgentsConfigTab(QWidget):
 
         for checkbox in self.tool_checkboxes.values():
             checkbox.setEnabled(enabled)
-            
+
         if not enabled:
             self.save_btn.setEnabled(False)
             self._is_dirty = False  # Reset dirty state when editor is disabled

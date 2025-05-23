@@ -15,7 +15,7 @@ resolution-markers = [
 
 [[package]]
 name = "agentcrew"
-version = "0.3.6"
+version = "0.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },

@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional, List
 
 from AgentCrew.modules.agents.local_agent import LocalAgent
 from AgentCrew.modules.agents.manager import AgentManager
+from AgentCrew.modules.mcpclient.manager import MCPSessionManager
 
 
 class ConfigManagement:
@@ -331,19 +332,19 @@ class ConfigManagement:
         new_agents_config = agent_manager.load_agents_from_config(agents_config_path)
         for agent_cfg in new_agents_config:
             # Update existing agent
-            agent_name = agent_manager.get_local_agent(agent_cfg["name"])
-            if agent_name:
+            existing_agent = agent_manager.get_local_agent(agent_cfg["name"])
+            if existing_agent:
                 was_actived = False
-                if agent_name.is_active:
+                if existing_agent.is_active:
                     was_actived = True
-                    agent_name.deactivate()
-                agent_name.tools = agent_cfg.get("tools", [])
-                agent_name.system_prompt = agent_cfg.get("system_prompt", "")
-                agent_name.temperature = agent_cfg.get("temperature", 0.4)
-                agent_name.tool_definitions = {}
-                agent_name.register_tools()
+                    existing_agent.deactivate()
+                existing_agent.tools = agent_cfg.get("tools", [])
+                existing_agent.system_prompt = agent_cfg.get("system_prompt", "")
+                existing_agent.temperature = agent_cfg.get("temperature", 0.4)
+                existing_agent.tool_definitions = {}
+                existing_agent.register_tools()
                 if was_actived:
-                    agent_name.activate()
+                    existing_agent.activate()
             # New Agent
             else:
                 clone_agent = agent_manager.get_current_agent()
@@ -353,7 +354,7 @@ class ConfigManagement:
                         for agent in agent_manager.agents
                         if isinstance(agent, LocalAgent)
                     ][0]
-                agent_name = LocalAgent(
+                new_agent = LocalAgent(
                     name=agent_cfg["name"],
                     description=agent_cfg["description"],
                     llm_service=clone_agent.llm,
@@ -361,15 +362,14 @@ class ConfigManagement:
                     tools=agent_cfg["tools"],
                     temperature=agent_cfg.get("temperature", None),
                 )
-                agent_manager.register_agent(agent_name)
+                agent_manager.register_agent(new_agent)
         new_agent_name = [a["name"] for a in new_agents_config]
         old_agent_name = [
             n for n in agent_manager.agents.keys() if n not in new_agent_name
         ]
         for agent_name in old_agent_name:
-            agent = agent_manager.get_agent(agent_name)
-            if agent and agent.is_active:
-                agent.deactivate()
+            old_agent = agent_manager.get_agent(agent_name)
+            if old_agent and old_agent.is_active:
                 agent_manager.select_agent(new_agent_name[0])
 
             agent_manager.deregister_agent(agent_name)
@@ -408,8 +408,15 @@ class ConfigManagement:
             # Write to file
             with open(mcp_config_path, "w", encoding="utf-8") as f:
                 json.dump(config_data, f, indent=2)
+            self.reload_mcp_from_config()
         except Exception as e:
             raise ValueError(f"Error writing MCP configuration: {str(e)}")
+
+    def reload_mcp_from_config(self):
+        session_manager = MCPSessionManager.get_instance()
+        session_manager.cleanup()
+        session_manager = MCPSessionManager.force_new_instance()
+        session_manager.initialize()
 
     def read_custom_llm_providers_config(self) -> List[Dict[str, Any]]:
         """

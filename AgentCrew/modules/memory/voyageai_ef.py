@@ -2,8 +2,6 @@ from chromadb import Documents, EmbeddingFunction, Embeddings
 from chromadb.api.types import Space
 from typing import Optional, List, cast, Dict, Any
 from chromadb.utils.embedding_functions.schemas import validate_config_schema
-import numpy as np
-import numpy.typing as npt
 import os
 
 

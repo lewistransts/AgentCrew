@@ -137,7 +137,7 @@ class ModelRegistry:
             The current model if set, None otherwise
         """
         return self.current_model
-        
+
     def get_providers(self) -> List[str]:
         """
         Get all unique provider names from the registered models.

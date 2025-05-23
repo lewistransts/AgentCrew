@@ -1,4 +1,4 @@
-from typing import Dict, Any, Generator, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 from uuid import uuid4
 
 from pydantic import ValidationError

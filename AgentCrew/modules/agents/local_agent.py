@@ -79,11 +79,7 @@ class LocalAgent(BaseAgent):
             if self.services and tool_name in self.services:
                 service = self.services[tool_name]
                 if service:
-                    if tool_name == "llm":
-                        self.register_tool(
-                            service.register_tool, service.register_tool
-                        )  # Example: register LLM tools
-                    elif tool_name == "memory":
+                    if tool_name == "memory":
                         from AgentCrew.modules.memory.tool import (
                             register as register_memory,
                         )

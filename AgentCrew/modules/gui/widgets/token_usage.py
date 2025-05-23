@@ -3,10 +3,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QLabel,
 )
-from PySide6.QtGui import (
-    QColor,
-    QPalette,
-)
 
 
 class TokenUsageWidget(QWidget):
@@ -17,11 +13,11 @@ class TokenUsageWidget(QWidget):
         # self.setAutoFillBackground(True) # Remove this line
 
         # Set background color directly via stylesheet
-        self.setStyleSheet("background-color: #11111b;") # Catppuccin Crust
+        self.setStyleSheet("background-color: #11111b;")  # Catppuccin Crust
 
         # Create layout
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0) # Remove default margins if any
+        layout.setContentsMargins(0, 0, 0, 0)  # Remove default margins if any
 
         # Create labels
         self.token_label = QLabel(

@@ -3,7 +3,6 @@ import subprocess
 from typing import Any, Dict, List, Optional
 from tree_sitter_language_pack import get_parser
 from tree_sitter import Parser
-from AgentCrew.modules import logger
 
 
 class CodeAnalysisService:

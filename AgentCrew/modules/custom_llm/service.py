@@ -3,8 +3,6 @@ from AgentCrew.modules.openai import OpenAIService
 from mcp.types import ImageContent, TextContent
 from typing import Dict, Any, List, Optional, Tuple
 import json
-import contextlib
-from openai.types.chat import ChatCompletion
 from AgentCrew.modules import logger
 
 

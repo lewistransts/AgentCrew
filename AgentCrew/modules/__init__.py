@@ -1,13 +1,14 @@
 import logging
 import sys
 
+LOG_LEVEL = logging.ERROR
 # Create a logger
 logger = logging.getLogger("AgentCrew")
-logger.setLevel(logging.ERROR)  # Set default level to DEBUG
+logger.setLevel(LOG_LEVEL)  # Set default level to DEBUG
 
 # Create a console handler
 ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.ERROR)  # Set handler level
+ch.setLevel(LOG_LEVEL)  # Set handler level
 
 # Create a formatter and set it for the handler
 formatter = logging.Formatter(

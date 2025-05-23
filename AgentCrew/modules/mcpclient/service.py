@@ -1,8 +1,6 @@
-from contextlib import AsyncExitStack
 from AgentCrew.modules import logger
 from typing import Dict, Any, List, Optional, Callable
 from mcp import ClientSession, StdioServerParameters
-from AgentCrew.modules import logger
 from mcp.types import EmbeddedResource, ImageContent, TextContent
 from mcp.client.stdio import stdio_client
 from AgentCrew.modules.agents import AgentManager
@@ -41,11 +39,17 @@ class MCPService:
             async with stdio_client(server_params) as (stdio, write_stream):
                 logger.info(f"MCPService: stdio_client established for {server_id}")
                 async with ClientSession(stdio, write_stream) as session:
-                    logger.info(f"MCPService: ClientSession established for {server_id}")
+                    logger.info(
+                        f"MCPService: ClientSession established for {server_id}"
+                    )
                     await session.initialize()
                     self.sessions[server_id] = session
-                    self.connected_servers[server_id] = True  # Mark as connected before tool registration
-                    logger.info(f"MCPService: {server_id} connected. Registering tools...")
+                    self.connected_servers[server_id] = (
+                        True  # Mark as connected before tool registration
+                    )
+                    logger.info(
+                        f"MCPService: {server_id} connected. Registering tools..."
+                    )
 
                     for agent_name in server_config.enabledForAgents:
                         await self.register_server_tools(server_id, agent_name)
@@ -57,7 +61,7 @@ class MCPService:
 
         except asyncio.CancelledError:
             logger.info(f"MCPService: Connection task for {server_id} was cancelled.")
-        except Exception as e:
+        except Exception:
             logger.exception(
                 f"MCPService: Error in connection management for '{server_id}'"
             )
@@ -97,6 +101,7 @@ class MCPService:
         logger.info("MCPService: Shutting down all server connections...")
         active_tasks = []
         for server_id, event in list(self._server_shutdown_events.items()):
+            await self.deregister_server_tools(server_id)
             logger.info(f"MCPService: Signaling shutdown for {server_id}")
             event.set()
             if server_id in self._server_connection_tasks:
@@ -130,7 +135,9 @@ class MCPService:
                     await asyncio.wait_for(
                         task, timeout=10.0
                     )  # Wait for task to finish
-                    logger.info(f"MCPService: Connection task for {server_id} completed.")
+                    logger.info(
+                        f"MCPService: Connection task for {server_id} completed."
+                    )
                 except asyncio.TimeoutError:
                     logger.warning(
                         f"MCPService: Timeout waiting for {server_id} connection task to complete. It might be stuck."
@@ -149,7 +156,9 @@ class MCPService:
 
         # Clean up entries related to this server, though _manage_single_connection's finally should handle most
         self._server_connection_tasks.pop(server_id, None)
-        logger.info(f"MCPService: Shutdown process for {server_id} initiated/completed.")
+        logger.info(
+            f"MCPService: Shutdown process for {server_id} initiated/completed."
+        )
 
     async def register_server_tools(
         self, server_id: str, agent_name: Optional[str] = None
@@ -161,7 +170,9 @@ class MCPService:
             server_id: ID of the server to register tools from
         """
         if server_id not in self.sessions or not self.connected_servers.get(server_id):
-            logger.warning(f"Cannot register tools: Server '{server_id}' is not connected")
+            logger.warning(
+                f"Cannot register tools: Server '{server_id}' is not connected"
+            )
             return
 
         try:
@@ -193,9 +204,30 @@ class MCPService:
                     registry.register_tool(
                         tool_definition_factory(), handler_factory, self
                     )
-        except Exception as e:
+        except Exception:
             logger.exception(f"Error registering tools from server '{server_id}'")
             self.connected_servers[server_id] = False
+
+    async def deregister_server_tools(self, server_id: str):
+        agent_manager = AgentManager.get_instance()
+        for agent_name in agent_manager.agents.keys():
+            local_agent = agent_manager.get_local_agent(agent_name)
+            if not local_agent:
+                continue
+            if server_id in self.tools_cache:
+                for tool_name in self.tools_cache[server_id].keys():
+                    was_active = False
+                    if local_agent.is_active:
+                        was_active = True
+                        local_agent.deactivate()
+                    if (
+                        f"{server_id}_{tool_name}"
+                        in local_agent.tool_definitions.keys()
+                    ):
+                        del local_agent.tool_definitions[f"{server_id}_{tool_name}"]
+
+                    if was_active:
+                        local_agent.activate()
 
     def _format_tool_definition(
         self, tool: Any, server_id: str, provider: Optional[str] = None
@@ -310,7 +342,7 @@ class MCPService:
                     }
                     for tool in response.tools
                 ]
-            except Exception as e:
+            except Exception:
                 logger.exception(f"Error listing tools from server '{server_id}'")
                 self.connected_servers[server_id] = False
                 return []
