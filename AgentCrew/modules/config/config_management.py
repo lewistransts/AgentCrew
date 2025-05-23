@@ -334,16 +334,16 @@ class ConfigManagement:
             # Update existing agent
             existing_agent = agent_manager.get_local_agent(agent_cfg["name"])
             if existing_agent:
-                was_actived = False
+                was_active = False
                 if existing_agent.is_active:
-                    was_actived = True
+                    was_active = True
                     existing_agent.deactivate()
                 existing_agent.tools = agent_cfg.get("tools", [])
                 existing_agent.system_prompt = agent_cfg.get("system_prompt", "")
                 existing_agent.temperature = agent_cfg.get("temperature", 0.4)
                 existing_agent.tool_definitions = {}
                 existing_agent.register_tools()
-                if was_actived:
+                if was_active:
                     existing_agent.activate()
             # New Agent
             else:
@@ -373,6 +373,16 @@ class ConfigManagement:
                 agent_manager.select_agent(new_agent_name[0])
 
             agent_manager.deregister_agent(agent_name)
+        ## Finally update transfer prompt for agents
+        for _, agent in agent_manager.agents.items():
+            was_active = False
+            if agent.is_active:
+                was_active = True
+                agent.deactivate()
+            if isinstance(agent, LocalAgent):
+                agent.custom_system_prompt = None
+            if was_active:
+                agent_manager.select_agent(agent.name)
 
     def read_mcp_config(self) -> Dict[str, Any]:
         """
