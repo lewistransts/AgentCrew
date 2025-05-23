@@ -336,9 +336,14 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
             elif os.getenv("DEEPINFRA_API_KEY"):
                 provider = "deepinfra"
             else:
-                raise ValueError(
-                    "No LLM API key found. Please set either ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, or DEEPINFRA_API_KEY"
-                )
+                # Ask user to setup api key if nothing found
+                from AgentCrew.modules.gui.widgets.config_window import ConfigWindow
+
+                app = QApplication(sys.argv)
+                config_window = ConfigWindow()
+                config_window.tab_widget.setCurrentIndex(3)  # Show Settings tab
+                config_window.show()
+                sys.exit(app.exec())
         services = setup_services(provider, memory_llm)
 
         if mcp_config:

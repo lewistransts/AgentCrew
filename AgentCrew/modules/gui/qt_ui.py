@@ -1344,7 +1344,7 @@ class ChatWindow(QMainWindow, Observer):
         from AgentCrew.modules.gui.widgets.config_window import ConfigWindow
 
         config_window = ConfigWindow(self)
-        config_window.tab_widget.setCurrentIndex(2)  # Show Settings tab
+        config_window.tab_widget.setCurrentIndex(3)  # Show Settings tab
         config_window.exec()
 
     def refresh_agent_menu(self):
