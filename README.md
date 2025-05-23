@@ -64,8 +64,8 @@ curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d401
 powershell -ExecutionPolicy ByPass -c "irm https://gist.githubusercontent.com/daltonnyx/e2d9a4d371e095bfa07cf5246d7e0746/raw/af138f99ed5351dc59cae81143e058ef95b5fa37/install.ps1 | iex"
 ```
 
-> Notes: I have not tested Windows script yet since I don't have any Windows
-> machine, please open a ticket if you have trouble with it.
+> **Notes: I have not tested Windows script yet since I don't have any Windows
+> machine, please open a ticket if you have trouble with it.**
 
 ## Installation (using `uv`)
 
