@@ -2,6 +2,26 @@ from .types import Model
 
 _ANTHROPIC_MODELS = [
     Model(
+        id="claude-opus-4-20250514",
+        provider="claude",
+        name="Claude 4 Opus",
+        description="Anthropic's most capable and intelligent model yet. Claude Opus 4 sets new standards in complex reasoning and advanced coding",
+        capabilities=["thinking", "tool_use", "vision"],
+        default=False,
+        input_token_price_1m=15.0,
+        output_token_price_1m=75.0,
+    ),
+    Model(
+        id="claude-sonnet-4-20250514",
+        provider="claude",
+        name="Claude 4 Sonnet",
+        description="Anthropic's high-performance model with exceptional reasoning and efficiency",
+        capabilities=["thinking", "tool_use", "vision"],
+        default=False,
+        input_token_price_1m=3.0,
+        output_token_price_1m=15.0,
+    ),
+    Model(
         id="claude-3-7-sonnet-latest",
         provider="claude",
         name="Claude 3.7 Sonnet",

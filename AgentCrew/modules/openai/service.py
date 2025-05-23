@@ -1,13 +1,9 @@
 import os
 import json
 import mimetypes
-from typing import AsyncIterator, Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
-from openai.types.chat import ChatCompletionChunk
-from openai.types.chat.chat_completion import Choice
-from contextlib import _AsyncGeneratorContextManager
-from openai import AsyncStream
 from AgentCrew.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules import logger
@@ -182,7 +178,6 @@ class OpenAIService(BaseLLMService):
             "max_tokens": 16000,
         }
         if "thinking" in ModelRegistry.get_model_capabilities(self.model):
-            # stream_params["parallel_tool_calls"] = False
             stream_params.pop("max_tokens", None)
             if self.reasoning_effort:
                 stream_params["reasoning_effort"] = self.reasoning_effort

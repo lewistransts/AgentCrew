@@ -210,7 +210,7 @@ class MessageBubble(QFrame):
         # Set the text content (convert Markdown to HTML)
         self.set_text(text)
 
-        self.message_label.setMinimumWidth(900)
+        self.message_label.setMinimumWidth(600)
         self.message_label.setSizePolicy(
             QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum
         )

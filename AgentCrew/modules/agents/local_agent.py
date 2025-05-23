@@ -398,7 +398,8 @@ class LocalAgent(BaseAgent):
                 ) = self.llm.process_stream_chunk(
                     chunk, assistant_response, self.tool_uses
                 )
-                self.tool_uses = tool_uses
+                if tool_uses:
+                    self.tool_uses.extend(tool_uses)
                 if chunk_input_tokens > 0:
                     self.input_tokens_usage = chunk_input_tokens
                 if chunk_output_tokens > 0:

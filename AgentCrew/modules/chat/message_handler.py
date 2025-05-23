@@ -666,12 +666,10 @@ class MessageHandler(Observable):
                         self._notify(
                             "error", f"Failed to store conversation in memory: {str(e)}"
                         )
-                # Store the conversation turn reference for /jump command
-                turn = ConversationTurn(
-                    self.current_user_input,  # User message for preview
-                    self.current_user_input_idx,  # Index of the *start* of this turn's messages
+                self.store_conversation_turn(
+                    self.current_user_input, self.current_user_input_idx
                 )
-                self.conversation_turns.append(turn)
+                # Store the conversation turn reference for /jump command
                 self.current_user_input = None
                 self.current_user_input_idx = -1
 
@@ -704,6 +702,12 @@ class MessageHandler(Observable):
             return assistant_response, input_tokens, output_tokens
 
         except Exception as e:
+            if self.current_user_input:
+                self.store_conversation_turn(
+                    self.current_user_input, self.current_user_input_idx
+                )
+                self.current_user_input = None
+                self.current_user_input_idx = -1
             error_message = str(e)
             traceback_str = traceback.format_exc()
             self._notify(
@@ -715,6 +719,13 @@ class MessageHandler(Observable):
                 },
             )
             return None, 0, 0
+
+    def store_conversation_turn(self, user_input, input_index):
+        turn = ConversationTurn(
+            user_input,  # User message for preview
+            input_index,  # Index of the *start* of this turn's messages
+        )
+        self.conversation_turns.append(turn)
 
     # --- Add these new methods ---
     def list_conversations(self) -> List[Dict[str, Any]]:
@@ -780,8 +791,7 @@ class MessageHandler(Observable):
                             )
                             and not message_content.startswith("Content of ")
                         ):
-                            turn = ConversationTurn(message_content, i)
-                            self.conversation_turns.append(turn)
+                            self.store_conversation_turn(message_content, i)
 
                 print(f"Loaded conversation {conversation_id}")  # Optional: Debugging
                 self._notify(

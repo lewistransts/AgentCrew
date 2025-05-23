@@ -789,9 +789,6 @@ class ChatWindow(QMainWindow, Observer):
         )  # Display error in status bar
         self.expecting_response = False
 
-        # Re-enable input controls
-        self.set_input_controls_enabled(True)
-
     @Slot(str)
     def display_status_message(self, message):
         self.status_bar.showMessage(message, 5000)

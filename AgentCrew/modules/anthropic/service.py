@@ -217,24 +217,34 @@ class AnthropicService(BaseLLMService):
         elif chunk.type == "message_stop" and hasattr(chunk, "message"):
             if (
                 hasattr(chunk.message, "stop_reason")
+                and chunk.message.stop_reason == "refusal"
+            ):
+                raise ValueError(
+                    "Request has been refused. Please create new conversation or rollback to older message."
+                )
+
+            elif (
+                hasattr(chunk.message, "stop_reason")
                 and chunk.message.stop_reason == "tool_use"
                 and hasattr(chunk.message, "content")
             ):
                 # Extract tool use information
+                logger.info(chunk.message.content)
                 for content_block in chunk.message.content:
                     if (
                         hasattr(content_block, "type")
                         and content_block.type == "tool_use"
                     ):
-                        tool_uses = [
+                        if not tool_uses:
+                            tool_uses = []
+                        tool_uses.append(
                             {
                                 "name": content_block.name,
                                 "input": content_block.input,
                                 "id": content_block.id,
                                 "response": content_block,
                             }
-                        ]
-                        break
+                        )
                     # elif (
                     #     hasattr(content_block, "type")
                     #     and content_block.type == "thinking"
