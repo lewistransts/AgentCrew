@@ -209,6 +209,23 @@ ensures:
 - API keys for the LLM providers and services you intend to use (e.g., OpenAI,
   Anthropic, Tavily). At least one LLM provider API key is required.
 
+## Installation (one-line script)
+
+### Linux and MacOS
+
+```bash
+curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/9a75abc1811c0e2805352fd7d97e2326964d2403/install.sh | bash
+```
+
+### Windows
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://gist.githubusercontent.com/daltonnyx/e2d9a4d371e095bfa07cf5246d7e0746/raw/af138f99ed5351dc59cae81143e058ef95b5fa37/install.ps1 | iex"
+```
+
+> Notes: I have not tested Windows script yet since I don't have any Windows
+> machine, please open a ticket if you have trouble with it.
+
 ## Installation (using `uv`)
 
 1. **Clone the repository:**
