@@ -41,6 +41,77 @@ user-friendly GUI.
 
 <https://github.com/user-attachments/assets/43b84b63-027e-4615-8bd1-96211dc9b28e>
 
+## Prerequisites
+
+- Python 3.12+
+- `uv` Python package manager (Install with `pip install uv` or see
+  [official `uv` documentation](https://github.com/astral-sh/uv))
+- Git (required for the code analysis tool to list repository files)
+- API keys for the LLM providers and services you intend to use (e.g., OpenAI,
+  Anthropic, Tavily). At least one LLM provider API key is required.
+
+## Installation (one-line script)
+
+### Linux and MacOS
+
+```bash
+curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/9a75abc1811c0e2805352fd7d97e2326964d2403/install.sh | bash
+```
+
+### Windows
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://gist.githubusercontent.com/daltonnyx/e2d9a4d371e095bfa07cf5246d7e0746/raw/af138f99ed5351dc59cae81143e058ef95b5fa37/install.ps1 | iex"
+```
+
+> Notes: I have not tested Windows script yet since I don't have any Windows
+> machine, please open a ticket if you have trouble with it.
+
+## Installation (using `uv`)
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone https://github.com/daltonnyx/AgentCrew.git
+   cd AgentCrew
+   ```
+
+2. **Create and activate a virtual environment using `uv`:**
+
+   ```bash
+   uv venv
+   source .venv/bin/activate  # On Linux/macOS
+   # .\.venv\Scripts\activate  # On Windows (Command Prompt)
+   # .\.venv\Scripts\Activate.ps1 # On Windows (PowerShell)
+   ```
+
+3. **Install AgentCrew and its dependencies:**
+
+   ```bash
+   uv pip install .
+   ```
+
+   For development, including tools like `pyinstaller` and `pygments`:
+
+   ```bash
+   uv pip install .[dev]
+   ```
+
+   If you want to use the Mem0 memory service (optional alternative to
+   ChromaDB):
+
+   ```bash
+   uv pip install .[mem0ai]
+   ```
+
+4. **Install as a tool (optional, for global access):** This makes the
+   `agentcrew` command available system-wide if your `uv` tools directory is in
+   your PATH.
+
+   ```bash
+   uv tool install .
+   ```
+
 ## Core Tenets of the AgentCrew Design
 
 AgentCrew was conceptualized not merely as an LLM interface layer, but as a
@@ -199,77 +270,6 @@ ensures:
 - **Keyboard Navigation & Shortcuts:** Efficient interaction with `Ctrl+Enter`
   for send, `Ctrl+Shift+C` for copy, `Ctrl+L` for new chat, and history
   navigation in console.
-
-## Prerequisites
-
-- Python 3.12+
-- `uv` Python package manager (Install with `pip install uv` or see
-  [official `uv` documentation](https://github.com/astral-sh/uv))
-- Git (required for the code analysis tool to list repository files)
-- API keys for the LLM providers and services you intend to use (e.g., OpenAI,
-  Anthropic, Tavily). At least one LLM provider API key is required.
-
-## Installation (one-line script)
-
-### Linux and MacOS
-
-```bash
-curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/9a75abc1811c0e2805352fd7d97e2326964d2403/install.sh | bash
-```
-
-### Windows
-
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://gist.githubusercontent.com/daltonnyx/e2d9a4d371e095bfa07cf5246d7e0746/raw/af138f99ed5351dc59cae81143e058ef95b5fa37/install.ps1 | iex"
-```
-
-> Notes: I have not tested Windows script yet since I don't have any Windows
-> machine, please open a ticket if you have trouble with it.
-
-## Installation (using `uv`)
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/daltonnyx/AgentCrew.git
-   cd AgentCrew
-   ```
-
-2. **Create and activate a virtual environment using `uv`:**
-
-   ```bash
-   uv venv
-   source .venv/bin/activate  # On Linux/macOS
-   # .\.venv\Scripts\activate  # On Windows (Command Prompt)
-   # .\.venv\Scripts\Activate.ps1 # On Windows (PowerShell)
-   ```
-
-3. **Install AgentCrew and its dependencies:**
-
-   ```bash
-   uv pip install .
-   ```
-
-   For development, including tools like `pyinstaller` and `pygments`:
-
-   ```bash
-   uv pip install .[dev]
-   ```
-
-   If you want to use the Mem0 memory service (optional alternative to
-   ChromaDB):
-
-   ```bash
-   uv pip install .[mem0ai]
-   ```
-
-4. **Install as a tool (optional, for global access):** This makes the
-   `agentcrew` command available system-wide if your `uv` tools directory is in
-   your PATH.
-
-   ```bash
-   uv tool install .
-   ```
 
 ## Configuration
 
