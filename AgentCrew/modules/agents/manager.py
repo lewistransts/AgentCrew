@@ -193,19 +193,21 @@ class AgentManager:
                 ):
                     if "content" in msg:
                         content = ""
-                        if isinstance(msg["content"], str):
+                        processing_content = msg["content"]
+                        if msg.get("role", "") == "tool":
+                            processing_content = msg.get("tool_result", {}).get(
+                                "content", ""
+                            )
+                        if isinstance(processing_content, str):
                             content = msg.get("content", "")
                         elif (
-                            isinstance(msg["content"], List) and len(msg["content"]) > 0
+                            isinstance(processing_content, List)
+                            and len(processing_content) > 0
                         ):
-                            if "text" == msg.get("content", [])[0].get("type", ""):
-                                content = msg.get("content", [])[0]["text"]
-                            elif (
-                                msg.get("content", [])[0].get("type", "") == "image_url"
-                            ):
+                            if "text" == processing_content[0].get("type", ""):
+                                content = processing_content[0]["text"]
+                            elif processing_content[0].get("type", "") == "image_url":
                                 direct_injected_messages.append(msg)
-                        if msg.get("role", "") == "tool":
-                            content = msg.get("tool_result", {}).get("content", "")
                         if content.strip():
                             actor = (
                                 msg.get("agent", "Assistant")
@@ -292,10 +294,10 @@ class AgentManager:
   <transfer_rules>
     - When you encounter a task that falls outside your specialized expertise, you must transfer the conversation to a more appropriate agent from the available list. This ensures the user receives the most accurate and helpful assistance possible.
     - You're ONLY able to transfer to one agent at a time.
-    - When appropriate, transfer to the next agent or requestor agent with your result for smoothing conversation
-    - Agents DO NOT share same conversation to user with others.
+    - Define `post_action` in `transfer` tool's arguments whenever possible.
+    - Each Agent has his own conversation history with user. use `relevant_messages` to share any messages matter to the task.
     - Use `relevant_messages` to provide necessary message indices related to the task from your conversation history.
-    - To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments.
+    - To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments, include post_action whenever possible.
   </transfer_rules>
   <agent_lists>
 {"\n".join(agent_descriptions)}

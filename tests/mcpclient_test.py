@@ -4,7 +4,7 @@ import json
 from unittest.mock import MagicMock, patch, AsyncMock
 from AgentCrew.modules.mcpclient.config import MCPConfigManager, MCPServerConfig
 from AgentCrew.modules.mcpclient.service import MCPService
-from AgentCrew.modules.mcpclient.manager import MCPSessionManager
+from AgentCrew.modules.mcpclient import MCPSessionManager
 
 
 @pytest.fixture

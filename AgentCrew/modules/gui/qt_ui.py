@@ -28,7 +28,7 @@ from PySide6.QtCore import (
     QStringListModel,
 )
 from AgentCrew.modules.llm.model_registry import ModelRegistry
-from AgentCrew.modules.agents.manager import AgentManager
+from AgentCrew.modules.agents import AgentManager
 from PySide6.QtGui import (
     QKeySequence,
     QShortcut,

@@ -1,5 +1,7 @@
 from typing import Dict, Any, Callable
 
+from AgentCrew.modules.agents import AgentManager
+
 
 def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
     """
@@ -11,7 +13,7 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
     Returns:
         The tool definition
     """
-    tool_description = "transfer to a specialized agent when the current task requires expertise beyond the current agent's capabilities. Provide a clear explanation to the user why the transfer is necessary. IMPORTANT: transfered agent cannot see your conversation with user"
+    tool_description = "transfer to a specialized agent when the current task requires expertise beyond the current agent's capabilities. Provide a clear explanation to the user why the transfer is necessary."
     tool_arguments = {
         "target_agent": {
             "type": "string",
@@ -26,9 +28,9 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
             "items": {"type": "integer"},
             "description": "MUST include 0-based index of conversation's chat messages relate to this task including user messages, tool use results, assistant messages",
         },
-        "chain_agent": {
+        "post_action": {
             "type": "string",
-            "description": "Optional, Chain the request to other agent for further processing when necessary",
+            "description": "Define the next action for transfered agent after task has been completed. For example: report back to requestor agent about the task, ask user for the next phase, transfer it to other agent to continue the task, etc...",
         },
     }
     tool_required = ["target_agent", "task", "relevant_messages"]
@@ -57,7 +59,7 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
         }
 
 
-def get_transfer_tool_handler(agent_manager) -> Callable:
+def get_transfer_tool_handler(agent_manager: AgentManager) -> Callable:
     """
     Get the handler function for the transfer tool.
 
@@ -83,7 +85,7 @@ def get_transfer_tool_handler(agent_manager) -> Callable:
         target_agent = params.get("target_agent")
         task = params.get("task")
         relevant_messages = params.get("relevant_messages", [])
-        next_agent = params.get("chain_agent", "")
+        post_action = params.get("post_action", "")
 
         if not target_agent:
             raise ValueError("Error: No target agent specified")
@@ -101,13 +103,15 @@ def get_transfer_tool_handler(agent_manager) -> Callable:
         response = ""
 
         if result["success"] and result["transfer"]["from"] != "None":
-            response = f"I'm giving you task from {result['transfer']['from']}  \n---\n\n{task}\n---"
-
-            if next_agent:
-                response += f"\nTransfer to {next_agent} with relevant messages for further processing.  \n"
+            response = (
+                f"## Task from {result['transfer']['from']} via `transfer` tool: {task}"
+            )
 
             if result["transfer"]["relevant_data"]:
-                response += f"\n### Relevant messages:\n{'\n\n'.join(result['transfer']['relevant_data'])}"
+                response += f"\n## Shared Context:  \n{'\n\n'.join(result['transfer']['relevant_data'])}"
+
+            if post_action:
+                response += f"\n## When task is completed: {post_action}"
 
             return response
 

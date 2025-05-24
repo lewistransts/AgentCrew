@@ -19,7 +19,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QDoubleValidator
 
 from AgentCrew.modules.config.config_management import ConfigManagement
-from AgentCrew.modules.agents.manager import AgentManager
+from AgentCrew.modules.agents import AgentManager
 
 
 class AgentsConfigTab(QWidget):

@@ -3,7 +3,7 @@ Functions for generating A2A agent cards from SwissKnife agents.
 """
 
 from typing import List
-from AgentCrew.modules.agents.local_agent import LocalAgent
+from AgentCrew.modules.agents import LocalAgent
 from .common.types import AgentCard, AgentCapabilities, AgentSkill, AgentProvider
 
 

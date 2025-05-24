@@ -1,7 +1,7 @@
 import asyncio
 from typing import Dict, Any, Callable
 
-from AgentCrew.modules.agents.manager import AgentManager
+from AgentCrew.modules.agents import AgentManager
 from .base_service import BaseMemoryService
 
 

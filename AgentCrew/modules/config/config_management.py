@@ -3,9 +3,9 @@ import json
 import toml
 from typing import Dict, Any, Optional, List
 
-from AgentCrew.modules.agents.local_agent import LocalAgent
-from AgentCrew.modules.agents.manager import AgentManager
-from AgentCrew.modules.mcpclient.manager import MCPSessionManager
+from AgentCrew.modules.agents import LocalAgent
+from AgentCrew.modules.agents import AgentManager
+from AgentCrew.modules.mcpclient import MCPSessionManager
 
 
 class ConfigManagement:
