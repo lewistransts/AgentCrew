@@ -26,7 +26,7 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
         "relevant_messages": {
             "type": "array",
             "items": {"type": "integer"},
-            "description": "MUST include 0-based index of conversation's chat messages relate to this task including user messages, tool use results, assistant messages",
+            "description": "ONLY include 0-based index of conversation's chat messages directly related to this task either user messages, tool use results or assistant messages",
         },
         "post_action": {
             "type": "string",
