@@ -1,6 +1,7 @@
 import os
 import json
 import toml
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 
 from AgentCrew.modules.agents import LocalAgent
@@ -333,13 +334,16 @@ class ConfigManagement:
         for agent_cfg in new_agents_config:
             # Update existing agent
             existing_agent = agent_manager.get_local_agent(agent_cfg["name"])
+            system_prompt = agent_cfg.get("system_prompt", "").replace(
+                "{current_date}", datetime.today().strftime("%Y-%m-%d")
+            )
             if existing_agent:
                 was_active = False
                 if existing_agent.is_active:
                     was_active = True
                     existing_agent.deactivate()
                 existing_agent.tools = agent_cfg.get("tools", [])
-                existing_agent.system_prompt = agent_cfg.get("system_prompt", "")
+                existing_agent.set_system_prompt(system_prompt)
                 existing_agent.temperature = agent_cfg.get("temperature", 0.4)
                 existing_agent.tool_definitions = {}
                 existing_agent.register_tools()
@@ -362,6 +366,7 @@ class ConfigManagement:
                     tools=agent_cfg["tools"],
                     temperature=agent_cfg.get("temperature", None),
                 )
+                new_agent.set_system_prompt(system_prompt)
                 agent_manager.register_agent(new_agent)
         new_agent_name = [a["name"] for a in new_agents_config]
         old_agent_name = [
