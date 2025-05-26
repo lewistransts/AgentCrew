@@ -26,11 +26,11 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
         "relevant_messages": {
             "type": "array",
             "items": {"type": "integer"},
-            "description": "ONLY include 0-based index of conversation's chat messages directly related to this task either user messages, tool use results or assistant messages",
+            "description": "ONLY include 0-based index of conversation's chat messages that DIRECT related to this task. Either user messages, tool use results or assistant messages",
         },
         "post_action": {
             "type": "string",
-            "description": "Define the next action for transfered agent after task has been completed. For example: report back to requestor agent about the task, ask user for the next phase, transfer it to other agent to continue the task, etc...",
+            "description": "Define the next action for transfered agent after task has been completed, omit if no further action required. For example: report back to requestor agent about the task, ask user for the next phase, transfer it to other agent to continue the task, etc...",
         },
     }
     tool_required = ["target_agent", "task", "relevant_messages"]

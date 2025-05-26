@@ -296,7 +296,7 @@ class AgentManager:
     - You're ONLY able to transfer to one agent at a time.
     - Define `post_action` in `transfer` tool's arguments whenever possible.
     - Each Agent has his own conversation history with user. use `relevant_messages` to share any messages matter to the task.
-    - Use `relevant_messages` to provide necessary message indices related to the task from your conversation history.
+    - Use `relevant_messages` to provide message indices DIRECT related to the task from your conversation history.
     - To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments, include post_action whenever possible.
   </transfer_rules>
   <agent_lists>
