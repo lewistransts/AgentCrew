@@ -188,7 +188,7 @@ _GOOGLE_MODELS = [
         output_token_price_1m=0.4,
     ),
     Model(
-        id="gemini-2.5-flash-preview-04-17",
+        id="gemini-2.5-flash-preview-05-20",
         provider="google",
         name="Gemini 2.5 Flash Preview",
         description="Gemini 2.5 Flash is Google's first fully hybrid reasoning AI model, designed for high speed and cost-efficiency, allowing developers to toggle advanced reasoning on or off as needed.",

@@ -13,27 +13,28 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
     Returns:
         The tool definition
     """
-    tool_description = "transfer to a specialized agent when the current task requires expertise beyond the current agent's capabilities. Provide a clear explanation to the user why the transfer is necessary."
+    tool_description = "Transfers the current task to a specialized agent when the user's request requires expertise or capabilities beyond your current abilities. This ensures the user receives the most accurate and efficient assistance. YOU MUST provide essential context from the current conversation, as the target agent does NOT have access to the prior history. Always explain the reason for the transfer to the user before invoking this tool"
     tool_arguments = {
         "target_agent": {
             "type": "string",
-            "description": "The name of the specialized agent to transfer to. Refer to the ## Agents for list of available agents",
+            "description": "The unique identifier or name of the specialized agent to transfer the task to. Refer to the official <Available_Agents_List> tags for available specialist agents and their capabilities.",
         },
-        "task": {
+        "task_description": {
             "type": "string",
-            "description": "A precise description of the task the target agent should perform. This description MUST include the triggering keywords that prompted the transfer. Be specific and actionable.",
+            "description": "A precise, actionable description of the task for the target agent. This MUST clearly state what the target agent needs to achieve and SHOULD include any triggering keywords or phrases from the user that initiated the need for transfer. Think of this as the 'mission objective' for the other agent.",
         },
-        "relevant_messages": {
+        "included_context": {
             "type": "array",
-            "items": {"type": "integer"},
-            "description": "ONLY include 0-based index of conversation's chat messages that DIRECT related to this task. Either user messages, tool use results or assistant messages",
+            "items": {"type": "string"},
+            "description": "An array of verbatim quoted strings from the conversation history (user messages, your responses, previous tool outputs). This is VITAL as the target agent has NO prior conversation history. Select only essential snippets that are absolutely necessary for the target agent to understand the task, the history of the request, and complete the task accurately. Prioritize: 1. Important information you (the current agent) have already provided or discovered. 2. Any relevant previous tool outputs. 3. The user's original request/question. 4. Key clarifications or constraints provided by the user. Avoid including irrelevant chitchat. Be concise but comprehensive.",
         },
         "post_action": {
             "type": "string",
-            "description": "Define the next action for transfered agent after task has been completed, omit if no further action required. For example: report back to requestor agent about the task, ask user for the next phase, transfer it to other agent to continue the task, etc...",
+            "description": "Defines the expected next action for the target agent after it has completed its assigned task. For example: 'report back to \"requestor agent\" about the task', 'ask user for the next phase', 'transfer it to other agent to continue the task', etc...",
         },
     }
-    tool_required = ["target_agent", "task", "relevant_messages"]
+
+    tool_required = ["target_agent", "task_description", "included_context"]
     if provider == "claude":
         return {
             "name": "transfer",
@@ -83,8 +84,8 @@ def get_transfer_tool_handler(agent_manager: AgentManager) -> Callable:
             A string describing the result of the transfer
         """
         target_agent = params.get("target_agent")
-        task = params.get("task")
-        relevant_messages = params.get("relevant_messages", [])
+        task = params.get("task_description")
+        included_context = params.get("included_context", [])
         post_action = params.get("post_action", "")
 
         if not target_agent:
@@ -96,7 +97,7 @@ def get_transfer_tool_handler(agent_manager: AgentManager) -> Callable:
         if target_agent == agent_manager.current_agent.name:
             raise ValueError("Error: Cannot transfer to same agent")
 
-        result = agent_manager.perform_transfer(target_agent, task, relevant_messages)
+        result = agent_manager.perform_transfer(target_agent, task)
         if target_agent == "None":
             raise ValueError("Error: Task is completed. This transfer is invalid")
 
@@ -107,8 +108,8 @@ def get_transfer_tool_handler(agent_manager: AgentManager) -> Callable:
                 f"## Task from {result['transfer']['from']} via `transfer` tool: {task}"
             )
 
-            if result["transfer"]["relevant_data"]:
-                response += f"\n## Shared Context:  \n{'\n\n'.join(result['transfer']['relevant_data'])}"
+            if included_context:
+                response += f"\n## Shared Context:  \n{'\n\n'.join(included_context)}"
 
             if post_action:
                 response += f"\n## When task is completed: {post_action}"

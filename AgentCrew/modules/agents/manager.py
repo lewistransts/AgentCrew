@@ -160,9 +160,7 @@ class AgentManager:
             raise ValueError("Current agent is not set")
         return self.current_agent
 
-    def perform_transfer(
-        self, target_agent_name: str, task: str, relevant_messages: List[int]
-    ) -> Dict[str, Any]:
+    def perform_transfer(self, target_agent_name: str, task: str) -> Dict[str, Any]:
         """
         Perform a transfer to another agent.
 
@@ -181,16 +179,12 @@ class AgentManager:
 
         source_agent = self.current_agent
 
-        relevant_data = []
         direct_injected_messages = []
         if source_agent:
             if target_agent_name not in source_agent.shared_context_pool:
                 source_agent.shared_context_pool[target_agent_name] = []
             for i, msg in enumerate(source_agent.std_history):
-                if (
-                    i in relevant_messages
-                    and i not in source_agent.shared_context_pool[target_agent_name]
-                ):
+                if i not in source_agent.shared_context_pool[target_agent_name]:
                     if "content" in msg:
                         content = ""
                         processing_content = msg["content"]
@@ -208,24 +202,25 @@ class AgentManager:
                                 content = processing_content[0]["text"]
                             elif processing_content[0].get("type", "") == "image_url":
                                 direct_injected_messages.append(msg)
+                                source_agent.shared_context_pool[
+                                    target_agent_name
+                                ].append(i)
+                                continue
                         if content.strip():
-                            actor = (
-                                msg.get("agent", "Assistant")
-                                if msg["role"] == "assistant"
-                                else msg.get("role", "")
-                            )
-                            relevant_data.append(
-                                f"----Message from {actor}----\n{content}\n----End message from {actor}----"
-                            )
-                    # Set the new current agent
-                    source_agent.shared_context_pool[target_agent_name].append(i)
+                            if content.startswith(
+                                "Content of "
+                            ):  # file should be shared across agents
+                                direct_injected_messages.append(msg)
+                                # Set the new current agent
+                                source_agent.shared_context_pool[
+                                    target_agent_name
+                                ].append(i)
 
         # Record the transfer
         transfer_record = {
             "from": source_agent.name if source_agent else "None",
             "to": target_agent_name,
             "reason": task,
-            "relevant_data": relevant_data,
         }
         # Set the new current agent
         self.select_agent(target_agent_name)
@@ -291,17 +286,50 @@ class AgentManager:
             agent_descriptions.append(agent_desc)
 
         transfer_prompt = f"""<Agents>
-  <transfer_rules>
-    - When you encounter a task that falls outside your specialized expertise, you must transfer the conversation to a more appropriate agent from the available list. This ensures the user receives the most accurate and helpful assistance possible.
-    - You're ONLY able to transfer to one agent at a time.
-    - Define `post_action` in `transfer` tool's arguments whenever possible.
-    - Each Agent has his own conversation history with user. use `relevant_messages` to share any messages matter to the task.
-    - Use `relevant_messages` to provide message indices DIRECT related to the task from your conversation history.
-    - To perform a transfer, use `transfer` tool with target_agent, task, relevant_messages arguments, include post_action whenever possible.
-  </transfer_rules>
-  <agent_lists>
-{"\n".join(agent_descriptions)}
-  </agent_lists>
+  <Instruction_Overview>
+    Your primary function is to assist the user effectively. When a task requires expertise you don't possess, you MUST transfer it to a specialized agent. The success of this transfer critically depends on how well you prepare the information for the next agent, as **agents DO NOT share conversation history.**
+  </Instruction_Overview>
+
+  <Transfer_Protocol>
+    <Core_Principle_of_Transfer>
+      Your goal is to equip the `target_agent` with ALL necessary information to understand the user's need and continue the task seamlessly, as if they had been part of the conversation from the relevant starting point. The `target_agent` will have **NO ACCESS** to your prior conversation with the user, except for what you explicitly provide.
+    </Core_Principle_of_Transfer>
+
+    <Critical_Rules_for_Transferring_Tasks>
+      1.  **NO SHARED HISTORY:** This is the most important rule. Assume the `target_agent` knows absolutely nothing about the current conversation.
+      2.  **`included_context` is ESSENTIAL:**
+          *   You MUST use the `included_context` argument in the `transfer` tool.
+          *   Populate it with an array of **verbatim strings** (direct quotes) of key messages from the current conversation (user messages, your previous responses, or tool outputs).
+          *   **DO NOT include the content of files in this field.** Files are shared across agents.
+          *   These snippets MUST be **directly relevant and absolutely essential** for the `target_agent` to:
+              *   Understand the user's full intent.
+              *   Grasp the current state of the task.
+              *   Avoid asking the user to repeat information.
+          *   Select concise, impactful snippets. Prioritize information that provides crucial context, definitions, user preferences, or previous decisions.
+          *   If the `task` description fully and unambiguously captures a piece of information, you might not need to repeat it in `included_context`, but err on the side of inclusion for critical details.
+      3.  **`task` Description (PRECISE & SELF-CONTAINED):**
+          *   The `task` argument must provide a clear, precise, and actionable description of what the `target_agent` needs to do.
+          *   It MUST include any triggering keywords or specific details that prompted the transfer.
+          *   This description should be self-contained enough for the agent to understand the immediate objective.
+      4.  **User Communication:**
+          *   Before initiating the transfer, you MUST provide a clear explanation to the user about *why* the transfer is necessary and *what* they can expect.
+      5.  **Single Target Agent:** You can ONLY transfer to one `target_agent` at a time.
+      6.  **`post_action` (DEFINE WHEN POSSIBLE):**
+          *   Whenever a logical next step for the `target_agent` (after completing its assigned task) is clear, define it in the `post_action` argument. Examples: 'report back to the requesting agent about the task outcome', 'ask the user for the next phase', 'transfer to another agent (specify which) to continue the overall process'. If no specific follow-up is needed from the target agent beyond completing its task for the user, omit this.
+    </Critical_Rules_for_Transferring_Tasks>
+
+    <Tool_Usage_for_Transfer>
+      To perform a transfer, you MUST use the `transfer` tool. Ensure you correctly populate the following arguments:
+      *   `target_agent`: The exact name of the agent from the ## Agents list.
+      *   `task`: The precise, self-contained task description.
+      *   `included_context`: The array of verbatim conversation snippets.
+      *   `post_action`: (Optional, but encouraged) The next step for the target agent.
+    </Tool_Usage_for_Transfer>
+  </Transfer_Protocol>
+
+  <Available_Agents_List id="Agents">
+    {"\n".join(agent_descriptions)}
+  </Available_Agents_List>
 </Agents>"""
 
         return transfer_prompt
