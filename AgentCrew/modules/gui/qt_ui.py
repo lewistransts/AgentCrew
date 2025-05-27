@@ -673,9 +673,9 @@ class ChatWindow(QMainWindow, Observer):
 
         # Process events and scroll to show the new message
         QApplication.processEvents()
-        self.chat_scroll.verticalScrollBar().setValue(
-            self.chat_scroll.verticalScrollBar().maximum()
-        )
+        # self.chat_scroll.verticalScrollBar().setValue(
+        #     self.chat_scroll.verticalScrollBar().maximum()
+        # )
 
     def append_message(self, text, is_user=True, message_index=None, agent_name=None):
         """Adds a message bubble to the chat container."""
@@ -723,9 +723,9 @@ class ChatWindow(QMainWindow, Observer):
         QApplication.processEvents()
 
         # Scroll to the bottom to show new message
-        self.chat_scroll.verticalScrollBar().setValue(
-            self.chat_scroll.verticalScrollBar().maximum()
-        )
+        # self.chat_scroll.verticalScrollBar().setValue(
+        #     self.chat_scroll.verticalScrollBar().maximum()
+        # )
 
         return message_bubble
 
@@ -748,6 +748,10 @@ class ChatWindow(QMainWindow, Observer):
             }
         )
 
+        self.chat_scroll.verticalScrollBar().setValue(
+            self.chat_scroll.verticalScrollBar().maximum()
+        )
+
     @Slot(str)
     def display_response_chunk(self, chunk: str):
         """Display a response chunk from the assistant."""
@@ -762,9 +766,9 @@ class ChatWindow(QMainWindow, Observer):
             self.current_response_bubble.append_text(chunk)
             # Force update and scroll
             QApplication.processEvents()
-            self.chat_scroll.verticalScrollBar().setValue(
-                self.chat_scroll.verticalScrollBar().maximum()
-            )
+            # self.chat_scroll.verticalScrollBar().setValue(
+            #     self.chat_scroll.verticalScrollBar().maximum()
+            # )
         # Otherwise, create a new message (should not happen in normal operation)
         else:
             self.current_response_bubble = self.append_message(chunk, False)
@@ -1425,9 +1429,9 @@ class ChatWindow(QMainWindow, Observer):
 
             # Force update and scroll
             QApplication.processEvents()
-            self.chat_scroll.verticalScrollBar().setValue(
-                self.chat_scroll.verticalScrollBar().maximum()
-            )
+            # self.chat_scroll.verticalScrollBar().setValue(
+            #     self.chat_scroll.verticalScrollBar().maximum()
+            # )
 
     def append_thinking_message(self, text, agent_name):
         """Adds a thinking message bubble to the chat container."""
@@ -1450,9 +1454,9 @@ class ChatWindow(QMainWindow, Observer):
         QApplication.processEvents()
 
         # Scroll to the bottom to show new message
-        self.chat_scroll.verticalScrollBar().setValue(
-            self.chat_scroll.verticalScrollBar().maximum()
-        )
+        # self.chat_scroll.verticalScrollBar().setValue(
+        #     self.chat_scroll.verticalScrollBar().maximum()
+        # )
 
         return message_bubble
 
@@ -1496,6 +1500,9 @@ class ChatWindow(QMainWindow, Observer):
             self.display_thinking_chunk(data)  # data is the thinking chunk
         elif event == "thinking_completed":
             self.display_status_message("Thinking completed.")
+            self.chat_scroll.verticalScrollBar().setValue(
+                self.chat_scroll.verticalScrollBar().maximum()
+            )
             # Reset thinking bubble reference
             self.current_thinking_bubble = None
         elif event == "clear_requested":

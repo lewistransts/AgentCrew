@@ -1,6 +1,7 @@
 import markdown
 
 from PySide6.QtWidgets import (
+    QSizePolicy,
     QWidget,
     QVBoxLayout,
     QPushButton,
@@ -41,7 +42,9 @@ class SystemMessageWidget(QWidget):
         )  # Catppuccin Subtext0
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.message_label.setWordWrap(True)
-        self.message_label.setMaximumWidth(1200)  # Increased from 500 to 1200
+        self.message_label.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
+        )
         self.message_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
             | Qt.TextInteractionFlag.LinksAccessibleByMouse

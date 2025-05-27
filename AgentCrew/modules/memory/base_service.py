@@ -15,6 +15,16 @@ class BaseMemoryService(ABC):
         """Set the provider name for this service."""
         self._session_id = value
 
+    @property
+    def loaded_conversation(self) -> bool:
+        """Get the provider name for this service."""
+        return getattr(self, "_load_conversation", False)
+
+    @loaded_conversation.setter
+    def loaded_conversation(self, value: bool):
+        """Set the provider name for this service."""
+        self._load_conversation = value
+
     @abstractmethod
     async def store_conversation(
         self, user_message: str, assistant_response: str, agent_name: str = "None"

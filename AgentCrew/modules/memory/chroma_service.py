@@ -163,6 +163,8 @@ class ChromaMemoryService(BaseMemoryService):
                         "session_id": self.session_id,
                         "agent": agent_name,
                         "type": "conversation",
+                        "user_message": user_message,
+                        "assistant_messsage": assistant_response,
                     }
                 ],
             )
@@ -178,6 +180,8 @@ class ChromaMemoryService(BaseMemoryService):
                         "session_id": self.session_id,
                         "agent": agent_name,
                         "type": "conversation",
+                        "user_message": user_message,
+                        "assistant_messsage": assistant_response,
                     }
                 ],
                 ids=[memory_id],
@@ -208,11 +212,14 @@ class ChromaMemoryService(BaseMemoryService):
 
     async def need_generate_user_context(self, user_input: str) -> bool:
         keywords = await self._semantic_extracting(user_input)
-        if not self.current_embedding_context:
+        if not self.loaded_conversation and self.current_embedding_context is None:
             self.current_embedding_context = self.embedding_function([keywords])
             return True
 
         self.current_embedding_context = self.embedding_function([keywords])
+        # Cannot Calculate similarity
+        if len(self.context_embedding) == 0:
+            return False
         avg_conversation = np.mean(self.context_embedding, axis=0)
 
         similarity = self._cosine_similarity(
