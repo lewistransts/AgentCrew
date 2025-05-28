@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QScrollArea,
     QSplitter,
+    QMenu,  # Added
+    QStackedWidget,  # Added
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QDoubleValidator
@@ -65,8 +67,9 @@ class AgentsConfigTab(QWidget):
 
         # Buttons for agent list management
         list_buttons_layout = QHBoxLayout()
-        self.add_agent_btn = QPushButton("Add")
-        self.add_agent_btn.setStyleSheet("""
+
+        self.add_agent_menu_btn = QPushButton("Add Agent")
+        self.add_agent_menu_btn.setStyleSheet("""
             QPushButton {
                 background-color: #89b4fa; /* Catppuccin Blue */
                 color: #1e1e2e; /* Catppuccin Base */
@@ -74,6 +77,7 @@ class AgentsConfigTab(QWidget):
                 border-radius: 4px;
                 padding: 8px;
                 font-weight: bold;
+                padding-left: 12px; /* Add some padding for text */
             }
             QPushButton:hover {
                 background-color: #74c7ec; /* Catppuccin Sapphire */
@@ -85,8 +89,46 @@ class AgentsConfigTab(QWidget):
                 background-color: #45475a; /* Catppuccin Surface1 */
                 color: #6c7086; /* Catppuccin Overlay0 */
             }
+            QPushButton::menu-indicator {
+                /* image: url(myindicator.png); Adjust if using a custom image */
+                subcontrol-origin: padding;
+                subcontrol-position: right center;
+                right: 5px; /* Adjust as needed to position from the right edge */
+                width: 16px; /* Ensure there's enough space for the indicator */
+            }
         """)
-        self.add_agent_btn.clicked.connect(self.add_new_agent)
+        add_agent_menu = QMenu(self)
+        add_agent_menu.setStyleSheet("""
+            QMenu {
+                background-color: #181825; /* Catppuccin Mantle */
+                color: #cdd6f4; /* Catppuccin Text */
+                border: 1px solid #313244; /* Catppuccin Surface0 */
+                border-radius: 4px;
+                padding: 4px;
+            }
+            QMenu::item {
+                padding: 6px 20px;
+                background-color: transparent;
+            }
+            QMenu::item:selected {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                border-radius: 3px;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: #313244; /* Catppuccin Surface0 */
+                margin-left: 5px;
+                margin-right: 5px;
+            }
+        """)
+        add_local_action = add_agent_menu.addAction("Add Local Agent")
+        add_remote_action = add_agent_menu.addAction("Add Remote Agent")
+        self.add_agent_menu_btn.setMenu(add_agent_menu)
+
+        add_local_action.triggered.connect(self.add_new_local_agent)
+        add_remote_action.triggered.connect(self.add_new_remote_agent)
+
         self.remove_agent_btn = QPushButton("Remove")
         self.remove_agent_btn.setStyleSheet("""
             QPushButton {
@@ -111,7 +153,9 @@ class AgentsConfigTab(QWidget):
         self.remove_agent_btn.clicked.connect(self.remove_agent)
         self.remove_agent_btn.setEnabled(False)  # Disable until selection
 
-        list_buttons_layout.addWidget(self.add_agent_btn)
+        list_buttons_layout.addWidget(
+            self.add_agent_menu_btn
+        )  # Changed from self.add_agent_btn
         list_buttons_layout.addWidget(self.remove_agent_btn)
 
         left_layout.addWidget(QLabel("Agents:"))
@@ -123,49 +167,68 @@ class AgentsConfigTab(QWidget):
         right_panel.setWidgetResizable(True)
         # right_panel.setStyleSheet("background-color: #181825;") # Set by QDialog stylesheet
 
-        self.editor_widget = QWidget()
-        self.editor_widget.setStyleSheet(
-            "background-color: #181825;"
-        )  # Catppuccin Mantle
-        self.editor_layout = QVBoxLayout(self.editor_widget)
+        editor_container_widget = (
+            QWidget()
+        )  # Container for stacked widget and save button
+        editor_container_widget.setStyleSheet("background-color: #181825;")
+        self.editor_layout = QVBoxLayout(
+            editor_container_widget
+        )  # editor_layout now on container
 
-        # Form layout for agent properties
-        form_layout = QFormLayout()
+        self.editor_stacked_widget = QStackedWidget()
 
-        # Name field
-        self.name_input = QLineEdit()
-        form_layout.addRow("Name:", self.name_input)
+        # Local Agent Editor Widget
+        self.local_agent_editor_widget = QWidget()
+        local_agent_layout = QVBoxLayout(self.local_agent_editor_widget)
+        local_form_layout = QFormLayout()
 
-        # Description field
+        self.name_input = QLineEdit()  # This is for Local Agent Name
+        local_form_layout.addRow("Name:", self.name_input)
         self.description_input = QLineEdit()
-        form_layout.addRow("Description:", self.description_input)
-
-        # Temperature field
+        local_form_layout.addRow("Description:", self.description_input)
         self.temperature_input = QLineEdit()
-        self.temperature_input.setValidator(
-            QDoubleValidator(0.0, 2.0, 1)
-        )  # Range 0-2, 1 decimal
+        self.temperature_input.setValidator(QDoubleValidator(0.0, 2.0, 1))
         self.temperature_input.setPlaceholderText("0.0 - 2.0")
-        form_layout.addRow("Temperature:", self.temperature_input)
+        local_form_layout.addRow("Temperature:", self.temperature_input)
 
-        # Tools selection
         tools_group = QGroupBox("Tools")
         tools_layout = QVBoxLayout()
-
         self.tool_checkboxes = {}
         for tool in self.available_tools:
             checkbox = QCheckBox(tool)
             self.tool_checkboxes[tool] = checkbox
             tools_layout.addWidget(checkbox)
-
         tools_group.setLayout(tools_layout)
 
-        # System prompt
         self.system_prompt_input = QTextEdit()
         self.system_prompt_input.setMinimumHeight(200)
 
-        # Save button
+        local_agent_layout.addLayout(local_form_layout)
+        local_agent_layout.addWidget(tools_group)
+        local_agent_layout.addWidget(QLabel("System Prompt:"))
+        local_agent_layout.addWidget(self.system_prompt_input)
+        local_agent_layout.addStretch()
+
+        # Remote Agent Editor Widget
+        self.remote_agent_editor_widget = QWidget()
+        remote_agent_layout = QVBoxLayout(self.remote_agent_editor_widget)
+        remote_form_layout = QFormLayout()
+
+        self.remote_name_input = QLineEdit()
+        remote_form_layout.addRow("Name:", self.remote_name_input)
+        self.remote_base_url_input = QLineEdit()
+        self.remote_base_url_input.setPlaceholderText("e.g., http://localhost:8000")
+        remote_form_layout.addRow("Base URL:", self.remote_base_url_input)
+
+        remote_agent_layout.addLayout(remote_form_layout)
+        remote_agent_layout.addStretch()
+
+        self.editor_stacked_widget.addWidget(self.local_agent_editor_widget)
+        self.editor_stacked_widget.addWidget(self.remote_agent_editor_widget)
+
+        # Save button (common to both editors)
         self.save_btn = QPushButton("Save")
+        # ... (save_btn styling and connect remains the same)
         self.save_btn.setStyleSheet("""
             QPushButton {
                 background-color: #89b4fa; /* Catppuccin Blue */
@@ -187,25 +250,26 @@ class AgentsConfigTab(QWidget):
             }
         """)
         self.save_btn.clicked.connect(self.save_agent)
-        self.save_btn.setEnabled(False)  # Disable until selection
+        self.save_btn.setEnabled(False)
 
-        # Add all components to editor layout
-        self.editor_layout.addLayout(form_layout)
-        self.editor_layout.addWidget(tools_group)
-        self.editor_layout.addWidget(QLabel("System Prompt:"))
-        self.editor_layout.addWidget(self.system_prompt_input)
+        # Add stacked widget and save button to editor_layout
+        self.editor_layout.addWidget(self.editor_stacked_widget)  # Changed
         self.editor_layout.addWidget(self.save_btn)
-        self.editor_layout.addStretch()
+        # self.editor_layout.addStretch() # Removed, stretch is within individual editors
 
         # Connect signals for editor fields to handle changes
+        # Local agent fields
         self.name_input.textChanged.connect(self._on_editor_field_changed)
         self.description_input.textChanged.connect(self._on_editor_field_changed)
         self.temperature_input.textChanged.connect(self._on_editor_field_changed)
         self.system_prompt_input.textChanged.connect(self._on_editor_field_changed)
         for checkbox in self.tool_checkboxes.values():
             checkbox.stateChanged.connect(self._on_editor_field_changed)
+        # Remote agent fields
+        self.remote_name_input.textChanged.connect(self._on_editor_field_changed)
+        self.remote_base_url_input.textChanged.connect(self._on_editor_field_changed)
 
-        right_panel.setWidget(self.editor_widget)
+        right_panel.setWidget(editor_container_widget)  # Set the container widget
 
         # Add panels to splitter
         splitter.addWidget(left_panel)
@@ -223,106 +287,175 @@ class AgentsConfigTab(QWidget):
         """Load agents from configuration."""
         self.agents_list.clear()
 
-        agents = self.agents_config.get("agents", [])
-        for agent in agents:
-            item = QListWidgetItem(agent.get("name", "Unnamed Agent"))
-            item.setData(Qt.ItemDataRole.UserRole, agent)
+        # Load local agents
+        local_agents = self.agents_config.get("agents", [])
+        for agent_conf in local_agents:
+            item_data = agent_conf.copy()
+            item_data["agent_type"] = "local"
+            item = QListWidgetItem(item_data.get("name", "Unnamed Local Agent"))
+            item.setData(Qt.ItemDataRole.UserRole, item_data)
+            self.agents_list.addItem(item)
+
+        # Load remote agents
+        remote_agents = self.agents_config.get("remote_agents", [])
+        for agent_conf in remote_agents:
+            item_data = agent_conf.copy()
+            item_data["agent_type"] = "remote"
+            item = QListWidgetItem(item_data.get("name", "Unnamed Remote Agent"))
+            item.setData(Qt.ItemDataRole.UserRole, item_data)
             self.agents_list.addItem(item)
 
     def on_agent_selected(self, current, previous):
         """Handle agent selection."""
         if current is None:
-            self.set_editor_enabled(
-                False
-            )  # This will disable save_btn and reset dirty flag
+            self.set_editor_enabled(False)
             self.remove_agent_btn.setEnabled(False)
+            # Optionally hide both editors or show a placeholder
+            # self.editor_stacked_widget.setCurrentIndex(-1) # or a placeholder widget index
             return
 
-        # Enable editor fields and remove button
-        self.set_editor_enabled(True)  # Enables fields
+        self.set_editor_enabled(True)
         self.remove_agent_btn.setEnabled(True)
 
-        # Get agent data
         agent_data = current.data(Qt.ItemDataRole.UserRole)
+        agent_type = agent_data.get(
+            "agent_type", "local"
+        )  # Default to local if type is missing
 
-        # Temporarily block signals while populating form to avoid triggering _on_editor_field_changed
-        editor_widgets = [
+        # Temporarily block signals
+        all_editor_widgets = [
             self.name_input,
             self.description_input,
             self.temperature_input,
             self.system_prompt_input,
+            self.remote_name_input,
+            self.remote_base_url_input,
         ] + list(self.tool_checkboxes.values())
-
-        for widget in editor_widgets:
+        for widget in all_editor_widgets:
             widget.blockSignals(True)
 
-        # Populate form
-        self.name_input.setText(agent_data.get("name", ""))
-        self.description_input.setText(agent_data.get("description", ""))
-        self.temperature_input.setText(str(agent_data.get("temperature", "0.5")))
+        if agent_type == "local":
+            self.editor_stacked_widget.setCurrentWidget(self.local_agent_editor_widget)
+            self.name_input.setText(agent_data.get("name", ""))
+            self.description_input.setText(agent_data.get("description", ""))
+            self.temperature_input.setText(str(agent_data.get("temperature", "0.5")))
+            tools = agent_data.get("tools", [])
+            for tool, checkbox in self.tool_checkboxes.items():
+                checkbox.setChecked(tool in tools)
+            self.system_prompt_input.setText(agent_data.get("system_prompt", ""))
+            # Clear remote fields just in case
+            self.remote_name_input.clear()
+            self.remote_base_url_input.clear()
+        elif agent_type == "remote":
+            self.editor_stacked_widget.setCurrentWidget(self.remote_agent_editor_widget)
+            self.remote_name_input.setText(agent_data.get("name", ""))
+            self.remote_base_url_input.setText(agent_data.get("base_url", ""))
+            # Clear local fields
+            self.name_input.clear()
+            self.description_input.clear()
+            self.temperature_input.clear()
+            self.system_prompt_input.clear()
+            for checkbox in self.tool_checkboxes.values():
+                checkbox.setChecked(False)
 
-        # Set tool checkboxes
-        tools = agent_data.get("tools", [])
-        for tool, checkbox in self.tool_checkboxes.items():
-            checkbox.setChecked(tool in tools)
-
-        # Set system prompt
-        self.system_prompt_input.setText(agent_data.get("system_prompt", ""))
-
-        for widget in editor_widgets:
+        for widget in all_editor_widgets:
             widget.blockSignals(False)
 
-        # After loading data, mark as not dirty and disable save until a change is made
         self._is_dirty = False
         self.save_btn.setEnabled(False)
 
     def _on_editor_field_changed(self):
         """Mark configuration as dirty and enable save if an agent is selected and editor is active."""
-        # Check if an agent is selected and the editor part is enabled
-        if self.agents_list.currentItem() and self.name_input.isEnabled():
-            if not self._is_dirty:
-                self._is_dirty = True
-            self.save_btn.setEnabled(True)
+        if self.agents_list.currentItem():
+            current_editor_widget = self.editor_stacked_widget.currentWidget()
+            is_editor_active = False
+            if (
+                current_editor_widget == self.local_agent_editor_widget
+                and self.name_input.isEnabled()
+            ):
+                is_editor_active = True
+            elif (
+                current_editor_widget == self.remote_agent_editor_widget
+                and self.remote_name_input.isEnabled()
+            ):
+                is_editor_active = True
+
+            if is_editor_active:
+                if not self._is_dirty:
+                    self._is_dirty = True
+                self.save_btn.setEnabled(True)
 
     def set_editor_enabled(self, enabled: bool):
-        """Enable or disable the editor form."""
+        """Enable or disable all editor form fields."""
+        # Local agent fields
         self.name_input.setEnabled(enabled)
         self.description_input.setEnabled(enabled)
         self.temperature_input.setEnabled(enabled)
         self.system_prompt_input.setEnabled(enabled)
-
         for checkbox in self.tool_checkboxes.values():
             checkbox.setEnabled(enabled)
 
-        if not enabled:
-            self.save_btn.setEnabled(False)
-            self._is_dirty = False  # Reset dirty state when editor is disabled
+        # Remote agent fields
+        self.remote_name_input.setEnabled(enabled)
+        self.remote_base_url_input.setEnabled(enabled)
 
-    def add_new_agent(self):
-        """Add a new agent to the configuration."""
-        # Create a new agent with default values
-        new_agent = {
-            "name": "NewAgent",
-            "description": "Description for the new agent",
+        if not enabled:
+            # Clear all fields when disabling
+            self.name_input.clear()
+            self.description_input.clear()
+            self.temperature_input.clear()
+            self.system_prompt_input.clear()
+            for checkbox in self.tool_checkboxes.values():
+                checkbox.setChecked(False)
+            self.remote_name_input.clear()
+            self.remote_base_url_input.clear()
+
+            self.save_btn.setEnabled(False)
+            self._is_dirty = False
+            # self.editor_stacked_widget.setCurrentIndex(-1) # Optionally hide content
+
+    def add_new_local_agent(self):
+        """Add a new local agent to the configuration."""
+        new_agent_data = {
+            "name": "NewLocalAgent",
+            "description": "Description for the new local agent",
             "temperature": 0.5,
             "tools": ["memory", "clipboard"],
             "system_prompt": "You are a helpful assistant. Today is {current_date}.",
+            "agent_type": "local",
         }
 
-        # Add to list
-        item = QListWidgetItem(new_agent["name"])
-        item.setData(Qt.ItemDataRole.UserRole, new_agent)
+        item = QListWidgetItem(new_agent_data["name"])
+        item.setData(Qt.ItemDataRole.UserRole, new_agent_data)
         self.agents_list.addItem(item)
-        self.agents_list.setCurrentItem(item)  # This will trigger on_agent_selected
+        self.agents_list.setCurrentItem(item)  # Triggers on_agent_selected
 
-        # on_agent_selected populates fields, sets _is_dirty = False, and save_btn = False.
-        # For a new agent, it's inherently "dirty" and should be saveable.
+        # on_agent_selected will switch to local editor and populate.
+        # Mark as dirty and enable save.
         self._is_dirty = True
         self.save_btn.setEnabled(True)
-
-        # Focus on name field for immediate editing
         self.name_input.setFocus()
         self.name_input.selectAll()
+
+    def add_new_remote_agent(self):
+        """Add a new remote agent to the configuration."""
+        new_agent_data = {
+            "name": "NewRemoteAgent",
+            "base_url": "http://localhost:8000",
+            "agent_type": "remote",
+        }
+
+        item = QListWidgetItem(new_agent_data["name"])
+        item.setData(Qt.ItemDataRole.UserRole, new_agent_data)
+        self.agents_list.addItem(item)
+        self.agents_list.setCurrentItem(item)  # Triggers on_agent_selected
+
+        # on_agent_selected will switch to remote editor and populate.
+        # Mark as dirty and enable save.
+        self._is_dirty = True
+        self.save_btn.setEnabled(True)
+        self.remote_name_input.setFocus()
+        self.remote_name_input.selectAll()
 
     def remove_agent(self):
         """Remove the selected agent."""
@@ -330,9 +463,9 @@ class AgentsConfigTab(QWidget):
         if not current_item:
             return
 
-        agent_name = current_item.text()
+        agent_data = current_item.data(Qt.ItemDataRole.UserRole)
+        agent_name = agent_data.get("name", "this agent")
 
-        # Confirm deletion
         reply = QMessageBox.question(
             self,
             "Confirm Deletion",
@@ -341,17 +474,15 @@ class AgentsConfigTab(QWidget):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            # Remove from list
             row = self.agents_list.row(current_item)
             self.agents_list.takeItem(row)
 
-            # Clear editor
-            self.set_editor_enabled(False)
-            self.name_input.clear()
-            self.description_input.clear()
-            self.system_prompt_input.clear()
-            for checkbox in self.tool_checkboxes.values():
-                checkbox.setChecked(False)
+            # set_editor_enabled(False) is called by on_agent_selected when currentItem becomes None
+            # or when a new item is selected. If list becomes empty, on_agent_selected(None, old_item) is called.
+            if self.agents_list.count() == 0:
+                self.set_editor_enabled(False)  # Explicitly disable if list is empty
+                self.remove_agent_btn.setEnabled(False)
+
             self.save_all_agents()
 
     def save_agent(self):
@@ -360,71 +491,86 @@ class AgentsConfigTab(QWidget):
         if not current_item:
             return
 
-        # Get values from form
-        name = self.name_input.text().strip()
-        description = self.description_input.text().strip()
-        system_prompt = self.system_prompt_input.toPlainText().strip()
+        agent_data_from_list = current_item.data(Qt.ItemDataRole.UserRole)
+        agent_type = agent_data_from_list.get("agent_type", "local")
 
-        # Get and validate temperature
-        try:
-            temperature = float(self.temperature_input.text().strip() or "0.5")
-            temperature = max(0.0, min(2.0, temperature))  # Clamp between 0 and 2
-        except ValueError:
-            temperature = 0.5  # Default value if invalid
+        updated_agent_data = {}
 
-        # Validate
-        if not name:
-            QMessageBox.warning(self, "Validation Error", "Agent name cannot be empty.")
-            return
+        if agent_type == "local":
+            name = self.name_input.text().strip()
+            description = self.description_input.text().strip()
+            system_prompt = self.system_prompt_input.toPlainText().strip()
+            try:
+                temperature = float(self.temperature_input.text().strip() or "0.5")
+                temperature = max(0.0, min(2.0, temperature))
+            except ValueError:
+                temperature = 0.5
 
-        # Get selected tools
-        tools = [
-            tool
-            for tool, checkbox in self.tool_checkboxes.items()
-            if checkbox.isChecked()
-        ]
+            if not name:
+                QMessageBox.warning(
+                    self, "Validation Error", "Local Agent name cannot be empty."
+                )
+                return
 
-        # Update agent data
-        agent_data = {
-            "name": name,
-            "description": description,
-            "temperature": temperature,
-            "tools": tools,
-            "system_prompt": system_prompt,
-        }
+            tools = [t for t, cb in self.tool_checkboxes.items() if cb.isChecked()]
+            updated_agent_data = {
+                "name": name,
+                "description": description,
+                "temperature": temperature,
+                "tools": tools,
+                "system_prompt": system_prompt,
+                "agent_type": "local",
+            }
+            current_item.setText(name)
+        elif agent_type == "remote":
+            name = self.remote_name_input.text().strip()
+            base_url = self.remote_base_url_input.text().strip()
 
-        # Update item in list
-        current_item.setText(name)
-        current_item.setData(Qt.ItemDataRole.UserRole, agent_data)
+            if not name:
+                QMessageBox.warning(
+                    self, "Validation Error", "Remote Agent name cannot be empty."
+                )
+                return
+            if not base_url:  # Basic validation for URL
+                QMessageBox.warning(
+                    self, "Validation Error", "Remote Agent Base URL cannot be empty."
+                )
+                return
 
-        # Save all agents to config
+            updated_agent_data = {
+                "name": name,
+                "base_url": base_url,
+                "agent_type": "remote",
+            }
+            current_item.setText(name)
+
+        current_item.setData(Qt.ItemDataRole.UserRole, updated_agent_data)
         self.save_all_agents()
-
-        # After saving, mark as not dirty and disable save button
         self._is_dirty = False
         self.save_btn.setEnabled(False)
 
-        # Show success message with restart notification
-        # QMessageBox.information(
-        #     self,
-        #     "Configuration Saved",
-        #     f"Agent '{name}' saved successfully.\n\nPlease restart the application for changes to take effect.",
-        # )
-
     def save_all_agents(self):
         """Save all agents to the configuration file."""
-        agents = []
+        local_agents_list = []
+        remote_agents_list = []
 
         for i in range(self.agents_list.count()):
             item = self.agents_list.item(i)
             agent_data = item.data(Qt.ItemDataRole.UserRole)
-            agents.append(agent_data)
 
-        # Update config
-        self.agents_config["agents"] = agents
+            # Create a copy for saving, remove UI-specific 'agent_type'
+            config_data = agent_data.copy()
+            agent_type_for_sorting = config_data.pop(
+                "agent_type", "local"
+            )  # Default to local if missing
 
-        # Save to file
+            if agent_type_for_sorting == "local":
+                local_agents_list.append(config_data)
+            elif agent_type_for_sorting == "remote":
+                remote_agents_list.append(config_data)
+
+        self.agents_config["agents"] = local_agents_list
+        self.agents_config["remote_agents"] = remote_agents_list
+
         self.config_manager.write_agents_config(self.agents_config)
-
-        # Emit signal that configuration changed
         self.config_changed.emit()

@@ -20,10 +20,7 @@ class RemoteAgent(BaseAgent):
         self.card_resolver = A2ACardResolver(agent_url)
         self.agent_card = self.card_resolver.get_agent_card()
         self.client = A2AClient(self.agent_card, timeout=600)
-        self.name = name
-        self.description = self.agent_card.description
-        self.history = []
-        self.shared_context_pool: Dict[str, List[int]] = {}
+        super().__init__(name, self.agent_card.description)
 
     def activate(self) -> bool:
         """

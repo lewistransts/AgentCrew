@@ -212,7 +212,11 @@ tools = ["memory", "clipboard", "web_search", "code_analysis"]
     first_agent_name = None
     for agent_def in agent_definitions:
         if agent_def.get("base_url", ""):
-            agent = RemoteAgent(agent_def["name"], agent_def.get("base_url"))
+            try:
+                agent = RemoteAgent(agent_def["name"], agent_def.get("base_url"))
+            except Exception as e:
+                print("Error: cannot connect to remote agent, skipping...")
+                continue
         else:
             if not first_agent_name:
                 first_agent_name = agent_def["name"]
@@ -389,7 +393,13 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
 @click.option(
     "--mcp-config", default=None, help="Path to the mcp servers configuration file."
 )
-def a2a_server(host, port, base_url, provider, agent_config, mcp_config):
+@click.option(
+    "--memory-llm",
+    type=click.Choice(["claude", "groq", "openai", "google"]),
+    default=None,
+    help="LLM Model use for analyzing and processing memory",
+)
+def a2a_server(host, port, base_url, provider, agent_config, mcp_config, memory_llm):
     """Start an A2A server exposing all SwissKnife agents"""
     try:
         load_api_keys_from_config()
@@ -414,9 +424,9 @@ def a2a_server(host, port, base_url, provider, agent_config, mcp_config):
                     "No LLM API key found. Please set either ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, or DEEPINFRA_API_KEY"
                 )
 
+        services = setup_services(provider, memory_llm)
         if mcp_config:
             os.environ["MCP_CONFIG_PATH"] = mcp_config
-        services = setup_services(provider)
 
         # Set up agents from configuration
         setup_agents(services, agent_config, provider)

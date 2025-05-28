@@ -123,7 +123,7 @@ class AgentTaskManager(TaskManager):
                     thinking_chunk,
                 ) in agent.process_messages():
                     # Update current response
-                    if chunk_text:
+                    if response_message:
                         current_response = response_message
 
                     # Update task status
@@ -236,8 +236,8 @@ class AgentTaskManager(TaskManager):
             if task.id in self.streaming_tasks:
                 queue = self.streaming_tasks[task.id]
 
-                # Send final artifact
-                await queue.put(TaskArtifactUpdateEvent(id=task.id, artifact=artifact))
+                # No need to send last update with full response
+                # await queue.put(TaskArtifactUpdateEvent(id=task.id, artifact=artifact))
 
                 # Send final status
                 await queue.put(

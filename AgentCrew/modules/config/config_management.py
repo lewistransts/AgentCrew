@@ -3,8 +3,9 @@ import json
 import toml
 from datetime import datetime
 from typing import Dict, Any, Optional, List
+from AgentCrew.modules import logging
 
-from AgentCrew.modules.agents import LocalAgent
+from AgentCrew.modules.agents import LocalAgent, RemoteAgent
 from AgentCrew.modules.agents import AgentManager
 from AgentCrew.modules.mcpclient import MCPSessionManager
 
@@ -333,6 +334,15 @@ class ConfigManagement:
         new_agents_config = agent_manager.load_agents_from_config(agents_config_path)
         for agent_cfg in new_agents_config:
             # Update existing agent
+            if agent_cfg.get("base_url"):
+                try:
+                    agent_manager.agents[agent_cfg["name"]] = RemoteAgent(
+                        agent_cfg["name"], agent_cfg["base_url"]
+                    )
+                except Exception as e:
+                    logging.error(str(e))
+                finally:
+                    continue
             existing_agent = agent_manager.get_local_agent(agent_cfg["name"])
             system_prompt = agent_cfg.get("system_prompt", "").replace(
                 "{current_date}", datetime.today().strftime("%Y-%m-%d")
