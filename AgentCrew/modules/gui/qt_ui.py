@@ -208,7 +208,7 @@ class ChatWindow(QMainWindow, Observer):
             Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
         self.chat_scroll.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
 
         # Create token usage widget
