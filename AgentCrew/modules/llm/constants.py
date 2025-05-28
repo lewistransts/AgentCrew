@@ -130,15 +130,6 @@ _GROQ_MODELS = [
         output_token_price_1m=0.99,
     ),
     Model(
-        id="deepseek-r1-distill-qwen-32b",
-        provider="groq",
-        name="DeepSeek R1 Distill Qwen 32b",
-        description="DeepSeek's powerful model optimized for Groq",
-        capabilities=["thinking", "tool_use"],
-        input_token_price_1m=0.69,
-        output_token_price_1m=0.69,
-    ),
-    Model(
         id="llama-3.3-70b-versatile",
         provider="groq",
         name="Llama 3.3 70B",
@@ -195,6 +186,7 @@ _GOOGLE_MODELS = [
         capabilities=["tool_use", "vision", "thinking"],
         input_token_price_1m=0.15,
         output_token_price_1m=3.5,
+        default=True,
     ),
     Model(
         id="gemini-2.5-pro-preview-05-06",
@@ -204,7 +196,6 @@ _GOOGLE_MODELS = [
         capabilities=["tool_use", "thinking", "vision"],
         input_token_price_1m=1.25,
         output_token_price_1m=2.5,
-        default=True,
     ),
 ]
 

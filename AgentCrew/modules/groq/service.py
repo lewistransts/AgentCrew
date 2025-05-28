@@ -12,7 +12,12 @@ from groq import AsyncGroq
 from dotenv import load_dotenv
 from mcp.types import TextContent, ImageContent
 from groq.types.chat import ChatCompletion
-from AgentCrew.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
+from AgentCrew.modules.llm.base import (
+    BaseLLMService,
+    read_binary_file,
+    read_text_file,
+    AsyncIterator,
+)
 from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules import logger
 
@@ -241,18 +246,15 @@ class GroqService(BaseLLMService):
                 stop_animation.set()
                 animation_thread.join()
 
-            @contextlib.asynccontextmanager
-            async def simulate_stream(data: ChatCompletion):
-                self.current_input_tokens = (
-                    data.usage.prompt_tokens if data.usage else 0
-                )
-                self.current_output_tokens = (
-                    data.usage.completion_tokens if data.usage else 0
-                )
-                yield data.choices
+            if response.usage:
+                self.current_input_tokens = response.usage.prompt_tokens
+                self.current_output_tokens = response.usage.completion_tokens
+            else:
+                self.current_input_tokens = 0
+                self.current_output_tokens = 0
 
-            # Return a list containing the single response to simulate a stream
-            return simulate_stream(response)
+            # Return an AsyncIterator wrapping response.choices
+            return AsyncIterator(response.choices)
         else:
             # Use actual streaming when no tools are needed
             return await self.client.chat.completions.create(

@@ -104,8 +104,11 @@ def get_transfer_tool_handler(agent_manager: AgentManager) -> Callable:
         response = ""
 
         if result["success"] and result["transfer"]["from"] != "None":
-            response = (
-                f"## Task from {result['transfer']['from']} via `transfer` tool: {task}"
+            response = f"## Task from {result['transfer']['from']} via `transfer` tool: {task}  \n"
+
+            response += (
+                f"> Disclaimer: I only delegate task from {result['transfer']['from']}."
+                "If you need more context or asking question, use `transfer` tool  \n"
             )
 
             if included_context:

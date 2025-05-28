@@ -1,30 +1,10 @@
 from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules.openai import OpenAIService
+from AgentCrew.modules.llm.base import AsyncIterator
 from mcp.types import ImageContent, TextContent
 from typing import Dict, Any, List, Optional, Tuple
 import json
 from AgentCrew.modules import logger
-
-
-class AsyncIterator:
-    def __init__(self, seq):
-        self.iter = iter(seq)
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        try:
-            return next(self.iter)
-        except StopIteration:
-            raise StopAsyncIteration
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        # No specific cleanup is needed for this simple iterator wrapper
-        pass
 
 
 class CustomLLMService(OpenAIService):
