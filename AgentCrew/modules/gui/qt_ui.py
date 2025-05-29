@@ -650,14 +650,17 @@ class ChatWindow(QMainWindow, Observer):
             self.chat_scroll.verticalScrollBar().maximum()
         )
 
-    def append_file(self, file_path, is_base64=False):
+    def append_file(self, file_path, is_user=False, is_base64=False):
         # Create container for message alignment (similar to append_message)
         container = QWidget()
         container_layout = QHBoxLayout(container)
         container_layout.setContentsMargins(0, 0, 0, 0)
 
         # Create the message bubble
-        message_bubble = MessageBubble(None, True, "You")
+        if is_user:
+            message_bubble = MessageBubble(None, True, "You")
+        else:
+            message_bubble = MessageBubble(None, False, self.message_handler.agent.name)
 
         # Add the file display to the message bubble
         if is_base64:
@@ -665,8 +668,12 @@ class ChatWindow(QMainWindow, Observer):
         else:
             message_bubble.display_file(file_path)
 
-        container_layout.addWidget(message_bubble)
-        container_layout.addStretch(1)  # Push to left
+        if is_user:
+            container_layout.addWidget(message_bubble)
+            container_layout.addStretch(1)  # Push to left
+        else:
+            container_layout.addStretch(1)  # Push to left
+            container_layout.addWidget(message_bubble)
 
         # Add the container to the chat layout
         self.chat_layout.addWidget(container)
@@ -1078,8 +1085,11 @@ class ChatWindow(QMainWindow, Observer):
                         isinstance(first_item, dict)
                         and first_item.get("type") == "image_url"
                     ):
+                        print(first_item)
                         self.append_file(
-                            first_item.get("image_url", {}).get("url", ""), True
+                            first_item.get("image_url", {}).get("url", ""),
+                            is_user,
+                            True,
                         )
                         msg_idx += 1
                         continue
@@ -1540,6 +1550,8 @@ class ChatWindow(QMainWindow, Observer):
             # Re-enable controls only if not loading a conversation
             if not self.loading_conversation:
                 self.set_input_controls_enabled(True)
+        elif event == "image_generated":
+            self.append_file(data, False, True)
         elif event == "tool_use":
             self.display_tool_use(data)
         elif event == "tool_result":

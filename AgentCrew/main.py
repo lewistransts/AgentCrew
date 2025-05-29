@@ -104,7 +104,6 @@ def setup_services(provider, memory_llm=None):
     llm_service = llm_manager.get_service(provider)
 
     # Initialize services
-    # Only use default groq when available
     if memory_llm:
         memory_service = ChromaMemoryService(
             llm_service=llm_manager.initialize_standalone_service(memory_llm)

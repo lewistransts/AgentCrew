@@ -208,7 +208,8 @@ class MessageBubble(QFrame):
         self.message_label.setStyleSheet(f"color: {message_text_color};")
 
         # Set the text content (convert Markdown to HTML)
-        self.set_text(text)
+        if text:
+            self.set_text(text)
 
         self.message_label.setMinimumWidth(900)
         self.message_label.setSizePolicy(
