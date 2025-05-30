@@ -254,6 +254,24 @@ _DEEPINFRA_MODELS = [
         input_token_price_1m=0.1,
         output_token_price_1m=0.3,
     ),
+    Model(
+        id="deepseek-ai/DeepSeek-V3-0324",
+        provider="deepinfra",
+        name="DeepSeek V3 0324",
+        description="DeepSeek-V3-0324, a strong Mixture-of-Experts (MoE) language model with 671B total parameters with 37B activated for each token, an improved iteration over DeepSeek-V3",
+        capabilities=["text-generation", "tool_use"],
+        input_token_price_1m=0.3,
+        output_token_price_1m=0.88,
+    ),
+    Model(
+        id="deepseek-ai/DeepSeek-R1-0528",
+        provider="deepinfra",
+        name="DeepSeek R1 0528",
+        description="The DeepSeek R1 model has undergone a minor version upgrade, with the current version being DeepSeek-R1-0528.",
+        capabilities=["text-generation", "thinking"],
+        input_token_price_1m=0.5,
+        output_token_price_1m=2.18,
+    ),
 ]
 AVAILABLE_MODELS = (
     _ANTHROPIC_MODELS

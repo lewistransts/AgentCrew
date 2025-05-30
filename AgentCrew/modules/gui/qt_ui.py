@@ -1298,7 +1298,8 @@ class ChatWindow(QMainWindow, Observer):
             for model in models:
                 model_action = QAction(f"{model.name} ({model.id})", self)
                 model_action.triggered.connect(
-                    lambda checked, model_id=model.id: self.change_model(model_id)
+                    lambda checked,
+                    model_id=f"{model.provider}/{model.id}": self.change_model(model_id)
                 )
                 provider_menu.addAction(model_action)
 
@@ -1570,7 +1571,7 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "model_changed":
             self.add_system_message(f"Switched to {data['name']} ({data['id']})")
             self.status_indicator.setText(
-                f"Agent: {self.message_handler.agent.name} | Model: {data['id']}"
+                f"Agent: {self.message_handler.agent.name} | Model: {self.message_handler.agent.get_model()}"
             )
         elif event == "agent_changed_by_transfer":
             self.add_system_message(f"Transfered to {data} agent")

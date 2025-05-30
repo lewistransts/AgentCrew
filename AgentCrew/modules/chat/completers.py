@@ -48,7 +48,7 @@ class ModelCompleter(Completer):
 
             # Get all available models from the registry
             all_models = []
-            for provider in ["claude", "openai", "groq", "google", "deepinfra"]:
+            for provider in self.registry.get_providers():
                 for model in self.registry.get_models_by_provider(provider):
                     all_models.append((model.id, model.name, provider))
 
@@ -57,7 +57,7 @@ class ModelCompleter(Completer):
                 if model_id.startswith(word_before_cursor):
                     display = f"{model_id} - {model_name} ({provider})"
                     yield Completion(
-                        model_id,
+                        f"{provider}/{model_id}",
                         start_position=-len(word_before_cursor),
                         display=display,
                     )

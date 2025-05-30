@@ -19,6 +19,7 @@ from AgentCrew.modules.llm.service_manager import ServiceManager
 from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules.coding import SpecPromptValidationService
 from AgentCrew.modules.agents import AgentManager, LocalAgent, RemoteAgent
+from AgentCrew.modules.image_generation import ImageGenerationService
 from PySide6.QtWidgets import QApplication
 
 import nest_asyncio
@@ -38,6 +39,9 @@ def cli_prod():
     os.environ["SW_AGENTS_CONFIG"] = os.path.expanduser("~/.AgentCrew/agents.toml")
     os.environ["PERSISTENCE_DIR"] = os.path.expanduser("~/.AgentCrew/persistents")
     os.environ["AGENTCREW_CONFIG_PATH"] = os.path.expanduser("~/.AgentCrew/config.json")
+    os.environ["GENERATED_IMAGES_PATH"] = os.path.expanduser(
+        "~/.AgentCrew/generated_images"
+    )
     cli()  # Delegate to main CLI function
 
 
@@ -98,7 +102,7 @@ def setup_services(provider, memory_llm=None):
     if models:
         # Find default model for this provider
         default_model = next((m for m in models if m.default), models[0])
-        registry.set_current_model(default_model.id)
+        registry.set_current_model(f"{default_model.provider}/{default_model.id}")
 
     # Get the LLM service from the manager
     llm_service = llm_manager.get_service(provider)
@@ -133,6 +137,18 @@ def setup_services(provider, memory_llm=None):
         click.echo(f"⚠️ Code analysis tool not available: {str(e)}")
         code_analysis_service = None
 
+    # Initialize image generation service
+    try:
+        # Use OpenAI by default if API key is available
+        if os.getenv("OPENAI_API_KEY"):
+            image_gen_service = ImageGenerationService()
+        else:
+            image_gen_service = None
+            click.echo("⚠️ Image generation service not available: No API keys found.")
+    except Exception as e:
+        click.echo(f"⚠️ Image generation service not available: {str(e)}")
+        image_gen_service = None
+
     # try:
     #     scraping_service = ScrapingService()
     # except Exception as e:
@@ -156,6 +172,7 @@ def setup_services(provider, memory_llm=None):
         "web_search": search_service,
         "aider": aider_service,
         "context_persistent": context_service,
+        "image_generation": image_gen_service,
     }
     return services
 
@@ -279,6 +296,7 @@ def discover_and_register_tools(services=None):
         ("modules.clipboard.tool", "clipboard"),
         ("modules.web_search.tool", "web_search"),
         ("modules.coding.tool", "aider"),
+        ("modules.image_generation.tool", "image_generation"),
     ]
 
     for module_name, service_key in tool_modules:

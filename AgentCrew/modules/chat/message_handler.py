@@ -351,7 +351,7 @@ class MessageHandler(Observable):
         # If no model ID is provided, list available models
         if not model_id:
             models_by_provider = {}
-            for provider in ["claude", "openai", "groq", "google"]:
+            for provider in registry.get_providers():
                 models = registry.get_models_by_provider(provider)
                 if models:
                     models_by_provider[provider] = []
@@ -362,7 +362,7 @@ class MessageHandler(Observable):
                         )
                         models_by_provider[provider].append(
                             {
-                                "id": model.id,
+                                "id": f"{model.provider}/{model.id}",
                                 "name": model.name,
                                 "description": model.description,
                                 "capabilities": model.capabilities,

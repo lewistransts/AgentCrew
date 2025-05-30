@@ -109,7 +109,12 @@ class LocalAgent(BaseAgent):
                         )
 
                         register_spec_validator(service, self)
+                    elif tool_name == "image_generation":
+                        from AgentCrew.modules.image_generation.tool import (
+                            register as register_image_generation,
+                        )
 
+                        register_image_generation(service, self)
                     else:
                         print(f"⚠️ Tool {tool_name} not found in services")
             else:
@@ -322,7 +327,7 @@ class LocalAgent(BaseAgent):
         return self.llm.calculate_cost(input_tokens, output_tokens)
 
     def get_model(self) -> str:
-        return self.llm.model
+        return f"{self.llm.provider_name}/{self.llm.model}"
 
     def update_llm_service(self, new_llm_service: BaseLLMService) -> bool:
         """

@@ -40,6 +40,7 @@ class AgentsConfigTab(QWidget):
             "code_analysis",
             "web_search",
             "aider",
+            "image_generation",
         ]
 
         # Load agents configuration

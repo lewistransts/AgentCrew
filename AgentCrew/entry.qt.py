@@ -39,7 +39,7 @@ def setup_services(provider):
     if models:
         # Find default model for this provider
         default_model = next((m for m in models if m.default), models[0])
-        registry.set_current_model(default_model.id)
+        registry.set_current_model(f"{default_model.provider}/{default_model.id}")
 
     # Get the LLM service from the manager
     llm_service = llm_manager.get_service(provider)

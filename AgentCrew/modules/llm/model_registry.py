@@ -87,7 +87,7 @@ class ModelRegistry:
         Args:
             model: The model to register
         """
-        self.models[model.id] = model
+        self.models[f"{model.provider}/{model.id}"] = model
 
     def get_model(self, model_id: str) -> Optional[Model]:
         """
