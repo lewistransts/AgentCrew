@@ -38,7 +38,9 @@ class OpenAIService(BaseLLMService):
         Returns:
             bool: True if thinking mode is supported and successfully set, False otherwise.
         """
-        if "thinking" in ModelRegistry.get_model_capabilities(self.model):
+        if "thinking" in ModelRegistry.get_model_capabilities(
+            f"{self._provider_name}/{self.model}"
+        ):
             if budget_tokens == "0" or budget_tokens == "none":
                 self.reasoning_effort = None
             if budget_tokens not in ["low", "medium", "high"]:
@@ -51,7 +53,9 @@ class OpenAIService(BaseLLMService):
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         """Calculate the cost based on token usage."""
-        current_model = ModelRegistry.get_instance().get_model(self.model)
+        current_model = ModelRegistry.get_instance().get_model(
+            f"{self._provider_name}/{self.model}"
+        )
         if current_model:
             input_cost = (input_tokens / 1_000_000) * current_model.input_token_price_1m
             output_cost = (
@@ -93,7 +97,9 @@ class OpenAIService(BaseLLMService):
         mime_type, _ = mimetypes.guess_type(file_path)
 
         if mime_type and mime_type.startswith("image/"):
-            if "vision" not in ModelRegistry.get_model_capabilities(self.model):
+            if "vision" not in ModelRegistry.get_model_capabilities(
+                f"{self._provider_name}/{self.model}"
+            ):
                 return None
             image_data = read_binary_file(file_path)
             if image_data:
@@ -177,7 +183,9 @@ class OpenAIService(BaseLLMService):
             "stream_options": {"include_usage": True},
             "max_tokens": 16000,
         }
-        if "thinking" in ModelRegistry.get_model_capabilities(self.model):
+        if "thinking" in ModelRegistry.get_model_capabilities(
+            f"{self._provider_name}/{self.model}"
+        ):
             stream_params.pop("max_tokens", None)
             if self.reasoning_effort:
                 stream_params["reasoning_effort"] = self.reasoning_effort
@@ -193,7 +201,7 @@ class OpenAIService(BaseLLMService):
 
         # Add tools if available
         if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
-            self.model
+            f"{self._provider_name}/{self.model}"
         ):
             stream_params["tools"] = self.tools
 

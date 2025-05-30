@@ -105,7 +105,9 @@ class GoogleAINativeService(BaseLLMService):
             self.thinking_budget = 0
             logger.info("Thinking mode disabled.")
             return True
-        if "thinking" not in ModelRegistry.get_model_capabilities(self.model):
+        if "thinking" not in ModelRegistry.get_model_capabilities(
+            f"{self._provider_name}/{self.model}"
+        ):
             logger.warning("Thinking mode is disabled for this model.")
             return False
 
@@ -133,7 +135,9 @@ class GoogleAINativeService(BaseLLMService):
             float: Estimated cost in USD
         """
         # Current Gemini pricing as of March 2025
-        current_model = ModelRegistry.get_instance().get_model(self.model)
+        current_model = ModelRegistry.get_instance().get_model(
+            f"{self._provider_name}/{self.model}"
+        )
         if current_model:
             input_cost = (input_tokens / 1_000_000) * current_model.input_token_price_1m
             output_cost = (
@@ -186,7 +190,9 @@ class GoogleAINativeService(BaseLLMService):
         mime_type, _ = mimetypes.guess_type(file_path)
 
         if mime_type and mime_type.startswith("image/"):
-            if "vision" not in ModelRegistry.get_model_capabilities(self.model):
+            if "vision" not in ModelRegistry.get_model_capabilities(
+                f"{self._provider_name}/{self.model}"
+            ):
                 return None
             image_data = read_binary_file(file_path)
             if image_data:
@@ -373,7 +379,7 @@ class GoogleAINativeService(BaseLLMService):
 
             # Add tools if available
             if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
-                self.model
+                f"{self._provider_name}/{self.model}"
             ):
                 config.tools = self.tools
 

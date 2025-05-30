@@ -92,7 +92,9 @@ class CustomLLMService(OpenAIService):
             logger.info(f"Total tokens: {input_tokens + output_tokens:,}")
             logger.info(f"Estimated cost: ${total_cost:.4f}")
             analyze_result = response.choices[0].message.content or ""
-            if "thinking" in ModelRegistry.get_model_capabilities(self.model):
+            if "thinking" in ModelRegistry.get_model_capabilities(
+                f"{self._provider_name}/{self.model}"
+            ):
                 THINK_STARTED = "<think>"
                 THINK_STOPED = "</think>"
 
@@ -130,7 +132,7 @@ class CustomLLMService(OpenAIService):
 
         # Add tools if available
         if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
-            self.model
+            f"{self._provider_name}/{self.model}"
         ):
             stream_params["tools"] = self.tools
 
@@ -200,7 +202,9 @@ class CustomLLMService(OpenAIService):
             content = message.content or " "
             if hasattr(message, "reasoning") and message.reasoning:
                 thinking_content = (message.reasoning, None)
-            if "thinking" in ModelRegistry.get_model_capabilities(self.model):
+            if "thinking" in ModelRegistry.get_model_capabilities(
+                f"{self._provider_name}/{self.model}"
+            ):
                 THINK_STARTED = "<think>"
                 THINK_STOPED = "</think>"
                 think_start_idx = content.find(THINK_STARTED)

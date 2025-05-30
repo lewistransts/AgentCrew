@@ -3,6 +3,7 @@ from typing import Dict, Any, List, Optional, Tuple
 import json
 import os
 from dotenv import load_dotenv
+from AgentCrew.modules.llm.model_registry import ModelRegistry
 
 
 class GoogleAIService(OpenAIService):
@@ -63,7 +64,9 @@ class GoogleAIService(OpenAIService):
             ] + messages
 
         # Add tools if available
-        if self.tools and self.model != "gemini-2.0-flash-thinking-exp":
+        if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
+            f"{self._provider_name}/{self.model}"
+        ):
             stream_params["tools"] = self.tools
 
         return self.client.chat.completions.create(**stream_params, stream=True)

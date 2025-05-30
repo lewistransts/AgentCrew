@@ -58,7 +58,9 @@ class GroqService(BaseLLMService):
 
     def calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         """Calculate the cost based on token usage."""
-        current_model = ModelRegistry.get_instance().get_model(self.model)
+        current_model = ModelRegistry.get_instance().get_model(
+            f"{self._provider_name}/{self.model}"
+        )
         if current_model:
             input_cost = (input_tokens / 1_000_000) * current_model.input_token_price_1m
             output_cost = (
@@ -100,7 +102,9 @@ class GroqService(BaseLLMService):
         mime_type, _ = mimetypes.guess_type(file_path)
 
         if mime_type and mime_type.startswith("image/"):
-            if "vision" not in ModelRegistry.get_model_capabilities(self.model):
+            if "vision" not in ModelRegistry.get_model_capabilities(
+                f"{self._provider_name}/{self.model}"
+            ):
                 return None
             image_data = read_binary_file(file_path)
             if image_data:
@@ -218,7 +222,9 @@ class GroqService(BaseLLMService):
                 {"role": f"{system_role}", "content": self.system_prompt},
             ] + messages
 
-        if "thinking" in ModelRegistry.get_model_capabilities(self.model):
+        if "thinking" in ModelRegistry.get_model_capabilities(
+            f"{self._provider_name}/{self.model}"
+        ):
             stream_params["reasoning_format"] = "parsed"
             # stream_params["messages"].append(
             #     {"role": "assistant", "content": "<think>\n"}
@@ -226,7 +232,7 @@ class GroqService(BaseLLMService):
 
         # Add tools if available
         if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
-            self.model
+            f"{self._provider_name}/{self.model}"
         ):
             stream_params["tools"] = self.tools
 
