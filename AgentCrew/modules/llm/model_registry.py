@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 from .types import Model
 from .constants import AVAILABLE_MODELS
+from AgentCrew.modules import logger
 from AgentCrew.modules.config.config_management import ConfigManagement
 
 
@@ -32,6 +33,7 @@ class ModelRegistry:
         registry = ModelRegistry.get_instance()
         model = registry.get_model(mode_id)
         if not model:
+            logger.error("Model not found in registry: %s", mode_id)
             return []
         return model.capabilities
 
@@ -127,6 +129,7 @@ class ModelRegistry:
         if model:
             self.current_model = model
             return True
+        logger.warning("Model with ID '%s' not found in registry.", model_id)
         return False
 
     def get_current_model(self) -> Optional[Model]:
