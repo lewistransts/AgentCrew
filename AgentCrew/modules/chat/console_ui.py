@@ -174,6 +174,10 @@ class ConsoleUI(Observer):
         tool_use = data["tool_use"]
         error = data["error"]
         print(f"{RED}❌ Error in tool {tool_use['name']}: {error}{RESET}")
+        if self.live:
+            self.live.update("")
+            self.live.stop()
+            self.live = None
 
     def finish_response(self, response: str):
         """Finalize and display the complete response."""
@@ -197,6 +201,10 @@ class ConsoleUI(Observer):
                 print(f"{GRAY}{error['traceback']}{RESET}")
         else:
             print(f"\n{RED}❌ Error: {error}{RESET}")
+        if self.live:
+            self.live.update("")
+            self.live.stop()
+            self.live = None
 
     def display_message(self, message: str):
         """Display a generic message."""
