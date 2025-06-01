@@ -96,7 +96,6 @@ class CodeAssistant:
                 cwd=str(sanitized_path),
                 capture_output=True,
                 text=True,
-                timeout=180,
                 check=True,
             )
             return result.stdout
