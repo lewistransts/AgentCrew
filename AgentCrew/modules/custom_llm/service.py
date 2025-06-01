@@ -329,12 +329,18 @@ class CustomLLMService(OpenAIService):
             chunk_text = chunk.choices[0].delta.content
             if "<think>" in chunk_text:
                 self._is_thinking = True
+
             if self._is_thinking:
                 thinking_content = chunk_text
             else:
                 assistant_response += chunk_text
+
             if "</think>" in chunk_text:
                 self._is_thinking = False
+
+            # Remove chunk_text if still in thinking mode
+            if self._is_thinking:
+                chunk_text = None
 
         # Handle final chunk with usage information
         if hasattr(chunk, "usage"):
