@@ -268,7 +268,7 @@ _DEEPINFRA_MODELS = [
         provider="deepinfra",
         name="DeepSeek R1 0528",
         description="The DeepSeek R1 model has undergone a minor version upgrade, with the current version being DeepSeek-R1-0528.",
-        capabilities=["text-generation", "thinking"],
+        capabilities=["text-generation", "tool_use", "thinking"],
         input_token_price_1m=0.5,
         output_token_price_1m=2.18,
     ),
