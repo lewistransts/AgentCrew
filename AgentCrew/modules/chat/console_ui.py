@@ -159,6 +159,7 @@ class ConsoleUI(Observer):
 
     def display_tool_use(self, tool_use: Dict):
         """Display information about a tool being used."""
+        self.finish_live_update()
         print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
         print(f"\n{GRAY}{tool_use}{RESET}")
 
@@ -171,10 +172,15 @@ class ConsoleUI(Observer):
 
     def display_tool_error(self, data: Dict):
         """Display an error that occurred during tool execution."""
+        self.finish_live_update()
         tool_use = data["tool_use"]
         error = data["error"]
         print(f"{RED}❌ Error in tool {tool_use['name']}: {error}{RESET}")
+
+    def finish_live_update(self):
+        """stop the live update display."""
         if self.live:
+            self.console.print(self.live.get_renderable())
             self.live.update("")
             self.live.stop()
             self.live = None
