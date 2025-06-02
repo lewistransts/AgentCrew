@@ -1547,7 +1547,7 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "file_processed":
             # Create a message bubble for the file
             file_path = data["file_path"]
-            self.append_file(file_path)
+            self.append_file(file_path, is_user=True)
             # Re-enable controls only if not loading a conversation
             if not self.loading_conversation:
                 self.set_input_controls_enabled(True)

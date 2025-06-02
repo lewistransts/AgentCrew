@@ -260,7 +260,7 @@ class ConsoleUI(Observer):
             return
 
         print(f"{YELLOW}Available conversations:{RESET}")
-        for i, convo in enumerate(conversations, 1):
+        for i, convo in enumerate(conversations[:30], 1):
             # Format timestamp for better readability
             timestamp = convo.get("timestamp", "Unknown")
             if isinstance(timestamp, (int, float)):
