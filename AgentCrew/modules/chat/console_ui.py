@@ -27,6 +27,8 @@ from AgentCrew.modules.chat.constants import (
     RICH_GRAY,
 )
 
+CODE_THEME = "lightbulb"
+
 
 class ConsoleUI(Observer):
     """
@@ -155,7 +157,7 @@ class ConsoleUI(Observer):
         if len(lines) > height_limit:
             lines = lines[-height_limit:]
 
-        self.live.update(Markdown("\n".join(lines)))
+        self.live.update(Markdown("\n".join(lines), code_theme=CODE_THEME))
 
     def display_tool_use(self, tool_use: Dict):
         """Display information about a tool being used."""
@@ -194,7 +196,7 @@ class ConsoleUI(Observer):
 
         # Replace \n with two spaces followed by \n for proper Markdown line breaks
         markdown_formatted_response = response.replace("\n", "  \n")
-        self.console.print(Markdown(markdown_formatted_response))
+        self.console.print(Markdown(markdown_formatted_response, code_theme=CODE_THEME))
 
         # Store the latest response
         self.latest_assistant_response = response
@@ -346,7 +348,7 @@ class ConsoleUI(Observer):
                 print(f"\n{GREEN}{BOLD}🤖 {agent_name.upper()}:{RESET}")
                 content = self._extract_message_content(msg)
                 # Format as markdown for better display
-                self.console.print(Markdown(content))
+                self.console.print(Markdown(content, code_theme=CODE_THEME))
                 self.display_divider()
 
         print(f"{YELLOW}End of conversation history{RESET}\n")
