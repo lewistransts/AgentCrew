@@ -45,7 +45,13 @@ class AgentManager:
         except (toml.TomlDecodeError, json.JSONDecodeError):
             raise ValueError("Invalid configuration file format.")
 
-        return config.get("agents", []) + config.get("remote_agents", [])
+        # Filter enabled agents (default to True if enabled field is missing)
+        local_agents = [agent for agent in config.get("agents", []) 
+                       if agent.get("enabled", True)]
+        remote_agents = [agent for agent in config.get("remote_agents", [])
+                        if agent.get("enabled", True)]
+        
+        return local_agents + remote_agents
 
     def __init__(self):
         """Initialize the agent manager."""

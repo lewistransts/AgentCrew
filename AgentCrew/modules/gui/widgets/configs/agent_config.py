@@ -191,6 +191,11 @@ class AgentsConfigTab(QWidget):
         self.temperature_input.setValidator(QDoubleValidator(0.0, 2.0, 1))
         self.temperature_input.setPlaceholderText("0.0 - 2.0")
         local_form_layout.addRow("Temperature:", self.temperature_input)
+        
+        # Add enabled checkbox for local agents
+        self.enabled_checkbox = QCheckBox("Enabled")
+        self.enabled_checkbox.setChecked(True)  # Default to enabled
+        local_form_layout.addRow("", self.enabled_checkbox)
 
         tools_group = QGroupBox("Tools")
         tools_layout = QVBoxLayout()
@@ -220,6 +225,11 @@ class AgentsConfigTab(QWidget):
         self.remote_base_url_input = QLineEdit()
         self.remote_base_url_input.setPlaceholderText("e.g., http://localhost:8000")
         remote_form_layout.addRow("Base URL:", self.remote_base_url_input)
+        
+        # Add enabled checkbox for remote agents
+        self.remote_enabled_checkbox = QCheckBox("Enabled")
+        self.remote_enabled_checkbox.setChecked(True)  # Default to enabled
+        remote_form_layout.addRow("", self.remote_enabled_checkbox)
 
         remote_agent_layout.addLayout(remote_form_layout)
         remote_agent_layout.addStretch()
@@ -264,11 +274,13 @@ class AgentsConfigTab(QWidget):
         self.description_input.textChanged.connect(self._on_editor_field_changed)
         self.temperature_input.textChanged.connect(self._on_editor_field_changed)
         self.system_prompt_input.textChanged.connect(self._on_editor_field_changed)
+        self.enabled_checkbox.stateChanged.connect(self._on_editor_field_changed)
         for checkbox in self.tool_checkboxes.values():
             checkbox.stateChanged.connect(self._on_editor_field_changed)
         # Remote agent fields
         self.remote_name_input.textChanged.connect(self._on_editor_field_changed)
         self.remote_base_url_input.textChanged.connect(self._on_editor_field_changed)
+        self.remote_enabled_checkbox.stateChanged.connect(self._on_editor_field_changed)
 
         right_panel.setWidget(editor_container_widget)  # Set the container widget
 
@@ -329,8 +341,10 @@ class AgentsConfigTab(QWidget):
             self.description_input,
             self.temperature_input,
             self.system_prompt_input,
+            self.enabled_checkbox,
             self.remote_name_input,
             self.remote_base_url_input,
+            self.remote_enabled_checkbox,
         ] + list(self.tool_checkboxes.values())
         for widget in all_editor_widgets:
             widget.blockSignals(True)
@@ -340,6 +354,7 @@ class AgentsConfigTab(QWidget):
             self.name_input.setText(agent_data.get("name", ""))
             self.description_input.setText(agent_data.get("description", ""))
             self.temperature_input.setText(str(agent_data.get("temperature", "0.5")))
+            self.enabled_checkbox.setChecked(agent_data.get("enabled", True))
             tools = agent_data.get("tools", [])
             for tool, checkbox in self.tool_checkboxes.items():
                 checkbox.setChecked(tool in tools)
@@ -347,15 +362,18 @@ class AgentsConfigTab(QWidget):
             # Clear remote fields just in case
             self.remote_name_input.clear()
             self.remote_base_url_input.clear()
+            self.remote_enabled_checkbox.setChecked(True)  # Default for clearing
         elif agent_type == "remote":
             self.editor_stacked_widget.setCurrentWidget(self.remote_agent_editor_widget)
             self.remote_name_input.setText(agent_data.get("name", ""))
             self.remote_base_url_input.setText(agent_data.get("base_url", ""))
+            self.remote_enabled_checkbox.setChecked(agent_data.get("enabled", True))
             # Clear local fields
             self.name_input.clear()
             self.description_input.clear()
             self.temperature_input.clear()
             self.system_prompt_input.clear()
+            self.enabled_checkbox.setChecked(True)  # Default for clearing
             for checkbox in self.tool_checkboxes.values():
                 checkbox.setChecked(False)
 
@@ -393,12 +411,14 @@ class AgentsConfigTab(QWidget):
         self.description_input.setEnabled(enabled)
         self.temperature_input.setEnabled(enabled)
         self.system_prompt_input.setEnabled(enabled)
+        self.enabled_checkbox.setEnabled(enabled)
         for checkbox in self.tool_checkboxes.values():
             checkbox.setEnabled(enabled)
 
         # Remote agent fields
         self.remote_name_input.setEnabled(enabled)
         self.remote_base_url_input.setEnabled(enabled)
+        self.remote_enabled_checkbox.setEnabled(enabled)
 
         if not enabled:
             # Clear all fields when disabling
@@ -406,10 +426,12 @@ class AgentsConfigTab(QWidget):
             self.description_input.clear()
             self.temperature_input.clear()
             self.system_prompt_input.clear()
+            self.enabled_checkbox.setChecked(True)
             for checkbox in self.tool_checkboxes.values():
                 checkbox.setChecked(False)
             self.remote_name_input.clear()
             self.remote_base_url_input.clear()
+            self.remote_enabled_checkbox.setChecked(True)
 
             self.save_btn.setEnabled(False)
             self._is_dirty = False
@@ -423,6 +445,7 @@ class AgentsConfigTab(QWidget):
             "temperature": 0.5,
             "tools": ["memory", "clipboard"],
             "system_prompt": "You are a helpful assistant. Today is {current_date}.",
+            "enabled": True,
             "agent_type": "local",
         }
 
@@ -443,6 +466,7 @@ class AgentsConfigTab(QWidget):
         new_agent_data = {
             "name": "NewRemoteAgent",
             "base_url": "http://localhost:8000",
+            "enabled": True,
             "agent_type": "remote",
         }
 
@@ -520,6 +544,7 @@ class AgentsConfigTab(QWidget):
                 "temperature": temperature,
                 "tools": tools,
                 "system_prompt": system_prompt,
+                "enabled": self.enabled_checkbox.isChecked(),
                 "agent_type": "local",
             }
             current_item.setText(name)
@@ -541,6 +566,7 @@ class AgentsConfigTab(QWidget):
             updated_agent_data = {
                 "name": name,
                 "base_url": base_url,
+                "enabled": self.remote_enabled_checkbox.isChecked(),
                 "agent_type": "remote",
             }
             current_item.setText(name)
