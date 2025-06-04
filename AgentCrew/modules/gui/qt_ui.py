@@ -928,6 +928,60 @@ class ChatWindow(QMainWindow, Observer):
         self.current_response_bubble = None
         self.current_response_container = None
 
+    def display_consolidation(self, result: Dict[str, Any]):
+        """
+        Display the result of a conversation consolidation.
+
+        Args:
+            result: Dictionary containing consolidation results
+        """
+        self.display_conversation(
+            self.message_handler.streamline_messages,
+            self.message_handler.current_conversation_id,
+        )
+
+    def append_consolidated_message(self, text, metadata=None):
+        """
+        Add a consolidated message with special styling to the chat.
+
+        Args:
+            text: The summary text
+            metadata: Optional metadata about the consolidation
+        """
+        # Create container for message
+        container = QWidget()
+        container_layout = QHBoxLayout(container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Create the message bubble with special styling
+        message_bubble = MessageBubble(
+            text, False, "Conversation Summary", is_consolidated=True
+        )
+
+        # If we have metadata, add it to the message bubble
+        if metadata:
+            msg_count = metadata.get("messages_consolidated", 0)
+            consolidated_tokens = metadata.get("consolidated_token_count", 0)
+            origin_tokens = metadata.get("original_token_count", 0)
+            message_bubble.add_metadata_header(
+                f"📝 {msg_count} messages consolidated (~{origin_tokens - consolidated_tokens} tokens saved)"
+            )
+
+        # Center the consolidated message
+        container_layout.addStretch(1)
+        container_layout.addWidget(message_bubble)
+        container_layout.addStretch(1)
+
+        self.chat_layout.addWidget(container)
+
+        # Process events and scroll
+        QApplication.processEvents()
+        self.chat_scroll.verticalScrollBar().setValue(
+            self.chat_scroll.verticalScrollBar().maximum()
+        )
+
+        # self.remove_messages_before(message_bubble)
+
     def display_tool_error(self, data: Dict):
         """Display an error that occurred during tool execution."""
         tool_use = data["tool_use"]
@@ -1006,6 +1060,32 @@ class ChatWindow(QMainWindow, Observer):
         self.remove_messages_after(message_bubble)
         self.message_input.setText(current_text)
 
+    def remove_messages_before(self, message_bubble):
+        """Remove all message widgets that appear before the given message bubble, including the
+        message bubble itself."""
+        container_index = -1
+        for i in range(self.chat_layout.count()):
+            item = self.chat_layout.itemAt(i)
+            if item and item.widget():
+                # Check if this widget contains our message bubble
+                if message_bubble in item.widget().findChildren(MessageBubble):
+                    container_index = i
+                    break
+
+        if container_index == -1:
+            return  # Message bubble not found
+
+        # Remove the container with the message bubble and all widgets before it
+        for i in range(container_index):
+            item = self.chat_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        # Reset current response tracking
+        self.current_response_bubble = None
+        self.current_response_container = None
+        self.expecting_response = False
+
     def remove_messages_after(self, message_bubble):
         """Remove all message widgets that appear after the given message bubble, including the message bubble itself."""
         # Find the index of the container widget that holds the message bubble
@@ -1060,9 +1140,16 @@ class ChatWindow(QMainWindow, Observer):
         self.session_cost = 0.0
         self.token_usage.update_token_info(0, 0, 0.0, 0.0)
 
+        last_consolidated_idx = 0
+
+        for i, msg in reversed(list(enumerate(messages))):
+            if msg.get("role") == "consolidated":
+                last_consolidated_idx = i
+                break
+
         # Add messages from the loaded conversation, filtering for user/assistant roles
         msg_idx = 0
-        for msg in messages:
+        for msg in messages[last_consolidated_idx:]:
             role = msg.get("role")
             if role == "user" or role == "assistant":
                 content = msg.get("content", "")
@@ -1118,6 +1205,22 @@ class ChatWindow(QMainWindow, Observer):
                         msg.get("agent", None),
                     )
                 # Add handling for other potential content formats if necessary
+            elif role == "consolidated":
+                # Handle consolidated message
+                content = msg.get("content", "")
+                message_content = ""
+
+                if isinstance(content, list) and content:
+                    first_item = content[0]
+                    if (
+                        isinstance(first_item, dict)
+                        and first_item.get("type") == "text"
+                    ):
+                        message_content = first_item.get("text", "")
+
+                if message_content.strip():
+                    metadata = msg.get("metadata", {})
+                    self.append_consolidated_message(message_content, metadata)
             msg_idx += 1
 
         # Update status bar and re-enable controls
@@ -1505,6 +1608,9 @@ class ChatWindow(QMainWindow, Observer):
                     self.message_handler.current_user_input_idx
                 )
                 self.current_user_bubble = None
+        elif event == "consolidation_completed":
+            self.display_consolidation(data)
+            self.set_input_controls_enabled(True)
         elif event == "thinking_started":
             self.display_thinking_started(data)  # data is agent_name
         elif event == "thinking_chunk":

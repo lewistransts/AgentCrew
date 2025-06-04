@@ -138,16 +138,41 @@ class AgentManager:
             agent.shared_context_pool = {}
 
     def rebuild_agents_messages(self, streamline_messages):
+        """
+        Rebuild agent message histories from streamline messages, handling consolidated messages.
+        
+        Args:
+            streamline_messages: The standardized message list
+        """
         self.clean_agents_messages()
+        
+        # Find the last consolidated message index
+        last_consolidated_idx = -1
+        for i, msg in enumerate(streamline_messages):
+            if msg.get("role") == "consolidated":
+                last_consolidated_idx = i
+        
+        # Determine which messages to include
+        messages_to_process = []
+        if last_consolidated_idx >= 0:
+            # Include the consolidated message and everything after it
+            messages_to_process = streamline_messages[last_consolidated_idx:]
+        else:
+            # No consolidated messages, include everything
+            messages_to_process = streamline_messages
+        
+        # Process messages for each agent
         for _, agent in self.agents.items():
-            agent.history = MessageTransformer.convert_messages(
-                [
-                    msg
-                    for msg in streamline_messages
-                    if msg.get("agent", "") == agent.name
-                ],
-                agent.get_provider(),
-            )
+            agent_messages = [
+                msg for msg in messages_to_process
+                if msg.get("agent", "") == agent.name or msg.get("role") == "consolidated" or msg.get("role") == "user"
+            ]
+            
+            if agent_messages:
+                agent.history = MessageTransformer.convert_messages(
+                    agent_messages,
+                    agent.get_provider(),
+                )
 
     def get_current_agent(self) -> BaseAgent:
         """

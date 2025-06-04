@@ -120,6 +120,8 @@ class ConsoleUI(Observer):
             self.display_divider()
         elif event == "file_processed":
             self.display_message(f"{YELLOW}Processed file: {data['file_path']}{RESET}")
+        elif event == "consolidation_completed":
+            self.display_consolidation_result(data)
         elif event == "conversations_listed":
             self.display_conversations(data)  # data is list of conversation metadata
         elif event == "conversation_loaded":
@@ -157,7 +159,8 @@ class ConsoleUI(Observer):
         if len(lines) > height_limit:
             lines = lines[-height_limit:]
 
-        self.live.update(Markdown("\n".join(lines), code_theme=CODE_THEME))
+        if self.live:
+            self.live.update(Markdown("\n".join(lines), code_theme=CODE_THEME))
 
     def display_tool_use(self, tool_use: Dict):
         """Display information about a tool being used."""
@@ -326,6 +329,21 @@ class ConsoleUI(Observer):
         except Exception as e:
             print(f"{RED}Error loading conversation: {str(e)}{RESET}")
 
+    def display_consolidation_result(self, result: Dict[str, Any]):
+        """
+        Display information about a consolidation operation.
+
+        Args:
+            result: Dictionary containing consolidation results
+        """
+        print(f"\n{YELLOW}🔄 Conversation Consolidated:{RESET}")
+        print(f"  • {result['messages_consolidated']} messages summarized")
+        print(f"  • {result['messages_preserved']} recent messages preserved")
+        print(
+            f"  • ~{result['original_token_count'] - result['consolidated_token_count']} tokens saved"
+        )
+        self.display_loaded_conversation(self.message_handler.streamline_messages)
+
     def display_loaded_conversation(self, messages):
         """Display all messages from a loaded conversation.
 
@@ -335,8 +353,15 @@ class ConsoleUI(Observer):
         print(f"\n{YELLOW}Displaying conversation history:{RESET}")
         self.display_divider()
 
+        last_consolidated_idx = 0
+
+        for i, msg in reversed(list(enumerate(messages))):
+            if msg.get("role") == "consolidated":
+                last_consolidated_idx = i
+                break
+
         # Display each message in the conversation
-        for msg in messages:
+        for msg in messages[last_consolidated_idx:]:
             role = msg.get("role")
             if role == "user":
                 print(f"\n{BLUE}{BOLD}👤 YOU:{RESET}")
@@ -348,6 +373,26 @@ class ConsoleUI(Observer):
                 print(f"\n{GREEN}{BOLD}🤖 {agent_name.upper()}:{RESET}")
                 content = self._extract_message_content(msg)
                 # Format as markdown for better display
+                self.console.print(Markdown(content, code_theme=CODE_THEME))
+                self.display_divider()
+            elif role == "consolidated":
+                print(f"\n{YELLOW}📝 CONVERSATION SUMMARY:{RESET}")
+                content = self._extract_message_content(msg)
+
+                # Display metadata if available
+                metadata = msg.get("metadata", {})
+                if metadata:
+                    consolidated_count = metadata.get(
+                        "messages_consolidated", "unknown"
+                    )
+                    token_savings = metadata.get(
+                        "original_token_count", 0
+                    ) - metadata.get("consolidated_token_count", 0)
+                    print(
+                        f"{YELLOW}({consolidated_count} messages consolidated, ~{token_savings} tokens saved){RESET}"
+                    )
+
+                # Format the summary with markdown
                 self.console.print(Markdown(content, code_theme=CODE_THEME))
                 self.display_divider()
 
@@ -531,6 +576,7 @@ class ConsoleUI(Observer):
             f"{YELLOW}Use '/agent [agent_name]' to switch agents or list available agents.{RESET}",
             f"{YELLOW}Use '/list' to list saved conversations.{RESET}",
             f"{YELLOW}Use '/load <id>' or '/load <number>' to load a conversation.{RESET}",
+            f"{YELLOW}Use '/consolidate [count]' to summarize older messages (default: 10 recent messages preserved).{RESET}",
         ]
 
         for message in welcome_messages:

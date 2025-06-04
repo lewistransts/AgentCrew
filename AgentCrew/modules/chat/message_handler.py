@@ -5,6 +5,7 @@ import os
 import time
 
 from AgentCrew.modules.agents.base import MessageType
+from AgentCrew.modules.agents.local_agent import LocalAgent
 from AgentCrew.modules.chat.history import ChatHistoryManager, ConversationTurn
 from AgentCrew.modules.agents import AgentManager
 from AgentCrew.modules.chat.file_handler import FileHandler
@@ -12,6 +13,7 @@ from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules.llm.service_manager import ServiceManager
 from AgentCrew.modules.llm.message import MessageTransformer
 from AgentCrew.modules.memory import BaseMemoryService, ContextPersistenceService
+from AgentCrew.modules.chat.consolidation import ConversationConsolidator
 
 
 class Observable:
@@ -136,6 +138,76 @@ class MessageHandler(Observable):
             except ValueError:
                 self._notify("error", "Invalid budget value. Please provide a number.")
             return False, True
+
+        # Handle consolidate command
+        if user_input.lower().startswith("/consolidate"):
+            try:
+                # Extract the parameter (number of messages to preserve)
+                parts = user_input.split()
+                if len(parts) == 1:
+                    # Default to preserving the last 10 messages if no count specified
+                    preserve_count = 10
+                else:
+                    preserve_count = int(parts[1])
+
+                if isinstance(self.agent, LocalAgent):
+                    consolidator = ConversationConsolidator(self.agent.llm)
+
+                    # Consolidate messages
+                    result = await consolidator.consolidate(
+                        self.streamline_messages, preserve_count
+                    )
+
+                    if result["success"]:
+                        # Rebuild agent messages from consolidated messages
+                        self.agent_manager.rebuild_agents_messages(
+                            self.streamline_messages
+                        )
+
+                        # Notify UI about consolidation
+                        self._notify("consolidation_completed", result)
+
+                        # If we have a conversation ID, update the persistent storage
+                        if self.current_conversation_id:
+                            try:
+                                self.persistent_service.append_conversation_messages(
+                                    self.current_conversation_id,
+                                    self.streamline_messages,
+                                    True,  # Replace all messages with the consolidated version
+                                )
+                            except Exception as e:
+                                self._notify(
+                                    "error",
+                                    f"Failed to save consolidated conversation: {str(e)}",
+                                )
+
+                        message = (
+                            f"Consolidated {result['messages_consolidated']} messages, "
+                            f"preserving {result['messages_preserved']} recent messages. "
+                            f"Token savings: ~{result['original_token_count'] - result['consolidated_token_count']}"
+                        )
+                        self._notify("system_message", message)
+                    else:
+                        self._notify(
+                            "system_message",
+                            f"Consolidation skipped: {result['reason']}",
+                        )
+
+                    return False, True  # Not exiting, but handled command
+                else:
+                    self._notify(
+                        "error",
+                        "Consolidation is only supported with LocalAgent.",
+                    )
+            except ValueError as e:
+                self._notify(
+                    "error",
+                    f"Invalid consolidation parameter: {str(e)}. Use /consolidate [number]",
+                )
+                return False, True
+            except Exception as e:
+                self._notify("error", f"Error during consolidation: {str(e)}")
+                return False, True
 
         # Handle jump command
         if user_input.lower().startswith("/jump "):
@@ -751,21 +823,8 @@ class MessageHandler(Observable):
                 if last_agent_name and self.agent_manager.select_agent(last_agent_name):
                     self.agent = self.agent_manager.get_current_agent()
                     self._notify("agent_changed", last_agent_name)
-                current_provider = self.agent.get_provider()
-                # self.messages = MessageTransformer.convert_messages(
-                #     [msg for msg in history if msg.get("agent", "") == self.agent.name],
-                #     current_provider,
-                # )
                 self.streamline_messages = history
-                for message in self.streamline_messages:
-                    if message.get("agent", ""):
-                        agent = self.agent_manager.get_agent(message.get("agent", ""))
-                        if agent:
-                            agent.history.extend(
-                                MessageTransformer.convert_messages(
-                                    [message], current_provider
-                                )
-                            )
+                self.agent_manager.rebuild_agents_messages(self.streamline_messages)
 
                 self.last_assisstant_response_idx = len(self.agent.history)
 

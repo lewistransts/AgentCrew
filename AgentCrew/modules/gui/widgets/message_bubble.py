@@ -109,6 +109,7 @@ class MessageBubble(QFrame):
         parent=None,
         message_index=None,
         is_thinking=False,  # Add this parameter
+        is_consolidated=False,  # Add this parameter for consolidated messages
     ):
         super().__init__(parent)
 
@@ -116,6 +117,7 @@ class MessageBubble(QFrame):
         self.message_index = message_index
         self.is_user = is_user
         self.is_thinking = is_thinking  # Store thinking state
+        self.is_consolidated = is_consolidated  # Store consolidated state
 
         # Setup frame appearance
         self.setFrameShape(QFrame.Shape.StyledPanel)
@@ -146,6 +148,17 @@ class MessageBubble(QFrame):
                 }
                 """
             )
+        elif is_consolidated:  # Special styling for consolidated messages
+            self.setStyleSheet(
+                """
+                QFrame { 
+                    border-radius: 12px; 
+                    background-color: #313244; /* Catppuccin Surface0 */
+                    border: 1px solid #45475a; /* Catppuccin Surface1 */
+                    padding: 2px;
+                }
+                """
+            )
         else:  # Assistant bubble
             self.setStyleSheet(
                 """
@@ -171,6 +184,10 @@ class MessageBubble(QFrame):
             label_text = (
                 f"{agent_name}'s THINKING:"  # Special label for thinking content
             )
+        elif is_consolidated:
+            label_text = "CONVERSATION SUMMARY:"  # Special label for consolidated content
+        elif is_consolidated:
+            label_text = "CONVERSATION SUMMARY:"  # Special label for consolidated content
 
         sender_label = QLabel(label_text)
         sender_label_color = (
@@ -432,6 +449,19 @@ class MessageBubble(QFrame):
             return f"{size_bytes / (1024 * 1024):.1f} MB"
         else:
             return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
+            
+    def add_metadata_header(self, header_text):
+        """Add a metadata header to the consolidated message."""
+        header_label = QLabel(header_text)
+        header_label.setStyleSheet("""
+            QLabel {
+                color: #a6adc8; /* Catppuccin Subtext0 */
+                font-style: italic;
+                padding-bottom: 5px;
+            }
+        """)
+        # Insert header at position 1, just after the sender label
+        self.layout().insertWidget(1, header_label)
 
     def display_base64_img(self, data: str):
         """
