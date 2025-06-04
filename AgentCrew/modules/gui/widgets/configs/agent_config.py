@@ -16,7 +16,9 @@ from PySide6.QtWidgets import (
     QSplitter,
     QMenu,  # Added
     QStackedWidget,  # Added
+    QFileDialog,  # Added for file import
 )
+import os  # Added for path operations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QDoubleValidator
 
@@ -130,6 +132,30 @@ class AgentsConfigTab(QWidget):
         add_local_action.triggered.connect(self.add_new_local_agent)
         add_remote_action.triggered.connect(self.add_new_remote_agent)
 
+        # Add Import button with green styling
+        self.import_agents_btn = QPushButton("Import")
+        self.import_agents_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #a6e3a1; /* Catppuccin Green */
+                color: #1e1e2e; /* Catppuccin Base */
+                border: none;
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #94e2d5; /* Catppuccin Teal - lighter green for hover */
+            }
+            QPushButton:pressed {
+                background-color: #8bd5ca; /* Slightly darker for pressed state */
+            }
+            QPushButton:disabled {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #6c7086; /* Catppuccin Overlay0 */
+            }
+        """)
+        self.import_agents_btn.clicked.connect(self.import_agents)
+
         self.remove_agent_btn = QPushButton("Remove")
         self.remove_agent_btn.setStyleSheet("""
             QPushButton {
@@ -157,6 +183,7 @@ class AgentsConfigTab(QWidget):
         list_buttons_layout.addWidget(
             self.add_agent_menu_btn
         )  # Changed from self.add_agent_btn
+        list_buttons_layout.addWidget(self.import_agents_btn)
         list_buttons_layout.addWidget(self.remove_agent_btn)
 
         left_layout.addWidget(QLabel("Agents:"))
@@ -191,7 +218,7 @@ class AgentsConfigTab(QWidget):
         self.temperature_input.setValidator(QDoubleValidator(0.0, 2.0, 1))
         self.temperature_input.setPlaceholderText("0.0 - 2.0")
         local_form_layout.addRow("Temperature:", self.temperature_input)
-        
+
         # Add enabled checkbox for local agents
         self.enabled_checkbox = QCheckBox("Enabled")
         self.enabled_checkbox.setChecked(True)  # Default to enabled
@@ -225,7 +252,7 @@ class AgentsConfigTab(QWidget):
         self.remote_base_url_input = QLineEdit()
         self.remote_base_url_input.setPlaceholderText("e.g., http://localhost:8000")
         remote_form_layout.addRow("Base URL:", self.remote_base_url_input)
-        
+
         # Add enabled checkbox for remote agents
         self.remote_enabled_checkbox = QCheckBox("Enabled")
         self.remote_enabled_checkbox.setChecked(True)  # Default to enabled
@@ -382,6 +409,15 @@ class AgentsConfigTab(QWidget):
 
         self._is_dirty = False
         self.save_btn.setEnabled(False)
+
+    def _find_agent_index_by_name(self, agent_name):
+        """Find the index of an agent in the agents_list by name."""
+        for i in range(self.agents_list.count()):
+            item = self.agents_list.item(i)
+            agent_data = item.data(Qt.ItemDataRole.UserRole)
+            if agent_data.get("name", "") == agent_name:
+                return i
+        return -1
 
     def _on_editor_field_changed(self):
         """Mark configuration as dirty and enable save if an agent is selected and editor is active."""
@@ -575,6 +611,210 @@ class AgentsConfigTab(QWidget):
         self.save_all_agents()
         self._is_dirty = False
         self.save_btn.setEnabled(False)
+
+    def import_agents(self):
+        """Import agent configurations from a file."""
+        # Open file dialog to select a TOML or JSON file
+        file_dialog = QFileDialog(self)
+        file_dialog.setWindowTitle("Import Agent Configuration")
+        file_dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        file_dialog.setNameFilter("Agent Configuration (*.toml *.json)")
+
+        if not file_dialog.exec():
+            # User canceled the dialog
+            return
+
+        selected_files = file_dialog.selectedFiles()
+        if not selected_files:
+            return
+
+        import_file_path = selected_files[0]
+
+        # Check if file exists
+        if not os.path.exists(import_file_path):
+            QMessageBox.critical(
+                self,
+                "Import Error",
+                f"The selected file does not exist: {import_file_path}",
+            )
+            return
+
+        # Load the configuration file
+        try:
+            temp_config = ConfigManagement(import_file_path)
+            imported_config = temp_config.get_config()
+
+            # Validate the configuration structure
+            local_agents = imported_config.get("agents", [])
+            remote_agents = imported_config.get("remote_agents", [])
+
+            if not local_agents and not remote_agents:
+                QMessageBox.warning(
+                    self,
+                    "Invalid Configuration",
+                    "No agent configurations found in the selected file.",
+                )
+                return
+
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Import Error", f"Failed to load agent configuration: {str(e)}"
+            )
+            return
+
+        # Check for conflicts
+        existing_agent_names = set()
+        for i in range(self.agents_list.count()):
+            item = self.agents_list.item(i)
+            agent_data = item.data(Qt.ItemDataRole.UserRole)
+            existing_agent_names.add(agent_data.get("name", ""))
+
+        # Find conflicts
+        conflict_names = []
+        imported_names = []
+
+        for agent in local_agents:
+            name = agent.get("name", "")
+            if name:
+                imported_names.append(name)
+                if name in existing_agent_names:
+                    conflict_names.append(name)
+
+        for agent in remote_agents:
+            name = agent.get("name", "")
+            if name:
+                imported_names.append(name)
+                if name in existing_agent_names:
+                    conflict_names.append(name)
+
+        # If there are conflicts, show warning dialog
+        user_choice = "import_all"  # Default: import all
+        if conflict_names:
+            conflict_list = "\n".join([f"• {name}" for name in conflict_names])
+
+            message_box = QMessageBox(self)
+            message_box.setWindowTitle("Agent Name Conflicts")
+            message_box.setIcon(QMessageBox.Icon.Warning)
+            message_box.setText(
+                f"The following agent(s) already exist and will be overridden:\n\n"
+                f"{conflict_list}\n\n"
+                f"How would you like to proceed?"
+            )
+
+            # Add custom buttons
+            override_btn = message_box.addButton(
+                "Override", QMessageBox.ButtonRole.AcceptRole
+            )
+            skip_btn = message_box.addButton(
+                "Skip Conflicts", QMessageBox.ButtonRole.ActionRole
+            )
+            cancel_btn = message_box.addButton(
+                "Cancel", QMessageBox.ButtonRole.RejectRole
+            )
+
+            message_box.exec()
+
+            clicked_button = message_box.clickedButton()
+            if clicked_button == override_btn:
+                user_choice = "import_all"
+            elif clicked_button == skip_btn:
+                user_choice = "skip_conflicts"
+            else:  # cancel_btn or close
+                user_choice = "cancel"
+
+        if user_choice == "cancel":
+            return
+
+        # Process the import based on user's choice
+        imported_count = 0
+        skipped_count = 0
+
+        # Get current config to update
+        current_local_agents = self.agents_config.get("agents", [])
+        current_remote_agents = self.agents_config.get("remote_agents", [])
+
+        # Process local agents
+        for imported_agent in local_agents:
+            name = imported_agent.get("name", "")
+            if not name:
+                continue
+
+            # Check if this is a conflict
+            is_conflict = name in existing_agent_names
+
+            if is_conflict and user_choice == "skip_conflicts":
+                skipped_count += 1
+                continue
+
+            # If we're here, we're importing this agent
+            # Remove any existing agent with the same name
+            if is_conflict:
+                current_local_agents = [
+                    a for a in current_local_agents if a.get("name") != name
+                ]
+                current_remote_agents = [
+                    a for a in current_remote_agents if a.get("name") != name
+                ]
+
+            # Add the imported agent
+            # Make sure the 'enabled' field is present (for backward compatibility)
+            if "enabled" not in imported_agent:
+                imported_agent["enabled"] = True
+
+            current_local_agents.append(imported_agent)
+            imported_count += 1
+
+        # Process remote agents
+        for imported_agent in remote_agents:
+            name = imported_agent.get("name", "")
+            if not name:
+                continue
+
+            # Check if this is a conflict
+            is_conflict = name in existing_agent_names
+
+            if is_conflict and user_choice == "skip_conflicts":
+                skipped_count += 1
+                continue
+
+            # If we're here, we're importing this agent
+            # Remove any existing agent with the same name
+            if is_conflict:
+                current_local_agents = [
+                    a for a in current_local_agents if a.get("name") != name
+                ]
+                current_remote_agents = [
+                    a for a in current_remote_agents if a.get("name") != name
+                ]
+
+            # Add the imported agent
+            # Make sure the 'enabled' field is present (for backward compatibility)
+            if "enabled" not in imported_agent:
+                imported_agent["enabled"] = True
+
+            current_remote_agents.append(imported_agent)
+            imported_count += 1
+
+        # Update the configuration
+        self.agents_config["agents"] = current_local_agents
+        self.agents_config["remote_agents"] = current_remote_agents
+
+        # Save the updated configuration and refresh the UI
+        self.config_manager.write_agents_config(self.agents_config)
+        self.load_agents()
+
+        # Select the first imported agent in the list if any were imported
+        if imported_count > 0 and imported_names:
+            index = self._find_agent_index_by_name(imported_names[0])
+            if index >= 0:
+                self.agents_list.setCurrentRow(index)
+
+        # Show success message
+        status_message = f"Successfully imported {imported_count} agent(s)."
+        if skipped_count > 0:
+            status_message += f" Skipped {skipped_count} agent(s) due to conflicts."
+
+        QMessageBox.information(self, "Import Complete", status_message)
 
     def save_all_agents(self):
         """Save all agents to the configuration file."""
