@@ -395,6 +395,8 @@ class MessageTransformer:
             claude_msg = {"role": msg.get("role", "")}
             if claude_msg["role"] == "tool":
                 claude_msg["role"] = "user"
+            elif claude_msg["role"] == "consolidated":
+                claude_msg["role"] = "user"
             # Handle content
             if "content" in msg:
                 if msg.get("role") == "assistant" and "tool_calls" in msg:
@@ -496,6 +498,9 @@ class MessageTransformer:
         for msg in messages:
             openai_msg = {"role": msg.get("role", "")}
 
+            if openai_msg["role"] == "consolidated":
+                openai_msg["role"] = "user"
+
             # Handle content
             if "content" in msg:
                 openai_msg["content"] = list(msg["content"])
@@ -543,6 +548,9 @@ class MessageTransformer:
         google_messages = []
         for msg in messages:
             google_msg = {"role": msg.get("role", "")}
+
+            if google_msg["role"] == "consolidated":
+                google_msg["role"] = "user"
 
             # Handle content
             if "content" in msg:
@@ -594,6 +602,9 @@ class MessageTransformer:
         groq_messages = []
         for msg in messages:
             groq_msg = {"role": msg.get("role", "")}
+
+            if groq_msg["role"] == "consolidated":
+                groq_msg["role"] = "user"
 
             # Handle content
             if "content" in msg:

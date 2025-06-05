@@ -185,9 +185,13 @@ class MessageBubble(QFrame):
                 f"{agent_name}'s THINKING:"  # Special label for thinking content
             )
         elif is_consolidated:
-            label_text = "CONVERSATION SUMMARY:"  # Special label for consolidated content
+            label_text = (
+                "CONVERSATION SUMMARY:"  # Special label for consolidated content
+            )
         elif is_consolidated:
-            label_text = "CONVERSATION SUMMARY:"  # Special label for consolidated content
+            label_text = (
+                "CONVERSATION SUMMARY:"  # Special label for consolidated content
+            )
 
         sender_label = QLabel(label_text)
         sender_label_color = (
@@ -239,9 +243,6 @@ class MessageBubble(QFrame):
 
         # Set size policies
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        # Store the original text (for adding chunks)
-        self.text_content = text
 
         # For user messages, add hover button functionality
         if is_user and message_index is not None:
@@ -348,8 +349,7 @@ class MessageBubble(QFrame):
 
     def append_text(self, text):
         """Append text to the existing message."""
-        self.text_content = text
-        self.set_text(self.text_content)
+        self.set_text(text)
 
     def display_file(self, file_path: str):
         """Display a file in the message bubble based on its type."""
@@ -449,7 +449,7 @@ class MessageBubble(QFrame):
             return f"{size_bytes / (1024 * 1024):.1f} MB"
         else:
             return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
-            
+
     def add_metadata_header(self, header_text):
         """Add a metadata header to the consolidated message."""
         header_label = QLabel(header_text)
