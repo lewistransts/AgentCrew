@@ -994,6 +994,107 @@ class ChatWindow(QMainWindow, Observer):
         self.current_response_bubble = None
         self.current_response_container = None
 
+    def display_tool_confirmation_request(self, tool_info):
+        """Display a dialog for tool confirmation request."""
+        tool_use = tool_info.copy()
+        confirmation_id = tool_use.pop("confirmation_id")
+
+        # Create dialog
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Tool Execution Confirmation")
+        dialog.setIcon(QMessageBox.Icon.Question)
+
+        # Format tool information for display
+        tool_description = f"The assistant wants to use the '{tool_use['name']}' tool {confirmation_id}."
+        params_text = ""
+
+        if isinstance(tool_use["input"], dict):
+            params_text = "\n\nParameters:"
+            for key, value in tool_use["input"].items():
+                params_text += f"\n• {key}: {value}"
+        else:
+            params_text = f"\n\nInput: {tool_use['input']}"
+
+        dialog.setText(tool_description + params_text)
+        dialog.setInformativeText("Do you want to allow this tool to run?")
+
+        # Add buttons
+        yes_button = dialog.addButton("Yes (Once)", QMessageBox.ButtonRole.YesRole)
+        no_button = dialog.addButton("No", QMessageBox.ButtonRole.NoRole)
+        all_button = dialog.addButton("Yes to All", QMessageBox.ButtonRole.AcceptRole)
+
+        # Style the buttons with Catppuccin colors
+        yes_button.setStyleSheet("""
+            QPushButton {
+                background-color: #a6e3a1; /* Catppuccin Green */
+                color: #1e1e2e; /* Catppuccin Base */
+                font-weight: bold;
+                padding: 6px 14px;
+                border: none;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #94e2d5; /* Catppuccin Teal */
+            }
+        """)
+
+        all_button.setStyleSheet("""
+            QPushButton {
+                background-color: #89b4fa; /* Catppuccin Blue */
+                color: #1e1e2e; /* Catppuccin Base */
+                font-weight: bold;
+                padding: 6px 14px;
+                border: none;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #74c7ec; /* Catppuccin Sapphire */
+            }
+        """)
+
+        no_button.setStyleSheet("""
+            QPushButton {
+                background-color: #f38ba8; /* Catppuccin Red */
+                color: #1e1e2e; /* Catppuccin Base */
+                font-weight: bold;
+                padding: 6px 14px;
+                border: none;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #eba0ac; /* Catppuccin Maroon */
+            }
+        """)
+
+        # Execute dialog and get result
+        dialog.exec()
+        clicked_button = dialog.clickedButton()
+
+        # Process result
+        if clicked_button == yes_button:
+            self.message_handler.resolve_tool_confirmation(
+                confirmation_id, {"action": "approve"}
+            )
+            self.display_status_message(f"Approved tool: {tool_use['name']}")
+        elif clicked_button == all_button:
+            self.message_handler.resolve_tool_confirmation(
+                confirmation_id, {"action": "approve_all"}
+            )
+            self.display_status_message(
+                f"Approved all future calls to tool: {tool_use['name']}"
+            )
+        else:  # No or dialog closed
+            self.message_handler.resolve_tool_confirmation(
+                confirmation_id, {"action": "deny"}
+            )
+            self.display_status_message(f"Denied tool: {tool_use['name']}")
+
+    def display_tool_denied(self, data):
+        """Display a message about a denied tool execution."""
+        tool_use = data["tool_use"]
+        self.add_system_message(f"❌ Tool execution denied: {tool_use['name']}")
+        self.display_status_message(f"Tool execution denied: {tool_use['name']}")
+
     def browse_file(self):
         """Open file dialog and process selected file."""
         file_paths, _ = QFileDialog.getOpenFileNames(
@@ -1622,6 +1723,10 @@ class ChatWindow(QMainWindow, Observer):
             )
             # Reset thinking bubble reference
             self.current_thinking_bubble = None
+        elif event == "tool_confirmation_required":
+            self.display_tool_confirmation_request(data)
+        elif event == "tool_denied":
+            self.display_tool_denied(data)
         elif event == "clear_requested":
             # This is likely triggered by the worker after /clear command
             # The UI clear might have already happened if user initiated via Ctrl+L

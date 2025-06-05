@@ -3,7 +3,9 @@ from typing import List, Dict, Any, Tuple, Optional
 import traceback
 import os
 import time
+import asyncio
 
+from AgentCrew.modules import logger
 from AgentCrew.modules.agents.base import MessageType
 from AgentCrew.modules.agents.local_agent import LocalAgent
 from AgentCrew.modules.chat.history import ChatHistoryManager, ConversationTurn
@@ -82,6 +84,12 @@ class MessageHandler(Observable):
         # self.messages = []  # Initialize empty messages list
         self.streamline_messages = []
         self.current_conversation_id = None  # ID for persistence
+
+        # Tool confirmation tracking
+        self._auto_approved_tools = set()  # Track tools approved for all future calls
+        self._pending_confirmations = {}  # Store futures for confirmation requests
+        self._next_confirmation_id = 0  # ID counter for confirmation requests
+
         self.start_new_conversation()  # Initialize first conversation
 
     def _messages_append(self, message):
@@ -300,6 +308,9 @@ class MessageHandler(Observable):
     def start_new_conversation(self):
         """Starts a new persistent conversation, clears history, and gets a new ID."""
         try:
+            # Reset approved tools for the new conversation
+            self._auto_approved_tools = set()
+
             # Ensure the service instance is available
             if (
                 not hasattr(self, "persistent_service")
@@ -327,12 +338,12 @@ class MessageHandler(Observable):
             )
             # Re-use existing signal to clear UI display, ensures UI is reset
             self._notify("clear_requested")
-            print(
+            logger.info(
                 f"INFO: Started new persistent conversation {self.current_conversation_id}"
             )
         except Exception as e:
             error_message = f"Failed to start new persistent conversation: {str(e)}"
-            print(f"ERROR: {error_message}")
+            logger.error(f"ERROR: {error_message}")
             self._notify("error", {"message": error_message})
 
             self.current_conversation_id = (
@@ -561,6 +572,59 @@ class MessageHandler(Observable):
 
         self._notify("agent_changed_by_transfer", self.agent.name)
 
+    async def _wait_for_tool_confirmation(self, tool_use):
+        """
+        Create a future and wait for tool confirmation from the user.
+
+        Args:
+            tool_use: The tool use dictionary
+
+        Returns:
+            Dict with confirmation result containing action and any additional data
+        """
+        confirmation_id = self._next_confirmation_id
+        self._next_confirmation_id += 1
+
+        # Create a future that will be resolved when the user responds
+        self._pending_confirmations[confirmation_id] = {"approval": "pending"}
+
+        # Notify UI that confirmation is required
+        tool_info = {**tool_use, "confirmation_id": confirmation_id}
+        self._notify("tool_confirmation_required", tool_info)
+
+        try:
+            while self._pending_confirmations[confirmation_id]["approval"] == "pending":
+                await asyncio.sleep(0.1)  # Wait for the user to respond
+            # Wait for the user's response
+            result = self._pending_confirmations[confirmation_id]
+            logger.info(
+                f"Successfully received tool confirmation {confirmation_id} with result: {result}"
+            )
+            return result
+        except Exception as e:
+            logger.error(
+                f"Error while waiting for tool confirmation {confirmation_id}: {str(e)}"
+            )
+            return {"action": "deny"}
+        finally:
+            # Clean up the future
+            if confirmation_id in self._pending_confirmations:
+                del self._pending_confirmations[confirmation_id]
+
+    def resolve_tool_confirmation(self, confirmation_id, result):
+        """
+        Resolve a pending tool confirmation future with the user's decision.
+
+        Args:
+            confirmation_id: The ID of the confirmation request
+            result: Dictionary with the user's decision (action: 'approve', 'approve_all', or 'deny')
+        """
+        if confirmation_id in self._pending_confirmations:
+            self._pending_confirmations[confirmation_id] = {
+                "approval": "done",
+                **result,
+            }
+
     async def get_assistant_response(
         self, input_tokens=0, output_tokens=0
     ) -> Tuple[Optional[str], int, int]:
@@ -640,34 +704,16 @@ class MessageHandler(Observable):
 
                 # Process each tool use
                 for tool_use in tool_uses:
-                    # self._notify("response_completed", assistant_response)
-                    self._notify("tool_use", tool_use)
-
-                    try:
-                        tool_result = await self.agent.execute_tool_call(
-                            tool_use["name"], tool_use["input"]
-                        )
-
-                        if tool_use["name"] == "transfer":
+                    # Special handling for the transfer tool - always auto-approve
+                    tool_name = tool_use["name"]
+                    if tool_name == "transfer":
+                        self._notify("tool_use", tool_use)
+                        try:
+                            tool_result = await self.agent.execute_tool_call(
+                                tool_name, tool_use["input"]
+                            )
                             self._post_tool_transfer(tool_result)
-
-                        else:
-                            tool_result_message = self.agent.format_message(
-                                MessageType.ToolResult,
-                                {"tool_use": tool_use, "tool_result": tool_result},
-                            )
-                            self._messages_append(tool_result_message)
-                            self._notify(
-                                "tool_result",
-                                {
-                                    "tool_use": tool_use,
-                                    "tool_result": tool_result,
-                                    "message": tool_result_message,
-                                },
-                            )
-
-                    except Exception as e:
-                        if tool_use["name"] == "transfer":
+                        except Exception as e:
                             # if transfer failed we should add the tool_call message back for record
                             self._messages_append(
                                 self.agent.format_message(
@@ -678,7 +724,79 @@ class MessageHandler(Observable):
                                     },
                                 )
                             )
+                            error_message = self.agent.format_message(
+                                MessageType.ToolResult,
+                                {
+                                    "tool_use": tool_use,
+                                    "tool_result": str(e),
+                                    "is_error": True,
+                                },
+                            )
+                            self._messages_append(error_message)
+                            self._notify(
+                                "tool_error",
+                                {
+                                    "tool_use": tool_use,
+                                    "error": str(e),
+                                    "message": error_message,
+                                },
+                            )
+                        continue
+                    # END transfer tool handling
 
+                    # For all other tools, check if confirmation is needed
+                    if tool_name not in self._auto_approved_tools:
+                        # Request confirmation from the user
+                        confirmation = await self._wait_for_tool_confirmation(tool_use)
+                        action = confirmation.get("action", "deny")
+
+                        if action == "deny":
+                            # User denied the tool execution
+                            error_message = self.agent.format_message(
+                                MessageType.ToolResult,
+                                {
+                                    "tool_use": tool_use,
+                                    "tool_result": "User denied permission to execute this tool.",
+                                    "is_error": True,
+                                },
+                            )
+                            self._messages_append(error_message)
+                            self._notify(
+                                "tool_denied",
+                                {
+                                    "tool_use": tool_use,
+                                    "message": error_message,
+                                },
+                            )
+                            continue  # Skip to the next tool
+
+                        if action == "approve_all":
+                            # Remember this tool for auto-approval
+                            self._auto_approved_tools.add(tool_name)
+
+                    # Tool is approved, execute it
+                    self._notify("tool_use", tool_use)
+
+                    try:
+                        tool_result = await self.agent.execute_tool_call(
+                            tool_name, tool_use["input"]
+                        )
+
+                        tool_result_message = self.agent.format_message(
+                            MessageType.ToolResult,
+                            {"tool_use": tool_use, "tool_result": tool_result},
+                        )
+                        self._messages_append(tool_result_message)
+                        self._notify(
+                            "tool_result",
+                            {
+                                "tool_use": tool_use,
+                                "tool_result": tool_result,
+                                "message": tool_result_message,
+                            },
+                        )
+
+                    except Exception as e:
                         error_message = self.agent.format_message(
                             MessageType.ToolResult,
                             {
@@ -767,7 +885,7 @@ class MessageHandler(Observable):
                         )
                 except Exception as e:
                     error_message = f"Failed to save conversation turn to {self.current_conversation_id}: {str(e)}"
-                    print(f"ERROR: {error_message}")
+                    logger.error(f"ERROR: {error_message}")
                     self._notify("error", {"message": error_message})
             self.last_assisstant_response_idx = len(self.agent.history)
             # --- End of Persistence Logic ---
@@ -806,13 +924,16 @@ class MessageHandler(Observable):
         try:
             return self.persistent_service.list_conversations()
         except Exception as e:
-            print(f"Error listing conversations: {e}")
+            logger.error(f"Error listing conversations: {e}")
             self._notify("error", f"Failed to list conversations: {e}")
             return []
 
     def load_conversation(self, conversation_id: str) -> Optional[List[Dict[str, Any]]]:
         """Loads a specific conversation history and sets it as active."""
         try:
+            # Reset approved tools for the loaded conversation
+            self._auto_approved_tools = set()
+
             self.agent_manager.clean_agents_messages()
             history = self.persistent_service.get_conversation_history(conversation_id)
             if history:
@@ -854,7 +975,9 @@ class MessageHandler(Observable):
                         ):
                             self.store_conversation_turn(message_content, i)
 
-                print(f"Loaded conversation {conversation_id}")  # Optional: Debugging
+                logger.info(
+                    f"Loaded conversation {conversation_id}"
+                )  # Optional: Debugging
                 self._notify(
                     "conversation_loaded", {"id": conversation_id, "history": history}
                 )
@@ -865,7 +988,7 @@ class MessageHandler(Observable):
                 )
                 return []
         except Exception as e:
-            print(f"Error loading conversation {conversation_id}: {e}")
+            logger.error(f"Error loading conversation {conversation_id}: {e}")
             self._notify("error", f"Failed to load conversation {conversation_id}: {e}")
 
     def delete_conversation_by_id(self, conversation_id: str) -> bool:
@@ -878,9 +1001,9 @@ class MessageHandler(Observable):
         Returns:
             True if deletion was successful, False otherwise.
         """
-        print(f"INFO: Attempting to delete conversation: {conversation_id}")
+        logger.info(f"INFO: Attempting to delete conversation: {conversation_id}")
         if self.persistent_service.delete_conversation(conversation_id):
-            print(
+            logger.info(
                 f"INFO: Successfully deleted conversation file for ID: {conversation_id}"
             )
             self._notify("conversations_changed", None)
@@ -889,13 +1012,13 @@ class MessageHandler(Observable):
             )
 
             if self.current_conversation_id == conversation_id:
-                print(
+                logger.info(
                     f"INFO: Deleted conversation {conversation_id} was the current one. Starting new conversation."
                 )
                 self.start_new_conversation()  # This will notify "clear_requested"
             return True
         else:
             error_msg = f"Failed to delete conversation {conversation_id[:8]}..."
-            print(f"ERROR: {error_msg}")
+            logger.error(f"ERROR: {error_msg}")
             self._notify("error", {"message": error_msg})
             return False

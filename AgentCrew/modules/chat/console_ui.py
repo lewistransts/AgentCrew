@@ -76,6 +76,12 @@ class ConsoleUI(Observer):
             # self.display_tool_result(data)  # data is dict with tool_use and tool_result
         elif event == "tool_error":
             self.display_tool_error(data)  # data is dict with tool_use and error
+        elif event == "tool_confirmation_required":
+            self.display_tool_confirmation_request(
+                data
+            )  # data is the tool use with confirmation ID
+        elif event == "tool_denied":
+            self.display_tool_denied(data)  # data is the tool use that was denied
         elif event == "response_completed":
             # pass
             self.finish_response(data)  # data is the complete response
@@ -181,6 +187,56 @@ class ConsoleUI(Observer):
         tool_use = data["tool_use"]
         error = data["error"]
         print(f"{RED}❌ Error in tool {tool_use['name']}: {error}{RESET}")
+
+    def display_tool_confirmation_request(self, tool_info):
+        """Display tool confirmation request and get user response."""
+        self.finish_live_update()
+
+        tool_use = tool_info.copy()
+        confirmation_id = tool_use.pop("confirmation_id")
+
+        print(f"\n{YELLOW}🔧 Tool execution requires your permission:{RESET}")
+        print(f"{YELLOW}Tool: {tool_use['name']}{RESET}")
+
+        # Display tool parameters
+        if isinstance(tool_use["input"], dict):
+            print(f"{YELLOW}Parameters:{RESET}")
+            for key, value in tool_use["input"].items():
+                print(f"  - {key}: {value}")
+        else:
+            print(f"{YELLOW}Input: {tool_use['input']}{RESET}")
+
+        # Get user response
+        while True:
+            response = input(
+                f"\n{YELLOW}Allow this tool to run? [y]es/[n]o/[all] future calls: {RESET}"
+            ).lower()
+
+            if response in ["y", "yes"]:
+                self.message_handler.resolve_tool_confirmation(
+                    confirmation_id, {"action": "approve"}
+                )
+                break
+            elif response in ["n", "no"]:
+                self.message_handler.resolve_tool_confirmation(
+                    confirmation_id, {"action": "deny"}
+                )
+                break
+            elif response in ["all", "a"]:
+                self.message_handler.resolve_tool_confirmation(
+                    confirmation_id, {"action": "approve_all"}
+                )
+                print(
+                    f"{YELLOW}✓ Approved all future calls to '{tool_use['name']}' for this session.{RESET}"
+                )
+                break
+            else:
+                print(f"{YELLOW}Please enter 'y', 'n', or 'all'.{RESET}")
+
+    def display_tool_denied(self, data):
+        """Display information about a denied tool execution."""
+        tool_use = data["tool_use"]
+        print(f"\n{RED}❌ Tool execution denied: {tool_use['name']}{RESET}")
 
     def finish_live_update(self):
         """stop the live update display."""
@@ -577,6 +633,8 @@ class ConsoleUI(Observer):
             f"{YELLOW}Use '/list' to list saved conversations.{RESET}",
             f"{YELLOW}Use '/load <id>' or '/load <number>' to load a conversation.{RESET}",
             f"{YELLOW}Use '/consolidate [count]' to summarize older messages (default: 10 recent messages preserved).{RESET}",
+            f"{YELLOW}Tool calls require confirmation before execution.{RESET}",
+            f"{YELLOW}Use 'y' to approve once, 'n' to deny, 'all' to approve future calls to the same tool.{RESET}",
         ]
 
         for message in welcome_messages:
