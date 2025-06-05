@@ -204,6 +204,49 @@ class CustomLLMProvidersConfigTab(QWidget):
 
         self.clear_and_disable_form()
 
+    def add_header_field(self, key="", value=""):
+        """Add a new header field row."""
+        row_widget = QWidget()
+        row_layout = QHBoxLayout(row_widget)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+
+        key_input = QLineEdit()
+        key_input.setPlaceholderText("Header Name")
+        if key:
+            key_input.setText(key)
+
+        value_input = QLineEdit()
+        value_input.setPlaceholderText("Value")
+        if value:
+            value_input.setText(value)
+
+        remove_button = QPushButton("Remove")
+        remove_button.clicked.connect(lambda: self.remove_header_field(row_widget))
+
+        row_layout.addWidget(key_input)
+        row_layout.addWidget(value_input)
+        row_layout.addWidget(remove_button)
+
+        self.headers_layout.addWidget(row_widget)
+        self.header_fields.append((row_widget, key_input, value_input))
+
+    def remove_header_field(self, row_widget):
+        """Remove a header field row."""
+        # Find and remove the row from our tracking list
+        for i, (widget, _, _) in enumerate(self.header_fields):
+            if widget == row_widget:
+                self.header_fields.pop(i)
+                break
+
+        # Remove from UI
+        row_widget.deleteLater()
+
+    def clear_header_fields(self):
+        """Remove all header fields."""
+        for widget, _, _ in self.header_fields:
+            widget.deleteLater()
+        self.header_fields = []
+
     def clear_and_disable_form(self):
         """Clear and disable the provider detail form fields and buttons."""
         self.name_edit.clear()
@@ -220,6 +263,10 @@ class CustomLLMProvidersConfigTab(QWidget):
 
         self.save_button.setEnabled(False)
         self.remove_button.setEnabled(False)
+
+        # Clear and disable header fields
+        self.clear_header_fields()
+        self.add_header_button.setEnabled(False)
 
         # Also clear and disable the available models section
         self.available_models_list_widget.clear()
@@ -247,6 +294,17 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_key_edit.setText(provider_data.get("api_key", ""))
         self.default_model_id_edit.setText(provider_data.get("default_model_id", ""))
         self.is_stream_checkbox.setChecked(provider_data.get("is_stream", False))
+
+        # Clear and reload header fields
+        self.clear_header_fields()
+
+        # Add header fields if they exist
+        if "extra_headers" in provider_data:
+            for key, value in provider_data["extra_headers"].items():
+                self.add_header_field(key, value)
+
+        # Enable header fields
+        self.add_header_button.setEnabled(True)
 
         self.name_edit.setEnabled(True)
         self.api_base_url_edit.setEnabled(True)
@@ -301,6 +359,10 @@ class CustomLLMProvidersConfigTab(QWidget):
 
         self.is_stream_checkbox.setEnabled(True)
         self.is_stream_checkbox.setChecked(False)
+
+        # Clear existing headers and enable adding new ones
+        self.clear_header_fields()
+        self.add_header_button.setEnabled(True)
 
         # Enable the save button for the new provider
         self.save_button.setEnabled(True)
@@ -371,6 +433,25 @@ class CustomLLMProvidersConfigTab(QWidget):
         form_layout.addRow("Streaming:", self.is_stream_checkbox)
 
         editor_layout.addLayout(form_layout)
+
+        # Headers section
+        self.headers_label = QLabel("Custom HTTP Headers")
+        editor_layout.addWidget(self.headers_label)
+
+        # Container for header fields
+        self.headers_container = QWidget()
+        self.headers_layout = QVBoxLayout(self.headers_container)
+        self.headers_layout.setContentsMargins(0, 0, 0, 0)
+        editor_layout.addWidget(self.headers_container)
+
+        # Add button for new headers
+        self.add_header_button = QPushButton("Add Header")
+        self.add_header_button.clicked.connect(self.add_header_field)
+        self.add_header_button.setEnabled(False)  # Disabled until provider selected
+        editor_layout.addWidget(self.add_header_button)
+
+        # Initialize the header fields list
+        self.header_fields = []
 
         # Available Models Section
         editor_layout.addWidget(QLabel("Available Models:"))
@@ -535,6 +616,14 @@ class CustomLLMProvidersConfigTab(QWidget):
             )
             return
 
+        # Collect header fields
+        extra_headers = {}
+        for _, key_input, value_input in self.header_fields:
+            key = key_input.text().strip()
+            value = value_input.text()
+            if key:  # Only save headers with non-empty keys
+                extra_headers[key] = value
+
         # Collect model data (dictionaries) from the list widget
         available_models_data = []
         for i in range(self.available_models_list_widget.count()):
@@ -555,6 +644,7 @@ class CustomLLMProvidersConfigTab(QWidget):
             "default_model_id": default_model_id,
             "available_models": available_models_data,  # List of model dictionaries
             "is_stream": is_stream,
+            "extra_headers": extra_headers,  # Add the extra_headers field
         }
 
         # Validate default_model_id against available_models

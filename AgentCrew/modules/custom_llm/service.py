@@ -11,7 +11,12 @@ class CustomLLMService(OpenAIService):
     """Custom LLM service that can connect to any OpenAI-compatible API."""
 
     def __init__(
-        self, base_url: str, api_key: str, provider_name: str, is_stream: bool = False
+        self,
+        base_url: str,
+        api_key: str,
+        provider_name: str,
+        is_stream: bool = False,
+        extra_headers: Optional[Dict[str, str]] = None,
     ):
         """
         Initializes the CustomLLMService.
@@ -21,6 +26,7 @@ class CustomLLMService(OpenAIService):
             api_key (str): The API key for the service.
             provider_name (str): The name of the custom provider.
             is_stream (bool): Whether to enable streaming responses by default.
+            extra_headers (Optional[List[Dict[str, str]]]): Custom HTTP headers to include in API requests.
         """
         super().__init__(api_key=api_key, base_url=base_url)
         self._provider_name = provider_name
@@ -28,6 +34,7 @@ class CustomLLMService(OpenAIService):
             f"Initialized Custom LLM Service for provider: {provider_name} at {base_url}"
         )
         self._is_stream = is_stream
+        self.extra_headers = extra_headers
 
     def format_tool_result(
         self, tool_use: Dict, tool_result: Any, is_error: bool = False
@@ -79,6 +86,7 @@ class CustomLLMService(OpenAIService):
                         "content": prompt,
                     }
                 ],
+                extra_headers=self.extra_headers,
             )
 
             # Calculate and log token usage and cost
@@ -142,12 +150,16 @@ class CustomLLMService(OpenAIService):
         if self._is_stream:
             self._is_thinking = False
             return await self.client.chat.completions.create(
-                **stream_params, stream=True
+                **stream_params,
+                stream=True,
+                extra_headers=self.extra_headers,
             )
 
         else:
             response = await self.client.chat.completions.create(
-                **stream_params, stream=False
+                **stream_params,
+                stream=False,
+                extra_headers=self.extra_headers,
             )
 
             if response.usage:
