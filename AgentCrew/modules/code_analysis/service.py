@@ -16,7 +16,7 @@ class CodeAnalysisService:
         ".mjs": "javascript",
         ".cjs": "javascript",
         ".ts": "typescript",
-        ".tsx": "tsx",
+        ".tsx": "typescript",
         ".java": "java",
         ".cpp": "cpp",
         ".hpp": "cpp",
@@ -45,7 +45,6 @@ class CodeAnalysisService:
                 "python": get_parser("python"),
                 "javascript": get_parser("javascript"),
                 "typescript": get_parser("typescript"),
-                "tsx": get_parser("typescript"),
                 "java": get_parser("java"),
                 "cpp": get_parser("cpp"),
                 "ruby": get_parser("ruby"),
@@ -160,43 +159,7 @@ class CodeAnalysisService:
                                 return result
                             # Break after first identifier to avoid capturing right-hand side
                             break
-
-                elif language == "javascript":
-                    if node.type in [
-                        "class_declaration",
-                        "method_definition",
-                        "function_declaration",
-                    ]:
-                        for child in node.children:
-                            if child.type == "identifier":
-                                result["name"] = self._extract_node_text(
-                                    child, source_code
-                                )
-                            elif child.type == "formal_parameters":
-                                params = []
-                                for param in child.children:
-                                    if (
-                                        "parameter" in param.type
-                                        or param.type == "identifier"
-                                    ):
-                                        params.append(
-                                            self._extract_node_text(param, source_code)
-                                        )
-                                if params:
-                                    result["parameters"] = params
-                    elif node.type in ["variable_declaration", "lexical_declaration"]:
-                        # Handle var/let/const declarations
-                        for child in node.children:
-                            if child.type == "variable_declarator":
-                                for subchild in child.children:
-                                    if subchild.type == "identifier":
-                                        result["type"] = "variable_declaration"
-                                        result["name"] = self._extract_node_text(
-                                            subchild, source_code
-                                        )
-                                        return result
-
-                elif language == "typescript":
+                elif language == "javascript" or language == "typescript":
                     if (
                         node.type
                         in [
@@ -233,7 +196,7 @@ class CodeAnalysisService:
                                         return exported_result
 
                         # Handle arrow functions - extract name from parent variable declarator
-                        if node.type == "arrow_function":
+                        elif node.type == "arrow_function":
                             parent = node.parent
                             if parent and parent.type == "variable_declarator":
                                 for sibling in parent.children:
@@ -295,6 +258,14 @@ class CodeAnalysisService:
                                                     result["parameters"] = arrow_result[
                                                         "parameters"
                                                     ]
+                                    else:
+                                        result["type"] = "variable_declaration"
+                                        result["name"] = var_name
+                                        result["first_line"] = (
+                                            self._extract_node_text(node, source_code)
+                                            .split("\n")[0]
+                                            .strip("{")
+                                        )
 
                         # Handle regular declarations
                         elif node.type in [
@@ -383,7 +354,11 @@ class CodeAnalysisService:
                                     if params:
                                         result["parameters"] = params
 
-                    elif node.type in ["variable_statement", "property_declaration"]:
+                    elif node.type in [
+                        "variable_statement",
+                        "property_declaration",
+                        "variable_declaration",
+                    ]:
                         # Handle variable declarations and property declarations
                         for child in node.children:
                             if child.type == "variable_declaration_list":
@@ -811,11 +786,13 @@ class CodeAnalysisService:
 
                 # Recursively process children
                 children = []
-                # print(
-                #     f"{node.type} ({self._extract_node_text(node, source_code) if node.type == 'identifier' else ''})"
-                # )
-                # print(self._extract_node_text(node, source_code))
-                # print("=============")
+                # if file_path.endswith("models/wishlist.js"):
+                #     print(f"{file_path} {language}")
+                #     print(
+                #         f"{node.type} ({self._extract_node_text(node, source_code) if node.type == 'identifier' else ''})"
+                #     )
+                #     print(self._extract_node_text(node, source_code))
+                #     print("=============")
                 for child in node.children:
                     child_result = process_node(child)
                     if child_result and (
@@ -1061,7 +1038,10 @@ class CodeAnalysisService:
                         modfilers = " ".join(node["modifiers"]) + " "
                     node_info = f"{modfilers}{node_name}({params_str})"
             else:
-                node_info = node_name
+                if "first_line" in node:
+                    node_info = node["first_line"]
+                else:
+                    node_info = node_name
 
             lines.append(f"{prefix}{branch}{node_info}")
 
@@ -1213,7 +1193,11 @@ class CodeAnalysisService:
                     node_lines = format_node(node, "", is_last)
                     if node_lines:  # Only add node lines if there are any
                         output_lines.extend(node_lines)
-
+                    # else:
+                    #     output_lines.append(
+                    #         self.get_file_content(result["path"]).get("file")
+                    #     )
+                    #
         # Return the formatted text
         return (
             "\n".join(output_lines)
