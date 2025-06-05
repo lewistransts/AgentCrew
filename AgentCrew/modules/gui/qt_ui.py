@@ -1306,6 +1306,9 @@ class ChatWindow(QMainWindow, Observer):
                         msg.get("agent", None),
                     )
                 # Add handling for other potential content formats if necessary
+                if "tool_calls" in msg:
+                    for tool_call in msg["tool_calls"]:
+                        self.display_tool_use(tool_call)
             elif role == "consolidated":
                 # Handle consolidated message
                 content = msg.get("content", "")
