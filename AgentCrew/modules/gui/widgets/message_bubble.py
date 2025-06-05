@@ -324,25 +324,29 @@ class MessageBubble(QFrame):
     def set_text(self, text):
         """Set or update the text content of the message."""
         try:
-            html_content = markdown.markdown(
-                text,
-                output_format="html",
-                extensions=[
-                    "tables",
-                    "fenced_code",
-                    "codehilite",
-                    "nl2br",
-                    "sane_lists",
-                ],
-            )
-            html_content = (
-                f"""<style>
-            pre {{ white-space: pre-wrap; margin-bottom: 0;}}
-                {CODE_CSS}
-            </style>"""
-                + html_content
-            )
-            self.message_label.setText(html_content)
+            # Do not use markdown for thinking messages due to rendering performance
+            if self.is_thinking:
+                self.message_label.setText(text)
+            else:
+                html_content = markdown.markdown(
+                    text,
+                    output_format="html",
+                    extensions=[
+                        "tables",
+                        "fenced_code",
+                        "codehilite",
+                        "nl2br",
+                        "sane_lists",
+                    ],
+                )
+                html_content = (
+                    f"""<style>
+                pre {{ white-space: pre-wrap; margin-bottom: 0;}}
+                    {CODE_CSS}
+                </style>"""
+                    + html_content
+                )
+                self.message_label.setText(html_content)
         except Exception as e:
             print(f"Error rendering markdown: {e}")
             self.message_label.setText(text)
