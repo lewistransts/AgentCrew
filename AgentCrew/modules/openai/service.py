@@ -116,7 +116,7 @@ class OpenAIService(BaseLLMService):
             if content:
                 message_content = {
                     "type": "text",
-                    "text": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
+                    "text": f"Content of {file_path}:\n\n{content}",
                 }
 
                 logger.info(f"📄 Including text file: {file_path}")

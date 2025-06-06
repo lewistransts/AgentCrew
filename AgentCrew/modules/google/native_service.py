@@ -209,7 +209,7 @@ class GoogleAINativeService(BaseLLMService):
             if content:
                 message_content = {
                     "type": "text",
-                    "text": f"I'm sharing this file with you:\n\nContent of {file_path}:\n\n{content}",
+                    "text": f"Content of {file_path}:\n\n{content}",
                 }
 
                 logger.info(f"📄 Including text file: {file_path}")
@@ -233,7 +233,7 @@ class GoogleAINativeService(BaseLLMService):
                 return [
                     {
                         "type": "text",
-                        "text": f"I'm sharing this file with you:\n\n{result['text']}",
+                        "text": f"{result['text']}",
                     }
                 ]
             else:

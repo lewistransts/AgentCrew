@@ -1291,10 +1291,18 @@ class ChatWindow(QMainWindow, Observer):
                     message_content,
                     flags=re.DOTALL | re.IGNORECASE,
                 )
-                if (
+                if message_content.startswith("Content of "):
+                    file_path = (
+                        message_content.split(":\n\n")[0]
+                        .lstrip("Content of")
+                        .rstrip("(converted to Markdown)")
+                        .strip()
+                    )
+                    self.append_file(file_path, True)
+
+                elif (
                     message_content.strip()
                     and not message_content.startswith("Context from your memory:")
-                    and not message_content.startswith("Content of ")
                     and not message_content.startswith(
                         "Need to tailor response bases on this"
                     )

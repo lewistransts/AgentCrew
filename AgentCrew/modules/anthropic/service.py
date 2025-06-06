@@ -124,12 +124,9 @@ class AnthropicService(BaseLLMService):
             content = read_text_file(file_path)
             if content:
                 logger.info(f"📄 Including text file: {file_path}")
-                text_prefix = (
-                    "I'm sharing this file with you:\n\n" if for_command else ""
-                )
                 return {
                     "type": "text",
-                    "text": f"{text_prefix}Content of {file_path}:\n\n{content}",
+                    "text": f"Content of {file_path}:\n\n{content}",
                 }
 
         return None
