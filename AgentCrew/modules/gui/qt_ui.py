@@ -1005,7 +1005,7 @@ class ChatWindow(QMainWindow, Observer):
         dialog.setIcon(QMessageBox.Icon.Question)
 
         # Format tool information for display
-        tool_description = f"The assistant wants to use the '{tool_use['name']}' tool {confirmation_id}."
+        tool_description = f"The assistant wants to use the '{tool_use['name']}' tool."
         params_text = ""
 
         if isinstance(tool_use["input"], dict):

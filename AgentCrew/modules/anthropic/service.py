@@ -1,6 +1,7 @@
 import os
 import mimetypes
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+from mcp.types import TextContent
 from anthropic import AsyncAnthropic
 from anthropic.types import TextBlock
 from dotenv import load_dotenv
@@ -287,13 +288,26 @@ class AnthropicService(BaseLLMService):
         Returns:
             A formatted message that can be appended to the messages list
         """
+        parsed_tool_result = tool_result
+        if isinstance(tool_result, List):
+            parsed_tool_result = []
+            for tool in tool_result:
+                if isinstance(tool, TextContent):
+                    parsed_tool_result.append(
+                        {
+                            "type": tool.type,
+                            "text": tool.text,
+                        }
+                    )
+                else:
+                    parsed_tool_result.append(tool)
         message = {
             "role": "user",
             "content": [
                 {
                     "type": "tool_result",
                     "tool_use_id": tool_use["id"],
-                    "content": tool_result,
+                    "content": parsed_tool_result,
                 }
             ],
         }
@@ -302,8 +316,8 @@ class AnthropicService(BaseLLMService):
         if is_error:
             message["content"][0]["is_error"] = True
 
-        if len(str(tool_result)) > 1024 and self.caching_blocks < 4:
-            message["content"][0]["cache_control"] = {"type": "ephemeral"}
+        if len(str(parsed_tool_result)) > 1024 and self.caching_blocks < 4:
+            message["content"][-1]["cache_control"] = {"type": "ephemeral"}
             self.caching_blocks += 1
         return message
 

@@ -431,6 +431,10 @@ class ConsoleUI(Observer):
                 # Format as markdown for better display
                 self.console.print(Markdown(content, code_theme=CODE_THEME))
                 self.display_divider()
+                if "tool_calls" in msg:
+                    for tool_call in msg["tool_calls"]:
+                        self.display_tool_use(tool_call)
+                self.display_divider()
             elif role == "consolidated":
                 print(f"\n{YELLOW}📝 CONVERSATION SUMMARY:{RESET}")
                 content = self._extract_message_content(msg)
