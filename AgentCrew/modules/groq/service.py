@@ -205,7 +205,6 @@ class GroqService(BaseLLMService):
         """Stream the assistant's response with tool support."""
         stream_params = {
             "model": self.model,
-            "max_completion_tokens": 4096,
             "messages": messages,
             "temperature": 0.4,
             "top_p": 0.95,
@@ -550,7 +549,6 @@ class GroqService(BaseLLMService):
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
-                max_completion_tokens=8192,
                 temperature=0.6,
                 top_p=0.95,
                 reasoning_format="parsed",

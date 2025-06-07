@@ -447,7 +447,8 @@ class MessageTransformer:
                 if isinstance(tool_result["content"], list):
                     for content_item in tool_result["content"]:
                         if isinstance(content_item, dict):
-                            del content_item["annotations"]
+                            if "annotations" in content_item:
+                                del content_item["annotations"]
 
                 claude_msg["content"] = [tool_result]
 

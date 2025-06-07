@@ -469,7 +469,6 @@ class AnthropicService(BaseLLMService):
             self.caching_blocks += 1
         stream_params = {
             "model": self.model,
-            "max_tokens": 8192,
             "system": self.system_prompt,
             "messages": messages,
             "top_p": 0.95,

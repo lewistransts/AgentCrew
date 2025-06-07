@@ -181,7 +181,6 @@ class OpenAIService(BaseLLMService):
             "model": self.model,
             "messages": messages,
             "stream_options": {"include_usage": True},
-            "max_tokens": 16000,
         }
         if "thinking" in ModelRegistry.get_model_capabilities(
             f"{self._provider_name}/{self.model}"
