@@ -127,7 +127,7 @@ class CustomLLMService(OpenAIService):
             "model": self.model,
             "messages": messages,
             # "stream_options": {"include_usage": True},
-            "max_tokens": 8192,
+            "max_tokens": 20000,
         }
         stream_params["temperature"] = self.temperature
         stream_params["extra_body"] = {"min_p": 0.1}
