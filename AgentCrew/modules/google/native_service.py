@@ -369,6 +369,7 @@ class GoogleAINativeService(BaseLLMService):
             # Create configuration with tools
             config = types.GenerateContentConfig(
                 temperature=self.temperature,
+                max_output_tokens=65536,
                 top_p=0.95,
             )
 
