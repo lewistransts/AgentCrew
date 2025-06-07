@@ -736,11 +736,8 @@ class ChatWindow(QMainWindow, Observer):
 
         return message_bubble
 
-    @Slot(str, int, int)
-    def handle_response(self, response, input_tokens, output_tokens):
-        """Handle the full response from the LLM worker"""
-        # self.display_response_chunk(response)
-
+    def _update_cost_info(self, input_tokens, output_tokens):
+        """Update cost statistic."""
         # Calculate cost
         total_cost = self.message_handler.agent.calculate_usage_cost(
             input_tokens, output_tokens
@@ -755,8 +752,15 @@ class ChatWindow(QMainWindow, Observer):
             }
         )
 
+    @Slot(str, int, int)
+    def handle_response(self, response, input_tokens, output_tokens):
+        """Handle the full response from the LLM worker"""
+        # self.display_response_chunk(response)
+
+        self._update_cost_info(input_tokens, output_tokens)
+
         self.chat_scroll.verticalScrollBar().setValue(
-            self.chat_scroll.verticalScrollBar().maximum()
+            self.chat_scroll.verticalScrollBar().minimum()
         )
 
     @Slot(str)
@@ -1821,6 +1825,8 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "response_completed":
             # Re-enable input controls
             self.set_input_controls_enabled(True)
+        elif event == "update_token_usage":
+            self._update_cost_info(data["input_tokens"], data["output_tokens"])
 
         # --- Ensure controls are re-enabled after most events if not loading ---
         # Place this check strategically if needed, or rely on specific event handlers

@@ -815,7 +815,12 @@ class MessageHandler(Observable):
                             },
                         )
 
-                return await self.get_assistant_response(input_tokens, output_tokens)
+                self._notify(
+                    "update_token_usage",
+                    {"input_tokens": input_tokens, "output_tokens": output_tokens},
+                )
+
+                return await self.get_assistant_response()
 
             if thinking_content:
                 # self._notify("thinking_completed")

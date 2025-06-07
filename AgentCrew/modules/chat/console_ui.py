@@ -50,6 +50,7 @@ class ConsoleUI(Observer):
         self.live = None  # Will be initialized during response streaming
         self._last_ctrl_c_time = 0
         self.latest_assistant_response = ""
+        self.session_cost = 0.0
 
         # Set up key bindings
         self.kb = self._setup_key_bindings()
@@ -139,6 +140,10 @@ class ConsoleUI(Observer):
             # self.display_message(
             #     f"{YELLOW}Conversation saved: {data.get('id', 'N/A')}{RESET}"
             # )
+        elif event == "clear_requested":
+            self.session_cost = 0.0
+        elif event == "update_token_usage":
+            self._calculate_token_usage(data["input_tokens"], data["output_tokens"])
 
     def display_thinking_started(self, agent_name: str):
         """Display the start of the thinking process."""
@@ -661,10 +666,17 @@ class ConsoleUI(Observer):
         )
         self.display_divider()
 
+    def _calculate_token_usage(self, input_tokens: int, output_tokens: int):
+        total_cost = self.message_handler.agent.calculate_usage_cost(
+            input_tokens, output_tokens
+        )
+        self.session_cost += total_cost
+        return total_cost
+
     def start(self):
         self.print_welcome_message()
 
-        session_cost = 0.0
+        self.session_cost = 0.0
         self._cached_conversations = []  # Add this to cache conversation list
 
         while True:
@@ -716,12 +728,10 @@ class ConsoleUI(Observer):
                 self.message_handler.get_assistant_response()
             )
 
+            total_cost = self._calculate_token_usage(input_tokens, output_tokens)
+
             if assistant_response:
                 # Calculate and display token usage
-                total_cost = self.message_handler.agent.calculate_usage_cost(
-                    input_tokens, output_tokens
-                )
-                session_cost += total_cost
                 self.display_token_usage(
-                    input_tokens, output_tokens, total_cost, session_cost
+                    input_tokens, output_tokens, total_cost, self.session_cost
                 )
