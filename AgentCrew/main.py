@@ -17,7 +17,6 @@ from AgentCrew.modules.memory import (
 from AgentCrew.modules.code_analysis import CodeAnalysisService
 from AgentCrew.modules.llm.service_manager import ServiceManager
 from AgentCrew.modules.llm.model_registry import ModelRegistry
-from AgentCrew.modules.coding import SpecPromptValidationService
 from AgentCrew.modules.agents import AgentManager, LocalAgent, RemoteAgent
 from AgentCrew.modules.image_generation import ImageGenerationService
 from PySide6.QtWidgets import QApplication
@@ -122,7 +121,6 @@ def setup_services(provider, memory_llm=None):
         )
     context_service = ContextPersistenceService()
     clipboard_service = ClipboardService()
-    aider_service = SpecPromptValidationService("groq")
     # Try to create search service if API key is available
     try:
         search_service = TavilySearchService()
@@ -170,7 +168,6 @@ def setup_services(provider, memory_llm=None):
         "clipboard": clipboard_service,
         "code_analysis": code_analysis_service,
         "web_search": search_service,
-        "aider": aider_service,
         "context_persistent": context_service,
         "image_generation": image_gen_service,
     }

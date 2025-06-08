@@ -758,9 +758,6 @@ class ChatWindow(QMainWindow, Observer):
 
         self._update_cost_info(input_tokens, output_tokens)
 
-        self.chat_scroll.verticalScrollBar().setValue(
-            self.chat_scroll.verticalScrollBar().minimum()
-        )
         # Reset response expectation
         self.expecting_response = False
 

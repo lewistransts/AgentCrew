@@ -103,12 +103,6 @@ class LocalAgent(BaseAgent):
                         )
 
                         register_web_search(service, self)
-                    elif tool_name == "aider":
-                        from AgentCrew.modules.coding.tool import (
-                            register as register_spec_validator,
-                        )
-
-                        register_spec_validator(service, self)
                     elif tool_name == "image_generation":
                         from AgentCrew.modules.image_generation.tool import (
                             register as register_image_generation,
