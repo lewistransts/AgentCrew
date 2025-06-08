@@ -16,7 +16,6 @@ class LLMWorker(QObject):
     response_ready = Signal(str, int, int)  # response, input_tokens, output_tokens
     error = Signal(str)
     status_message = Signal(str)
-    token_usage = Signal(dict)
     request_exit = Signal()
     request_clear = Signal()
     thinking_started = Signal(str)  # agent_name
@@ -76,19 +75,19 @@ class LLMWorker(QObject):
                     assistant_response, input_tokens, output_tokens
                 )
 
-                # Calculate cost
-                total_cost = self.message_handler.agent.calculate_usage_cost(
-                    input_tokens, output_tokens
-                )
-
-                # Emit token usage information
-                self.token_usage.emit(
-                    {
-                        "input_tokens": input_tokens,
-                        "output_tokens": output_tokens,
-                        "total_cost": total_cost,
-                    }
-                )
+                # # Calculate cost
+                # total_cost = self.message_handler.agent.calculate_usage_cost(
+                #     input_tokens, output_tokens
+                # )
+                #
+                # # Emit token usage information
+                # self.token_usage.emit(
+                #     {
+                #         "input_tokens": input_tokens,
+                #         "output_tokens": output_tokens,
+                #         "total_cost": total_cost,
+                #     }
+                # )
             else:
                 logger.info("No response received from assistant")
                 self.status_message.emit("No response received")

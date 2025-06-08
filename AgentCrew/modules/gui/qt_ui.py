@@ -418,7 +418,6 @@ class ChatWindow(QMainWindow, Observer):
         self.llm_worker.response_ready.connect(self.handle_response)
         self.llm_worker.error.connect(self.display_error)
         self.llm_worker.status_message.connect(self.display_status_message)
-        self.llm_worker.token_usage.connect(self.update_token_usage)
         self.llm_worker.request_exit.connect(self.handle_exit_request)
         self.llm_worker.request_clear.connect(self.handle_clear_request)
 
@@ -762,6 +761,11 @@ class ChatWindow(QMainWindow, Observer):
         self.chat_scroll.verticalScrollBar().setValue(
             self.chat_scroll.verticalScrollBar().minimum()
         )
+        # Reset response expectation
+        self.expecting_response = False
+
+        # Re-enable input controls
+        self.set_input_controls_enabled(True)
 
     @Slot(str)
     def display_response_chunk(self, chunk: str):
@@ -822,12 +826,6 @@ class ChatWindow(QMainWindow, Observer):
         self.token_usage.update_token_info(
             input_tokens, output_tokens, total_cost, self.session_cost
         )
-
-        # Reset response expectation
-        self.expecting_response = False
-
-        # Re-enable input controls
-        self.set_input_controls_enabled(True)
 
     @Slot()
     def copy_last_response(self):
