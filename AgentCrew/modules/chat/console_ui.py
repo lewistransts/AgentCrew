@@ -12,6 +12,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 
+from AgentCrew.modules.agents.base import MessageType
 from AgentCrew.modules.chat.message_handler import MessageHandler, Observer
 from AgentCrew.modules import logger
 from AgentCrew.modules.chat.completers import ChatCompleter
@@ -51,6 +52,7 @@ class ConsoleUI(Observer):
         self._last_ctrl_c_time = 0
         self.latest_assistant_response = ""
         self.session_cost = 0.0
+        self._live_text_data = ""
 
         # Set up key bindings
         self.kb = self._setup_key_bindings()
@@ -161,6 +163,8 @@ class ConsoleUI(Observer):
             self.start_streaming_response(self.message_handler.agent.name)
 
         updated_text = chunk
+
+        self._live_text_data = updated_text
 
         # Only show the last part that fits in the console
         lines = updated_text.split("\n")
@@ -680,58 +684,76 @@ class ConsoleUI(Observer):
         self._cached_conversations = []  # Add this to cache conversation list
 
         while True:
-            # Get user input
-            user_input = self.get_user_input()
+            try:
+                # Get user input
+                user_input = self.get_user_input()
 
-            # Handle list command directly
-            if user_input.strip() == "/list":
-                self._cached_conversations = self.message_handler.list_conversations()
-                self.display_conversations(self._cached_conversations)
-                continue
-
-            # Handle load command directly
-            if user_input.strip().startswith("/load "):
-                load_arg = user_input.strip()[
-                    6:
-                ].strip()  # Extract argument after "/load "
-                if load_arg:
-                    self.handle_load_conversation(load_arg)
-                else:
-                    print(
-                        f"{YELLOW}Usage: /load <conversation_id> or /load <number>{RESET}"
+                # Handle list command directly
+                if user_input.strip() == "/list":
+                    self._cached_conversations = (
+                        self.message_handler.list_conversations()
                     )
-                continue
+                    self.display_conversations(self._cached_conversations)
+                    continue
 
-            # Process user input and commands
-            # self.start_streaming_response(self.message_handler.agent_name)
-            should_exit, was_cleared = asyncio.run(
-                self.message_handler.process_user_input(user_input)
-            )
+                # Handle load command directly
+                if user_input.strip().startswith("/load "):
+                    load_arg = user_input.strip()[
+                        6:
+                    ].strip()  # Extract argument after "/load "
+                    if load_arg:
+                        self.handle_load_conversation(load_arg)
+                    else:
+                        print(
+                            f"{YELLOW}Usage: /load <conversation_id> or /load <number>{RESET}"
+                        )
+                    continue
 
-            # Exit if requested
-            if should_exit:
-                break
+                # Process user input and commands
+                # self.start_streaming_response(self.message_handler.agent_name)
+                should_exit, was_cleared = asyncio.run(
+                    self.message_handler.process_user_input(user_input)
+                )
 
-            # Skip to next iteration if messages were cleared
-            if was_cleared:
-                continue
+                # Exit if requested
+                if should_exit:
+                    break
 
-            # Skip to next iteration if no messages to process
-            if not self.message_handler.agent.history:
-                continue
+                # Skip to next iteration if messages were cleared
+                if was_cleared:
+                    continue
 
-            # Start streaming response
-            # self.start_streaming_response(self.message_handler.agent_name)
+                # Skip to next iteration if no messages to process
+                if not self.message_handler.agent.history:
+                    continue
 
-            # Get assistant response
-            assistant_response, input_tokens, output_tokens = asyncio.run(
-                self.message_handler.get_assistant_response()
-            )
+                # Start streaming response
+                # self.start_streaming_response(self.message_handler.agent_name)
 
-            total_cost = self._calculate_token_usage(input_tokens, output_tokens)
+                # Get assistant response
+                assistant_response, input_tokens, output_tokens = asyncio.run(
+                    self.message_handler.get_assistant_response()
+                )
 
-            if assistant_response:
-                # Calculate and display token usage
-                self.display_token_usage(
-                    input_tokens, output_tokens, total_cost, self.session_cost
+                total_cost = self._calculate_token_usage(input_tokens, output_tokens)
+
+                if assistant_response:
+                    # Calculate and display token usage
+                    self.display_token_usage(
+                        input_tokens, output_tokens, total_cost, self.session_cost
+                    )
+            except KeyboardInterrupt as e:
+                self.message_handler.stop_streaming = True
+                # Display whatever text was generated so far
+                if self.live:
+                    last_response = self._live_text_data
+                    self.message_handler._messages_append(
+                        self.message_handler.agent.format_message(
+                            MessageType.Assistant, {"message": last_response}
+                        )
+                    )
+                    self.live.stop()
+                    self.live = None
+                self.display_message(
+                    f"{YELLOW}Message streaming stopped by user.{RESET}"
                 )
