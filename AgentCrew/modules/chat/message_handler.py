@@ -651,6 +651,14 @@ class MessageHandler(Observable):
                 chunk_text,
                 thinking_chunk,
             ) in stream_generator:
+                # Check if stop was requested
+                if self.stop_streaming:
+                    self.stop_streaming = False  # Reset flag
+
+                    # Properly close the generator instead of breaking
+                    await stream_generator.aclose()
+                    self._notify("streaming_stopped", assistant_response)
+
                 # Accumulate thinking content if available
                 if thinking_chunk:
                     think_text_chunk, signature = thinking_chunk
@@ -677,14 +685,6 @@ class MessageHandler(Observable):
                         # Delays it a bit when using without stream
                         time.sleep(0.5)
                     self._notify("response_chunk", (chunk_text, assistant_response))
-
-                # Check if stop was requested
-                if self.stop_streaming:
-                    self.stop_streaming = False  # Reset flag
-
-                    # Properly close the generator instead of breaking
-                    await stream_generator.aclose()
-                    self._notify("streaming_stopped", assistant_response)
 
             tool_uses, input_tokens_in_turn, output_tokens_in_turn = (
                 self.agent.get_process_result()
