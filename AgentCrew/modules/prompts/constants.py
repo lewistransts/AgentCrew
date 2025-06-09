@@ -1,52 +1,3 @@
-ANALYSIS_PROMPT = """
-<user_context_analysis>
-<instruction>
-1.  Analyze the <conversation_history> to gather user information.
-2.  ONLY INCLUDE information that is related to <user_input>
-3.  Format this summary as a JSON object.
-4.  MUST enclose the entire JSON object within `<user_context_summary>` tags.
-5.  Use the following keys in the JSON object: `explicit_preferences`, `topics_of_interest`, `key_facts_entities`, `inferred_behavior`.
-6.  The value for `explicit_preferences`, `topics_of_interest`, `inferred_behavior` MUST be a JSON array of strings `["item1", "item2", ...]`.
-7.  the value for `key_facts_entities` MUST be a dictionary with key is a string and value is a array of strings `{"entity1": ["fact about entity1"]}`
-8.  If no information has been identified for a category, use an empty array `[]` as its value.
-9.  If there are conflicts between conversation_histories, Choose the latest memory by date. 
-10. Avoid using ambiguous entity key like "./", "this repo", "this file", choose a meaningful entity key.
-11. Only response `<user_context_summary>...</user_context_summary>` block
-</instruction>
-
-<output_format_example>
-<user_context_summary>
-{
-  "explicit_preferences": ["Be concise", "Use markdown", "Explain like I'm 5"],
-  "topics_of_interest": ["Python", "Machine Learning", "Gardening"],
-  "key_facts_entities": {"Project Alpha": ["Deadline: Next Tuesday", "Written in C#"], "Cat's name: Whiskers": ["Favorite food: Fish"]},
-  "inferred_behavior": ["Prefers short answers", "Often provides code examples"]
-}
-</user_context_summary>
-</output_format_example>
-
-<empty_value_example>
-<user_context_summary>
-{
-  "explicit_preferences": [],
-  "topics_of_interest": ["Photosynthesis"],
-  "key_facts_entities": {"User's son": ["Name: Leo"]},
-  "inferred_behavior": []
-}
-</user_context_summary>
-</empty_value_example>
-
-</user_context_analysis>
-
-<user_input>
-{user_input}
-</user_input>
-
-<conversation_history>
-{conversation_history}
-</conversation_history>
-"""
-
 PRE_ANALYZE_PROMPT = """
 Enhance this conversation for AI memory storage. Create a single comprehensive text document that includes ALL of the following sections:
 
@@ -56,8 +7,6 @@ Enhance this conversation for AI memory storage. Create a single comprehensive t
     4. CONTEXT: Background information relevant to understanding this exchange
     5. ENTITIES: Important people, organizations, products, or concepts mentioned including essential facts, concepts, or data points discussed about that entity
     6. DOMAIN: The subject domain(s) this conversation relates to
-    7. USER PREFERENCES: Any explicit preferences expressed by the user (e.g., "I prefer Python over Java")
-    8. BEHAVIORAL INSIGHTS: Observations about user behavior (e.g., "User asks detailed technical questions")
 
     USER: {user_message}
     ASSISTANT: {assistant_response}
@@ -105,8 +54,6 @@ POST_RETRIEVE_MEMORY = """
     *   `CONTEXT`: Background information.
     *   `ENTITIES`: Key people, orgs, products, concepts, facts.
     *   `DOMAIN`: Subject domain(s).
-    *   `USER_PREFERENCES`: Explicit user preferences.
-    *   `BEHAVIORAL_INSIGHTS`: User behavior observations.
 
 **Processing Instructions:**
 1.  **Relevance Filtering:**

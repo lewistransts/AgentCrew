@@ -34,6 +34,7 @@ class LocalAgent(BaseAgent):
         self.tools: List[str] = tools  # List of tool names that the agent needs
         self.system_prompt = None
         self.custom_system_prompt = None
+        self.tool_prompts = []
         # self.history = []
         # self.shared_context_pool: Dict[str, List[int]] = {}
         # Store tool definitions in the same format as ToolRegistry
@@ -82,9 +83,13 @@ class LocalAgent(BaseAgent):
                     if tool_name == "memory":
                         from AgentCrew.modules.memory.tool import (
                             register as register_memory,
+                            adaptive_instruction_prompt,
                         )
 
-                        register_memory(service, self)
+                        register_memory(
+                            service, self.services.get("context_persistent", None), self
+                        )
+                        self.tool_prompts.append(adaptive_instruction_prompt())
                     elif tool_name == "clipboard":
                         from AgentCrew.modules.clipboard.tool import (
                             register as register_clipboard,
@@ -202,11 +207,14 @@ class LocalAgent(BaseAgent):
         system_prompt = self.get_system_prompt()
         if self.custom_system_prompt:
             system_prompt = (
-                self.get_system_prompt() + "\n---\n\n" + self.custom_system_prompt
-                # + "\n---\n\n"
-                # + ANALYSIS_PROMPT
+                self.get_system_prompt()
+                + "\n---\n\n"
+                + self.custom_system_prompt
+                + "\n---\n\n"
+                + "\n".join(self.tool_prompts)
             )
 
+        print(system_prompt)
         self.llm.set_system_prompt(system_prompt)
         self.llm.temperature = self.temperature if self.temperature is not None else 0.4
         self.is_active = True
@@ -372,6 +380,10 @@ class LocalAgent(BaseAgent):
         Returns:
             The processed messages with the agent's response
         """
+        from AgentCrew.modules.memory.context_persistent import (
+            ContextPersistenceService,
+        )
+
         assistant_response = ""
         self.tool_uses = []
         self.input_tokens_usage = 0
@@ -379,6 +391,31 @@ class LocalAgent(BaseAgent):
         # Ensure the first message is a system message with the agent's prompt
         if not messages:
             messages = self.history
+        if "context_persistent" in self.services and isinstance(
+            self.services["context_persistent"], ContextPersistenceService
+        ):
+            adaptive_behaviors = self.services[
+                "context_persistent"
+            ].get_adaptive_behaviors(self.name)
+            if (
+                len(adaptive_behaviors.keys()) > 0
+                and messages[-1].get("role", "assistant") == "user"
+            ):
+                adaptive_text = ""
+                for key, value in adaptive_behaviors.items():
+                    adaptive_text += f"- {value} ({key})\n"
+
+                adaptive_messages = {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"Follows latest user prefer behaviors: \n{adaptive_text}",
+                        }
+                    ],
+                }
+                messages.insert(1, adaptive_messages)
+                print(messages)
         async with await self.llm.stream_assistant_response(messages) as stream:
             async for chunk in stream:
                 # Process the chunk using the LLM service

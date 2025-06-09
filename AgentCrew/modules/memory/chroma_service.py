@@ -11,7 +11,6 @@ from AgentCrew.modules.llm.base import BaseLLMService
 from .base_service import BaseMemoryService
 from .voyageai_ef import VoyageEmbeddingFunction
 from AgentCrew.modules.prompts.constants import (
-    ANALYSIS_PROMPT,
     SEMANTIC_EXTRACTING,
     PRE_ANALYZE_PROMPT,
     POST_RETRIEVE_MEMORY,
@@ -249,17 +248,6 @@ class ChromaMemoryService(BaseMemoryService):
             Formatted string containing relevant context from past conversations
         """
         return await self.retrieve_memory(user_input, 5, agent_name=agent_name)
-
-        if self.llm_service:
-            analyze_result = await self.llm_service.process_message(
-                ANALYSIS_PROMPT.replace(
-                    "{conversation_history}",
-                    await self.retrieve_memory(user_input, 5, agent_name=agent_name),
-                ).replace("{user_input}", user_input)
-            )
-            return analyze_result
-        else:
-            return "No user context being processed"
 
     async def _semantic_extracting(self, input: str) -> str:
         if self.llm_service:

@@ -16,13 +16,8 @@ class ContextPersistenceService:
     Uses print for output and raises exceptions on critical errors.
     """
 
-    CONTEXT_FILENAME = "context.json"
     CONVERSATIONS_SUBDIR = "conversations"
-    DEFAULT_CONTEXT_STRUCTURE = {"latest_summary": {}, "_rankings": {}}
-    KEY_FACTS_CATEGORY_NAME = "key_facts_entities"
-    ENTITY_ITSELF_COUNT_KEY = (
-        "_entity_itself_count"  # Key to store entity's own frequency
-    )
+    ADAPTIVE_BEHAVIORS_FILE = "adaptive.json"
 
     def __init__(self, persistence_dir_override: Optional[str] = None):
         """
@@ -62,8 +57,8 @@ class ContextPersistenceService:
 
         # Expand user path (~) if present, and get absolute path for clarity
         self.base_dir = os.path.abspath(os.path.expanduser(persistence_dir))
-        self.context_file_path = os.path.join(self.base_dir, self.CONTEXT_FILENAME)
         self.conversations_dir = os.path.join(self.base_dir, self.CONVERSATIONS_SUBDIR)
+        self.adaptive_behaviors_file_path = os.path.join(self.base_dir, self.ADAPTIVE_BEHAVIORS_FILE)
 
         # _ensure_dir already raises OSError on failure
         self._ensure_dir(self.base_dir)
@@ -143,328 +138,6 @@ class ContextPersistenceService:
             # Catch unexpected errors during write/dump
             logger.error(f"ERROR: Unexpected error writing {file_path}: {e}")
             raise
-
-    def _update_rankings(self, current_rankings: dict, new_summary: dict) -> dict:
-        """
-        Updates ranking counts based on a new context summary.
-        Maintains nested structure for 'key_facts_entities' ranking.
-
-        Args:
-            current_rankings: The existing rankings dictionary.
-            new_summary: The new user context summary dictionary.
-
-        Returns:
-            The dictionary with updated ranking counts.
-        """
-        updated_rankings = {}
-        # Ensure all categories from current_rankings are carried over safely
-        for category, items in current_rankings.items():
-            # Ensure the copied item is a dictionary, especially for nested ones
-            if isinstance(items, dict):
-                # Deep copy might be safer for nested structures if modification is complex,
-                # but simple assignment should be okay if we only modify counts.
-                # Let's stick with shallow copy for now for simplicity. If issues arise, use copy.deepcopy.
-                updated_rankings[category] = items.copy()
-            else:
-                logger.warning(
-                    f"WARNING: Malformed ranking category found: {category}. Resetting."
-                )
-                updated_rankings[category] = {}
-
-        # Iterate through the categories and items in the *new* summary
-        for category, items in new_summary.items():
-            # Ensure the category exists in rankings, initialize if not
-            if category not in updated_rankings:
-                updated_rankings[category] = {}
-
-            # --- Handle the special 'key_facts_entities' category ---
-            if category == self.KEY_FACTS_CATEGORY_NAME:
-                if isinstance(items, dict):
-                    # Ensure the ranking category itself is a dict
-                    if not isinstance(updated_rankings[category], dict):
-                        logger.warning(
-                            f"WARNING: Resetting ranking for {category} as it wasn't a dict."
-                        )
-                        updated_rankings[category] = {}
-
-                    for entity_key, facts_list in items.items():
-                        if not isinstance(entity_key, str):
-                            # print(f"DEBUG: Skipping non-string entity key in ranking: {entity_key}")
-                            continue  # Skip non-string keys
-
-                        # Ensure the entity key exists in the ranking dict for this category
-                        if entity_key not in updated_rankings[category]:
-                            updated_rankings[category][
-                                entity_key
-                            ] = {}  # Value is now a dict for facts
-
-                        # Ensure the value is a dictionary (might be needed if loaded from corrupt file)
-                        if not isinstance(updated_rankings[category][entity_key], dict):
-                            logger.warning(
-                                f"WARNING: Resetting ranking for entity '{entity_key}' as its value wasn't a dict."
-                            )
-                            updated_rankings[category][entity_key] = {}
-
-                        # Increment the count for the entity key itself
-                        entity_count = updated_rankings[category][entity_key].get(
-                            self.ENTITY_ITSELF_COUNT_KEY, 0
-                        )
-                        updated_rankings[category][entity_key][
-                            self.ENTITY_ITSELF_COUNT_KEY
-                        ] = entity_count + 1
-
-                        # Rank the associated facts within the entity's dictionary
-                        if isinstance(facts_list, list):
-                            for fact in facts_list:
-                                if isinstance(fact, str):
-                                    # Increment count for this fact *within this entity's dict*
-                                    fact_count = updated_rankings[category][
-                                        entity_key
-                                    ].get(fact, 0)
-                                    updated_rankings[category][entity_key][fact] = (
-                                        fact_count + 1
-                                    )
-                                else:
-                                    # print(f"DEBUG: Skipping non-string fact in ranking: {fact}")
-                                    pass
-                        else:
-                            # print(f"DEBUG: Facts list for entity '{entity_key}' is not a list: {facts_list}")
-                            pass
-                else:
-                    # print(f"DEBUG: Expected a dict for '{self.KEY_FACTS_CATEGORY_NAME}', but got {type(items)}")
-                    pass
-
-            # --- Handle other categories (assumed to be List[str]) ---
-            else:
-                # Ensure the ranking category itself is a dict
-                if not isinstance(updated_rankings[category], dict):
-                    logger.warning(
-                        f"WARNING: Resetting ranking for {category} as it wasn't a dict."
-                    )
-                    updated_rankings[category] = {}
-
-                if isinstance(items, list):
-                    for item in items:
-                        # Only rank strings for simplicity
-                        if isinstance(item, str):
-                            current_count = updated_rankings[category].get(item, 0)
-                            updated_rankings[category][item] = current_count + 1
-                        else:
-                            # print(f"DEBUG: Skipping non-string item in ranking category '{category}': {item}")
-                            pass
-                else:
-                    # print(f"DEBUG: Expected a list for category '{category}', but got {type(items)}")
-                    pass
-
-        return updated_rankings
-
-    # --- User Context Management ---
-
-    def store_user_context(self, context_summary: dict):
-        """
-        Stores the latest user context summary and updates the rankings.
-
-        Args:
-            context_summary: The new user context summary dictionary.
-
-        Raises:
-            ValueError: If context_summary is not a dictionary.
-            IOError, TypeError, OSError: If writing to the context file fails.
-        """
-        if not isinstance(context_summary, dict):
-            # Raise error instead of just logging
-            raise ValueError(
-                "Invalid context_summary provided (must be a dict). Aborting store."
-            )
-
-        full_data = self._read_json_file(
-            self.context_file_path, default_value=self.DEFAULT_CONTEXT_STRUCTURE.copy()
-        )
-        # Ensure the structure read from file is valid before proceeding
-        if not isinstance(full_data.get("_rankings"), dict):
-            logger.warning(
-                f"WARNING: Invalid rankings structure in {self.context_file_path}. Resetting rankings."
-            )
-            full_data["_rankings"] = {}
-        if not isinstance(full_data.get("latest_summary"), dict):
-            full_data["latest_summary"] = {}  # Ensure latest_summary exists
-
-        current_rankings = full_data["_rankings"]
-
-        # Call the updated ranking logic
-        updated_rankings = self._update_rankings(current_rankings, context_summary)
-
-        data_to_save = {
-            "latest_summary": context_summary,
-            "_rankings": updated_rankings,
-        }
-
-        # _write_json_file now raises exceptions on failure
-        self._write_json_file(self.context_file_path, data_to_save)
-        # print(f"INFO: User context stored successfully at {self.context_file_path}")
-
-    def get_user_context(self) -> Dict[str, Any] | None:
-        """
-        Retrieves the stored user context including latest summary and rankings.
-
-        Returns:
-            The dictionary containing 'latest_summary' and '_rankings',
-            or None if the file doesn't exist or is invalid/empty.
-        """
-        data = self._read_json_file(self.context_file_path, default_value=None)
-
-        # Basic validation after reading
-        if (
-            data is None
-            or not isinstance(data.get("latest_summary"), dict)
-            or not isinstance(data.get("_rankings"), dict)
-        ):
-            logger.warning(
-                f"WARNING: Stored context file {self.context_file_path} is missing or invalid."
-            )
-            return None  # Return None if invalid or missing
-
-        # Check if it's just the default empty structure
-        if not data["latest_summary"] and not data["_rankings"]:
-            # print(f"INFO: Stored context file {self.context_file_path} is empty.")
-            return None  # Return None if empty
-
-        return data
-
-    def get_user_context_json(
-        self, min_count_threshold: int = 3, limit_count_threshold: int = 10
-    ) -> str:
-        """
-        Formats the ranking data into a JSON string suitable for prompt injection.
-
-        Includes only items/entities with a count >= min_count_threshold.
-        Limits the number of items/entities per category to limit_count_threshold,
-        selecting the ones with the highest counts.
-        Counts are used for filtering/limiting but are *not* included in the output JSON.
-
-        Args:
-            min_count_threshold: The minimum count an item/entity must have to be considered.
-            limit_count_threshold: The maximum number of items/entities to include per category,
-                                sorted by count descending. For key_facts_entities,
-                                this limits the number of entities shown.
-
-        Returns:
-            A JSON formatted string summarizing the high-frequency, limited context,
-            or an empty JSON object string "{}" if no items meet the criteria.
-        """
-        context_data = self.get_user_context()
-        if not context_data or not isinstance(context_data.get("_rankings"), dict):
-            return "{}"  # Return empty JSON object string
-
-        rankings = context_data["_rankings"]
-        filtered_data_for_json = {}  # Build a dict containing filtered items
-
-        # --- Filter and Limit the data ---
-        for category, category_rankings in rankings.items():
-            if not isinstance(category_rankings, dict):
-                continue  # Skip malformed
-
-            # --- Special handling for key_facts_entities ---
-            if category == self.KEY_FACTS_CATEGORY_NAME:
-                potentially_includable_entities = []
-                # First pass: identify entities meeting min_threshold and get their count
-                for entity_key, entity_data in category_rankings.items():
-                    if not isinstance(entity_data, dict):
-                        continue  # Skip malformed entity
-
-                    entity_itself_count = entity_data.get(
-                        self.ENTITY_ITSELF_COUNT_KEY, 0
-                    )
-                    include_entity = entity_itself_count >= min_count_threshold
-
-                    # Also check facts to see if entity should be considered even if its own count is low
-                    if not include_entity:
-                        for fact, count in entity_data.items():
-                            if fact == self.ENTITY_ITSELF_COUNT_KEY:
-                                continue
-                            if count >= min_count_threshold:
-                                include_entity = True
-                                break  # Found one fact meeting threshold, entity is potentially includable
-
-                    if include_entity:
-                        # Store entity key and its own count for sorting/limiting
-                        potentially_includable_entities.append(
-                            (entity_key, entity_itself_count)
-                        )
-
-                # Sort potential entities by their own count (descending)
-                potentially_includable_entities.sort(key=lambda x: x[1], reverse=True)
-
-                # Limit the number of entities
-                limited_entities = potentially_includable_entities[
-                    :limit_count_threshold
-                ]
-
-                # Second pass: build the output dict for the limited entities
-                filtered_entities_dict = {}
-                if limited_entities:
-                    # Get just the keys of the top entities
-                    top_entity_keys = [key for key, count in limited_entities]
-                    # Sort keys alphabetically for final output consistency
-                    top_entity_keys.sort()
-
-                    for entity_key in top_entity_keys:
-                        entity_data = category_rankings.get(
-                            entity_key, {}
-                        )  # Should exist, but default defensively
-                        filtered_facts_list = []
-                        # Collect facts meeting min_threshold for this top entity
-                        for fact, count in entity_data.items():
-                            if fact == self.ENTITY_ITSELF_COUNT_KEY:
-                                continue
-                            if count >= min_count_threshold:
-                                filtered_facts_list.append(fact)
-
-                        # Add entity to output dict, even if facts list is empty (if entity itself met threshold)
-                        # Sort facts alphabetically
-                        filtered_entities_dict[entity_key] = sorted(filtered_facts_list)
-
-                # Add the category to the final dict only if it has filtered entities
-                if filtered_entities_dict:
-                    filtered_data_for_json[category] = filtered_entities_dict
-
-            # --- Handling for regular (flat) categories ---
-            else:
-                items_meeting_min_threshold = []
-                for item, count in category_rankings.items():
-                    if count >= min_count_threshold:
-                        items_meeting_min_threshold.append((item, count))
-
-                # Sort by count descending
-                items_meeting_min_threshold.sort(key=lambda x: x[1], reverse=True)
-
-                # Limit the number of items
-                if category not in ["explicit_preferences", "inferred_behavior"]:
-                    limited_items = items_meeting_min_threshold[:limit_count_threshold]
-                else:
-                    limited_items = items_meeting_min_threshold
-
-                # Extract just the item names from the limited list
-                final_item_list = [item for item, count in limited_items]
-
-                # Add the category to the final dict only if it has filtered items
-                if final_item_list:
-                    # Sort items alphabetically for final output consistency
-                    filtered_data_for_json[category] = sorted(final_item_list)
-
-        # --- Generate JSON string ---
-        if not filtered_data_for_json:
-            return "{}"  # Return empty JSON object string
-
-        # Use separators=(',', ':') for compact JSON, sort_keys=True for consistency
-        try:
-            json_string = json.dumps(
-                filtered_data_for_json, separators=(",", ":"), sort_keys=True
-            )
-            return json_string
-        except TypeError as e:
-            logger.error(f"ERROR: Failed to serialize filtered data to JSON: {e}")
-            return "{}"  # Fallback on serialization error
 
     # --- Conversation History Management ---
 
@@ -697,3 +370,129 @@ class ContextPersistenceService:
             raise
 
         return conversations
+
+    # --- Adaptive Behavior Management ---
+
+    def get_adaptive_behaviors(self, agent_name: str) -> Dict[str, str]:
+        """
+        Retrieves all adaptive behaviors for a specific agent.
+
+        Args:
+            agent_name: The name of the agent.
+
+        Returns:
+            Dictionary of behavior ID to behavior description mappings.
+        """
+        adaptive_data = self._read_json_file(self.adaptive_behaviors_file_path, default_value={})
+
+        if not isinstance(adaptive_data, dict):
+            logger.warning(
+                "WARNING: Adaptive behaviors file was not a dictionary. Resetting."
+            )
+            return {}
+
+        return adaptive_data.get(agent_name, {})
+
+    def store_adaptive_behavior(
+        self, agent_name: str, behavior_id: str, behavior: str
+    ) -> bool:
+        """
+        Stores or updates an adaptive behavior for a specific agent.
+
+        Args:
+            agent_name: The name of the agent.
+            behavior_id: Unique identifier for the behavior.
+            behavior: The behavior description in "when...do..." format.
+
+        Returns:
+            True if successful, False otherwise.
+
+        Raises:
+            ValueError: If behavior format is invalid.
+            IOError, TypeError, OSError: If reading or writing fails.
+        """
+        # Validate behavior format
+        if not isinstance(behavior, str) or not behavior.strip():
+            raise ValueError("Behavior must be a non-empty string")
+
+        behavior_lower = behavior.lower().strip()
+        if not behavior_lower.startswith("when") or "do" not in behavior_lower:
+            raise ValueError("Behavior must follow 'when...do...' format")
+
+        adaptive_data = self._read_json_file(self.adaptive_behaviors_file_path, default_value={})
+
+        if not isinstance(adaptive_data, dict):
+            logger.warning(
+                "WARNING: Adaptive behaviors file was not a dictionary. Resetting."
+            )
+            adaptive_data = {}
+
+        # Initialize agent's behaviors if not exists
+        if agent_name not in adaptive_data:
+            adaptive_data[agent_name] = {}
+
+        # Store the behavior
+        adaptive_data[agent_name][behavior_id] = behavior.strip()
+
+        try:
+            self._write_json_file(self.adaptive_behaviors_file_path, adaptive_data)
+            logger.info(
+                f"INFO: Stored adaptive behavior '{behavior_id}' for agent '{agent_name}'"
+            )
+            return True
+        except Exception as e:
+            logger.error(f"ERROR: Failed to store adaptive behavior: {e}")
+            return False
+
+    def remove_adaptive_behavior(self, agent_name: str, behavior_id: str) -> bool:
+        """
+        Removes a specific adaptive behavior for an agent.
+
+        Args:
+            agent_name: The name of the agent.
+            behavior_id: Unique identifier for the behavior to remove.
+
+        Returns:
+            True if successful or behavior didn't exist, False on error.
+        """
+        adaptive_data = self._read_json_file(self.adaptive_behaviors_file_path, default_value={})
+
+        if not isinstance(adaptive_data, dict):
+            logger.warning("WARNING: Adaptive behaviors file was not a dictionary.")
+            return True
+
+        if agent_name in adaptive_data and behavior_id in adaptive_data[agent_name]:
+            del adaptive_data[agent_name][behavior_id]
+
+            # Clean up empty agent entries
+            if not adaptive_data[agent_name]:
+                del adaptive_data[agent_name]
+
+            try:
+                self._write_json_file(self.adaptive_behaviors_file_path, adaptive_data)
+                logger.info(
+                    f"INFO: Removed adaptive behavior '{behavior_id}' for agent '{agent_name}'"
+                )
+                return True
+            except Exception as e:
+                logger.error(f"ERROR: Failed to remove adaptive behavior: {e}")
+                return False
+
+        return True  # Behavior didn't exist, consider it successful
+
+    def list_all_adaptive_behaviors(self) -> Dict[str, Dict[str, str]]:
+        """
+        Retrieves all adaptive behaviors for all agents.
+
+        Returns:
+            Dictionary mapping agent names to their behavior dictionaries.
+        """
+        adaptive_data = self._read_json_file(self.adaptive_behaviors_file_path, default_value={})
+
+        if not isinstance(adaptive_data, dict):
+            logger.warning(
+                "WARNING: Adaptive behaviors file was not a dictionary. Returning empty."
+            )
+            return {}
+
+        return adaptive_data

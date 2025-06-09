@@ -152,13 +152,124 @@ def get_memory_retrieve_tool_handler(memory_service: BaseMemoryService) -> Calla
     return handle_memory_retrieve
 
 
-def register(service_instance=None, agent=None):
+def get_adapt_tool_definition(provider="claude") -> Dict[str, Any]:
+    """
+    Get the tool definition for adaptive behavior management based on provider.
+
+    Args:
+        provider: The LLM provider ("claude" or "groq")
+
+    Returns:
+        Dict containing the tool definition
+    """
+    tool_description = "Store new or update existing adaptive behaviors that help improve user experience. Use this when you identify patterns in user interactions or need to remember specific ways to handle certain situations. Behaviors must follow 'when...do...' format."
+    tool_arguments = {
+        "id": {
+            "type": "string",
+            "description": "Unique identifier for this adaptive behavior. Use descriptive names like 'tech_documentation_search' or 'code_review_style'. Can be new or existing to update.",
+        },
+        "behavior": {
+            "type": "string",
+            "description": "The adaptive behavior description in 'when...do...' format. Example: 'when user mentions new technology, search for its latest documentation and provide comprehensive examples'",
+        },
+    }
+    tool_required = ["id", "behavior"]
+
+    if provider == "claude":
+        return {
+            "name": "adapt",
+            "description": tool_description,
+            "input_schema": {
+                "type": "object",
+                "properties": tool_arguments,
+                "required": tool_required,
+            },
+        }
+    else:  # provider == "groq"
+        return {
+            "type": "function",
+            "function": {
+                "name": "adapt",
+                "description": tool_description,
+                "parameters": {
+                    "type": "object",
+                    "properties": tool_arguments,
+                    "required": tool_required,
+                },
+            },
+        }
+
+
+def get_adapt_tool_handler(persistence_service: Any) -> Callable:
+    """
+    Get the handler function for the adaptive behavior tool.
+
+    Args:
+        persistence_service: The context persistence service instance
+
+    Returns:
+        Function that handles adaptive behavior storage requests
+    """
+
+    def handle_adapt(**params) -> str:
+        behavior_id = params.get("id")
+        behavior = params.get("behavior")
+        current_agent = AgentManager.get_instance().get_current_agent()
+
+        if not behavior_id:
+            return "Error: Behavior ID is required."
+
+        if not behavior:
+            return "Error: Behavior description is required."
+
+        try:
+            success = persistence_service.store_adaptive_behavior(
+                current_agent.name, behavior_id, behavior
+            )
+            if success:
+                return f"Successfully updated behavior '{behavior_id}': {behavior}"
+            else:
+                return f"Failed to update adaptive behavior '{behavior_id}'"
+        except ValueError as e:
+            return f"Invalid behavior format: {str(e)}"
+        except Exception as e:
+            return f"Error updating adaptive behavior: {str(e)}"
+
+    return handle_adapt
+
+
+def adaptive_instruction_prompt():
+    return """Use the 'adapt' tool to store behavioral patterns that improve user experience. Call it when you notice:
+
+1. **User Preferences**: Recurring requests or communication styles
+2. **Task Patterns**: Specific ways users like information presented
+3. **Context Triggers**: Situations requiring special handling
+
+**Format**: Always use "when...do..." structure
+**Examples**:
+- "when user asks about code, provide complete examples with explanations"
+- "when user mentions deadlines, prioritize speed over detailed explanations"
+- "when user shares personal info, acknowledge and reference it in future interactions"
+
+**Best Practices**:
+- Use descriptive IDs (e.g., "code_explanation_style", "deadline_response")
+- Be specific about triggers and actions
+- Update existing behaviors rather than creating duplicates
+- Focus on actionable, consistent improvements"""
+
+
+def register(
+    service_instance=None,
+    persistence_service=None,
+    agent=None,
+):
     """
     Register this tool with the central registry or directly with an agent
 
     Args:
         service_instance: The memory service instance
         agent: Agent instance to register with directly (optional)
+        persistence_service: The context persistence service instance (optional)
     """
     from AgentCrew.modules.tools.registration import register_tool
 
@@ -174,3 +285,12 @@ def register(service_instance=None, agent=None):
         service_instance,
         agent,
     )
+
+    # Register adapt tool if persistence service is provided
+    if persistence_service is not None:
+        register_tool(
+            get_adapt_tool_definition,
+            get_adapt_tool_handler,
+            persistence_service,
+            agent,
+        )
