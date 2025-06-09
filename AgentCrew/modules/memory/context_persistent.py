@@ -58,7 +58,9 @@ class ContextPersistenceService:
         # Expand user path (~) if present, and get absolute path for clarity
         self.base_dir = os.path.abspath(os.path.expanduser(persistence_dir))
         self.conversations_dir = os.path.join(self.base_dir, self.CONVERSATIONS_SUBDIR)
-        self.adaptive_behaviors_file_path = os.path.join(self.base_dir, self.ADAPTIVE_BEHAVIORS_FILE)
+        self.adaptive_behaviors_file_path = os.path.join(
+            self.base_dir, self.ADAPTIVE_BEHAVIORS_FILE
+        )
 
         # _ensure_dir already raises OSError on failure
         self._ensure_dir(self.base_dir)
@@ -383,7 +385,9 @@ class ContextPersistenceService:
         Returns:
             Dictionary of behavior ID to behavior description mappings.
         """
-        adaptive_data = self._read_json_file(self.adaptive_behaviors_file_path, default_value={})
+        adaptive_data = self._read_json_file(
+            self.adaptive_behaviors_file_path, default_value={}
+        )
 
         if not isinstance(adaptive_data, dict):
             logger.warning(
@@ -416,10 +420,12 @@ class ContextPersistenceService:
             raise ValueError("Behavior must be a non-empty string")
 
         behavior_lower = behavior.lower().strip()
-        if not behavior_lower.startswith("when") or "do" not in behavior_lower:
+        if not behavior_lower.startswith("when"):
             raise ValueError("Behavior must follow 'when...do...' format")
 
-        adaptive_data = self._read_json_file(self.adaptive_behaviors_file_path, default_value={})
+        adaptive_data = self._read_json_file(
+            self.adaptive_behaviors_file_path, default_value={}
+        )
 
         if not isinstance(adaptive_data, dict):
             logger.warning(
@@ -455,7 +461,9 @@ class ContextPersistenceService:
         Returns:
             True if successful or behavior didn't exist, False on error.
         """
-        adaptive_data = self._read_json_file(self.adaptive_behaviors_file_path, default_value={})
+        adaptive_data = self._read_json_file(
+            self.adaptive_behaviors_file_path, default_value={}
+        )
 
         if not isinstance(adaptive_data, dict):
             logger.warning("WARNING: Adaptive behaviors file was not a dictionary.")
@@ -487,7 +495,9 @@ class ContextPersistenceService:
         Returns:
             Dictionary mapping agent names to their behavior dictionaries.
         """
-        adaptive_data = self._read_json_file(self.adaptive_behaviors_file_path, default_value={})
+        adaptive_data = self._read_json_file(
+            self.adaptive_behaviors_file_path, default_value={}
+        )
 
         if not isinstance(adaptive_data, dict):
             logger.warning(

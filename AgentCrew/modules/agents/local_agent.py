@@ -214,7 +214,6 @@ class LocalAgent(BaseAgent):
                 + "\n".join(self.tool_prompts)
             )
 
-        print(system_prompt)
         self.llm.set_system_prompt(system_prompt)
         self.llm.temperature = self.temperature if self.temperature is not None else 0.4
         self.is_active = True
@@ -390,7 +389,7 @@ class LocalAgent(BaseAgent):
         self.output_tokens_usage = 0
         # Ensure the first message is a system message with the agent's prompt
         if not messages:
-            messages = self.history
+            messages = list(self.history)
         if "context_persistent" in self.services and isinstance(
             self.services["context_persistent"], ContextPersistenceService
         ):
@@ -415,7 +414,6 @@ class LocalAgent(BaseAgent):
                     ],
                 }
                 messages.insert(1, adaptive_messages)
-                print(messages)
         async with await self.llm.stream_assistant_response(messages) as stream:
             async for chunk in stream:
                 # Process the chunk using the LLM service
