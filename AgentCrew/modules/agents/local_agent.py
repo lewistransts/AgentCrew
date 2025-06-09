@@ -396,13 +396,10 @@ class LocalAgent(BaseAgent):
             adaptive_behaviors = self.services[
                 "context_persistent"
             ].get_adaptive_behaviors(self.name)
-            if (
-                len(adaptive_behaviors.keys()) > 0
-                and messages[-1].get("role", "assistant") == "user"
-            ):
+            if len(adaptive_behaviors.keys()) > 0:
                 adaptive_text = ""
                 for key, value in adaptive_behaviors.items():
-                    adaptive_text += f"- {value} ({key})\n"
+                    adaptive_text += f"- {value} (id:{key})\n"
 
                 adaptive_messages = {
                     "role": "user",
@@ -413,7 +410,7 @@ class LocalAgent(BaseAgent):
                         }
                     ],
                 }
-                messages.insert(1, adaptive_messages)
+                messages.insert(-1, adaptive_messages)
         async with await self.llm.stream_assistant_response(messages) as stream:
             async for chunk in stream:
                 # Process the chunk using the LLM service
