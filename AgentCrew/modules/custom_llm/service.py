@@ -4,6 +4,8 @@ from AgentCrew.modules.llm.base import AsyncIterator
 from mcp.types import ImageContent, TextContent
 from typing import Dict, Any, List, Optional, Tuple
 import json
+import os
+from datetime import datetime
 from AgentCrew.modules import logger
 
 
@@ -76,6 +78,11 @@ class CustomLLMService(OpenAIService):
 
     async def process_message(self, prompt: str, temperature: float = 0) -> str:
         try:
+            # Check if using GitHub Copilot
+            if self.base_url and self.base_url.endswith("githubcopilot.com"):
+                self.base_url = self.base_url.rstrip("/")
+                self.github_copilot_token_to_open_ai_key(self.api_key)
+
             response = await self.client.chat.completions.create(
                 model=self.model,
                 max_tokens=3000,
@@ -123,6 +130,11 @@ class CustomLLMService(OpenAIService):
 
     async def stream_assistant_response(self, messages):
         """Stream the assistant's response with tool support."""
+        # Check if using GitHub Copilot
+        if self.base_url and self.base_url.rstrip("/").endswith("githubcopilot.com"):
+            # Update client with new key
+            self.github_copilot_token_to_open_ai_key(self.api_key)
+
         stream_params = {
             "model": self.model,
             "messages": messages,
@@ -179,6 +191,35 @@ class CustomLLMService(OpenAIService):
             return self._process_stream_chunk(chunk, assistant_response, tool_uses)
         else:
             return self._process_non_stream_chunk(chunk, assistant_response, tool_uses)
+
+    def github_copilot_token_to_open_ai_key(self, copilot_api_key):
+        """
+        Convert GitHub Copilot token to OpenAI key format.
+
+        Args:
+            copilot_api_key: The GitHub Copilot token
+
+        Returns:
+            Updated OpenAI compatible token
+        """
+        openai_api_key = self.client.api_key
+
+        if openai_api_key.startswith("ghu") or int(
+            dict(x.split("=") for x in openai_api_key.split(";"))["exp"]
+        ) < int(datetime.now().timestamp()):
+            import requests
+
+            headers = {
+                "Authorization": f"Bearer {copilot_api_key}",
+                "Content-Type": "application/json",
+            }
+            if self.extra_headers:
+                headers.update(self.extra_headers)
+            res = requests.get(
+                "https://api.github.com/copilot_internal/v2/token", headers=headers
+            )
+            print(res.json())
+            self.client.api_key = res.json()["token"]
 
     def _process_non_stream_chunk(
         self, chunk, assistant_response, tool_uses

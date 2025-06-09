@@ -14,10 +14,11 @@ class OpenAIService(BaseLLMService):
 
     def __init__(self, api_key=None, base_url=None):
         load_dotenv()
-        api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.base_url = base_url
         if not api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables")
-        self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+        self.client = AsyncOpenAI(api_key=self.api_key, base_url=base_url)
         # Set default model
         self.model = "gpt-4.1"
         self.tools = []  # Initialize empty tools list
