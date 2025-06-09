@@ -556,9 +556,6 @@ class MessageHandler(Observable):
             }
         )
         if self.current_conversation_id:
-            related_mesages_idx = tool_result.find("\n## Shared Context:")
-            if related_mesages_idx >= 0:
-                tool_result = tool_result[:related_mesages_idx]
             self.persistent_service.append_conversation_messages(
                 self.current_conversation_id,
                 [

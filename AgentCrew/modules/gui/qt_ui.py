@@ -1355,13 +1355,6 @@ class ChatWindow(QMainWindow, Observer):
                         # self.append_message(first_item.get("text", ""), is_user=is_user)
                     # Add more specific handling here if other content types need display
 
-                ## Striped out the user context summary
-                message_content = re.sub(
-                    r"(?:```(?:json)?)?\s*<user_context_summary>.*?</user_context_summary>\s*(?:```)?",
-                    "",
-                    message_content,
-                    flags=re.DOTALL | re.IGNORECASE,
-                )
                 if message_content.startswith("Content of "):
                     file_path = (
                         message_content.split(":\n\n")[0]
@@ -1370,9 +1363,9 @@ class ChatWindow(QMainWindow, Observer):
                         .strip()
                     )
                     self.append_file(file_path, True)
-
                 elif (
                     message_content.strip()
+                    and not message_content.startswith("<transfer_tool>")
                     and not message_content.startswith("Context from your memory:")
                     and not message_content.startswith(
                         "Need to tailor response bases on this"
