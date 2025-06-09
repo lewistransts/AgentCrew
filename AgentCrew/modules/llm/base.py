@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Optional, Tuple
 import re
 import json
 import base64
+from AgentCrew.modules import logger
 
 
 def read_text_file(file_path):
@@ -16,7 +17,7 @@ def read_text_file(file_path):
             with open(file_path, "r", encoding="cp1252") as f:
                 return f.read()
         except Exception as e:
-            print(f"❌ Error reading file {file_path}: {str(e)}")
+            logger.error(f"❌ Error reading file {file_path}: {str(e)}")
             return None
 
 
@@ -27,7 +28,7 @@ def read_binary_file(file_path):
             content = f.read()
         return base64.b64encode(content).decode("utf-8")
     except Exception as e:
-        print(f"❌ Error reading file {file_path}: {str(e)}")
+        logger.error(f"❌ Error reading file {file_path}: {str(e)}")
         return None
 
 
@@ -36,7 +37,7 @@ def base64_to_bytes(base64_str: str):
     try:
         return base64.b64decode(base64_str)
     except Exception as e:
-        print(f"❌ Error decoding base64: {str(e)}")
+        logger.error(f"❌ Error decoding base64: {str(e)}")
         return None
 
 
@@ -145,7 +146,7 @@ class BaseLLMService(ABC):
                 # Optional: Add validation here to check if the loaded data
                 # has the expected keys (explicit_preferences, etc.)
                 if not isinstance(summary_data, dict):
-                    print(
+                    logger.warning(
                         f"WARNING: Parsed user context summary is not a dictionary: {type(summary_data)}"
                     )
                     summary_data = (
@@ -155,13 +156,13 @@ class BaseLLMService(ABC):
                     # Let's keep it cleaned, assuming the block was intended but malformed.
 
             except json.JSONDecodeError as json_err:
-                print(
+                logger.error(
                     f"ERROR: Failed to parse user context JSON: {json_err}\nContent: <<< {summary_json_str} >>>"
                 )
                 summary_data = None  # Parsing failed
                 # Keep cleaned_response as the block was likely intended but invalid.
             except Exception as e:
-                print(f"ERROR: Unexpected error parsing user context JSON: {e}")
+                logger.error(f"ERROR: Unexpected error parsing user context JSON: {e}")
                 summary_data = None
                 # Consider if unexpected errors should revert cleaned_response
                 # Sticking with keeping it cleaned for now.

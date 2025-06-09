@@ -1344,7 +1344,6 @@ class ChatWindow(QMainWindow, Observer):
                         isinstance(first_item, dict)
                         and first_item.get("type") == "image_url"
                     ):
-                        print(first_item)
                         self.append_file(
                             first_item.get("image_url", {}).get("url", ""),
                             is_user,
