@@ -26,7 +26,7 @@ def get_transfer_tool_definition(provider="claude") -> Dict[str, Any]:
         "included_context": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "An array of verbatim quoted strings from the conversation history (user messages, your responses, previous tool outputs). This is VITAL as the target agent has NO prior conversation history. Select only essential snippets that are absolutely necessary for the target agent to understand the task, the history of the request, and complete the task accurately. Prioritize: 1. Important information you (the current agent) have already provided or discovered. 2. Any relevant previous tool outputs. 3. The user's original request/question. 4. Key clarifications or constraints provided by the user. Avoid including irrelevant chitchat. Be concise but comprehensive.",
+            "description": "An array of verbatim quoted strings from the conversation history (user messages, your responses, previous tool outputs). This is VITAL as the target agent has NO prior conversation history. Select only essential snippets that are absolutely necessary for the target agent to understand the task, the history of the request, and complete the task accurately. Prioritize: 1. Important information you (the current agent) have already provided or discovered. 2. Any relevant previous tool outputs. 3. The user's original request/question. 4. Key clarifications or constraints provided by the user. Avoid including irrelevant chitchat. Be concise but comprehensive and detailed.",
         },
         "post_action": {
             "type": "string",

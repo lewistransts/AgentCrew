@@ -14,7 +14,11 @@ from AgentCrew.modules.chat.file_handler import FileHandler
 from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules.llm.service_manager import ServiceManager
 from AgentCrew.modules.llm.message import MessageTransformer
-from AgentCrew.modules.memory import BaseMemoryService, ContextPersistenceService
+from AgentCrew.modules.memory import (
+    BaseMemoryService,
+    ContextPersistenceService,
+    ChromaMemoryService,
+)
 from AgentCrew.modules.chat.consolidation import ConversationConsolidator
 
 
@@ -332,6 +336,13 @@ class MessageHandler(Observable):
             self.last_assisstant_response_idx = 0
             self.current_user_input = None
             self.current_user_input_idx = -1
+            # Make sure memory service is processed with llm even if GROQ api is not available
+            if (
+                isinstance(self.memory_service, ChromaMemoryService)
+                and not self.memory_service.llm_service
+            ):
+                self.memory_service.llm_service = self.agent.llm
+
             # Notify UI about the new conversation
             self._notify(
                 "system_message",
