@@ -218,7 +218,6 @@ class CustomLLMService(OpenAIService):
             res = requests.get(
                 "https://api.github.com/copilot_internal/v2/token", headers=headers
             )
-            print(res.json())
             self.client.api_key = res.json()["token"]
 
     def _process_non_stream_chunk(
