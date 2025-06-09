@@ -26,6 +26,7 @@ from PySide6.QtCore import (
     QThread,
     Signal,
     QStringListModel,
+    QTimer,
 )
 from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules.agents import AgentManager
@@ -407,6 +408,14 @@ class ChatWindow(QMainWindow, Observer):
             lambda: self.clear_chat(requested=False)
         )  # Pass requested=False
 
+        # Ctrl+C shortcut (stop message stream)
+        self.stop_shortcut = QShortcut(QKeySequence("Ctrl+C"), self)
+        self.stop_shortcut.activated.connect(self.stop_message_stream)
+
+        # Animation timer for stop button
+        self.animation_timer = QTimer(self)
+        self.animation_timer.timeout.connect(self.update_send_button_text)
+
         # Override key press event
         self.message_input.keyPressEvent = self.input_key_press_event
 
@@ -520,19 +529,11 @@ class ChatWindow(QMainWindow, Observer):
         else:
             QTextEdit.keyPressEvent(self.message_input, event)
 
-    def set_input_controls_enabled(self, enabled: bool):
-        """Enable or disable input controls."""
-        # Keep controls disabled if loading a conversation, regardless of 'enabled' argument
-        actual_enabled = enabled and not self.loading_conversation
-
-        self.message_input.setEnabled(actual_enabled)
-        self.send_button.setEnabled(actual_enabled)
-        self.file_button.setEnabled(actual_enabled)
-        self.sidebar.setEnabled(actual_enabled)
-
-        # Update cursor and appearance for visual feedback
-        if actual_enabled:
-            self.message_input.setFocus()
+    def _set_send_button_state(self, is_stop_stated: bool = False):
+        # If enabling controls, make sure we reset the send button
+        if not is_stop_stated:
+            self.animation_timer.stop()
+            self.send_button.setText("Send")
             self.send_button.setStyleSheet(
                 """
                 QPushButton {
@@ -551,6 +552,55 @@ class ChatWindow(QMainWindow, Observer):
                 }
                 """
             )
+            # Ensure the button is connected to send message
+            try:
+                self.send_button.clicked.disconnect()
+            except Exception:
+                pass  # In case it wasn't connected
+            self.send_button.clicked.connect(self.send_message)
+        else:
+            # Change button to stop functionality
+            self.send_button.setText("Stop \u25a0")
+            self.send_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #f38ba8; /* Catppuccin Red */
+                    color: #1e1e2e; /* Catppuccin Base (for contrast) */
+                    border: none;
+                    border-radius: 4px; 
+                    padding: 8px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #eba0ac; /* Catppuccin Maroon */
+                }
+                QPushButton:pressed {
+                    background-color: #f5c2e7; /* Catppuccin Pink */
+                }
+            """)
+            self.animation_timer.setInterval(
+                200
+            )  # Update every 200ms for faster blinking
+            self.animation_timer.start()
+
+            # Change the button to stop functionality
+            self.send_button.clicked.disconnect()
+            self.send_button.clicked.connect(self.stop_message_stream)
+            self.send_button.setEnabled(True)
+
+    def set_input_controls_enabled(self, enabled: bool):
+        """Enable or disable input controls."""
+        # Keep controls disabled if loading a conversation, regardless of 'enabled' argument
+        actual_enabled = enabled and not self.loading_conversation
+
+        self.message_input.setEnabled(actual_enabled)
+        self.send_button.setEnabled(actual_enabled)
+        self.file_button.setEnabled(actual_enabled)
+        self.sidebar.setEnabled(actual_enabled)
+
+        # Update cursor and appearance for visual feedback
+        if actual_enabled:
+            self._set_send_button_state()
+            self.message_input.setFocus()
             self.file_button.setStyleSheet(
                 """
                 QPushButton {
@@ -598,6 +648,8 @@ class ChatWindow(QMainWindow, Observer):
         self.set_input_controls_enabled(False)
 
         self.message_input.clear()
+
+        self._set_send_button_state(True)
 
         # Process commands locally that don't need LLM processing
         if user_input.startswith("/"):
@@ -1093,6 +1145,26 @@ class ChatWindow(QMainWindow, Observer):
         tool_use = data["tool_use"]
         self.add_system_message(f"❌ Tool execution denied: {tool_use['name']}")
         self.display_status_message(f"Tool execution denied: {tool_use['name']}")
+
+    def update_send_button_text(self):
+        """Toggle the stop button text for animation effect with a blinking square."""
+        # Get current frame index or start at 0
+        current_frame = getattr(self, "_animation_frame", 0)
+
+        # Simple toggle between filled and empty square for blinking effect
+        if current_frame == 0:
+            self.send_button.setText("Stop \u25a0")  # Filled square
+            self._animation_frame = 1
+        else:
+            self.send_button.setText("Stop \u25a1")  # Empty square
+            self._animation_frame = 0
+
+    def stop_message_stream(self):
+        """Stop the current message stream."""
+        if self.waiting_for_response:
+            self.send_button.setDisabled(True)
+            self.message_handler.stop_streaming = True
+            self.display_status_message("Stopping message stream...")
 
     def browse_file(self):
         """Open file dialog and process selected file."""
@@ -1819,6 +1891,10 @@ class ChatWindow(QMainWindow, Observer):
             self.add_system_message("Refreshing my memory...")
         elif event == "response_completed":
             # Re-enable input controls
+            self.set_input_controls_enabled(True)
+        elif event == "streaming_stopped":
+            # Display whatever text was generated so far
+            self.add_system_message("Message streaming stopped by user.")
             self.set_input_controls_enabled(True)
         elif event == "update_token_usage":
             self._update_cost_info(data["input_tokens"], data["output_tokens"])

@@ -81,6 +81,7 @@ class MessageHandler(Observable):
         self.current_user_input_idx = -1
         self.last_assisstant_response_idx = -1
         self.file_handler = FileHandler()
+        self.stop_streaming = False
         # self.messages = []  # Initialize empty messages list
         self.streamline_messages = []
         self.current_conversation_id = None  # ID for persistence
@@ -640,12 +641,19 @@ class MessageHandler(Observable):
         thinking_signature = ""  # Store the signature
         start_thinking = False
         end_thinking = False
+
+        # Create a reference to the streaming generator
+        stream_generator = None
+
         try:
+            # Store the generator in a variable so we can properly close it if needed
+            stream_generator = self.agent.process_messages()
+
             async for (
                 assistant_response,
                 chunk_text,
                 thinking_chunk,
-            ) in self.agent.process_messages():
+            ) in stream_generator:
                 # Accumulate thinking content if available
                 if thinking_chunk:
                     think_text_chunk, signature = thinking_chunk
@@ -672,6 +680,14 @@ class MessageHandler(Observable):
                         # Delays it a bit when using without stream
                         time.sleep(0.5)
                     self._notify("response_chunk", (chunk_text, assistant_response))
+
+                # Check if stop was requested
+                if self.stop_streaming:
+                    self.stop_streaming = False  # Reset flag
+
+                    # Properly close the generator instead of breaking
+                    await stream_generator.aclose()
+                    self._notify("streaming_stopped", assistant_response)
 
             tool_uses, input_tokens_in_turn, output_tokens_in_turn = (
                 self.agent.get_process_result()
