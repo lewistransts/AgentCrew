@@ -975,9 +975,9 @@ class ChatWindow(QMainWindow, Observer):
 
         # Process events and scroll
         QApplication.processEvents()
-        self.chat_scroll.verticalScrollBar().setValue(
-            self.chat_scroll.verticalScrollBar().maximum()
-        )
+        # self.chat_scroll.verticalScrollBar().setValue(
+        #     self.chat_scroll.verticalScrollBar().maximum()
+        # )
 
         # self.remove_messages_before(message_bubble)
 

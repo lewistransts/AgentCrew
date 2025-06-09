@@ -119,17 +119,22 @@ class ChromaMemoryService(BaseMemoryService):
         """
         ids = []
         if self.llm_service:
-            conversation_text = await self.llm_service.process_message(
-                PRE_ANALYZE_PROMPT.replace(
-                    "{current_date}", datetime.today().strftime("%Y-%m-%d")
+            try:
+                conversation_text = await self.llm_service.process_message(
+                    PRE_ANALYZE_PROMPT.replace(
+                        "{current_date}", datetime.today().strftime("%Y-%m-%d")
+                    )
+                    .replace("{user_message}", user_message)
+                    .replace("{assistant_response}", assistant_response)
                 )
-                .replace("{user_message}", user_message)
-                .replace("{assistant_response}", assistant_response)
-            )
-            lines = conversation_text.split("\n")
-            for i, line in enumerate(lines):
-                if line == "## ID:":
-                    ids.append(lines[i + 1])
+                lines = conversation_text.split("\n")
+                for i, line in enumerate(lines):
+                    if line == "## ID:":
+                        ids.append(lines[i + 1])
+            except Exception as e:
+                print(f"Error processing conversation with LLM: {e}")
+                # Fallback to simple concatenation if LLM fails
+                conversation_text = f"Date: {datetime.today().strftime('%Y-%m-%d')}.\n\n User: {user_message}.\n\nAssistant: {assistant_response}"
 
         else:
             # Create the memory document by combining user message and response
