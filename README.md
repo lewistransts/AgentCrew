@@ -55,7 +55,7 @@ user-friendly GUI.
 ### Linux and MacOS
 
 ```bash
-curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/9a75abc1811c0e2805352fd7d97e2326964d2403/install.sh | bash
+curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/116f24fe3d94f0c1a972da92cac2f278a59fdad6/install.sh | bash
 ```
 
 ### Windows
