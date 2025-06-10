@@ -16,7 +16,11 @@ class GithubCopilotService(CustomLLMService):
             api_key=api_key,
             base_url="https://api.githubcopilot.com",
             provider_name="github_copilot",
-            is_stream=False,
+            is_stream=True,
+            extra_headers={
+                "Copilot-Integration-Id": "vscode-chat",
+                "Editor-Version": "Neovim/0.9.0",
+            },
         )
         self.model = "gpt-4.1"
         self.current_input_tokens = 0
