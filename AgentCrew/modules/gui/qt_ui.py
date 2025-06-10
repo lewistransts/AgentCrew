@@ -416,6 +416,10 @@ class ChatWindow(QMainWindow, Observer):
         self.animation_timer = QTimer(self)
         self.animation_timer.timeout.connect(self.update_send_button_text)
 
+        # Add spinner sequence for animation
+        self.spinner_chars = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+        self.spinner_index = 0
+
         # Override key press event
         self.message_input.keyPressEvent = self.input_key_press_event
 
@@ -577,9 +581,7 @@ class ChatWindow(QMainWindow, Observer):
                     background-color: #f5c2e7; /* Catppuccin Pink */
                 }
             """)
-            self.animation_timer.setInterval(
-                200
-            )  # Update every 200ms for faster blinking
+            self.animation_timer.setInterval(150)  # Update every 150ms for spinner
             self.animation_timer.start()
 
             # Change the button to stop functionality
@@ -1147,17 +1149,12 @@ class ChatWindow(QMainWindow, Observer):
         self.display_status_message(f"Tool execution denied: {tool_use['name']}")
 
     def update_send_button_text(self):
-        """Toggle the stop button text for animation effect with a blinking square."""
-        # Get current frame index or start at 0
-        current_frame = getattr(self, "_animation_frame", 0)
-
-        # Simple toggle between filled and empty square for blinking effect
-        if current_frame == 0:
-            self.send_button.setText("Stop \u25a0")  # Filled square
-            self._animation_frame = 1
-        else:
-            self.send_button.setText("Stop \u25a1")  # Empty square
-            self._animation_frame = 0
+        """Cycle through spinner characters for stop button animation."""
+        spinner_char = self.spinner_chars[self.spinner_index]
+        self.send_button.setText(f"Stop {spinner_char}")
+        
+        # Move to next character in sequence
+        self.spinner_index = (self.spinner_index + 1) % len(self.spinner_chars)
 
     def stop_message_stream(self):
         """Stop the current message stream."""
