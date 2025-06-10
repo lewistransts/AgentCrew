@@ -444,7 +444,9 @@ def a2a_server(host, port, base_url, provider, agent_config, mcp_config, memory_
             base_url = f"http://{host}:{port}"
 
         if provider is None:
-            if os.getenv("ANTHROPIC_API_KEY"):
+            if os.getenv("GITHUB_COPILOT_API_KEY"):
+                provider = "github_copilot"
+            elif os.getenv("ANTHROPIC_API_KEY"):
                 provider = "claude"
             elif os.getenv("GEMINI_API_KEY"):
                 provider = "google"
@@ -454,8 +456,6 @@ def a2a_server(host, port, base_url, provider, agent_config, mcp_config, memory_
                 provider = "groq"
             elif os.getenv("DEEPINFRA_API_KEY"):
                 provider = "deepinfra"
-            elif os.getenv("GITHUB_COPILOT_API_KEY"):
-                provider = "github_copilot"
             else:
                 raise ValueError(
                     "No LLM API key found. Please set either ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, or DEEPINFRA_API_KEY"
@@ -491,7 +491,7 @@ def copilot_auth():
     """Authenticate with GitHub Copilot and save the API key to config"""
     try:
         click.echo("🔐 Starting GitHub Copilot authentication...")
-        
+
         # Step 1: Request device code
         resp = requests.post(
             "https://github.com/login/device/code",
@@ -505,29 +505,29 @@ def copilot_auth():
             },
             data='{"client_id":"Iv1.b507a08c87ecfe98","scope":"read:user"}',
         )
-        
+
         if resp.status_code != 200:
             click.echo(f"❌ Failed to get device code: {resp.status_code}", err=True)
             return
-            
+
         # Parse the response json, isolating the device_code, user_code, and verification_uri
         resp_json = resp.json()
         device_code = resp_json.get("device_code")
         user_code = resp_json.get("user_code")
         verification_uri = resp_json.get("verification_uri")
-        
+
         if not all([device_code, user_code, verification_uri]):
             click.echo("❌ Invalid response from GitHub", err=True)
             return
-        
+
         # Print the user code and verification uri
         click.echo(f"📋 Please visit {verification_uri} and enter code: {user_code}")
         click.echo("⏳ Waiting for authentication...")
-        
+
         # Step 2: Poll for access token
         while True:
             time.sleep(5)
-            
+
             resp = requests.post(
                 "https://github.com/login/oauth/access_token",
                 headers={
@@ -540,12 +540,12 @@ def copilot_auth():
                 },
                 data=f'{{"client_id":"Iv1.b507a08c87ecfe98","device_code":"{device_code}","grant_type":"urn:ietf:params:oauth:grant-type:device_code"}}',
             )
-            
+
             # Parse the response json
             resp_json = resp.json()
             access_token = resp_json.get("access_token")
             error = resp_json.get("error")
-            
+
             if access_token:
                 click.echo("✅ Authentication successful!")
                 break
@@ -563,24 +563,26 @@ def copilot_auth():
             else:
                 click.echo(f"❌ Authentication error: {error}", err=True)
                 return
-        
+
         # Step 3: Save the token to config
         config_manager = ConfigManagement()
         global_config = config_manager.read_global_config_data()
-        
+
         # Ensure api_keys section exists
         if "api_keys" not in global_config:
             global_config["api_keys"] = {}
-            
+
         # Save the token
         global_config["api_keys"]["GITHUB_COPILOT_API_KEY"] = access_token
         config_manager.write_global_config_data(global_config)
-        
+
         click.echo("💾 GitHub Copilot API key saved to config file!")
         click.echo("🚀 You can now use GitHub Copilot with --provider github_copilot")
-        
+
     except ImportError:
-        click.echo("❌ Error: 'requests' package is required for authentication", err=True)
+        click.echo(
+            "❌ Error: 'requests' package is required for authentication", err=True
+        )
         click.echo("Install it with: pip install requests")
     except Exception as e:
         click.echo(f"❌ Authentication failed: {str(e)}", err=True)
