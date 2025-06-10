@@ -1214,6 +1214,34 @@ class ChatWindow(QMainWindow, Observer):
         """Show context menu with options."""
         context_menu = QMenu(self)
 
+        # Add Catppuccin styling to context menu
+        context_menu.setStyleSheet("""
+            QMenu {
+                background-color: #181825; /* Catppuccin Mantle */
+                color: #cdd6f4; /* Catppuccin Text */
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
+                padding: 4px;
+                border-radius: 6px;
+            }
+            QMenu::item {
+                padding: 8px 24px 8px 12px;
+                border-radius: 4px;
+                margin: 2px;
+            }
+            QMenu::item:selected {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #b4befe; /* Catppuccin Lavender */
+            }
+            QMenu::item:pressed {
+                background-color: #585b70; /* Catppuccin Surface2 */
+            }
+            QMenu::separator {
+                height: 1px;
+                background: #45475a; /* Catppuccin Surface1 */
+                margin: 4px 8px;
+            }
+        """)
+
         # Add menu actions
         copy_action = context_menu.addAction("Copy Last Response")
         clear_action = context_menu.addAction("Clear Chat")
