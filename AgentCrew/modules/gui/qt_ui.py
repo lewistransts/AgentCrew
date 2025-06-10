@@ -176,6 +176,32 @@ class ChatWindow(QMainWindow, Observer):
             QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
                 background: none; /* Track area left/right of handle */
             }
+            
+            /* Context menu styling for QLabel widgets */
+            QLabel QMenu {
+                background-color: #181825; /* Catppuccin Mantle */
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
+                padding: 4px;
+                border-radius: 6px;
+            }
+            QLabel QMenu::item {
+                color: #f8f8f2; /* Brighter text color */
+                padding: 8px 24px 8px 12px;
+                border-radius: 4px;
+                margin: 2px;
+            }
+            QLabel QMenu::item:selected {
+                background-color: #45475a; /* Catppuccin Surface1 */
+                color: #ffffff; /* Pure white for selected items */
+            }
+            QLabel QMenu::item:pressed {
+                background-color: #585b70; /* Catppuccin Surface2 */
+            }
+            QLabel QMenu::separator {
+                height: 1px;
+                background: #45475a; /* Catppuccin Surface1 */
+                margin: 4px 8px;
+            }
             """
         )
 
