@@ -396,7 +396,10 @@ class LocalAgent(BaseAgent):
             adaptive_behaviors = self.services[
                 "context_persistent"
             ].get_adaptive_behaviors(self.name)
-            if len(adaptive_behaviors.keys()) > 0:
+            if (
+                len(adaptive_behaviors.keys()) > 0
+                and messages[-1].get("role", "assistant") == "user"
+            ):
                 adaptive_text = ""
                 for key, value in adaptive_behaviors.items():
                     adaptive_text += f"- {value} (id:{key})\n"
