@@ -1,11 +1,10 @@
 from typing import Dict, Optional
-from AgentCrew.modules.deepinfra import DeepInfraService
+from AgentCrew.modules.custom_llm import DeepInfraService, CustomLLMService
 from AgentCrew.modules.google import GoogleAINativeService
 from AgentCrew.modules.llm.base import BaseLLMService
 from AgentCrew.modules.anthropic import AnthropicService
 from AgentCrew.modules.groq import GroqService
 from AgentCrew.modules.openai import OpenAIService
-from AgentCrew.modules.custom_llm.service import CustomLLMService
 from AgentCrew.modules.config.config_management import ConfigManagement
 
 
