@@ -354,7 +354,9 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
 
         # Only check environment variables if provider wasn't explicitly specified
         if provider is None:
-            if os.getenv("ANTHROPIC_API_KEY"):
+            if os.getenv("GITHUB_COPILOT_API_KEY"):
+                provider = "github_copilot"
+            elif os.getenv("ANTHROPIC_API_KEY"):
                 provider = "claude"
             elif os.getenv("GEMINI_API_KEY"):
                 provider = "google"
@@ -364,8 +366,6 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
                 provider = "groq"
             elif os.getenv("DEEPINFRA_API_KEY"):
                 provider = "deepinfra"
-            elif os.getenv("GITHUB_COPILOT_API_KEY"):
-                provider = "github_copilot"
             else:
                 config = ConfigManagement()
                 custom_providers = config.read_custom_llm_providers_config()
