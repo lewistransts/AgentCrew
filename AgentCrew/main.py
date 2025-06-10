@@ -5,6 +5,8 @@ import os
 import sys
 import traceback
 import json
+import requests
+import time
 from datetime import datetime
 from AgentCrew.modules.chat import ConsoleUI
 from AgentCrew.modules.gui import ChatWindow
@@ -482,6 +484,106 @@ def a2a_server(host, port, base_url, provider, agent_config, mcp_config, memory_
     except Exception as e:
         print(traceback.format_exc())
         click.echo(f"❌ Error: {str(e)}", err=True)
+
+
+@cli.command()
+def copilot_auth():
+    """Authenticate with GitHub Copilot and save the API key to config"""
+    try:
+        click.echo("🔐 Starting GitHub Copilot authentication...")
+        
+        # Step 1: Request device code
+        resp = requests.post(
+            "https://github.com/login/device/code",
+            headers={
+                "accept": "application/json",
+                "editor-version": "vscode/1.100.3",
+                "editor-plugin-version": "GitHub.copilot/1.330.0",
+                "content-type": "application/json",
+                "user-agent": "GithubCopilot/1.330.0",
+                "accept-encoding": "gzip,deflate,br",
+            },
+            data='{"client_id":"Iv1.b507a08c87ecfe98","scope":"read:user"}',
+        )
+        
+        if resp.status_code != 200:
+            click.echo(f"❌ Failed to get device code: {resp.status_code}", err=True)
+            return
+            
+        # Parse the response json, isolating the device_code, user_code, and verification_uri
+        resp_json = resp.json()
+        device_code = resp_json.get("device_code")
+        user_code = resp_json.get("user_code")
+        verification_uri = resp_json.get("verification_uri")
+        
+        if not all([device_code, user_code, verification_uri]):
+            click.echo("❌ Invalid response from GitHub", err=True)
+            return
+        
+        # Print the user code and verification uri
+        click.echo(f"📋 Please visit {verification_uri} and enter code: {user_code}")
+        click.echo("⏳ Waiting for authentication...")
+        
+        # Step 2: Poll for access token
+        while True:
+            time.sleep(5)
+            
+            resp = requests.post(
+                "https://github.com/login/oauth/access_token",
+                headers={
+                    "accept": "application/json",
+                    "editor-version": "vscode/1.100.3",
+                    "editor-plugin-version": "GitHub.copilot/1.330.0",
+                    "content-type": "application/json",
+                    "user-agent": "GithubCopilot/1.330.0",
+                    "accept-encoding": "gzip,deflate,br",
+                },
+                data=f'{{"client_id":"Iv1.b507a08c87ecfe98","device_code":"{device_code}","grant_type":"urn:ietf:params:oauth:grant-type:device_code"}}',
+            )
+            
+            # Parse the response json
+            resp_json = resp.json()
+            access_token = resp_json.get("access_token")
+            error = resp_json.get("error")
+            
+            if access_token:
+                click.echo("✅ Authentication successful!")
+                break
+            elif error == "authorization_pending":
+                continue  # Keep polling
+            elif error == "slow_down":
+                time.sleep(5)  # Additional delay
+                continue
+            elif error == "expired_token":
+                click.echo("❌ Authentication expired. Please try again.", err=True)
+                return
+            elif error == "access_denied":
+                click.echo("❌ Authentication denied by user.", err=True)
+                return
+            else:
+                click.echo(f"❌ Authentication error: {error}", err=True)
+                return
+        
+        # Step 3: Save the token to config
+        config_manager = ConfigManagement()
+        global_config = config_manager.read_global_config_data()
+        
+        # Ensure api_keys section exists
+        if "api_keys" not in global_config:
+            global_config["api_keys"] = {}
+            
+        # Save the token
+        global_config["api_keys"]["GITHUB_COPILOT_API_KEY"] = access_token
+        config_manager.write_global_config_data(global_config)
+        
+        click.echo("💾 GitHub Copilot API key saved to config file!")
+        click.echo("🚀 You can now use GitHub Copilot with --provider github_copilot")
+        
+    except ImportError:
+        click.echo("❌ Error: 'requests' package is required for authentication", err=True)
+        click.echo("Install it with: pip install requests")
+    except Exception as e:
+        click.echo(f"❌ Authentication failed: {str(e)}", err=True)
 
 
 if __name__ == "__main__":
