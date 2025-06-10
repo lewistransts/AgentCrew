@@ -39,7 +39,7 @@ dependencies = [
   "tree-sitter-language-pack>=0.7.0",
   "nest-asyncio>=1.6.0",
   "voyageai>=0.3.2",
-  "numpy>=1.24.4,<=2; python_version < '3.13'",
+  "numpy>=1.24.4,<2; python_version < '3.13'",
 ]
 
 [project.optional-dependencies]
