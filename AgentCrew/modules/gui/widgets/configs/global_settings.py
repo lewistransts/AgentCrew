@@ -46,6 +46,11 @@ class SettingsTab(QWidget):
             "placeholder": "e.g., ...",
         },
         {
+            "label": "Github Copilot API Key:",
+            "key_name": "GITHUB_COPILOT_API_KEY",
+            "placeholder": "e.g., ...",
+        },
+        {
             "label": "Tavily API Key:",
             "key_name": "TAVILY_API_KEY",
             "placeholder": "e.g., tvly-...",

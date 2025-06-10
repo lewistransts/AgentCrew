@@ -282,10 +282,83 @@ _DEEPINFRA_MODELS = [
         output_token_price_1m=2.18,
     ),
 ]
+_GITHUB_COPILOT_MODELS = [
+    Model(
+        id="claude-3.7-sonnet",
+        provider="github_copilot",
+        name="claude-3.7-sonnet",
+        description="",
+        capabilities=["tool_use", "vision"],
+        default=False,
+        input_token_price_1m=0.0,
+        output_token_price_1m=0.0,
+    ),
+    Model(
+        id="gemini-2.5-pro-preview-05-06",
+        provider="github_copilot",
+        name="gemini-2.5-pro-preview-05-06",
+        description="",
+        capabilities=["tool_use", "vision"],
+        default=False,
+        input_token_price_1m=0.0,
+        output_token_price_1m=0.0,
+    ),
+    Model(
+        id="claude-3.7-sonnet-thought",
+        provider="github_copilot",
+        name="claude-3.7-sonnet-thought",
+        description="",
+        capabilities=["tool_use", "thinking", "vision"],
+        default=False,
+        input_token_price_1m=0.0,
+        output_token_price_1m=0.0,
+    ),
+    Model(
+        id="gpt-4.1",
+        provider="github_copilot",
+        name="gpt-4.1",
+        description="",
+        capabilities=["tool_use", "vision"],
+        default=True,
+        input_token_price_1m=0.0,
+        output_token_price_1m=0.0,
+    ),
+    Model(
+        id="o4-mini",
+        provider="github_copilot",
+        name="o4-mini",
+        description="",
+        capabilities=["tool_use", "thinking"],
+        default=False,
+        input_token_price_1m=0.0,
+        output_token_price_1m=0.0,
+    ),
+    Model(
+        id="o1",
+        provider="github_copilot",
+        name="o1",
+        description="",
+        capabilities=["tool_use", "thinking", "vision"],
+        default=False,
+        input_token_price_1m=0.0,
+        output_token_price_1m=0.0,
+    ),
+    Model(
+        id="claude-sonnet-4",
+        provider="github_copilot",
+        name="claude-sonnet-4",
+        description="",
+        capabilities=["tool_use", "vision"],
+        default=False,
+        input_token_price_1m=0.0,
+        output_token_price_1m=0.0,
+    ),
+]
 AVAILABLE_MODELS = (
     _ANTHROPIC_MODELS
     + _OPENAI_MODELS
     + _GROQ_MODELS
     + _GOOGLE_MODELS
     + _DEEPINFRA_MODELS
+    + _GITHUB_COPILOT_MODELS
 )

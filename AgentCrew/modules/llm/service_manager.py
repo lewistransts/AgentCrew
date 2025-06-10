@@ -1,5 +1,9 @@
 from typing import Dict, Optional
-from AgentCrew.modules.custom_llm import DeepInfraService, CustomLLMService
+from AgentCrew.modules.custom_llm import (
+    DeepInfraService,
+    CustomLLMService,
+    GithubCopilotService,
+)
 from AgentCrew.modules.google import GoogleAINativeService
 from AgentCrew.modules.llm.base import BaseLLMService
 from AgentCrew.modules.anthropic import AnthropicService
@@ -34,6 +38,7 @@ class ServiceManager:
             "openai": OpenAIService,
             "google": GoogleAINativeService,
             "deepinfra": DeepInfraService,
+            "github_copilot": GithubCopilotService,
         }
         # Store details for custom providers
         self.custom_provider_details: Dict[str, Dict] = {}

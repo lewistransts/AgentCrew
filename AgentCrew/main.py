@@ -82,6 +82,7 @@ def load_api_keys_from_config():
         "OPENAI_API_KEY",
         "GROQ_API_KEY",
         "DEEPINFRA_API_KEY",
+        "GITHUB_COPILOT_API_KEY",
         "TAVILY_API_KEY",
         "VOYAGE_API_KEY",
     ]
@@ -311,9 +312,11 @@ def discover_and_register_tools(services=None):
 @cli.command()
 @click.option(
     "--provider",
-    type=click.Choice(["claude", "groq", "openai", "google", "deepinfra"]),
+    type=click.Choice(
+        ["claude", "groq", "openai", "google", "deepinfra", "github_copilot"]
+    ),
     default=None,
-    help="LLM provider to use (claude, groq, openai, google, or deepinfra)",
+    help="LLM provider to use (claude, groq, openai, google, github_copilot, or deepinfra)",
 )
 @click.option(
     "--agent-config", default=None, help="Path to the agent configuration file."
@@ -350,6 +353,8 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
                 provider = "groq"
             elif os.getenv("DEEPINFRA_API_KEY"):
                 provider = "deepinfra"
+            elif os.getenv("GITHUB_COPILOT_API_KEY"):
+                provider = "github_copilot"
             else:
                 config = ConfigManagement()
                 custom_providers = config.read_custom_llm_providers_config()
@@ -402,9 +407,11 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
 @click.option("--base-url", default=None, help="Base URL for agent endpoints")
 @click.option(
     "--provider",
-    type=click.Choice(["claude", "groq", "openai", "google", "deepinfra"]),
+    type=click.Choice(
+        ["claude", "groq", "openai", "google", "github_copilot", "deepinfra"]
+    ),
     default=None,
-    help="LLM provider to use (claude, groq, openai, google, or deepinfra)",
+    help="LLM provider to use (claude, groq, openai, google, github_copilot or deepinfra)",
 )
 @click.option("--agent-config", default=None, help="Path to agent configuration file")
 @click.option(
@@ -436,6 +443,8 @@ def a2a_server(host, port, base_url, provider, agent_config, mcp_config, memory_
                 provider = "groq"
             elif os.getenv("DEEPINFRA_API_KEY"):
                 provider = "deepinfra"
+            elif os.getenv("GITHUB_COPILOT_API_KEY"):
+                provider = "github_copilot"
             else:
                 raise ValueError(
                     "No LLM API key found. Please set either ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, or DEEPINFRA_API_KEY"
