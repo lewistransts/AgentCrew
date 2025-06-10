@@ -46,11 +46,15 @@ class AgentManager:
             raise ValueError("Invalid configuration file format.")
 
         # Filter enabled agents (default to True if enabled field is missing)
-        local_agents = [agent for agent in config.get("agents", []) 
-                       if agent.get("enabled", True)]
-        remote_agents = [agent for agent in config.get("remote_agents", [])
-                        if agent.get("enabled", True)]
-        
+        local_agents = [
+            agent for agent in config.get("agents", []) if agent.get("enabled", True)
+        ]
+        remote_agents = [
+            agent
+            for agent in config.get("remote_agents", [])
+            if agent.get("enabled", True)
+        ]
+
         return local_agents + remote_agents
 
     def __init__(self):
@@ -146,34 +150,40 @@ class AgentManager:
     def rebuild_agents_messages(self, streamline_messages):
         """
         Rebuild agent message histories from streamline messages, handling consolidated messages.
-        
+
         Args:
             streamline_messages: The standardized message list
         """
         self.clean_agents_messages()
-        
+
         # Find the last consolidated message index
         last_consolidated_idx = -1
+        consolidated_messages = []
         for i, msg in enumerate(streamline_messages):
             if msg.get("role") == "consolidated":
+                consolidated_messages.append(msg)
                 last_consolidated_idx = i
-        
+
         # Determine which messages to include
         messages_to_process = []
         if last_consolidated_idx >= 0:
             # Include the consolidated message and everything after it
             messages_to_process = streamline_messages[last_consolidated_idx:]
+            messages_to_process = consolidated_messages + messages_to_process
         else:
             # No consolidated messages, include everything
             messages_to_process = streamline_messages
-        
+
         # Process messages for each agent
         for _, agent in self.agents.items():
             agent_messages = [
-                msg for msg in messages_to_process
-                if msg.get("agent", "") == agent.name or msg.get("role") == "consolidated" or msg.get("role") == "user"
+                msg
+                for msg in messages_to_process
+                if msg.get("agent", "") == agent.name
+                or msg.get("role") == "consolidated"
+                or msg.get("role") == "user"
             ]
-            
+
             if agent_messages:
                 agent.history = MessageTransformer.convert_messages(
                     agent_messages,

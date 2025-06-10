@@ -211,6 +211,7 @@ IMPORTANT GUIDELINES:
    - Key questions and their complete answers
    - Important decisions and conclusions
    - Technical details, facts, code snippets, and data
+   - Project and key files location and project structure
    - Problems identified and their solutions
    - Commitments or agreements made
    
