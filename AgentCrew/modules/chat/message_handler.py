@@ -336,13 +336,13 @@ class MessageHandler(Observable):
             self.last_assisstant_response_idx = 0
             self.current_user_input = None
             self.current_user_input_idx = -1
-            # Make sure memory service is processed with llm even if GROQ api is not available
-            if (
-                isinstance(self.memory_service, ChromaMemoryService)
-                and not self.memory_service.llm_service
-            ):
-                self.memory_service.llm_service = self.agent.llm
-
+            # # Make sure memory service is processed with llm even if GROQ api is not available
+            # if (
+            #     isinstance(self.memory_service, ChromaMemoryService)
+            #     and not self.memory_service.llm_service
+            # ):
+            #     self.memory_service.llm_service = self.agent.llm
+            #
             # Notify UI about the new conversation
             self._notify(
                 "system_message",
@@ -480,6 +480,12 @@ class MessageHandler(Observable):
 
                 # Update the agent manager with the new LLM service
                 self.agent_manager.update_llm_service(new_llm_service)
+                # if (
+                #     isinstance(self.memory_service, ChromaMemoryService)
+                #     and not self.memory_service.is_fixed_llm_service
+                # ):
+                #     # Update memory service with the new LLM service
+                #     self.memory_service.llm_service = new_llm_service
 
                 # Update our reference to the LLM
                 # self..llm = self.agent_manager.get_current_agent().llm

@@ -76,6 +76,16 @@ class BaseLLMService(ABC):
         self._provider_name = value
 
     @property
+    def model(self) -> str:
+        """Get the model for this service."""
+        return getattr(self, "_model", "unknown")
+
+    @model.setter
+    def model(self, value: str):
+        """Set the model for this service."""
+        self._model = value
+
+    @property
     def is_stream(self) -> bool:
         """Get the provider name for this service."""
         return getattr(self, "_is_stream", True)

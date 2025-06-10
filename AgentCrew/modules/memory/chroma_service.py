@@ -42,17 +42,19 @@ class ChromaMemoryService(BaseMemoryService):
 
         self.llm_service = llm_service
         ## set to groq if key available
-        if not self.llm_service and os.getenv("GROQ_API_KEY"):
-            self.llm_service = GroqService()
-            self.llm_service.model = "llama-3.1-8b-instant"
-        # if service passed, set the model based on provider
-        elif self.llm_service:
+        if self.llm_service:
             if self.llm_service.provider_name == "google":
                 self.llm_service.model = "gemini-2.0-flash"
             elif self.llm_service.provider_name == "claude":
                 self.llm_service.model = "claude-3-5-haiku-latest"
             elif self.llm_service.provider_name == "openai":
                 self.llm_service.model = "gpt-4.1-nano"
+            elif self.llm_service.provider_name == "groq":
+                self.llm_service.model = "llama-3.1-8b-instant"
+            elif self.llm_service.provider_name == "deepinfra":
+                self.llm_service.model = "google/gemma-3-27b-it"
+            elif self.llm_service.provider_name == "github_copilot":
+                self.llm_service.model = "gpt-4o-mini"
 
         # Create or get collection for storing memories
         if os.getenv("VOYAGE_API_KEY"):
