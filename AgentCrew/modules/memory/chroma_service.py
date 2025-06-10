@@ -40,17 +40,18 @@ class ChromaMemoryService(BaseMemoryService):
         # Initialize ChromaDB client with persistence
         self.client = chromadb.PersistentClient(path=self.db_path)
 
-        if not llm_service:
-            if os.getenv("GROQ_API_KEY"):
-                self.llm_service = GroqService()
-                self.llm_service.model = "llama-3.1-8b-instant"
-        else:
-            self.llm_service = llm_service
-            if llm_service.provider_name == "google":
+        self.llm_service = llm_service
+        ## set to groq if key available
+        if not self.llm_service and os.getenv("GROQ_API_KEY"):
+            self.llm_service = GroqService()
+            self.llm_service.model = "llama-3.1-8b-instant"
+        # if service passed, set the model based on provider
+        elif self.llm_service:
+            if self.llm_service.provider_name == "google":
                 self.llm_service.model = "gemini-2.0-flash"
-            elif llm_service.provider_name == "claude":
+            elif self.llm_service.provider_name == "claude":
                 self.llm_service.model = "claude-3-5-haiku-latest"
-            elif llm_service.provider_name == "openai":
+            elif self.llm_service.provider_name == "openai":
                 self.llm_service.model = "gpt-4.1-nano"
 
         # Create or get collection for storing memories
