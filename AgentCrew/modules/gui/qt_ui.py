@@ -1152,7 +1152,7 @@ class ChatWindow(QMainWindow, Observer):
         """Cycle through spinner characters for stop button animation."""
         spinner_char = self.spinner_chars[self.spinner_index]
         self.send_button.setText(f"Stop {spinner_char}")
-        
+
         # Move to next character in sequence
         self.spinner_index = (self.spinner_index + 1) % len(self.spinner_chars)
 
@@ -1880,7 +1880,7 @@ class ChatWindow(QMainWindow, Observer):
             self.add_system_message("Refreshing my memory...")
         elif event == "response_completed":
             # Re-enable input controls
-            self.set_input_controls_enabled(True)
+            pass
         elif event == "streaming_stopped":
             # Display whatever text was generated so far
             self.add_system_message("Message streaming stopped by user.")
