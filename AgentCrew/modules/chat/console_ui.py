@@ -3,6 +3,9 @@ import sys
 import time
 import pyperclip
 import re
+import threading
+import random
+import itertools
 from typing import Dict, Any, List
 from rich.console import Console
 from rich.markdown import Markdown
@@ -54,6 +57,8 @@ class ConsoleUI(Observer):
         self.latest_assistant_response = ""
         self.session_cost = 0.0
         self._live_text_data = ""
+        self._loading_stop_event = None
+        self._loading_thread = None
 
         # Set up key bindings
         self.kb = self._setup_key_bindings()
@@ -66,11 +71,14 @@ class ConsoleUI(Observer):
             event: The type of event that occurred.
             data: The data associated with the event.
         """
+
         if event == "thinking_started":
+            self.stop_loading_animation()  # Stop loading on first chunk
             self.display_thinking_started(data)  # data is agent_name
         elif event == "thinking_chunk":
             self.display_thinking_chunk(data)  # data is the thinking chunk
         elif event == "response_chunk":
+            self.stop_loading_animation()  # Stop loading on first chunk
             _, assistant_response = data
             self.update_live_display(assistant_response)  # data is the response chunk
         elif event == "tool_use":
@@ -129,6 +137,7 @@ class ConsoleUI(Observer):
             self.console.print("\n")
             self.display_divider()
         elif event == "file_processed":
+            self.stop_loading_animation()  # Stop loading on first chunk
             self.display_message(f"{YELLOW}Processed file: {data['file_path']}{RESET}")
         elif event == "consolidation_completed":
             self.display_consolidation_result(data)
@@ -153,6 +162,59 @@ class ConsoleUI(Observer):
         self.console.print(
             Text(f"\n💭 {agent_name.upper()}'s thinking process:", style=RICH_YELLOW)
         )
+
+    def _loading_animation(self, stop_event):
+        """Display a loading animation in the terminal."""
+        spinner = itertools.cycle(["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"])
+        fun_words = [
+            "Pondering",
+            "Cogitating",
+            "Ruminating",
+            "Contemplating",
+            "Brainstorming",
+            "Calculating",
+            "Processing",
+            "Analyzing",
+            "Deciphering",
+            "Meditating",
+            "Daydreaming",
+            "Scheming",
+            "Brewing",
+            "Conjuring",
+            "Inventing",
+            "Imagining",
+        ]
+        fun_word = random.choice(fun_words)
+
+        with Live(
+            "", console=self.console, auto_refresh=True, refresh_per_second=10
+        ) as live:
+            while not stop_event.is_set():
+                live.update(f"{fun_word} {next(spinner)}")
+                time.sleep(0.1)  # Control animation speed
+
+    def start_loading_animation(self):
+        """Start the loading animation."""
+        if self._loading_thread and self._loading_thread.is_alive():
+            return  # Already running
+
+        self._loading_stop_event = threading.Event()
+        self._loading_thread = threading.Thread(
+            target=self._loading_animation, args=(self._loading_stop_event,)
+        )
+        self._loading_thread.daemon = True
+        self._loading_thread.start()
+
+    def stop_loading_animation(self):
+        """Stop the loading animation."""
+        if self.console._live:
+            self.console._live.update("")
+        if self._loading_stop_event:
+            self._loading_stop_event.set()
+        if self._loading_thread and self._loading_thread.is_alive():
+            self._loading_thread.join(timeout=0.5)
+        self._loading_stop_event = None
+        self._loading_thread = None
 
     def display_thinking_chunk(self, chunk: str):
         """Display a chunk of the thinking process."""
@@ -272,6 +334,7 @@ class ConsoleUI(Observer):
 
     def display_error(self, error):
         """Display an error message."""
+        self.stop_loading_animation()  # Stop loading on error
         if isinstance(error, dict):
             print(f"\n{RED}❌ Error: {error['message']}{RESET}")
             if "traceback" in error:
@@ -690,6 +753,7 @@ class ConsoleUI(Observer):
         while True:
             try:
                 # Get user input
+                self.stop_loading_animation()  # Stop if any
                 user_input = self.get_user_input()
 
                 # Handle list command directly
@@ -713,6 +777,10 @@ class ConsoleUI(Observer):
                         )
                     continue
 
+                # Start loading animation while waiting for response
+                if not user_input.startswith("/") or user_input.startswith("/file "):
+                    self.start_loading_animation()
+
                 # Process user input and commands
                 # self.start_streaming_response(self.message_handler.agent_name)
                 should_exit, was_cleared = asyncio.run(
@@ -731,13 +799,13 @@ class ConsoleUI(Observer):
                 if not self.message_handler.agent.history:
                     continue
 
-                # Start streaming response
-                # self.start_streaming_response(self.message_handler.agent_name)
-
                 # Get assistant response
                 assistant_response, input_tokens, output_tokens = asyncio.run(
                     self.message_handler.get_assistant_response()
                 )
+
+                # Ensure loading animation is stopped
+                self.stop_loading_animation()
 
                 total_cost = self._calculate_token_usage(input_tokens, output_tokens)
 
@@ -747,6 +815,7 @@ class ConsoleUI(Observer):
                         input_tokens, output_tokens, total_cost, self.session_cost
                     )
             except KeyboardInterrupt:
+                self.stop_loading_animation()  # Stop loading on interrupt
                 self.message_handler.stop_streaming = True
                 # Display whatever text was generated so far
                 if self.live:
