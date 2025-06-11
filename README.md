@@ -165,16 +165,74 @@ feedback is welcome if you have trouble.)_
 
 ## ▶️ Getting Started / Basic Usage
 
-Chat with AgentCrew using its interface. The graphical interface (GUI) is often
-the easiest way to start.
+Chat with AgentCrew using its interface. The graphical interface (GUI) is
+usually the easiest way to start.
 
-**Using the command line:** Type `agentcrew chat` in your terminal to start the
-GUI.
+**Using the command line:**
 
-- For the console interface: `agentcrew chat --console`
-- To choose an AI provider (like OpenAI):
-  `agentcrew chat --provider openai --console`
-- To set up GitHub Copilot: first run `agentcrew copilot-auth`.
+To start AgentCrew, open your terminal and use the `agentcrew chat` command.
+Here are some common ways to use it (assuming you have installed AgentCrew using
+the steps above):
+
+- **Start with the GUI (default):**
+
+  ```bash
+  agentcrew chat
+  ```
+
+- **Start with the console interface:**
+
+  ```bash
+  agentcrew chat --console
+  ```
+
+- **Choose a specific AI provider (e.g., OpenAI) for the main chat:**
+
+  ```bash
+  agentcrew chat --provider openai --console
+  ```
+
+  _(Replace `openai` with `claude`, `groq`, `google`, `deepinfra`, or
+  `github_copilot` as needed.)_
+
+- **Specify a custom agent configuration file:**
+
+  ```bash
+  agentcrew chat --agent-config /path/to/your/agents.toml
+  ```
+
+- **Specify a custom MCP servers configuration file:**
+
+  ```bash
+  agentcrew chat --mcp-config /path/to/your/mcp_servers.json
+  ```
+
+- **Choose a specific AI model for memory processing:**
+
+  ```bash
+  agentcrew chat --memory-llm claude --console
+  ```
+
+  _(This sets which AI model helps the system analyze and manage conversation
+  memory. Replace `claude` with `openai`, `groq`, `google`, `deepinfra`, or
+  `github_copilot`.)_
+
+- **Combine options:**
+
+  ```bash
+  agentcrew chat --provider google --memory-llm openai --agent-config custom_agents.toml --console
+  ```
+
+_Remember to replace `/path/to/your/agents.toml` and
+`/path/to/your/mcp_servers.json` with the actual paths to your configuration
+files if you use those options._
+
+**To set up GitHub Copilot authentication:** Before using GitHub Copilot as a
+provider, run:
+
+```bash
+agentcrew copilot-auth
+```
 
 **In-Chat Commands (for console and GUI):**
 
@@ -182,7 +240,7 @@ GUI.
 - `/copy` or `Ctrl+Shift+C`: Copies the AI's last reply.
 - `/file <path/to/file>`: Adds a file's content to your message.
 - `/agent [agent_name]`: Switches to a different AI agent.
-- `/consolidate` <num_of_preserve_messages>: Combines selected messages into
+- `/consolidate <num_of_preserve_messages>`: Combines selected messages into
   one.
 - `/think <level>`: Turns on "thinking mode" for some AIs. Example:
   `/think medium`. Use `/think 0` to turn it off.
