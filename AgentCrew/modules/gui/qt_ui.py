@@ -2,6 +2,7 @@ import re
 import os
 from typing import Any, Dict
 import pyperclip
+import time
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -476,8 +477,11 @@ class ChatWindow(QMainWindow, Observer):
         self.current_user_bubble = None
         self.current_response_container = None
         self.current_thinking_bubble = None
+        self.current_file_bubble = None
         self.thinking_content = ""
         self.expecting_response = False
+        self._is_file_processing = False
+        self._delegated_user_input = None
 
         # Track session cost
         self.session_cost = 0.0
@@ -716,6 +720,9 @@ class ChatWindow(QMainWindow, Observer):
 
         # Send the request to worker thread via signal
         # This is thread-safe and doesn't require QMetaObject.invokeMethod
+        if self._is_file_processing:
+            self._delegated_user_input = user_input
+            return
         self.llm_worker.process_request.emit(user_input)
 
     def add_system_message(self, text):
@@ -762,6 +769,7 @@ class ChatWindow(QMainWindow, Observer):
         # self.chat_scroll.verticalScrollBar().setValue(
         #     self.chat_scroll.verticalScrollBar().maximum()
         # )
+        return message_bubble
 
     def append_message(self, text, is_user=True, message_index=None, agent_name=None):
         """Adds a message bubble to the chat container."""
@@ -1827,6 +1835,9 @@ class ChatWindow(QMainWindow, Observer):
             # If an error occurs during LLM processing, ensure loading flag is false
             self.loading_conversation = False
             self.set_input_controls_enabled(True)
+            if self.current_file_bubble:
+                self.remove_messages_after(self.current_file_bubble)
+                self.current_file_bubble = None
             self.display_error(data)
         elif event == "user_message_created":
             if self.current_user_bubble:
@@ -1880,13 +1891,20 @@ class ChatWindow(QMainWindow, Observer):
             except Exception:
                 # Fallback for non-JSON serializable data
                 self.add_system_message(f"DEBUG INFO:\n\n{str(data)}")
-        elif event == "file_processed":
-            # Create a message bubble for the file
+        elif event == "file_processing":
             file_path = data["file_path"]
-            self.append_file(file_path, is_user=True)
+            self.current_file_bubble = self.append_file(file_path, is_user=True)
             # Re-enable controls only if not loading a conversation
             if not self.loading_conversation:
                 self.set_input_controls_enabled(True)
+            self._is_file_processing = True
+        elif event == "file_processed":
+            # Create a message bubble for the file
+            if self._is_file_processing:
+                if self._delegated_user_input:
+                    self.llm_worker.process_request.emit(self._delegated_user_input)
+                    self._delegated_user_input = None
+                self._is_file_processing = False
         elif event == "image_generated":
             self.append_file(data, False, True)
         elif event == "tool_use":
@@ -1941,8 +1959,3 @@ class ChatWindow(QMainWindow, Observer):
             self.set_input_controls_enabled(True)
         elif event == "update_token_usage":
             self._update_cost_info(data["input_tokens"], data["output_tokens"])
-
-        # --- Ensure controls are re-enabled after most events if not loading ---
-        # Place this check strategically if needed, or rely on specific event handlers
-        # if not self.loading_conversation and not self.waiting_for_response:
-        #    self.set_input_controls_enabled(True)

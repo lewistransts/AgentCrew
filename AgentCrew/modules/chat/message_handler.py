@@ -251,6 +251,8 @@ class MessageHandler(Observable):
             file_path = user_input[6:].strip()
             file_path = os.path.expanduser(file_path)
 
+            self._notify("file_processing", {"file_path": file_path})
+
             # Process file with the file handling service
             file_content = self.file_handler.process_file(file_path)
             # Fallback to llm handle
