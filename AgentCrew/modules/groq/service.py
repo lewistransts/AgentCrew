@@ -1,5 +1,4 @@
 import os
-import contextlib
 import json
 import mimetypes
 import threading
@@ -11,7 +10,6 @@ from typing import Dict, Any, List, Optional, Tuple
 from groq import AsyncGroq
 from dotenv import load_dotenv
 from mcp.types import TextContent, ImageContent
-from groq.types.chat import ChatCompletion
 from AgentCrew.modules.llm.base import (
     BaseLLMService,
     read_binary_file,

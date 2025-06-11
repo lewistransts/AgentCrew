@@ -631,8 +631,8 @@ class ConsoleUI(Observer):
     def print_welcome_message(self):
         """Print the welcome message for the chat."""
         # Get version information
-        version = getattr(AgentCrew, '__version__', 'Unknown')
-        
+        version = getattr(AgentCrew, "__version__", "Unknown")
+
         welcome_messages = [
             f"\n{YELLOW}{BOLD}🎮 Welcome to AgentCrew v{version} interactive chat!{RESET}",
             f"{YELLOW}Press Ctrl+C twice to exit.{RESET}",
@@ -746,7 +746,7 @@ class ConsoleUI(Observer):
                     self.display_token_usage(
                         input_tokens, output_tokens, total_cost, self.session_cost
                     )
-            except KeyboardInterrupt as e:
+            except KeyboardInterrupt:
                 self.message_handler.stop_streaming = True
                 # Display whatever text was generated so far
                 if self.live:

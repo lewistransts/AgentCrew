@@ -3,8 +3,6 @@ Tool for generating images with AI.
 """
 
 from typing import Dict, Any, Callable, Literal, List
-from pathlib import Path
-from pathlib import Path
 from .service import ImageGenerationService
 import asyncio
 
@@ -129,7 +127,7 @@ def get_generate_image_tool_handler(image_service: ImageGenerationService) -> Ca
                 style=style,
                 quality=quality,
                 model=model if model else None,
-                image_paths=image_paths
+                image_paths=image_paths,
             )
         )
 
@@ -149,7 +147,7 @@ def get_generate_image_tool_handler(image_service: ImageGenerationService) -> Ca
         response += f"🧠 Using model: {result.get('model', 'DALL-E')}\n"
 
         # Add file paths
-        response += f"\n📁 Image saved to:\n"
+        response += "\n📁 Image saved to:\n"
         for path in result.get("image_paths", []):
             response += f"- {path}\n"
 

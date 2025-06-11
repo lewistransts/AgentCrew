@@ -17,7 +17,6 @@ from AgentCrew.modules.llm.message import MessageTransformer
 from AgentCrew.modules.memory import (
     BaseMemoryService,
     ContextPersistenceService,
-    ChromaMemoryService,
 )
 from AgentCrew.modules.chat.consolidation import ConversationConsolidator
 

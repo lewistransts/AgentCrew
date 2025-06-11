@@ -116,7 +116,9 @@ def check_and_update():
 
         if version_is_older(current_version, latest_version):
             # Add user confirmation prompt
-            if click.confirm("🔄 New version available! Do you want to update now?", default=False):
+            if click.confirm(
+                "🔄 New version available! Do you want to update now?", default=False
+            ):
                 click.echo("🔄 Starting update...")
                 run_update_command()
             else:
@@ -384,7 +386,7 @@ tools = ["memory", "clipboard", "web_search", "code_analysis"]
         if agent_def.get("base_url", ""):
             try:
                 agent = RemoteAgent(agent_def["name"], agent_def.get("base_url"))
-            except Exception as e:
+            except Exception:
                 print("Error: cannot connect to remote agent, skipping...")
                 continue
         else:

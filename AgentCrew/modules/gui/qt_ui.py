@@ -2,7 +2,6 @@ import re
 import os
 from typing import Any, Dict
 import pyperclip
-import time
 import AgentCrew
 
 from PySide6.QtWidgets import (

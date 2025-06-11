@@ -4,7 +4,6 @@ from AgentCrew.modules.llm.base import AsyncIterator
 from mcp.types import ImageContent, TextContent
 from typing import Dict, Any, List, Optional, Tuple
 import json
-import os
 from datetime import datetime
 from AgentCrew.modules import logger
 

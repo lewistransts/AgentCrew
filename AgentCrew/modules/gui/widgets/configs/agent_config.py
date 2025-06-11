@@ -707,9 +707,7 @@ class AgentsConfigTab(QWidget):
             skip_btn = message_box.addButton(
                 "Skip Conflicts", QMessageBox.ButtonRole.ActionRole
             )
-            cancel_btn = message_box.addButton(
-                "Cancel", QMessageBox.ButtonRole.RejectRole
-            )
+            _ = message_box.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
 
             message_box.exec()
 

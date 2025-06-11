@@ -2,7 +2,6 @@ import os
 import chromadb
 import uuid
 import numpy as np
-from AgentCrew.modules.groq import GroqService
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 

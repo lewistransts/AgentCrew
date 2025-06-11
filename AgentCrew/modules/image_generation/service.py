@@ -4,7 +4,7 @@ Service for generating images using OpenAI's DALL-E.
 
 import os
 import base64
-from typing import Literal, Optional, Dict, Any, Union, List
+from typing import Literal, Optional, Dict, Any, List
 import logging
 from datetime import datetime
 from openai import AsyncOpenAI
