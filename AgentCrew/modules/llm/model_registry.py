@@ -33,7 +33,7 @@ class ModelRegistry:
         registry = ModelRegistry.get_instance()
         model = registry.get_model(mode_id)
         if not model:
-            logger.error("Model not found in registry: %s", mode_id)
+            logger.warning("Model not found in registry: %s", mode_id)
             return []
         return model.capabilities
 
