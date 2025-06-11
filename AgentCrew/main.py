@@ -7,6 +7,8 @@ import traceback
 import json
 import requests
 import time
+import subprocess
+import platform
 from datetime import datetime
 from AgentCrew.modules.chat import ConsoleUI
 from AgentCrew.modules.gui import ChatWindow
@@ -44,6 +46,7 @@ def cli_prod():
     os.environ["GENERATED_IMAGES_PATH"] = os.path.expanduser(
         "~/.AgentCrew/generated_images"
     )
+    check_and_update()
     cli()  # Delegate to main CLI function
 
 
@@ -93,6 +96,149 @@ def load_api_keys_from_config():
         if key_name in api_keys_config and api_keys_config[key_name]:
             # Prioritize config file over existing environment variables
             os.environ[key_name] = str(api_keys_config[key_name])
+
+
+def check_and_update():
+    """Check for updates against the GitHub repository and run update command if needed"""
+    try:
+        # Get current version from __version__ or a version file
+        current_version = get_current_version()
+
+        # Get latest version from GitHub API
+        latest_version = get_latest_github_version()
+
+        if not current_version or not latest_version:
+            click.echo("⚠️ Could not determine version information", err=True)
+            return
+
+        click.echo(f"Current version: {current_version}")
+        click.echo(f"Latest version: {latest_version}")
+
+        if version_is_older(current_version, latest_version):
+            click.echo("🔄 New version available! Starting update...")
+            run_update_command()
+        else:
+            click.echo("✅ You are running the latest version")
+
+    except Exception as e:
+        click.echo(f"❌ Update check failed: {str(e)}", err=True)
+
+
+def get_current_version():
+    """Get the current version of AgentCrew"""
+    try:
+        # Try to get version from package __version__ attribute
+        import AgentCrew
+
+        if hasattr(AgentCrew, "__version__"):
+            return AgentCrew.__version__
+
+        return None
+    except Exception:
+        return None
+
+
+def get_latest_github_version():
+    """Get the latest version from GitHub repository tags"""
+    try:
+        # Use GitHub API to get latest release
+        api_url = (
+            "https://api.github.com/repos/saigontechnology/AgentCrew/releases/latest"
+        )
+        response = requests.get(api_url, timeout=10)
+
+        if response.status_code == 200:
+            release_data = response.json()
+            return release_data.get("tag_name", "").lstrip("v")
+
+        # Fallback: get tags and find the latest
+        tags_url = "https://api.github.com/repos/saigontechnology/AgentCrew/tags"
+        response = requests.get(tags_url, timeout=10)
+
+        if response.status_code == 200:
+            tags_data = response.json()
+            if tags_data:
+                # Get the first (latest) tag
+                latest_tag = tags_data[0].get("name", "").lstrip("v")
+                return latest_tag
+
+        return None
+    except Exception:
+        return None
+
+
+def version_is_older(current: str, latest: str) -> bool:
+    """
+    Compare two semantic version strings to check if current is older than latest.
+
+    Args:
+        current: Current version string (e.g., "0.5.1")
+        latest: Latest version string (e.g., "0.6.0")
+
+    Returns:
+        True if current version is older than latest version
+    """
+    try:
+        # Clean version strings (remove 'v' prefix if present)
+        current_clean = current.lstrip("v")
+        latest_clean = latest.lstrip("v")
+
+        # Split version strings into components
+        current_parts = [int(x) for x in current_clean.split(".")]
+        latest_parts = [int(x) for x in latest_clean.split(".")]
+
+        # Pad shorter version with zeros for comparison
+        max_length = max(len(current_parts), len(latest_parts))
+        current_parts.extend([0] * (max_length - len(current_parts)))
+        latest_parts.extend([0] * (max_length - len(latest_parts)))
+
+        # Compare version components
+        for current_part, latest_part in zip(current_parts, latest_parts):
+            if current_part < latest_part:
+                return True
+            elif current_part > latest_part:
+                return False
+
+        # Versions are equal
+        return False
+
+    except (ValueError, AttributeError):
+        # If version parsing fails, fall back to string comparison
+        return current != latest
+
+
+def run_update_command():
+    """Run the appropriate update command based on the operating system"""
+    try:
+        system = platform.system().lower()
+
+        if system == "linux" or system == "darwin":  # Darwin is macOS
+            # Linux/macOS update command
+            command = "curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/116f24fe3d94f0c1a972da92cac2f278a59fdad6/install.sh | bash"
+            click.echo("🐧 Running Linux/macOS update command...")
+
+        elif system == "windows":
+            # Windows update command
+            command = 'powershell -ExecutionPolicy ByPass -c "irm https://gist.githubusercontent.com/daltonnyx/e2d9a4d371e095bfa07cf5246d7e0746/raw/af138f99ed5351dc59cae81143e058ef95b5fa37/install.ps1 | iex"'
+            click.echo("🪟 Running Windows update command...")
+
+        else:
+            click.echo(f"❌ Unsupported operating system: {system}", err=True)
+            return
+
+        # Execute the update command
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+
+        if result.returncode == 0:
+            click.echo("✅ Update completed successfully!")
+            click.echo("🔄 Please restart the application to use the new version.")
+        else:
+            click.echo("❌ Update failed!")
+            if result.stderr:
+                click.echo(f"Error: {result.stderr}")
+
+    except Exception as e:
+        click.echo(f"❌ Update execution failed: {str(e)}", err=True)
 
 
 def setup_services(provider, memory_llm=None):
@@ -589,4 +735,5 @@ def copilot_auth():
 
 
 if __name__ == "__main__":
+    """Check for updates and update AgentCrew if a new version is available"""
     cli()
