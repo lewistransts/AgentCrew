@@ -419,7 +419,9 @@ class ChatWindow(QMainWindow, Observer):
         self.customContextMenuRequested.connect(self.show_context_menu)
 
         # Connect event handling signal
-        self.event_received.connect(self.handle_event)
+        self.event_received.connect(
+            self.handle_event, Qt.ConnectionType.BlockingQueuedConnection
+        )
 
         # Ctrl+Enter shortcut
         self.send_shortcut = QShortcut(QKeySequence("Ctrl+Return"), self)
@@ -715,14 +717,13 @@ class ChatWindow(QMainWindow, Observer):
         self.current_response_bubble = None
         self.current_response_container = None
 
-        # Update status bar
-        self.display_status_message("Processing your message...")
-
         # Send the request to worker thread via signal
         # This is thread-safe and doesn't require QMetaObject.invokeMethod
         if self._is_file_processing:
             self._delegated_user_input = user_input
             return
+        # Update status bar
+        self.display_status_message("Processing your message...")
         self.llm_worker.process_request.emit(user_input)
 
     def add_system_message(self, text):
@@ -1838,6 +1839,7 @@ class ChatWindow(QMainWindow, Observer):
             if self.current_file_bubble:
                 self.remove_messages_after(self.current_file_bubble)
                 self.current_file_bubble = None
+            self._is_file_processing = False
             self.display_error(data)
         elif event == "user_message_created":
             if self.current_user_bubble:
@@ -1892,12 +1894,12 @@ class ChatWindow(QMainWindow, Observer):
                 # Fallback for non-JSON serializable data
                 self.add_system_message(f"DEBUG INFO:\n\n{str(data)}")
         elif event == "file_processing":
+            self._is_file_processing = True
             file_path = data["file_path"]
             self.current_file_bubble = self.append_file(file_path, is_user=True)
             # Re-enable controls only if not loading a conversation
             if not self.loading_conversation:
                 self.set_input_controls_enabled(True)
-            self._is_file_processing = True
         elif event == "file_processed":
             # Create a message bubble for the file
             if self._is_file_processing:

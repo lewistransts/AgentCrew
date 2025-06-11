@@ -400,20 +400,25 @@ class LocalAgent(BaseAgent):
                 len(adaptive_behaviors.keys()) > 0
                 and messages[-1].get("role", "assistant") == "user"
             ):
-                adaptive_text = ""
-                for key, value in adaptive_behaviors.items():
-                    adaptive_text += f"- {value} (id:{key})\n"
+                # adaptive behaviors are only added if the last message is from the user
+                if isinstance(messages[-1]["content"], str) or (
+                    isinstance(messages[-1]["content"], list)
+                    and messages[-1]["content"][0].get("type") != "tool_result"
+                ):
+                    adaptive_text = ""
+                    for key, value in adaptive_behaviors.items():
+                        adaptive_text += f"- {value} (id:{key})\n"
 
-                adaptive_messages = {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": f"Follows latest user prefer behaviors: \n{adaptive_text}",
-                        }
-                    ],
-                }
-                messages.insert(-1, adaptive_messages)
+                    adaptive_messages = {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": f"Follows latest user prefer behaviors: \n{adaptive_text}",
+                            }
+                        ],
+                    }
+                    messages.insert(-1, adaptive_messages)
         async with await self.llm.stream_assistant_response(messages) as stream:
             async for chunk in stream:
                 # Process the chunk using the LLM service
