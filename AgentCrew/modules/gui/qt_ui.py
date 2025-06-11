@@ -432,9 +432,7 @@ class ChatWindow(QMainWindow, Observer):
         self.customContextMenuRequested.connect(self.show_context_menu)
 
         # Connect event handling signal
-        self.event_received.connect(
-            self.handle_event, Qt.ConnectionType.BlockingQueuedConnection
-        )
+        self.event_received.connect(self.handle_event)
 
         # Ctrl+Enter shortcut
         self.send_shortcut = QShortcut(QKeySequence("Ctrl+Return"), self)
