@@ -11,6 +11,7 @@ from rich.live import Live
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
+import AgentCrew
 
 from AgentCrew.modules.agents.base import MessageType
 from AgentCrew.modules.chat.message_handler import MessageHandler, Observer
@@ -629,8 +630,11 @@ class ConsoleUI(Observer):
 
     def print_welcome_message(self):
         """Print the welcome message for the chat."""
+        # Get version information
+        version = getattr(AgentCrew, '__version__', 'Unknown')
+        
         welcome_messages = [
-            f"\n{YELLOW}{BOLD}🎮 Welcome to the interactive chat!{RESET}",
+            f"\n{YELLOW}{BOLD}🎮 Welcome to AgentCrew v{version} interactive chat!{RESET}",
             f"{YELLOW}Press Ctrl+C twice to exit.{RESET}",
             f"{YELLOW}Type 'exit' or 'quit' to end the session.{RESET}",
             f"{YELLOW}Use '/file <file_path>' to include a file in your message.{RESET}",

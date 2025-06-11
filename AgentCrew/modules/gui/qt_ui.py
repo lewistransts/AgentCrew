@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict
 import pyperclip
 import time
+import AgentCrew
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -356,6 +357,18 @@ class ChatWindow(QMainWindow, Observer):
         # Status Bar
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
+
+        # Add version label to the right side of status bar
+        version_text = f"AgentCrew v{getattr(AgentCrew, '__version__', 'Unknown')}"
+        self.version_label = QLabel(version_text)
+        self.version_label.setStyleSheet("""
+            QLabel {
+                color: #a6adc8; /* Catppuccin Subtext0 */
+                padding: 2px 8px;
+                font-size: 11px;
+            }
+        """)
+        self.status_bar.addPermanentWidget(self.version_label)
 
         # --- Assemble Chat Area Layout ---
         chat_area_widget = QWidget()  # Container for everything right of the sidebar
