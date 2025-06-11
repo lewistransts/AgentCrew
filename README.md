@@ -153,22 +153,14 @@ feedback is welcome if you have trouble.)_
 2. **Set up a Python environment:**
 
    ```bash
-   uv venv
-   source .venv/bin/activate  # On Linux/macOS
-   # .\.venv\Scripts\activate  # On Windows (Command Prompt)
-   # .\.venv\Scripts\Activate.ps1 # On Windows (PowerShell)
+   uv sync
+   uv run AgentCrew/main.py chat
    ```
 
 3. **Install AgentCrew:**
 
    ```bash
-   uv pip install .
-   ```
-
-   For development (includes extra tools):
-
-   ```bash
-   uv pip install .[dev]
+   uv tool install .
    ```
 
 ## ▶️ Getting Started / Basic Usage
