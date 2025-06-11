@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QFileIconProvider,
 )
 from PySide6.QtCore import Qt, QFileInfo, QByteArray
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QFont, QPixmap
 
 # File display constants
 IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]
@@ -214,11 +214,7 @@ class MessageBubble(QFrame):
             | Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
 
-        # Increase font size by 10% (original logic was 1.5x, keeping that)
-        font = self.message_label.font()
-        font_size = font.pointSizeF() * 1.5
-        font.setPointSizeF(font_size)
-        self.message_label.setFont(font)
+        self.message_label.setFont(QFont("Arial", 13))
 
         # Set different text color for message content based on bubble type
         message_text_color = (

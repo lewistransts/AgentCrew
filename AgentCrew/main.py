@@ -115,8 +115,12 @@ def check_and_update():
         click.echo(f"Latest version: {latest_version}")
 
         if version_is_older(current_version, latest_version):
-            click.echo("🔄 New version available! Starting update...")
-            run_update_command()
+            # Add user confirmation prompt
+            if click.confirm("🔄 New version available! Do you want to update now?", default=False):
+                click.echo("🔄 Starting update...")
+                run_update_command()
+            else:
+                click.echo("⏭️ Skipping update. Starting application...")
         else:
             click.echo("✅ You are running the latest version")
 
