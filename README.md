@@ -14,10 +14,9 @@
 
 **What is AgentCrew?**
 
-AgentCrew helps you build smart AI assistants. With AgentCrew, you create a team
-of AI "agents." Each agent can focus on a specific area. These agents work
-together to complete tasks. This teamwork often produces better results than a
-single AI working alone.
+AgentCrew helps you build AI assistants. You can create a team of AI "agents."
+Each agent focuses on a specific area. These agents work together to complete
+tasks. This teamwork can produce good results.
 
 **Who Might Like AgentCrew?**
 
@@ -31,10 +30,11 @@ AgentCrew can help.
 - **Works with Many AI Models:** Supports AI from OpenAI (GPT), Anthropic
   (Claude), Google (Gemini), GitHub Copilot, and others. Switching models is
   simple.
-- **Creates Expert Agents:** Make AI agents for specific jobs, such as writing,
-  coding, or research.
-- **Connects to Other Tools:** Agents can use external software (like Jira)
-  through the Model Context Protocol (MCP).
+- **Creates Expert Agents:** Make AI agents for specific jobs, like writing or
+  research.
+- **Connects to Other Tools:** Agents can use external software through the
+  Model Context Protocol (MCP).
+- **User Control:** You can approve or deny when an agent wants to use a tool.
 - **Simple to Use:** Chat with your AI agents using a text display or a
   graphical window.
 - **Manages Conversations:** Easily go back to earlier messages or combine
@@ -48,15 +48,14 @@ _Coming soon_
 AgentCrew uses these main ideas:
 
 1. **AI Teamwork:** Just like a human team. Each person has a special skill.
-   Projects succeed when these specialists help each other. AgentCrew applies
-   this idea to AI. You create different AI agents. Each has its own
-   instructions and tools. For example, one agent might find information online,
-   while another writes summaries.
+   Projects work when these specialists help each other. AgentCrew applies this
+   idea to AI. You create different AI agents. Each has its own instructions and
+   tools. For example, one agent might find information online. Another might
+   write summaries.
 
 2. **Smart Task Sharing:** Agents in AgentCrew can decide to pass tasks to
    another agent. They have instructions on when and how to share work and
-   information. This lets the best AI for a specific part of the job take over
-   at the right time.
+   information. This lets the right AI take over at the right time.
 
 3. **Flexible AI Models Selection:** AgentCrew lets you use different AI models
    (Large Language Models like GPT or Claude). You are not stuck with one AI
@@ -77,20 +76,24 @@ Here are some things AgentCrew can do:
 **🚀 Strong Agent Capabilities:**
 
 - Define multiple AI agents, each with its own expertise.
-- Agents can pass tasks to other agents when their instructions indicate it.
+- Agents can pass tasks to other agents when they need to.
 - Customize each agent's system prompt. You can include information like the
   current date.
 
-**🛠️ Powerful Tools for Agents:**
+**🛠️ Powerful Tools for Agents with User Control:**
 
+- **Tool Call Approval:** You decide if an agent can use a tool. AgentCrew will
+  ask for your permission before a tool is run. This gives you more control.
 - **Model Context Protocol (MCP):** Lets agents connect to external tools like
-  Jira.
-- **Web Search:** Agents can find current information online.
+  Jira, with your approval.
+- **Web Search:** Agents can find current information online, with your
+  approval.
 - **Clipboard Access:** Agents can copy text from your clipboard or write text
-  to it.
+  to it, with your approval.
 - **Memory:** Agents remember past parts of your conversation. This helps them
   give relevant replies. You can tell agents to forget certain topics.
-- **Code Assistance:** Agents can analyze code and help with coding tasks.
+- **Code Assistance:** Agents can analyze code and help with coding tasks, with
+  your approval.
 
 **💬 Easy Interaction and Chat Management:**
 
@@ -220,22 +223,27 @@ If you are a developer, you can add to AgentCrew:
   ones, add them through the GUI or by editing `config.json`.
 - **Custom Agents:** Edit agent settings using the GUI or directly in the
   `agents.toml` file.
+- **Share Example Agents:** You can create useful agent configurations and share
+  them with the community by adding them to the `examples/agents/` folder in the
+  project.
 
 ## ⚠️ Security and Responsible Usage Advisory ⚠️
 
 You control how AgentCrew and its AI agents work. You are responsible for:
 
 - The instructions you give your AI agents.
-- The tools you let agents use.
+- The tools you let agents use. The **Tool Call Approval** feature helps you
+  manage this.
 - Any results from your prompts or tool setups. This includes risks like data
   leaks or unintended actions.
 
-Please review all prompts and tool settings carefully.
+Please review all prompts and tool settings.
 
 - Give agents only the permissions they truly need.
 - Do not put secret information (like passwords or API keys) directly in agent
   prompts.
-- Be very careful with tools that can access many files or the internet.
+- Be very careful with tools that can access many files or the internet, even
+  with approval.
 
 AgentCrew is powerful. Please use it responsibly.
 
