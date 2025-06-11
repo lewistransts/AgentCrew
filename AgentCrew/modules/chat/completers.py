@@ -63,12 +63,46 @@ class ModelCompleter(Completer):
                     )
 
 
+class AgentCompleter(Completer):
+    """Completer that shows available agents when typing /agent command."""
+
+    def __init__(self):
+        from AgentCrew.modules.agents.manager import AgentManager
+        self.agent_manager = AgentManager.get_instance()
+
+    def get_completions(self, document, complete_event):
+        text = document.text
+
+        # Only provide completions for the /agent command
+        if text.startswith("/agent "):
+            word_before_cursor = document.get_word_before_cursor()
+
+            # Get all available agents from the manager
+            all_agents = []
+            for agent_name, agent in self.agent_manager.agents.items():
+                description = getattr(agent, 'description', 'No description available')
+                is_current = self.agent_manager.current_agent and agent_name == self.agent_manager.current_agent.name
+                all_agents.append((agent_name, description, is_current))
+
+            # Filter agents based on what the user has typed so far
+            for agent_name, description, is_current in all_agents:
+                if agent_name.startswith(word_before_cursor):
+                    current_indicator = " (current)" if is_current else ""
+                    display = f"{agent_name}{current_indicator} - {description}"
+                    yield Completion(
+                        agent_name,
+                        start_position=-len(word_before_cursor),
+                        display=display,
+                    )
+
+
 class ChatCompleter(Completer):
     """Combined completer for chat commands."""
 
     def __init__(self, conversation_turns=None):
         self.file_completer = DirectoryListingCompleter()
         self.model_completer = ModelCompleter()
+        self.agent_completer = AgentCompleter()
         self.jump_completer = JumpCompleter(conversation_turns)
 
     def get_completions(self, document, complete_event):
@@ -77,6 +111,9 @@ class ChatCompleter(Completer):
         if text.startswith("/model "):
             # Use model completer for /model command
             yield from self.model_completer.get_completions(document, complete_event)
+        elif text.startswith("/agent "):
+            # Use agent completer for /agent command
+            yield from self.agent_completer.get_completions(document, complete_event)
         elif text.startswith("/jump "):
             # Use jump completer for /jump command
             yield from self.jump_completer.get_completions(document, complete_event)

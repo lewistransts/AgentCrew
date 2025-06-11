@@ -207,10 +207,10 @@ class ConsoleUI(Observer):
 
     def stop_loading_animation(self):
         """Stop the loading animation."""
-        if self.console._live:
-            self.console._live.update("")
-            self.console._live.stop()
         if self._loading_stop_event:
+            if self.console._live:
+                self.console._live.update("")
+                self.console._live.stop()
             self._loading_stop_event.set()
         if self._loading_thread and self._loading_thread.is_alive():
             self._loading_thread.join(timeout=0.5)
