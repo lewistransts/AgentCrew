@@ -40,6 +40,7 @@ dependencies = [
   "nest-asyncio>=1.6.0",
   "voyageai>=0.3.2",
   "numpy>=1.24.4,<2; python_version < '3.13' and sys_platform == 'darwin'",
+  "a2a-sdk",
 ]
 
 [project.optional-dependencies]
@@ -47,6 +48,9 @@ dependencies = [
 mem0ai = [
   "mem0ai>=0.1.95",
 ]
+
+[tool.uv.sources]
+a2a-sdk = { git = "https://github.com/daltonnyx/a2a-python", branch = "main" }
 
 [project.urls]
 "Homepage" = "https://github.com/daltonnyx/AgentCrew"
