@@ -41,7 +41,8 @@ AgentCrew can help.
 - **Manages Conversations:** Easily go back to earlier messages or combine
   messages.
 
-**Short Demo**  
+**Short Demo**
+
 <https://github.com/user-attachments/assets/f0d8d2a2-a163-446d-9536-45e54e6bde37>
 
 ## 💡 Core Ideas Behind AgentCrew
