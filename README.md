@@ -90,7 +90,7 @@ Here are some things AgentCrew can do:
   Jira.
 - **Web Search:** Agents can find current information online.
 - **Clipboard Access:** Agents can copy text from your clipboard or write text
-  to i.
+  to it.
 - **Memory:** Agents remember past parts of your conversation. This helps them
   give relevant replies. You can tell agents to forget certain topics.
 - **Code Assistance:** Agents can analyze code and help with coding tasks.
