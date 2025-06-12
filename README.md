@@ -42,7 +42,7 @@ AgentCrew can help.
   messages.
 
 **Short Demo**  
-[![Watch the video](https://img.youtube.com/vi/GCb6eTIc8zc/maxresdefault.jpg)](https://youtu.be/GCb6eTIc8zc)
+<https://github.com/user-attachments/assets/f0d8d2a2-a163-446d-9536-45e54e6bde37>
 
 ## 💡 Core Ideas Behind AgentCrew
 
