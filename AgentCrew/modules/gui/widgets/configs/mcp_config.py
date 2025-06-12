@@ -128,13 +128,29 @@ class MCPsConfigTab(QWidget):
         self.name_input.textChanged.connect(self._mark_dirty)
         form_layout.addRow("Name:", self.name_input)
 
+        # Streaming server checkbox
+        self.streaming_server_checkbox = QCheckBox("Streaming Server")
+        self.streaming_server_checkbox.stateChanged.connect(
+            self._on_streaming_server_changed
+        )
+        form_layout.addRow("", self.streaming_server_checkbox)
+
+        # URL field (for streaming servers)
+        self.url_input = QLineEdit()
+        self.url_input.textChanged.connect(self._mark_dirty)
+        self.url_input.setPlaceholderText("http://localhost:8080/mcp")
+        self.url_label = QLabel("URL:")
+        form_layout.addRow(self.url_label, self.url_input)
+
         # Command field
         self.command_input = QLineEdit()
         self.command_input.textChanged.connect(self._mark_dirty)
-        form_layout.addRow("Command:", self.command_input)
+        self.command_label = QLabel("Command:")
+        form_layout.addRow(self.command_label, self.command_input)
 
         # Arguments section
         args_group = QGroupBox("Arguments")
+        self.args_group = args_group  # Store reference
         self.args_layout = QVBoxLayout()
         self.arg_inputs = []
 
@@ -170,6 +186,7 @@ class MCPsConfigTab(QWidget):
 
         # Environment variables section
         env_group = QGroupBox("Environment Variables")
+        self.env_group = env_group  # Store reference
         self.env_layout = QVBoxLayout()
         self.env_inputs = []
 
@@ -281,6 +298,36 @@ class MCPsConfigTab(QWidget):
         can_save = current_item_selected and self.is_dirty
         self.save_btn.setEnabled(can_save)
 
+    def _on_streaming_server_changed(self, state):
+        """Handle streaming server checkbox state change."""
+        is_streaming = state == Qt.CheckState.Checked.value
+
+        # Show/hide fields and labels based on streaming server state
+        self.url_input.setVisible(is_streaming)
+        self.url_label.setVisible(is_streaming)
+        self.command_input.setVisible(not is_streaming)
+        self.command_label.setVisible(not is_streaming)
+        self.add_arg_btn.setVisible(not is_streaming)
+        self.add_env_btn.setVisible(not is_streaming)
+
+        # Hide/show existing argument and env fields
+        for arg_input in self.arg_inputs:
+            arg_input["input"].setVisible(not is_streaming)
+            arg_input["remove_btn"].setVisible(not is_streaming)
+
+        for env_input in self.env_inputs:
+            env_input["key_input"].setVisible(not is_streaming)
+            env_input["value_input"].setVisible(not is_streaming)
+            env_input["remove_btn"].setVisible(not is_streaming)
+
+        # Also hide/show the group boxes containing args and env vars
+        if hasattr(self, "args_group"):
+            self.args_group.setVisible(not is_streaming)
+        if hasattr(self, "env_group"):
+            self.env_group.setVisible(not is_streaming)
+
+        self._mark_dirty()
+
     def load_mcps(self):
         """Load MCP servers from configuration."""
         self.mcps_list.clear()
@@ -306,6 +353,10 @@ class MCPsConfigTab(QWidget):
 
         # Populate form
         self.name_input.setText(server_config.get("name", ""))
+        self.streaming_server_checkbox.setChecked(
+            server_config.get("streaming_server", False)
+        )
+        self.url_input.setText(server_config.get("url", ""))
         self.command_input.setText(server_config.get("command", ""))
 
         # Clear existing argument fields
@@ -329,12 +380,50 @@ class MCPsConfigTab(QWidget):
         for agent, checkbox in self.agent_checkboxes.items():
             checkbox.setChecked(agent in enabled_agents)
 
+        # Update field states based on streaming server
+        self._on_streaming_server_changed(
+            Qt.CheckState.Checked.value
+            if server_config.get("streaming_server", False)
+            else Qt.CheckState.Unchecked.value
+        )
+
         self.is_dirty = False
         self._update_save_button_state()
 
     def set_editor_enabled(self, enabled: bool):
         """Enable or disable the editor form."""
         self.name_input.setEnabled(enabled)
+        self.streaming_server_checkbox.setEnabled(enabled)
+
+        # For visibility-controlled fields, only disable them when editor is disabled
+        # Their visibility is controlled by streaming_server state
+        if enabled:
+            is_streaming = self.streaming_server_checkbox.isChecked()
+            self.url_input.setVisible(is_streaming)
+            self.url_label.setVisible(is_streaming)
+            self.command_input.setVisible(not is_streaming)
+            self.command_label.setVisible(not is_streaming)
+            self.add_arg_btn.setVisible(not is_streaming)
+            self.add_env_btn.setVisible(not is_streaming)
+            if hasattr(self, "args_group"):
+                self.args_group.setVisible(not is_streaming)
+            if hasattr(self, "env_group"):
+                self.env_group.setVisible(not is_streaming)
+        else:
+            # When editor is disabled, hide all conditional fields and labels
+            self.url_input.setVisible(False)
+            self.url_label.setVisible(False)
+            self.command_input.setVisible(False)
+            self.command_label.setVisible(False)
+            self.add_arg_btn.setVisible(False)
+            self.add_env_btn.setVisible(False)
+            if hasattr(self, "args_group"):
+                self.args_group.setVisible(False)
+            if hasattr(self, "env_group"):
+                self.env_group.setVisible(False)
+
+        # Always enable/disable these regardless of visibility
+        self.url_input.setEnabled(enabled)
         self.command_input.setEnabled(enabled)
         self.add_arg_btn.setEnabled(enabled)
         self.add_env_btn.setEnabled(enabled)
@@ -345,11 +434,20 @@ class MCPsConfigTab(QWidget):
         for arg_input in self.arg_inputs:
             arg_input["input"].setEnabled(enabled)
             arg_input["remove_btn"].setEnabled(enabled)
+            if enabled:
+                is_streaming = self.streaming_server_checkbox.isChecked()
+                arg_input["input"].setVisible(not is_streaming)
+                arg_input["remove_btn"].setVisible(not is_streaming)
 
         for env_input in self.env_inputs:
             env_input["key_input"].setEnabled(enabled)
             env_input["value_input"].setEnabled(enabled)
             env_input["remove_btn"].setEnabled(enabled)
+            if enabled:
+                is_streaming = self.streaming_server_checkbox.isChecked()
+                env_input["key_input"].setVisible(not is_streaming)
+                env_input["value_input"].setVisible(not is_streaming)
+                env_input["remove_btn"].setVisible(not is_streaming)
 
         if not enabled:
             self.is_dirty = False
@@ -510,6 +608,8 @@ class MCPsConfigTab(QWidget):
             "args": ["run", "-i", "--rm"],
             "env": {},
             "enabledForAgents": [],
+            "streaming_server": False,
+            "url": "",
         }
 
         # Add to list
@@ -568,6 +668,8 @@ class MCPsConfigTab(QWidget):
 
         # Get values from form
         name = self.name_input.text().strip()
+        streaming_server = self.streaming_server_checkbox.isChecked()
+        url = self.url_input.text().strip()
         command = self.command_input.text().strip()
 
         # Validate
@@ -577,9 +679,22 @@ class MCPsConfigTab(QWidget):
             )
             return
 
-        if not command:
-            QMessageBox.warning(self, "Validation Error", "Command cannot be empty.")
-            return
+        if streaming_server:
+            if not url:
+                QMessageBox.warning(
+                    self,
+                    "Validation Error",
+                    "URL cannot be empty for streaming servers.",
+                )
+                return
+        else:
+            if not command:
+                QMessageBox.warning(
+                    self,
+                    "Validation Error",
+                    "Command cannot be empty for stdio servers.",
+                )
+                return
 
         # Get arguments
         args = []
@@ -610,6 +725,8 @@ class MCPsConfigTab(QWidget):
             "args": args,
             "env": env,
             "enabledForAgents": enabled_agents,
+            "streaming_server": streaming_server,
+            "url": url,
         }
 
         # Update item in list

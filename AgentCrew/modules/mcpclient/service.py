@@ -30,34 +30,67 @@ class MCPService:
         logger.info(f"MCPService: Starting connection management for {server_id}")
 
         try:
-            server_params = StdioServerParameters(
-                command=server_config.command,
-                args=server_config.args,
-                env=server_config.env,
-            )
+            if server_config.streaming_server:
+                # Import here to avoid import errors if not available
+                from mcp.client.streamable_http import streamablehttp_client
 
-            async with stdio_client(server_params) as (stdio, write_stream):
-                logger.info(f"MCPService: stdio_client established for {server_id}")
-                async with ClientSession(stdio, write_stream) as session:
+                logger.info(f"MCPService: Using streaming HTTP client for {server_id}")
+                async with streamablehttp_client(server_config.url) as (
+                    read_stream,
+                    write_stream,
+                    _,
+                ):
                     logger.info(
-                        f"MCPService: ClientSession established for {server_id}"
+                        f"MCPService: streamablehttp_client established for {server_id}"
                     )
-                    await session.initialize()
-                    self.sessions[server_id] = session
-                    self.connected_servers[server_id] = (
-                        True  # Mark as connected before tool registration
-                    )
-                    logger.info(
-                        f"MCPService: {server_id} connected. Registering tools..."
-                    )
+                    async with ClientSession(read_stream, write_stream) as session:
+                        logger.info(
+                            f"MCPService: ClientSession established for {server_id}"
+                        )
+                        await session.initialize()
+                        self.sessions[server_id] = session
+                        self.connected_servers[server_id] = True
+                        logger.info(
+                            f"MCPService: {server_id} connected. Registering tools..."
+                        )
 
-                    for agent_name in server_config.enabledForAgents:
-                        await self.register_server_tools(server_id, agent_name)
+                        for agent_name in server_config.enabledForAgents:
+                            await self.register_server_tools(server_id, agent_name)
 
-                    logger.info(
-                        f"MCPService: {server_id} setup complete. Waiting for shutdown signal."
-                    )
-                    await shutdown_event.wait()
+                        logger.info(
+                            f"MCPService: {server_id} setup complete. Waiting for shutdown signal."
+                        )
+                        await shutdown_event.wait()
+            else:
+                # Original stdio client logic
+                server_params = StdioServerParameters(
+                    command=server_config.command,
+                    args=server_config.args,
+                    env=server_config.env,
+                )
+
+                async with stdio_client(server_params) as (stdio, write_stream):
+                    logger.info(f"MCPService: stdio_client established for {server_id}")
+                    async with ClientSession(stdio, write_stream) as session:
+                        logger.info(
+                            f"MCPService: ClientSession established for {server_id}"
+                        )
+                        await session.initialize()
+                        self.sessions[server_id] = session
+                        self.connected_servers[server_id] = (
+                            True  # Mark as connected before tool registration
+                        )
+                        logger.info(
+                            f"MCPService: {server_id} connected. Registering tools..."
+                        )
+
+                        for agent_name in server_config.enabledForAgents:
+                            await self.register_server_tools(server_id, agent_name)
+
+                        logger.info(
+                            f"MCPService: {server_id} setup complete. Waiting for shutdown signal."
+                        )
+                        await shutdown_event.wait()
 
         except asyncio.CancelledError:
             logger.info(f"MCPService: Connection task for {server_id} was cancelled.")

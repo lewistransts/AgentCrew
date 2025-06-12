@@ -14,6 +14,8 @@ class MCPServerConfig:
     args: List[str]
     enabledForAgents: List[str]
     env: Optional[Dict[str, str]] = None
+    streaming_server: bool = False
+    url: str = ""
 
 
 class MCPConfigManager:
@@ -60,10 +62,12 @@ class MCPConfigManager:
             for server_id, config in config_data.items():
                 self.configs[server_id] = MCPServerConfig(
                     name=config.get("name", server_id),
-                    command=config["command"],
+                    command=config.get("command", ""),
                     args=config.get("args", []),
                     env=config.get("env"),
                     enabledForAgents=config.get("enabledForAgents", []),
+                    streaming_server=config.get("streaming_server", False),
+                    url=config.get("url", ""),
                 )
 
             return self.configs
