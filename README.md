@@ -112,8 +112,7 @@ Here are some things AgentCrew can do:
 
 **⚙️ Simple Configuration:**
 
-- Set up AgentCrew using text files or, more easily, through its \*\*graphical
-  user )
+- Set up AgentCrew using text files or, more easily, through its GUI
 
 ## 💡 Core Ideas Behind AgentCrew
 
