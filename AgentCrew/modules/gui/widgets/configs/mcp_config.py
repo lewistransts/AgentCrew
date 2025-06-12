@@ -303,28 +303,8 @@ class MCPsConfigTab(QWidget):
         is_streaming = state == Qt.CheckState.Checked.value
 
         # Show/hide fields and labels based on streaming server state
-        self.url_input.setVisible(is_streaming)
-        self.url_label.setVisible(is_streaming)
-        self.command_input.setVisible(not is_streaming)
-        self.command_label.setVisible(not is_streaming)
-        self.add_arg_btn.setVisible(not is_streaming)
-        self.add_env_btn.setVisible(not is_streaming)
-
-        # Hide/show existing argument and env fields
-        for arg_input in self.arg_inputs:
-            arg_input["input"].setVisible(not is_streaming)
-            arg_input["remove_btn"].setVisible(not is_streaming)
-
-        for env_input in self.env_inputs:
-            env_input["key_input"].setVisible(not is_streaming)
-            env_input["value_input"].setVisible(not is_streaming)
-            env_input["remove_btn"].setVisible(not is_streaming)
-
-        # Also hide/show the group boxes containing args and env vars
-        if hasattr(self, "args_group"):
-            self.args_group.setVisible(not is_streaming)
-        if hasattr(self, "env_group"):
-            self.env_group.setVisible(not is_streaming)
+        self._set_sse_fields_visisble(is_streaming)
+        self._set_stdio_fields_visible(not is_streaming)
 
         self._mark_dirty()
 
@@ -390,6 +370,31 @@ class MCPsConfigTab(QWidget):
         self.is_dirty = False
         self._update_save_button_state()
 
+    def _set_sse_fields_visisble(self, visible: bool):
+        self.url_input.setVisible(visible)
+        self.url_label.setVisible(visible)
+
+    def _set_stdio_fields_visible(self, visible: bool):
+        self.command_input.setVisible(visible)
+        self.command_label.setVisible(visible)
+        self.add_arg_btn.setVisible(visible)
+        self.add_env_btn.setVisible(visible)
+
+        # Hide/show existing argument and env fields
+        for arg_input in self.arg_inputs:
+            arg_input["input"].setVisible(visible)
+            arg_input["remove_btn"].setVisible(visible)
+
+        for env_input in self.env_inputs:
+            env_input["key_input"].setVisible(visible)
+            env_input["value_input"].setVisible(visible)
+            env_input["remove_btn"].setVisible(visible)
+
+        if hasattr(self, "args_group"):
+            self.args_group.setVisible(visible)
+        if hasattr(self, "env_group"):
+            self.env_group.setVisible(visible)
+
     def set_editor_enabled(self, enabled: bool):
         """Enable or disable the editor form."""
         self.name_input.setEnabled(enabled)
@@ -399,16 +404,8 @@ class MCPsConfigTab(QWidget):
         # Their visibility is controlled by streaming_server state
         if enabled:
             is_streaming = self.streaming_server_checkbox.isChecked()
-            self.url_input.setVisible(is_streaming)
-            self.url_label.setVisible(is_streaming)
-            self.command_input.setVisible(not is_streaming)
-            self.command_label.setVisible(not is_streaming)
-            self.add_arg_btn.setVisible(not is_streaming)
-            self.add_env_btn.setVisible(not is_streaming)
-            if hasattr(self, "args_group"):
-                self.args_group.setVisible(not is_streaming)
-            if hasattr(self, "env_group"):
-                self.env_group.setVisible(not is_streaming)
+            self._set_stdio_fields_visible(not is_streaming)
+            self._set_sse_fields_visisble(is_streaming)
         else:
             # When editor is disabled, hide all conditional fields and labels
             self.url_input.setVisible(False)
