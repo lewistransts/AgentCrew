@@ -87,15 +87,13 @@ Here are some things AgentCrew can do:
 - **Tool Call Approval:** You decide if an agent can use a tool. AgentCrew will
   ask for your permission before a tool is run. This gives you more control.
 - **Model Context Protocol (MCP):** Lets agents connect to external tools like
-  Jira, with your approval.
-- **Web Search:** Agents can find current information online, with your
-  approval.
+  Jira.
+- **Web Search:** Agents can find current information online.
 - **Clipboard Access:** Agents can copy text from your clipboard or write text
-  to it, with your approval.
+  to i.
 - **Memory:** Agents remember past parts of your conversation. This helps them
   give relevant replies. You can tell agents to forget certain topics.
-- **Code Assistance:** Agents can analyze code and help with coding tasks, with
-  your approval.
+- **Code Assistance:** Agents can analyze code and help with coding tasks.
 
 **💬 Easy Interaction and Chat Management:**
 
