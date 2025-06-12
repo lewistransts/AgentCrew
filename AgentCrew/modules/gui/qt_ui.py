@@ -1217,6 +1217,23 @@ class ChatWindow(QMainWindow, Observer):
         """Stop the current message stream."""
         if self.waiting_for_response:
             self.send_button.setDisabled(True)
+            
+            # Update button styling to show disabled state more clearly
+            self.send_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #6c7086; /* Catppuccin Overlay0 - More grey/disabled look */
+                    color: #9399b2; /* Catppuccin Subtext1 - Muted text */
+                    border: none;
+                    border-radius: 4px; 
+                    padding: 8px;
+                    font-weight: bold;
+                }
+            """)
+            self.send_button.setText("Stopping...")
+            
+            # Stop the animation timer since we're now in a disabled state
+            self.animation_timer.stop()
+            
             self.message_handler.stop_streaming = True
             self.display_status_message("Stopping message stream...")
 
