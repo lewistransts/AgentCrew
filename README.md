@@ -87,84 +87,13 @@ Here are some things AgentCrew can do:
 - **Tool Call Approval:** You decide if an agent can use a tool. AgentCrew will
   ask for your permission before a tool is run. This gives you more control.
 - **Model Context Protocol (MCP):** Lets agents connect to external tools like
-  Jira, with your approval.
-- **Web Search:** Agents can find current information online, with your
-  approval.
+  Jira.
+- **Web Search:** Agents can find current information online.
 - **Clipboard Access:** Agents can copy text from your clipboard or write text
-  to it, with your approval.
+  to it.
 - **Memory:** Agents remember past parts of your conversation. This helps them
   give relevant replies. You can tell agents to forget certain topics.
-- **Code Assistance:** Agents can analyze code and help with coding tasks, with
-  your approval.
-
-**💬 Easy Interaction and Chat Management:**
-
-- **Dual Interfaces:** Chat with AgentCrew using a text console or a graphical
-  window (GUI).
-- **File Handling:** AI agents can work with text and image files in chat.
-  AgentCrew also supports PDF, DOCX, XLSX, and PPTX files.
-- **Streaming Responses:** Get real-time replies from AI agents.
-- **"Thinking Mode":** Some AI models can show their reasoning process.
-- **Rollback Messages:** Easily go back to an earlier point in your
-  conversation.
-- **Consolidate Messages:** Combine multiple chat messages into one using the
-  `/consolidate` command.
-
-**⚙️ Simple Configuration:**
-
-- Set up AgentCrew using text files or, more easily, through its GUI
-
-## 💡 Core Ideas Behind AgentCrew
-
-AgentCrew uses these main ideas:
-
-1. **AI Teamwork:** Just like a human team. Each person has a special skill.
-   Projects work when these specialists help each other. AgentCrew applies this
-   idea to AI. You create different AI agents. Each has its own instructions and
-   tools. For example, one agent might find information online. Another might
-   write summaries.
-
-2. **Smart Task Sharing:** Agents in AgentCrew can decide to pass tasks to
-   another agent. They have instructions on when and how to share work and
-   information. This lets the right AI take over at the right time.
-
-3. **Flexible AI Models Selection:** AgentCrew lets you use different AI models
-   (Large Language Models like GPT or Claude). You are not stuck with one AI
-   provider. AgentCrew makes it easy to connect and use the AI model you choose.
-
-## ✨ Key Features
-
-Here are some things AgentCrew can do:
-
-**🤖 Wide AI Model Support:**
-
-- Works with AI from Anthropic (Claude series), Google (Gemini series), OpenAI
-  (GPT series), Groq, and DeepInfra.
-- Supports **GitHub Copilot**. Set up authentication with
-  `agentcrew copilot-auth`.
-- Connect to custom AI providers compatible with OpenAI.
-
-**🚀 Strong Agent Capabilities:**
-
-- Define multiple AI agents, each with its own expertise.
-- Agents can pass tasks to other agents when they need to.
-- Customize each agent's system prompt. You can include information like the
-  current date.
-
-**🛠️ Powerful Tools for Agents with User Control:**
-
-- **Tool Call Approval:** You decide if an agent can use a tool. AgentCrew will
-  ask for your permission before a tool is run. This gives you more control.
-- **Model Context Protocol (MCP):** Lets agents connect to external tools like
-  Jira, with your approval.
-- **Web Search:** Agents can find current information online, with your
-  approval.
-- **Clipboard Access:** Agents can copy text from your clipboard or write text
-  to it, with your approval.
-- **Memory:** Agents remember past parts of your conversation. This helps them
-  give relevant replies. You can tell agents to forget certain topics.
-- **Code Assistance:** Agents can analyze code and help with coding tasks, with
-  your approval.
+- **Code Assistance:** Agents can analyze code and help with coding tasks.
 
 **💬 Easy Interaction and Chat Management:**
 
