@@ -498,6 +498,18 @@ class ChatWindow(QMainWindow, Observer):
         # Track session cost
         self.session_cost = 0.0
 
+        # Add simple throttling
+        self.chunk_buffer = ""
+        self.chunk_timer = QTimer(self)
+        self.chunk_timer.setSingleShot(True)
+        self.chunk_timer.timeout.connect(self._render_buffered_chunks)
+
+        # Add thinking message buffering
+        self.thinking_buffer = ""
+        self.thinking_timer = QTimer(self)
+        self.thinking_timer.setSingleShot(True)
+        self.thinking_timer.timeout.connect(self._render_buffered_thinking)
+
         # Add welcome message
         self.add_system_message(
             "Welcome! Select a past conversation or start a new one."
@@ -877,9 +889,9 @@ class ChatWindow(QMainWindow, Observer):
             self.current_response_bubble.append_text(chunk)
             # Force update and scroll
             QApplication.processEvents()
-            # self.chat_scroll.verticalScrollBar().setValue(
-            #     self.chat_scroll.verticalScrollBar().maximum()
-            # )
+            self.chat_scroll.verticalScrollBar().setValue(
+                self.chat_scroll.verticalScrollBar().maximum()
+            )
         # Otherwise, create a new message (should not happen in normal operation)
         else:
             self.current_response_bubble = self.append_message(chunk, False)
@@ -1778,6 +1790,7 @@ class ChatWindow(QMainWindow, Observer):
         # Create a new thinking bubble
         self.current_thinking_bubble = self.append_thinking_message(" ", agent_name)
         self.thinking_content = ""  # Initialize thinking content
+        self.thinking_buffer = ""  # Initialize thinking buffer
 
     def display_thinking_chunk(self, chunk: str):
         """Display a chunk of the thinking process."""
@@ -1813,9 +1826,9 @@ class ChatWindow(QMainWindow, Observer):
         QApplication.processEvents()
 
         # Scroll to the bottom to show new message
-        # self.chat_scroll.verticalScrollBar().setValue(
-        #     self.chat_scroll.verticalScrollBar().maximum()
-        # )
+        self.chat_scroll.verticalScrollBar().setValue(
+            self.chat_scroll.verticalScrollBar().maximum()
+        )
 
         return message_bubble
 
@@ -1836,12 +1849,30 @@ class ChatWindow(QMainWindow, Observer):
             return True
         return super().eventFilter(obj, event)
 
+    def _render_buffered_chunks(self):
+        """Render the latest buffered chunk."""
+        if self.chunk_buffer:
+            self.display_response_chunk(self.chunk_buffer)
+            self.chunk_buffer = ""
+
+    def _render_buffered_thinking(self):
+        """Render the latest buffered thinking chunk."""
+        if self.thinking_buffer and self.current_thinking_bubble:
+            # Update the thinking content and display it
+            self.display_thinking_chunk(self.thinking_buffer)
+            # Clear the buffer
+            self.thinking_buffer = ""
+
     @Slot(str, object)
     def handle_event(self, event: str, data: Any):
         if event == "response_chunk":
             _, assistant_response = data
             if assistant_response.strip():
-                self.display_response_chunk(assistant_response)
+                # Store latest chunk (replace, don't accumulate)
+                self.chunk_buffer = assistant_response
+                # Restart timer (50ms delay)
+                self.chunk_timer.stop()
+                self.chunk_timer.start(50)
         elif event == "error":
             # If an error occurs during LLM processing, ensure loading flag is false
             self.loading_conversation = False
@@ -1863,7 +1894,12 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "thinking_started":
             self.display_thinking_started(data)  # data is agent_name
         elif event == "thinking_chunk":
-            self.display_thinking_chunk(data)  # data is the thinking chunk
+            # Buffer thinking chunks instead of rendering immediately
+            self.thinking_buffer += data
+
+            # Restart timer (50ms delay, same as response chunks)
+            self.thinking_timer.stop()
+            self.thinking_timer.start(50)
         elif event == "thinking_completed":
             self.display_status_message("Thinking completed.")
             self.chat_scroll.verticalScrollBar().setValue(

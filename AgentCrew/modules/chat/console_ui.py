@@ -610,7 +610,9 @@ class ConsoleUI(Observer):
             agent_name: The name of the agent providing the response.
         """
         print(f"\n{GREEN}{BOLD}🤖 {agent_name.upper()}:{RESET}")
-        self.live = Live("", console=self.console, vertical_overflow="crop")
+        self.live = Live(
+            "", console=self.console, refresh_per_second=24, vertical_overflow="crop"
+        )
         self.live.start()
 
     def _setup_key_bindings(self):
