@@ -675,6 +675,7 @@ class MessageHandler(Observable):
                     await stream_generator.aclose()
                     self.stop_streaming = False  # Reset flag
                     self._notify("streaming_stopped", assistant_response)
+                    break
 
                 # Accumulate thinking content if available
                 if thinking_chunk:

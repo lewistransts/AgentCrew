@@ -9,10 +9,13 @@ from .common.types import (
     Message,
     TextPart,
     FilePart,
-    FileContent,
+    FileWithBytes,
+    FileWithUri,
     Artifact,
     Part,
-    SendTaskResponse,
+    SendMessageResponse,
+    DataPart,
+    Role,
 )
 
 
@@ -27,53 +30,57 @@ def convert_a2a_message_to_agent(message: Message) -> Dict[str, Any]:
     Returns:
         The message in SwissKnife format
     """
-    role = "user" if message.role == "user" else "assistant"
+    role = "user" if message.role == Role.user else "assistant"
     content = []
 
     for part in message.parts:
-        if part.type == "text":
-            content.append({"type": "text", "text": part.text})
-        elif part.type == "file":
+        part_data = part.root if hasattr(part, 'root') else part
+        
+        if part_data.kind == "text":
+            content.append({"type": "text", "text": part_data.text})
+        elif part_data.kind == "file":
             # Handle file content
-            if part.file.bytes:
+            file_data = part_data.file
+            if hasattr(file_data, 'bytes') and file_data.bytes:
                 # Base64 encoded file
                 content.append(
                     {
                         "type": "file",
-                        "file_data": part.file.bytes,
-                        "file_name": part.file.name or "file",
-                        "mime_type": part.file.mimeType or "application/octet-stream",
+                        "file_data": file_data.bytes,
+                        "file_name": file_data.name or "file",
+                        "mime_type": file_data.mimeType or "application/octet-stream",
                     }
                 )
-            elif part.file.uri:
+            elif hasattr(file_data, 'uri') and file_data.uri:
                 # File URI
                 content.append(
                     {
                         "type": "file_uri",
-                        "uri": part.file.uri,
-                        "file_name": part.file.name or "file",
-                        "mime_type": part.file.mimeType or "application/octet-stream",
+                        "uri": file_data.uri,
+                        "file_name": file_data.name or "file",
+                        "mime_type": file_data.mimeType or "application/octet-stream",
                     }
                 )
-        elif part.type == "data":
+        elif part_data.kind == "data":
             # Convert structured data
-            content.append({"type": "data", "data": part.data})
+            content.append({"type": "data", "data": part_data.data})
 
     return {"role": role, "content": content}
 
 
 # TODO: cover all of cases for images
-def convert_agent_message_to_a2a(message: Dict[str, Any]) -> Message:
+def convert_agent_message_to_a2a(message: Dict[str, Any], message_id: str = None) -> Message:
     """
     Convert a SwissKnife message to A2A format.
 
     Args:
         message: The SwissKnife message to convert
+        message_id: Optional message ID
 
     Returns:
         The message in A2A format
     """
-    role = "user" if message.get("role") == "user" else "agent"
+    role = Role.user if message.get("role") == "user" else Role.agent
     parts = []
 
     content = message.get("content", [])
@@ -92,7 +99,7 @@ def convert_agent_message_to_a2a(message: Dict[str, Any]) -> Message:
                     # Handle file content
                     parts.append(
                         FilePart(
-                            file=FileContent(
+                            file=FileWithBytes(
                                 name=part.get("file_name"),
                                 mimeType=part.get("mime_type"),
                                 bytes=part.get("file_data"),
@@ -103,7 +110,7 @@ def convert_agent_message_to_a2a(message: Dict[str, Any]) -> Message:
                     # Handle file URI
                     parts.append(
                         FilePart(
-                            file=FileContent(
+                            file=FileWithUri(
                                 name=part.get("file_name"),
                                 mimeType=part.get("mime_type"),
                                 uri=part.get("uri"),
@@ -112,15 +119,18 @@ def convert_agent_message_to_a2a(message: Dict[str, Any]) -> Message:
                     )
                 elif part.get("type") == "data":
                     # Handle structured data
-                    from .common.types import DataPart
-
                     parts.append(DataPart(data=part.get("data", {})))
 
-    return Message(role=role, parts=parts, metadata=message.get("metadata"))
+    return Message(
+        messageId=message_id or f"msg_{hash(str(parts))}",
+        role=role, 
+        parts=parts, 
+        metadata=message.get("metadata")
+    )
 
 
 def convert_agent_response_to_a2a(
-    response: str, tool_uses: Optional[List[Dict[str, Any]]] = None
+    response: str, tool_uses: Optional[List[Dict[str, Any]]] = None, artifact_id: str = None
 ) -> Artifact:
     """
     Convert a SwissKnife response to an A2A artifact.
@@ -128,6 +138,7 @@ def convert_agent_response_to_a2a(
     Args:
         response: The response text from SwissKnife
         tool_uses: Optional list of tool uses
+        artifact_id: Optional artifact ID
 
     Returns:
         The response as an A2A artifact
@@ -139,7 +150,11 @@ def convert_agent_response_to_a2a(
     if tool_uses:
         metadata = {"tool_uses": tool_uses}
 
-    return Artifact(parts=parts, metadata=metadata)
+    return Artifact(
+        artifactId=artifact_id or f"artifact_{hash(response)}",
+        parts=parts, 
+        metadata=metadata
+    )
 
 
 def convert_file_to_a2a_part(
@@ -170,18 +185,38 @@ def convert_file_to_a2a_part(
     base64_content = base64.b64encode(file_content).decode("utf-8")
 
     return FilePart(
-        file=FileContent(name=file_name, mimeType=mime_type, bytes=base64_content)
+        file=FileWithBytes(name=file_name, mimeType=mime_type, bytes=base64_content)
     )
 
 
 def convert_a2a_send_task_response_to_agent_message(
-    response: SendTaskResponse | GetTaskResponse, agent_name: str
+    response: SendMessageResponse | GetTaskResponse, agent_name: str
 ) -> Optional[str]:
-    if not response or not response.result or not response.result.artifacts:
+    """Convert A2A response to agent message format"""
+    if not response or not hasattr(response, 'root'):
         return None
-    assistant_a2a_message = response.result.artifacts[-1]
-    content_parts = []
-    for part in assistant_a2a_message.parts:
-        if part.type == "text":
-            content_parts.append(part.text)
-    return "\n".join(content_parts)
+        
+    result = response.root.result if hasattr(response.root, 'result') else None
+    if not result:
+        return None
+        
+    # Handle both Task and Message results
+    if hasattr(result, 'artifacts') and result.artifacts:
+        # Task result with artifacts
+        latest_artifact = result.artifacts[-1]
+        content_parts = []
+        for part in latest_artifact.parts:
+            part_data = part.root if hasattr(part, 'root') else part
+            if part_data.kind == "text":
+                content_parts.append(part_data.text)
+        return "\n".join(content_parts)
+    elif hasattr(result, 'parts'):
+        # Direct message result
+        content_parts = []
+        for part in result.parts:
+            part_data = part.root if hasattr(part, 'root') else part
+            if part_data.kind == "text":
+                content_parts.append(part_data.text)
+        return "\n".join(content_parts)
+    
+    return None

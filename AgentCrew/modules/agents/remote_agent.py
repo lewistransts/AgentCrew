@@ -9,9 +9,11 @@ from AgentCrew.modules.llm.message import MessageTransformer
 from AgentCrew.modules.agents.base import BaseAgent, MessageType
 from AgentCrew.modules.a2a.common.client import A2ACardResolver, A2AClient
 from AgentCrew.modules.a2a.common.types import (
-    TaskSendParams,
+    MessageSendParams,
     TaskStatusUpdateEvent,
+    JSONRPCErrorResponse,
     TaskArtifactUpdateEvent,
+    TextPart,
 )
 
 
@@ -98,9 +100,10 @@ class RemoteAgent(BaseAgent):
         last_user_message = messages[-1]
 
         a2a_message = convert_agent_message_to_a2a(last_user_message)
+        print(a2a_message)
 
-        a2a_payload = TaskSendParams(
-            id=str(uuid4()),
+        a2a_payload = MessageSendParams(
+            metadata={"id": str(uuid4())},
             message=a2a_message,
             # acceptedOutputModes can be set here if needed, e.g., based on agent_card.defaultOutputModes
             # For now, relying on server defaults or agent's capability.
@@ -111,20 +114,20 @@ class RemoteAgent(BaseAgent):
         async for stream_response in self.client.send_task_streaming(
             a2a_payload.model_dump()
         ):
-            if stream_response.error:
+            if isinstance(stream_response.root, JSONRPCErrorResponse):
                 raise Exception(
-                    f"Remote agent stream error: {stream_response.error.code} - {stream_response.error.message}"
+                    f"Remote agent stream error: {stream_response.root.error.code} - {stream_response.root.error.message}"
                 )
 
-            if stream_response.result:
-                event = stream_response.result
+            if stream_response.root.result:
+                event = stream_response.root.result
                 current_content_chunk_text = ""
                 current_thinking_chunk_text = ""
 
                 if isinstance(event, TaskArtifactUpdateEvent):
                     for part in event.artifact.parts:
-                        if part.type == "text":
-                            current_content_chunk_text += part.text
+                        if isinstance(part.root, TextPart):
+                            current_content_chunk_text += part.root.text
                     if current_content_chunk_text:
                         full_response_text += current_content_chunk_text
                         yield (
@@ -136,8 +139,8 @@ class RemoteAgent(BaseAgent):
                 elif isinstance(event, TaskStatusUpdateEvent):
                     if event.status.message and event.status.message.parts:
                         for part in event.status.message.parts:
-                            if part.type == "text":
-                                current_thinking_chunk_text += part.text
+                            if isinstance(part.root, TextPart):
+                                current_content_chunk_text += part.root.text
                         if current_thinking_chunk_text:
                             yield (
                                 full_response_text,

@@ -19,6 +19,7 @@ from .common.types import (
     A2ARequest,
     JSONRPCError,
     JSONRPCResponse,
+    JSONRPCErrorResponse,
     InvalidRequestError,
     JSONParseError,
     InternalError,
@@ -144,10 +145,10 @@ class A2AServer:
 
                 # Validate as A2A request
                 try:
-                    json_rpc_request = A2ARequest.validate_python(body)
+                    json_rpc_request = A2ARequest.model_validate(body)
                 except ValidationError as e:
                     logging.debug(f"cannot validate_python {e} ")
-                    error = JSONRPCResponse(
+                    error = JSONRPCErrorResponse(
                         id=body.get("id"),
                         error=InvalidRequestError(data=e.errors()),
                     )
@@ -156,18 +157,40 @@ class A2AServer:
                     )
 
                 # Process based on method
-                method = json_rpc_request.method
+                method = json_rpc_request.root.method
                 logger.debug(f"Processing method: {method}")
 
-                if method == "tasks/send":
-                    logger.debug("Handling tasks/send request")
-                    result = await task_manager.on_send_task(json_rpc_request)
+                if method == "message/send":
+                    logger.debug("Handling message/send request")
+                    result = await task_manager.on_send_message(json_rpc_request.root)
+                    logger.debug(f"message/send result: {result}")
+                    return JSONResponse(result.model_dump(exclude_none=True))
+
+                elif method == "message/stream":
+                    result_stream = task_manager.on_send_message_streaming(
+                        json_rpc_request.root
+                    )
+
+                    if isinstance(result_stream, JSONRPCResponse):
+                        return JSONResponse(result_stream.model_dump(exclude_none=True))
+
+                    async def event_generator():
+                        async for item in result_stream:
+                            yield {
+                                "data": json.dumps(item.model_dump(exclude_none=True))
+                            }
+
+                    return EventSourceResponse(event_generator())
+
+                elif method == "tasks/send":
+                    logger.debug("Handling legacy tasks/send request")
+                    result = await task_manager.on_send_task(json_rpc_request.root)
                     logger.debug(f"tasks/send result: {result}")
                     return JSONResponse(result.model_dump(exclude_none=True))
 
                 elif method == "tasks/sendSubscribe":
                     result_stream = task_manager.on_send_task_subscribe(
-                        json_rpc_request
+                        json_rpc_request.root
                     )
 
                     if isinstance(result_stream, JSONRPCResponse):
@@ -182,19 +205,19 @@ class A2AServer:
                     return EventSourceResponse(event_generator())
 
                 elif method == "tasks/get":
-                    result = await task_manager.on_get_task(json_rpc_request)
+                    result = await task_manager.on_get_task(json_rpc_request.root)
                     return JSONResponse(result.model_dump(exclude_none=True))
 
                 elif method == "tasks/cancel":
-                    result = await task_manager.on_cancel_task(json_rpc_request)
+                    result = await task_manager.on_cancel_task(json_rpc_request.root)
                     return JSONResponse(result.model_dump(exclude_none=True))
 
                 else:
                     logger.error(f"Invalid method requested: {method}")
-                    logger.error(f"Request ID: {json_rpc_request.id}")
-                    logger.error(f"Request params: {json_rpc_request.params}")
-                    error = JSONRPCResponse(
-                        id=json_rpc_request.id,
+                    logger.error(f"Request ID: {json_rpc_request.root.id}")
+                    logger.error(f"Request params: {json_rpc_request.root.params}")
+                    error = JSONRPCErrorResponse(
+                        id=json_rpc_request.root.id,
                         error=JSONRPCError(code=-32601, message="Method not found"),
                     )
                     return JSONResponse(
@@ -205,7 +228,7 @@ class A2AServer:
                 logger.error(f"JSON decode error: {str(e)}")
                 logger.error(f"Error position: line {e.lineno}, column {e.colno}")
                 logger.error(f"Error document: {e.doc}")
-                error = JSONRPCResponse(id=None, error=JSONParseError())
+                error = JSONRPCErrorResponse(id=None, error=JSONParseError())
                 return JSONResponse(
                     error.model_dump(exclude_none=True), status_code=400
                 )
@@ -215,7 +238,7 @@ class A2AServer:
                 for error in e.errors():
                     logger.error(f"Error type: {error['type']}")
                     logger.error(f"Error message: {error['msg']}")
-                error = JSONRPCResponse(
+                error = JSONRPCErrorResponse(
                     id=None, error=InvalidRequestError(data=e.errors())
                 )
                 return JSONResponse(
@@ -224,7 +247,7 @@ class A2AServer:
 
             except Exception as e:
                 logger.exception(f"Error processing request: {e}")
-                error = JSONRPCResponse(
+                error = JSONRPCErrorResponse(
                     id=body.get("id") if "body" in locals() else None,
                     error=InternalError(),
                 )
