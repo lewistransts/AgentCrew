@@ -111,9 +111,7 @@ class RemoteAgent(BaseAgent):
 
         full_response_text = ""
 
-        async for stream_response in self.client.send_task_streaming(
-            a2a_payload.model_dump()
-        ):
+        async for stream_response in self.client.send_message_streaming(a2a_payload):
             if isinstance(stream_response.root, JSONRPCErrorResponse):
                 raise Exception(
                     f"Remote agent stream error: {stream_response.root.error.code} - {stream_response.root.error.message}"
@@ -148,13 +146,6 @@ class RemoteAgent(BaseAgent):
                                 (current_thinking_chunk_text, None),
                             )
 
-                    if event.final:
-                        # If the final event itself contains text (e.g. in status.message),
-                        # it would have been processed by the thinking_chunk logic.
-                        # The loop will break, and processing is complete.
-                        # If full_response_text is empty, it means a successful completion
-                        # without textual artifacts from TaskArtifactUpdateEvent.
-                        break
         # After the loop, the generator stops. If full_response_text is empty,
         # it signifies no textual content was streamed as artifacts.
 

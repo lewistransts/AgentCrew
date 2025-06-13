@@ -1,6 +1,6 @@
 import json
 
-from collections.abc import AsyncIterable
+from collections.abc import AsyncGenerator
 from typing import Any, Optional
 from uuid import uuid4
 
@@ -24,15 +24,12 @@ from AgentCrew.modules.a2a.common.types import (
     SendMessageRequest,
     SendMessageResponse,
     SendStreamingMessageRequest,
+    TaskPushNotificationConfig,
     SendStreamingMessageResponse,
     SetTaskPushNotificationConfigRequest,
     SetTaskPushNotificationConfigResponse,
     TaskIdParams,
     MessageSendParams,
-    Message,
-    TextPart,
-    Part,
-    Role,
 )
 
 
@@ -60,7 +57,7 @@ class A2AClient:
 
     async def send_message_streaming(
         self, payload: MessageSendParams
-    ) -> AsyncIterable[SendStreamingMessageResponse]:
+    ) -> AsyncGenerator[SendStreamingMessageResponse]:
         """Send a streaming message using the new A2A v0.2 message/stream method"""
         request = SendStreamingMessageRequest(id=str(uuid4()), params=payload)
         async with httpx.AsyncClient(timeout=None) as client:
@@ -104,65 +101,17 @@ class A2AClient:
     async def set_task_push_notification_config(
         self, payload: dict[str, Any]
     ) -> SetTaskPushNotificationConfigResponse:
-        request = SetTaskPushNotificationConfigRequest(params=payload)
-        result = await self._send_request(request)
+        request = SetTaskPushNotificationConfigRequest(
+            id=str(uuid4()), params=TaskPushNotificationConfig(**payload)
+        )
+        result = await self._send_request(A2ARequest(root=request))
         return SetTaskPushNotificationConfigResponse.model_validate(result)
 
     async def get_task_push_notification_config(
         self, payload: dict[str, Any]
     ) -> GetTaskPushNotificationConfigResponse:
-        request = GetTaskPushNotificationConfigRequest(params=payload)
-        result = await self._send_request(request)
+        request = GetTaskPushNotificationConfigRequest(
+            id=str(uuid4()), params=TaskIdParams(**payload)
+        )
+        result = await self._send_request(A2ARequest(root=request))
         return GetTaskPushNotificationConfigResponse.model_validate(result)
-
-    # Legacy methods for backward compatibility
-    async def send_task(self, payload: dict[str, Any]) -> SendMessageResponse:
-        """Legacy method - converts old format to new message format"""
-        # Convert old payload to new MessageSendParams format
-        message_params = self._convert_task_payload_to_message_params(payload)
-        return await self.send_message(message_params)
-
-    async def send_task_streaming(
-        self, payload: dict[str, Any]
-    ) -> AsyncIterable[SendStreamingMessageResponse]:
-        """Legacy method - converts old format to new message format"""
-        # Convert old payload to new MessageSendParams format
-        message_params = self._convert_task_payload_to_message_params(payload)
-        async for response in self.send_message_streaming(message_params):
-            yield response
-
-    async def set_task_callback(
-        self, payload: dict[str, Any]
-    ) -> SetTaskPushNotificationConfigResponse:
-        """Legacy method - alias for set_task_push_notification_config"""
-        return await self.set_task_push_notification_config(payload)
-
-    async def get_task_callback(
-        self, payload: dict[str, Any]
-    ) -> GetTaskPushNotificationConfigResponse:
-        """Legacy method - alias for get_task_push_notification_config"""
-        return await self.get_task_push_notification_config(payload)
-
-    def _convert_task_payload_to_message_params(
-        self, payload: dict[str, Any]
-    ) -> MessageSendParams:
-        """Convert old task payload format to new message format"""
-        # This is a basic conversion - you may need to adjust based on your actual payload structure
-        message = payload.get("message", {})
-        print(payload)
-        print("===========")
-        print(message.get("messageId"))
-
-        message = Message(
-            messageId=message.get("messageId", str(uuid4())),
-            role=Role.user,
-            parts=message.get("parts", []),
-            contextId=payload.get("contextId"),
-            taskId=payload.get("taskId"),
-        )
-
-        return MessageSendParams(
-            message=message,
-            configuration=payload.get("configuration"),
-            metadata=payload.get("metadata"),
-        )
