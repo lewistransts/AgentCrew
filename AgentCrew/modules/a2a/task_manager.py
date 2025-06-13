@@ -458,4 +458,3 @@ class MultiAgentTaskManager:
             The task manager if found, None otherwise
         """
         return self.agent_task_managers.get(agent_name)
-
