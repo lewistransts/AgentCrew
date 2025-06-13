@@ -4,6 +4,7 @@ import uuid
 import numpy as np
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+from AgentCrew.modules import logger
 
 from AgentCrew.modules.llm.base import BaseLLMService
 
@@ -133,7 +134,7 @@ class ChromaMemoryService(BaseMemoryService):
                     if line == "## ID:":
                         ids.append(lines[i + 1])
             except Exception as e:
-                print(f"Error processing conversation with LLM: {e}")
+                logger.warning(f"Error processing conversation with LLM: {e}")
                 # Fallback to simple concatenation if LLM fails
                 conversation_text = f"Date: {datetime.today().strftime('%Y-%m-%d')}.\n\n User: {user_message}.\n\nAssistant: {assistant_response}"
 
@@ -253,10 +254,14 @@ class ChromaMemoryService(BaseMemoryService):
 
     async def _semantic_extracting(self, input: str) -> str:
         if self.llm_service:
-            keywords = await self.llm_service.process_message(
-                SEMANTIC_EXTRACTING.replace("{user_input}", input)
-            )
-            return keywords
+            try:
+                keywords = await self.llm_service.process_message(
+                    SEMANTIC_EXTRACTING.replace("{user_input}", input)
+                )
+                return keywords
+            except Exception as e:
+                logger.warning(f"Error extracting keywords with LLM: {e}")
+                return input
         else:
             return input
 
@@ -330,11 +335,16 @@ class ChromaMemoryService(BaseMemoryService):
 
         memories = "\n\n".join(output)
         if self.llm_service:
-            return await self.llm_service.process_message(
-                POST_RETRIEVE_MEMORY.replace("{keywords}", keywords).replace(
-                    "{memory_list}", memories
+            try:
+                return await self.llm_service.process_message(
+                    POST_RETRIEVE_MEMORY.replace("{keywords}", keywords).replace(
+                        "{memory_list}", memories
+                    )
                 )
-            )
+            except Exception as e:
+                logger.warning(f"Error processing retrieved memories with LLM: {e}")
+                # Fallback to returning raw memories if LLM processing fails
+                return memories
         else:
             return memories
 
