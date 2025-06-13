@@ -1217,7 +1217,7 @@ class ChatWindow(QMainWindow, Observer):
         """Stop the current message stream."""
         if self.waiting_for_response:
             self.send_button.setDisabled(True)
-            
+
             # Update button styling to show disabled state more clearly
             self.send_button.setStyleSheet("""
                 QPushButton {
@@ -1230,10 +1230,10 @@ class ChatWindow(QMainWindow, Observer):
                 }
             """)
             self.send_button.setText("Stopping...")
-            
+
             # Stop the animation timer since we're now in a disabled state
             self.animation_timer.stop()
-            
+
             self.message_handler.stop_streaming = True
             self.display_status_message("Stopping message stream...")
 
@@ -1969,6 +1969,7 @@ class ChatWindow(QMainWindow, Observer):
                 if self._delegated_user_input:
                     self.llm_worker.process_request.emit(self._delegated_user_input)
                     self._delegated_user_input = None
+                self.current_file_bubble = None
                 self._is_file_processing = False
         elif event == "image_generated":
             self.append_file(data, False, True)
