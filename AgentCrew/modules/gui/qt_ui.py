@@ -6,6 +6,7 @@ import AgentCrew
 
 from PySide6.QtWidgets import (
     QApplication,
+    QGridLayout,
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -1119,15 +1120,47 @@ class ChatWindow(QMainWindow, Observer):
         params_text = ""
 
         if isinstance(tool_use["input"], dict):
-            params_text = "\n\nParameters:"
+            params_text = "Parameters:"
             for key, value in tool_use["input"].items():
                 params_text += f"\n• {key}: {value}"
         else:
             params_text = f"\n\nInput: {tool_use['input']}"
 
-        dialog.setText(tool_description + params_text)
         dialog.setInformativeText("Do you want to allow this tool to run?")
 
+        dialog.setText(tool_description)
+
+        lt = dialog.layout()
+        text_edit = QTextEdit()
+        text_edit.setMinimumWidth(500)
+        text_edit.setMinimumHeight(300)
+        text_edit.setReadOnly(True)
+        text_edit.setText(params_text)
+        
+        # Style the text edit to match the main theme
+        text_edit.setStyleSheet("""
+            QTextEdit {
+                background-color: #313244; /* Catppuccin Surface0 */
+                color: #cdd6f4; /* Catppuccin Text */
+                border: 1px solid #45475a; /* Catppuccin Surface1 */
+                border-radius: 4px;
+                padding: 8px;
+                font-family: monospace;
+            }
+            QTextEdit:focus {
+                border: 1px solid #89b4fa; /* Catppuccin Blue */
+            }
+        """)
+        
+        if isinstance(lt, QGridLayout):
+            lt.addWidget(
+                text_edit,
+                lt.rowCount() - 2,
+                2,
+                1,
+                lt.columnCount() - 2,
+                Qt.AlignmentFlag.AlignLeft,
+            )
         # Add buttons
         yes_button = dialog.addButton("Yes (Once)", QMessageBox.ButtonRole.YesRole)
         no_button = dialog.addButton("No", QMessageBox.ButtonRole.NoRole)
