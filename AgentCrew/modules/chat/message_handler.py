@@ -671,11 +671,10 @@ class MessageHandler(Observable):
             ) in stream_generator:
                 # Check if stop was requested
                 if self.stop_streaming:
-                    self.stop_streaming = False  # Reset flag
-
                     # Properly close the generator instead of breaking
                     await stream_generator.aclose()
                     self._notify("streaming_stopped", assistant_response)
+                    self.stop_streaming = False  # Reset flag
 
                 # Accumulate thinking content if available
                 if thinking_chunk:
