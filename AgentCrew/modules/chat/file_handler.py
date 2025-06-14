@@ -6,11 +6,8 @@ from typing import Optional, Dict, Any
 import logging
 
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import (
-    AcceleratorDevice,
-    AcceleratorOptions,
-    PdfPipelineOptions,
-)
+from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
+from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.exceptions import ConversionError
 
