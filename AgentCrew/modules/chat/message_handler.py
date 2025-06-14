@@ -262,11 +262,12 @@ class MessageHandler(Observable):
 
             if file_content:
                 self._messages_append({"role": "user", "content": [file_content]})
-                if file_content.get("type", "") == "text":
-                    # TODO: For testing retrieve with keywords when transfer
-                    await self.memory_service.store_conversation(
-                        file_content.get("text", ""), "", self.agent.name
-                    )
+                # file should not be added to memory
+                # if file_content.get("type", "") == "text":
+                #     # TODO: For testing retrieve with keywords when transfer
+                #     await self.memory_service.store_conversation(
+                #         file_content.get("text", ""), "", self.agent.name
+                #     )
                 self._notify(
                     "file_processed",
                     {"file_path": file_path, "message": self.agent.history[-1]},
