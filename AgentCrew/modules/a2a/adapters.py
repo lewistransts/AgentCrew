@@ -34,14 +34,14 @@ def convert_a2a_message_to_agent(message: Message) -> Dict[str, Any]:
     content = []
 
     for part in message.parts:
-        part_data = part.root if hasattr(part, 'root') else part
-        
+        part_data = part.root if hasattr(part, "root") else part
+
         if part_data.kind == "text":
             content.append({"type": "text", "text": part_data.text})
         elif part_data.kind == "file":
             # Handle file content
             file_data = part_data.file
-            if hasattr(file_data, 'bytes') and file_data.bytes:
+            if hasattr(file_data, "bytes") and file_data.bytes:
                 # Base64 encoded file
                 content.append(
                     {
@@ -51,7 +51,7 @@ def convert_a2a_message_to_agent(message: Message) -> Dict[str, Any]:
                         "mime_type": file_data.mimeType or "application/octet-stream",
                     }
                 )
-            elif hasattr(file_data, 'uri') and file_data.uri:
+            elif hasattr(file_data, "uri") and file_data.uri:
                 # File URI
                 content.append(
                     {
@@ -69,7 +69,9 @@ def convert_a2a_message_to_agent(message: Message) -> Dict[str, Any]:
 
 
 # TODO: cover all of cases for images
-def convert_agent_message_to_a2a(message: Dict[str, Any], message_id: str = None) -> Message:
+def convert_agent_message_to_a2a(
+    message: Dict[str, Any], message_id: str = None
+) -> Message:
     """
     Convert a SwissKnife message to A2A format.
 
@@ -123,14 +125,16 @@ def convert_agent_message_to_a2a(message: Dict[str, Any], message_id: str = None
 
     return Message(
         messageId=message_id or f"msg_{hash(str(parts))}",
-        role=role, 
-        parts=parts, 
-        metadata=message.get("metadata")
+        role=role,
+        parts=parts,
+        metadata=message.get("metadata"),
     )
 
 
 def convert_agent_response_to_a2a(
-    response: str, tool_uses: Optional[List[Dict[str, Any]]] = None, artifact_id: str = None
+    response: str,
+    tool_uses: Optional[List[Dict[str, Any]]] = None,
+    artifact_id: str = None,
 ) -> Artifact:
     """
     Convert a SwissKnife response to an A2A artifact.
@@ -152,8 +156,8 @@ def convert_agent_response_to_a2a(
 
     return Artifact(
         artifactId=artifact_id or f"artifact_{hash(response)}",
-        parts=parts, 
-        metadata=metadata
+        parts=parts,
+        metadata=metadata,
     )
 
 
@@ -193,30 +197,30 @@ def convert_a2a_send_task_response_to_agent_message(
     response: SendMessageResponse | GetTaskResponse, agent_name: str
 ) -> Optional[str]:
     """Convert A2A response to agent message format"""
-    if not response or not hasattr(response, 'root'):
+    if not response or not hasattr(response, "root"):
         return None
-        
-    result = response.root.result if hasattr(response.root, 'result') else None
+
+    result = response.root.result if hasattr(response.root, "result") else None
     if not result:
         return None
-        
+
     # Handle both Task and Message results
-    if hasattr(result, 'artifacts') and result.artifacts:
+    if hasattr(result, "artifacts") and result.artifacts:
         # Task result with artifacts
         latest_artifact = result.artifacts[-1]
         content_parts = []
         for part in latest_artifact.parts:
-            part_data = part.root if hasattr(part, 'root') else part
+            part_data = part.root if hasattr(part, "root") else part
             if part_data.kind == "text":
                 content_parts.append(part_data.text)
         return "\n".join(content_parts)
-    elif hasattr(result, 'parts'):
+    elif hasattr(result, "parts"):
         # Direct message result
         content_parts = []
         for part in result.parts:
-            part_data = part.root if hasattr(part, 'root') else part
+            part_data = part.root if hasattr(part, "root") else part
             if part_data.kind == "text":
                 content_parts.append(part_data.text)
         return "\n".join(content_parts)
-    
+
     return None

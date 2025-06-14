@@ -34,9 +34,6 @@ from AgentCrew.modules.a2a.common.types import (
     TaskState,
     TaskStatus,
     TaskStatusUpdateEvent,
-    Message,
-    Role,
-    TextPart,
 )
 
 
@@ -207,11 +204,16 @@ class InMemoryTaskManager(TaskManager):
         )
 
     async def upsert_task(self, message_send_params: MessageSendParams) -> Task:
-        logger.info(f"Upserting task from message {message_send_params.message.messageId}")
+        logger.info(
+            f"Upserting task from message {message_send_params.message.messageId}"
+        )
         async with self.lock:
             # Use taskId from message or generate one
-            task_id = message_send_params.message.taskId or f"task_{message_send_params.message.messageId}"
-            
+            task_id = (
+                message_send_params.message.taskId
+                or f"task_{message_send_params.message.messageId}"
+            )
+
             task = self.tasks.get(task_id)
             if task is None:
                 task = Task(

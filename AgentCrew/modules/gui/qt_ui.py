@@ -820,6 +820,10 @@ class ChatWindow(QMainWindow, Observer):
             message_bubble.rollback_button.clicked.connect(
                 lambda: self.rollback_to_message(message_bubble)
             )
+        if message_bubble.consolidated_button:
+            message_bubble.consolidated_button.clicked.connect(
+                lambda: self.conslidate_messages(message_bubble)
+            )
         if is_user:
             container_layout.addWidget(message_bubble)
             container_layout.addStretch(1)  # Push to left
@@ -1136,7 +1140,7 @@ class ChatWindow(QMainWindow, Observer):
         text_edit.setMinimumHeight(300)
         text_edit.setReadOnly(True)
         text_edit.setText(params_text)
-        
+
         # Style the text edit to match the main theme
         text_edit.setStyleSheet("""
             QTextEdit {
@@ -1151,7 +1155,7 @@ class ChatWindow(QMainWindow, Observer):
                 border: 1px solid #89b4fa; /* Catppuccin Blue */
             }
         """)
-        
+
         if isinstance(lt, QGridLayout):
             lt.addWidget(
                 text_edit,
@@ -1364,6 +1368,24 @@ class ChatWindow(QMainWindow, Observer):
         self.remove_messages_after(message_bubble)
         self.message_input.setText(current_text)
 
+    def conslidate_messages(self, message_bubble):
+        """Consolidate message to the selected message."""
+        if message_bubble.message_index is None:
+            self.display_status_message(
+                "Cannot conslidate messages: no message index available"
+            )
+            return
+
+        preseved_messages = (
+            len(self.message_handler.streamline_messages) - message_bubble.message_index
+        )
+
+        # Execute the consolidated command
+        self.llm_worker.process_request.emit(f"/consolidated {preseved_messages}")
+
+        self.set_input_controls_enabled(False)  # Disable input while processing
+        self._set_send_button_state(True)  # Change button to stop state
+
     def remove_messages_before(self, message_bubble):
         """Remove all message widgets that appear before the given message bubble, including the
         message bubble itself."""
@@ -1452,7 +1474,7 @@ class ChatWindow(QMainWindow, Observer):
                 break
 
         # Add messages from the loaded conversation, filtering for user/assistant roles
-        msg_idx = 0
+        msg_idx = last_consolidated_idx
         for msg in messages[last_consolidated_idx:]:
             role = msg.get("role")
             if role == "user" or role == "assistant":
@@ -1505,7 +1527,7 @@ class ChatWindow(QMainWindow, Observer):
                     self.append_message(
                         message_content,
                         is_user,
-                        msg_idx if is_user else None,
+                        msg_idx,
                         msg.get("agent", None),
                     )
                 # Add handling for other potential content formats if necessary
@@ -1918,6 +1940,9 @@ class ChatWindow(QMainWindow, Observer):
         if event == "response_chunk":
             _, assistant_response = data
             if assistant_response.strip():
+                # Don't wait the buffer we need to initialize the response bubble as soon as possible
+                if self.current_response_bubble is None:
+                    self.current_response_bubble = self.append_message("", False)
                 # Store latest chunk (replace, don't accumulate)
                 self.chunk_buffer = assistant_response
                 # Restart timer (50ms delay)
@@ -2049,9 +2074,11 @@ class ChatWindow(QMainWindow, Observer):
             self.display_status_message(f"Conversation loaded: {data.get('id', 'N/A')}")
         elif event == "user_context_request":
             self.add_system_message("Refreshing my memory...")
-        elif event == "response_completed":
-            # Re-enable input controls
-            pass
+        elif event == "response_completed" or event == "assistant_message_added":
+            if self.current_response_bubble:
+                self.current_response_bubble.message_index = (
+                    len(self.message_handler.streamline_messages) - 1
+                )
         elif event == "streaming_stopped":
             # Display whatever text was generated so far
             self.add_system_message("Message streaming stopped by user.")

@@ -16,6 +16,7 @@ class A2A(RootModel[Any]):
 # Additional client error classes needed for compatibility
 class A2AClientHTTPError(Exception):
     """A2A Client HTTP Error"""
+
     def __init__(self, status_code: int, message: str):
         self.status_code = status_code
         self.message = message
@@ -24,6 +25,7 @@ class A2AClientHTTPError(Exception):
 
 class A2AClientJSONError(Exception):
     """A2A Client JSON Error"""
+
     def __init__(self, message: str):
         self.message = message
         super().__init__(f"JSON Error: {message}")

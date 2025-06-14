@@ -68,6 +68,7 @@ class AgentCompleter(Completer):
 
     def __init__(self):
         from AgentCrew.modules.agents.manager import AgentManager
+
         self.agent_manager = AgentManager.get_instance()
 
     def get_completions(self, document, complete_event):
@@ -80,8 +81,11 @@ class AgentCompleter(Completer):
             # Get all available agents from the manager
             all_agents = []
             for agent_name, agent in self.agent_manager.agents.items():
-                description = getattr(agent, 'description', 'No description available')
-                is_current = self.agent_manager.current_agent and agent_name == self.agent_manager.current_agent.name
+                description = getattr(agent, "description", "No description available")
+                is_current = (
+                    self.agent_manager.current_agent
+                    and agent_name == self.agent_manager.current_agent.name
+                )
                 all_agents.append((agent_name, description, is_current))
 
             # Filter agents based on what the user has typed so far

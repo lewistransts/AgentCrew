@@ -857,19 +857,18 @@ class MessageHandler(Observable):
                 # self._notify("thinking_completed")
                 self._notify("agent_continue", self.agent.name)
 
-            # Final assistant message
-            self._notify("response_completed", assistant_response)
-
-            # Store the latest response
-            self.latest_assistant_response = assistant_response
-
             # Add assistant response to messages
             if assistant_response:
+                # Store the latest response
+                self.latest_assistant_response = assistant_response
+
                 self._messages_append(
                     self.agent.format_message(
                         MessageType.Assistant, {"message": assistant_response}
                     )
                 )
+                # Final assistant message
+                self._notify("response_completed", assistant_response)
 
             if self.current_user_input and self.current_user_input_idx >= 0:
                 if self.memory_service:
@@ -984,6 +983,14 @@ class MessageHandler(Observable):
                 self.agent_manager.rebuild_agents_messages(self.streamline_messages)
 
                 self.last_assisstant_response_idx = len(self.agent.history)
+                try:
+                    self.latest_assistant_response = (
+                        self.agent.history[-1].get("content", [])[0].get("text", "")
+                    )
+                except (IndexError, AttributeError):
+                    self.latest_assistant_response = self.agent.history[-1].get(
+                        "content", ""
+                    )
 
                 for i, message in enumerate(self.streamline_messages):
                     role = message.get("role")

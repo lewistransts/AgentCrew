@@ -35,7 +35,7 @@ def map_tool_to_skill(tool_name: str, tool_def) -> AgentSkill:
         # Most tools work with text input/output
         inputModes=["text/plain"],
         outputModes=["text/plain"],
-        tags=[tool_name, "tool"]
+        tags=[tool_name, "tool"],
     )
 
 
@@ -69,14 +69,16 @@ def create_agent_card(agent: LocalAgent, base_url: str) -> AgentCard:
                 skills.append(skill)
     except Exception:
         # If no tools available, add a basic skill
-        skills = [AgentSkill(
-            id="general",
-            name="General Assistant",
-            description="General purpose AI assistant",
-            tags=["general", "assistant"],
-            inputModes=["text/plain"],
-            outputModes=["text/plain"]
-        )]
+        skills = [
+            AgentSkill(
+                id="general",
+                name="General Assistant",
+                description="General purpose AI assistant",
+                tags=["general", "assistant"],
+                inputModes=["text/plain"],
+                outputModes=["text/plain"],
+            )
+        ]
 
     # Create capabilities based on agent features
     capabilities = AgentCapabilities(
@@ -92,8 +94,10 @@ def create_agent_card(agent: LocalAgent, base_url: str) -> AgentCard:
     )
 
     return AgentCard(
-        name=agent.name if hasattr(agent, 'name') else "AgentCrew Assistant",
-        description=agent.description if hasattr(agent, 'description') else "An AI assistant powered by AgentCrew",
+        name=agent.name if hasattr(agent, "name") else "AgentCrew Assistant",
+        description=agent.description
+        if hasattr(agent, "description")
+        else "An AI assistant powered by AgentCrew",
         url=base_url,
         provider=provider,
         version="1.0.0",  # Should match AgentCrew version

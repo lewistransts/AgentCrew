@@ -245,15 +245,22 @@ class MessageBubble(QFrame):
             # Set up hover events for rollback button
             self.setMouseTracking(True)
 
-            rollback_button = QPushButton("↩ Rollback", self)
+            # Create rollback button with icon only
+            rollback_button = QPushButton(
+                "⟲", self
+            )  # Anticlockwise gapped circle arrow (more standard rollback icon)
+            rollback_button.setToolTip("Rollback to this message")
             rollback_button.setStyleSheet("""
                 QPushButton {
                     background-color: #b4befe; /* Catppuccin Lavender */
                     color: #1e1e2e; /* Catppuccin Base */
                     border: none;
-                    border-radius: 4px;
-                    padding: 4px 8px;
-                    font-size: 11px;
+                    border-radius: 15px;
+                    padding: 8px;
+                    font-size: 24px;
+                    font-weight: bold;
+                    width: 30px;
+                    height: 30px;
                 }
                 QPushButton:hover {
                     background-color: #cba6f7; /* Catppuccin Mauve */
@@ -263,59 +270,119 @@ class MessageBubble(QFrame):
                 }
             """)
             rollback_button.hide()
-
-            # Store the button as a property of the message bubble
             self.rollback_button = rollback_button
 
-            # Override enter and leave events
-            original_enter_event = self.enterEvent
-            original_leave_event = self.leaveEvent
+        if not self.is_consolidated:
+            # Create consolidated button with icon only
+            consolidated_button = QPushButton("📌", self)  # Pin/bookmark icon
+            consolidated_button.setToolTip("Pin this message")
+            consolidated_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #b4befe; /* Catppuccin Lavender */
+                    color: #1e1e2e; /* Catppuccin Base */
+                    border: none;
+                    border-radius: 15px;
+                    padding: 8px;
+                    font-size: 24px;
+                    font-weight: bold;
+                    width: 30px;
+                    height: 30px;
+                }
+                QPushButton:hover {
+                    background-color: #cba6f7; /* Catppuccin Mauve */
+                }
+                QPushButton:pressed {
+                    background-color: #f5c2e7; /* Catppuccin Pink */
+                }
+            """)
+            consolidated_button.hide()
 
-            def enter_event_wrapper(event):
-                if self.rollback_button:
-                    # Position the button in the top right corner
-                    button_width = self.rollback_button.sizeHint().width()
-                    button_height = self.rollback_button.sizeHint().height()
-                    self.rollback_button.setGeometry(
+            # Store the buttons as properties of the message bubble
+            self.consolidated_button = consolidated_button
+        else:
+            self.consolidated_button = None
+
+        # Override enter and leave events
+        original_enter_event = self.enterEvent
+        original_leave_event = self.leaveEvent
+
+        def enter_event_wrapper(event):
+            if self.rollback_button or self.consolidated_button:
+                # Position buttons in the top right corner with spacing
+                button_width = 30
+                button_height = 30
+                spacing = 5
+
+                is_has_consolidate = False
+                if self.consolidated_button:
+                    # Position consolidated button first (rightmost)
+                    self.consolidated_button.setGeometry(
                         self.width() - button_width - 5,
+                        5,
+                        button_width,
+                        button_height,
+                    )
+                    self.consolidated_button.show()
+                    is_has_consolidate = True
+
+                if self.rollback_button:
+                    # Position rollback button to the left of consolidated button
+                    self.rollback_button.setGeometry(
+                        self.width() - (button_width * 2) - spacing - 5
+                        if is_has_consolidate
+                        else self.width() - button_width - 5,
                         5,
                         button_width,
                         button_height,
                     )
                     self.rollback_button.show()
-                if original_enter_event:
-                    original_enter_event(event)
 
-            def leave_event_wrapper(event):
-                if self.rollback_button:
-                    self.rollback_button.hide()
-                if original_leave_event:
-                    original_leave_event(event)
+            if original_enter_event:
+                original_enter_event(event)
 
-            self.enterEvent = enter_event_wrapper
-            self.leaveEvent = leave_event_wrapper
+        def leave_event_wrapper(event):
+            if self.rollback_button:
+                self.rollback_button.hide()
+            if self.consolidated_button:
+                self.consolidated_button.hide()
+            if original_leave_event:
+                original_leave_event(event)
 
-            # Make sure button is properly positioned when message bubble is resized
-            original_resize_event = self.resizeEvent
+        self.enterEvent = enter_event_wrapper
+        self.leaveEvent = leave_event_wrapper
 
-            def resize_event_wrapper(event):
-                if (
-                    hasattr(self, "rollback_button")
-                    and self.rollback_button
-                    and self.rollback_button.isVisible()
-                ):
-                    button_width = self.rollback_button.sizeHint().width()
-                    button_height = self.rollback_button.sizeHint().height()
-                    self.rollback_button.setGeometry(
-                        self.width() - button_width - 5,
-                        5,
-                        button_width,
-                        button_height,
-                    )
-                if original_resize_event:
-                    original_resize_event(event)
+        # Make sure button is properly positioned when message bubble is resized
+        original_resize_event = self.resizeEvent
 
-            self.resizeEvent = resize_event_wrapper
+        def resize_event_wrapper(event):
+            button_width = 30
+            button_height = 30
+            spacing = 5
+            if hasattr(self, "consolidated_button") and self.consolidated_button:
+                # Position consolidated button first (rightmost)
+                self.consolidated_button.setGeometry(
+                    self.width() - button_width - 5,
+                    5,
+                    button_width,
+                    button_height,
+                )
+
+            if (
+                hasattr(self, "rollback_button")
+                and self.rollback_button
+                and self.rollback_button.isVisible()
+            ):
+                # Position rollback button to the left of consolidated button
+                self.rollback_button.setGeometry(
+                    self.width() - (button_width * 2) - spacing - 5,
+                    5,
+                    button_width,
+                    button_height,
+                )
+            if original_resize_event:
+                original_resize_event(event)
+
+        self.resizeEvent = resize_event_wrapper
 
     def set_text(self, text):
         """Set or update the text content of the message."""
