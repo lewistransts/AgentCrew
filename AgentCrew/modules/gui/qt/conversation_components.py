@@ -8,7 +8,7 @@ class ConversationComponents:
     """Handles conversation loading, saving, and management."""
 
     def __init__(self, chat_window):
-        from ..qt_ui import ChatWindow
+        from AgentCrew.modules.gui import ChatWindow
 
         if isinstance(chat_window, ChatWindow):
             self.chat_window = chat_window
@@ -156,7 +156,7 @@ class ConversationComponents:
             )
             return
 
-        self.chat_window.clear_chat()
+        self.chat_window.command_handler.clear_chat()
 
     def display_consolidation(self, result: Dict[str, Any]):
         """Display the result of a conversation consolidation."""

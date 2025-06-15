@@ -9,7 +9,7 @@ class MenuBuilder:
     """Builds and manages menus for the chat window."""
 
     def __init__(self, chat_window):
-        from ..qt_ui import ChatWindow
+        from AgentCrew.modules.gui import ChatWindow
 
         if isinstance(chat_window, ChatWindow):
             self.chat_window = chat_window
@@ -55,12 +55,13 @@ class MenuBuilder:
             for agent_name in available_agents:
                 agent_action = QAction(agent_name, self.chat_window)
                 agent_action.triggered.connect(
-                    lambda checked, name=agent_name: self.chat_window.change_agent(name)
+                    lambda checked,
+                    name=agent_name: self.chat_window.command_handler.change_agent(name)
                 )
                 agents_menu.addAction(agent_action)
             current_agent = agent_manager.get_current_agent()
             if current_agent.name != self.chat_window.message_handler.agent.name:
-                self.chat_window.change_agent(current_agent.name)
+                self.chat_window.command_handler.change_agent(current_agent.name)
 
     def _create_agents_menu(self, menu_bar):
         """Create the Agents menu."""
@@ -76,7 +77,8 @@ class MenuBuilder:
         for agent_name in available_agents:
             agent_action = QAction(agent_name, self.chat_window)
             agent_action.triggered.connect(
-                lambda checked, name=agent_name: self.chat_window.change_agent(name)
+                lambda checked,
+                name=agent_name: self.chat_window.command_handler.change_agent(name)
             )
             agents_menu.addAction(agent_action)
 
@@ -99,7 +101,7 @@ class MenuBuilder:
                 model_action = QAction(f"{model.name} ({model.id})", self.chat_window)
                 model_action.triggered.connect(
                     lambda checked,
-                    model_id=f"{model.provider}/{model.id}": self.chat_window.change_model(
+                    model_id=f"{model.provider}/{model.id}": self.chat_window.command_handler.change_model(
                         model_id
                     )
                 )
@@ -111,12 +113,16 @@ class MenuBuilder:
 
         # Add Agents configuration option
         agents_config_action = QAction("Agents Configuration", self.chat_window)
-        agents_config_action.triggered.connect(self.chat_window.open_agents_config)
+        agents_config_action.triggered.connect(
+            self.chat_window.command_handler.open_agents_config
+        )
         settings_menu.addAction(agents_config_action)
 
         # Add MCPs configuration option
         mcps_config_action = QAction("MCP Servers Configuration", self.chat_window)
-        mcps_config_action.triggered.connect(self.chat_window.open_mcps_config)
+        mcps_config_action.triggered.connect(
+            self.chat_window.command_handler.open_mcps_config
+        )
         settings_menu.addAction(mcps_config_action)
 
         settings_menu.addSeparator()  # Add a separator
@@ -124,6 +130,6 @@ class MenuBuilder:
         # Add Global Settings (API Keys etc.) configuration option
         global_settings_config_action = QAction("Global Settings", self.chat_window)
         global_settings_config_action.triggered.connect(
-            self.chat_window.open_global_settings_config
+            self.chat_window.command_handler.open_global_settings_config
         )
         settings_menu.addAction(global_settings_config_action)

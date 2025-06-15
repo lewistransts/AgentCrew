@@ -5,7 +5,7 @@ class UIStateManager:
     """Manages UI state and control enable/disable logic."""
 
     def __init__(self, chat_window):
-        from ..qt_ui import ChatWindow
+        from AgentCrew.modules.gui import ChatWindow
 
         if isinstance(chat_window, ChatWindow):
             self.chat_window = chat_window

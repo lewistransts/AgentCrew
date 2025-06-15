@@ -1,5 +1,4 @@
 from typing import Any, Optional
-import pyperclip
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -28,8 +27,8 @@ from AgentCrew.modules.gui.widgets import ConversationSidebar, TokenUsageWidget
 from AgentCrew.modules.gui.widgets import MessageBubble
 
 
-from .worker import LLMWorker
-from .qt import (
+from AgentCrew.modules.gui.worker import LLMWorker
+from AgentCrew.modules.gui.qt import (
     StyleProvider,
     MenuBuilder,
     KeyboardHandler,
@@ -39,6 +38,7 @@ from .qt import (
     UIStateManager,
     InputComponents,
     ConversationComponents,
+    CommandHandler,
 )
 
 
@@ -165,7 +165,7 @@ class ChatWindow(QMainWindow, Observer):
         self.llm_worker.error.connect(self.display_error)
         self.llm_worker.status_message.connect(self.display_status_message)
         self.llm_worker.request_exit.connect(self.handle_exit_request)
-        self.llm_worker.request_clear.connect(self.handle_clear_request)
+        self.llm_worker.request_clear.connect(self.command_handler.handle_clear_request)
 
         # Connect message handler to worker in the main thread
         self.llm_worker.connect_handler(self.message_handler)
@@ -227,6 +227,7 @@ class ChatWindow(QMainWindow, Observer):
         self.ui_state_manager = UIStateManager(self)
         self.input_components = InputComponents(self)
         self.conversation_components = ConversationComponents(self)
+        self.command_handler = CommandHandler(self)
 
     def closeEvent(self, event):
         """Handle window close event to clean up threads properly"""
@@ -252,33 +253,9 @@ class ChatWindow(QMainWindow, Observer):
 
         self.ui_state_manager._set_send_button_state(True)
 
-        # Process commands locally that don't need LLM processing
-        if user_input.startswith("/"):
-            # Clear command
-            if user_input.startswith("/clear"):
-                self.clear_chat()
-                self.ui_state_manager.set_input_controls_enabled(
-                    True
-                )  # Re-enable controls
-                return
-            # Copy command
-            elif user_input.startswith("/copy"):
-                self.copy_last_response()
-                self.ui_state_manager.set_input_controls_enabled(
-                    True
-                )  # Re-enable controls
-                return
-            # Debug command
-            elif user_input.startswith("/debug"):
-                self.display_debug_info()
-                self.ui_state_manager.set_input_controls_enabled(
-                    True
-                )  # Re-enable controls
-                return
-            # Exit command
-            elif user_input in ["/exit", "/quit"]:
-                QApplication.quit()
-                return
+        # Process commands using command handler
+        if self.command_handler.process_command(user_input):
+            return  # Command was processed locally
 
         # Add user message to chat
         self.chat_components.append_message(
@@ -362,57 +339,9 @@ class ChatWindow(QMainWindow, Observer):
         )
 
     @Slot()
-    def copy_last_response(self):
-        """Copy the last assistant response to clipboard."""
-        text = self.message_handler.latest_assistant_response
-        if text:
-            pyperclip.copy(text)
-            self.status_bar.showMessage("Last response copied to clipboard!", 3000)
-        else:
-            self.status_bar.showMessage("No response to copy", 3000)
-
-    @Slot()
     def handle_exit_request(self):
         """Handle exit request from worker thread"""
         QApplication.quit()
-
-    @Slot()
-    def handle_clear_request(self):
-        """Handle clear request from worker thread"""
-        self.clear_chat(True)
-
-    @Slot()
-    def clear_chat(self, requested=False):
-        """Clear the chat history and UI."""
-        # Only ask for confirmation if triggered by user (e.g., Ctrl+L), not programmatically
-        if not requested:
-            reply = QMessageBox.question(
-                self,
-                "Clear Chat",
-                "Are you sure you want to start new conversation?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            )
-            if reply == QMessageBox.StandardButton.No:
-                return  # User cancelled
-
-        # Clear the UI immediately
-        self.chat_components.clear_chat_ui()
-
-        # Reset session cost display
-        self.session_cost = 0.0
-        self.token_usage.update_token_info(0, 0, 0.0, 0.0)
-
-        # If the clear was initiated by the user (not loading a conversation),
-        # tell the message handler to clear its state.
-        if not requested:
-            self.llm_worker.process_request.emit("/clear")
-            # Add a confirmation message after clearing
-            self.chat_components.add_system_message("Chat history cleared.")
-            self.display_status_message("Chat history cleared")
-
-        # Ensure input controls are enabled after clearing
-        self.ui_state_manager.set_input_controls_enabled(True)
-        self.loading_conversation = False  # Ensure loading flag is reset
 
     def stop_message_stream(self):
         """Stop the current message stream."""
@@ -458,8 +387,8 @@ class ChatWindow(QMainWindow, Observer):
         clear_action = context_menu.addAction("Clear Chat")
 
         # Connect actions to slots
-        copy_action.triggered.connect(self.copy_last_response)
-        clear_action.triggered.connect(self.clear_chat)
+        copy_action.triggered.connect(self.command_handler.copy_last_response)
+        clear_action.triggered.connect(self.command_handler.clear_chat)
 
         # Show the menu at the cursor position
         context_menu.exec(self.mapToGlobal(position))
@@ -515,70 +444,6 @@ class ChatWindow(QMainWindow, Observer):
             True
         )  # Change button to stop state
 
-    def change_agent(self, agent_name):
-        """Change the current agent"""
-        # Process the agent change command
-        self.llm_worker.process_request.emit(f"/agent {agent_name}")
-
-    def change_model(self, model_id):
-        """Change the current model"""
-        # Process the model change command
-        self.llm_worker.process_request.emit(f"/model {model_id}")
-
-    def open_agents_config(self):
-        """Open the agents configuration window."""
-        from AgentCrew.modules.gui.widgets.config_window import ConfigWindow
-
-        config_window = ConfigWindow(self)
-        config_window.tab_widget.setCurrentIndex(0)  # Show Agents tab
-        config_window.exec()
-
-        # Refresh agent list in case changes were made
-        self.menu_builder.refresh_agent_menu()
-
-    def open_mcps_config(self):
-        """Open the MCP servers configuration window."""
-        from AgentCrew.modules.gui.widgets.config_window import ConfigWindow
-
-        config_window = ConfigWindow(self)
-        config_window.tab_widget.setCurrentIndex(1)  # Show MCPs tab
-        config_window.exec()
-
-    def open_global_settings_config(self):
-        """Open the global settings configuration window (API Keys)."""
-        from AgentCrew.modules.gui.widgets.config_window import ConfigWindow
-
-        config_window = ConfigWindow(self)
-        config_window.tab_widget.setCurrentIndex(3)  # Show Settings tab
-        config_window.exec()
-
-    def display_debug_info(self):
-        """Display debug information about the current messages."""
-        import json
-
-        try:
-            # Format the messages for display
-            debug_info = json.dumps(self.message_handler.agent.history, indent=2)
-        except Exception as _:
-            debug_info = str(self.message_handler.agent.history)
-        # Add as a system message
-        self.chat_components.add_system_message(
-            f"DEBUG INFO:\n\n```json\n{debug_info}\n```"
-        )
-
-        try:
-            # Format the messages for display
-            debug_info = json.dumps(self.message_handler.streamline_messages, indent=2)
-        except Exception as _:
-            debug_info = str(self.message_handler.streamline_messages)
-        # Add as a system message
-        self.chat_components.add_system_message(
-            f"DEBUG INFO:\n\n```json\n{debug_info}\n```"
-        )
-
-        # Update status bar
-        self.display_status_message("Debug information displayed")
-
     def listen(self, event: str, data: Any = None):
         """Handle events from the message handler."""
         # Use a signal to ensure thread-safety
@@ -622,11 +487,24 @@ class ChatWindow(QMainWindow, Observer):
             "tool_confirmation_required",
             "tool_denied",
         ]
+        command_events = [
+            "clear_requested",
+            "exit_requested",
+            "copy_requested",
+            "debug_requested",
+            "agent_changed",
+            "model_changed",
+            "agent_changed_by_transfer",
+            "think_budget_set",
+            "jump_performed",
+        ]
 
         if event in message_events:
             self.message_event_handler.handle_event(event, data)
         elif event in tool_events:
             self.tool_event_handler.handle_event(event, data)
+        elif event in command_events:
+            self.command_handler.handle_event(event, data)
         elif event == "error":
             # If an error occurs during LLM processing, ensure loading flag is false
             self.loading_conversation = False
@@ -639,30 +517,6 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "consolidation_completed":
             self.conversation_components.display_consolidation(data)
             self.ui_state_manager.set_input_controls_enabled(True)
-        elif event == "clear_requested":
-            self.chat_components.clear_chat_ui()
-            self.session_cost = 0.0
-            self.token_usage.update_token_info(0, 0, 0.0, 0.0)
-            self.chat_components.add_system_message("Chat history cleared by command.")
-            self.loading_conversation = False
-            self.ui_state_manager.set_input_controls_enabled(True)
-            self.sidebar.update_conversation_list()
-        elif event == "exit_requested":
-            QApplication.quit()
-        elif event == "copy_requested":
-            if isinstance(data, str):
-                pyperclip.copy(data)
-                self.display_status_message("Text copied to clipboard!")
-        elif event == "debug_requested":
-            import json
-
-            try:
-                debug_info = json.dumps(data, indent=2)
-                self.chat_components.add_system_message(
-                    f"DEBUG INFO:\n\n```json\n{debug_info}\n```"
-                )
-            except Exception:
-                self.chat_components.add_system_message(f"DEBUG INFO:\n\n{str(data)}")
         elif event == "file_processing":
             self._is_file_processing = True
             file_path = data["file_path"]
@@ -680,33 +534,7 @@ class ChatWindow(QMainWindow, Observer):
                 self._is_file_processing = False
         elif event == "image_generated":
             self.chat_components.append_file(data, False, True)
-        elif event == "jump_performed":
-            self.chat_components.add_system_message(
-                f"🕰️ Jumped to turn {data['turn_number']}: {data['preview']}"
-            )
-        elif event == "agent_changed":
-            self.chat_components.add_system_message(f"Switched to {data} agent")
-            self.status_indicator.setText(
-                f"Agent: {data} | Model: {self.message_handler.agent.get_model()}"
-            )
-            self.ui_state_manager.set_input_controls_enabled(True)
-        elif event == "model_changed":
-            self.chat_components.add_system_message(
-                f"Switched to {data['name']} ({data['id']})"
-            )
-            self.status_indicator.setText(
-                f"Agent: {self.message_handler.agent.name} | Model: {self.message_handler.agent.get_model()}"
-            )
-        elif event == "agent_changed_by_transfer":
-            self.chat_components.add_system_message(f"Transfered to {data} agent")
-            self.status_indicator.setText(
-                f"Agent: {data} | Model: {self.message_handler.agent.get_model()}"
-            )
-            self.current_response_bubble = None
-            self.current_response_container = None
-        elif event == "think_budget_set":
-            self.chat_components.add_system_message(f"Set thinking budget at {data}")
-            self.ui_state_manager.set_input_controls_enabled(True)
+        # Command-related events are now handled by command_handler above
         elif event == "conversation_saved":
             self.display_status_message(f"Conversation saved: {data.get('id', 'N/A')}")
             self.sidebar.update_conversation_list()

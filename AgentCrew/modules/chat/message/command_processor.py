@@ -22,7 +22,7 @@ class CommandProcessor:
     """Handles command processing for the message handler."""
 
     def __init__(self, message_handler):
-        from .handler import MessageHandler
+        from AgentCrew.modules.chat.message import MessageHandler
 
         if isinstance(message_handler, MessageHandler):
             self.message_handler = message_handler

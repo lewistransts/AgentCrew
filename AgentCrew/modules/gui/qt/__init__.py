@@ -7,6 +7,7 @@ from .chat_components import ChatComponents
 from .ui_state_manager import UIStateManager
 from .input_components import InputComponents
 from .conversation_components import ConversationComponents
+from .command_handler import CommandHandler
 
 __all__ = [
     "MessageEventHandler",
@@ -18,4 +19,5 @@ __all__ = [
     "UIStateManager",
     "InputComponents",
     "ConversationComponents",
+    "CommandHandler",
 ]

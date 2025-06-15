@@ -8,7 +8,7 @@ class ConversationManager:
     """Manages conversation state and operations."""
 
     def __init__(self, message_handler):
-        from .handler import MessageHandler
+        from AgentCrew.modules.chat.message import MessageHandler
 
         if isinstance(message_handler, MessageHandler):
             self.message_handler = message_handler

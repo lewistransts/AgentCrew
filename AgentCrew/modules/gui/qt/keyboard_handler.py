@@ -7,7 +7,7 @@ class KeyboardHandler:
     """Handles keyboard input for the chat window."""
 
     def __init__(self, chat_window):
-        from ..qt_ui import ChatWindow
+        from AgentCrew.modules.gui import ChatWindow
 
         if isinstance(chat_window, ChatWindow):
             self.chat_window = chat_window
@@ -21,12 +21,14 @@ class KeyboardHandler:
 
         # Ctrl+Shift+C shortcut (copy last response)
         self.copy_shortcut = QShortcut(QKeySequence("Ctrl+Shift+C"), self.chat_window)
-        self.copy_shortcut.activated.connect(self.chat_window.copy_last_response)
+        self.copy_shortcut.activated.connect(
+            self.chat_window.command_handler.copy_last_response
+        )
 
         # Ctrl+L shortcut (clear chat)
         self.clear_shortcut = QShortcut(QKeySequence("Ctrl+L"), self.chat_window)
         self.clear_shortcut.activated.connect(
-            lambda: self.chat_window.clear_chat(requested=False)
+            lambda: self.chat_window.command_handler.clear_chat(requested=False)
         )
 
         # Escape shortcut (stop message stream) - changed from Ctrl+C to avoid conflict

@@ -13,10 +13,12 @@ from AgentCrew.modules.memory import (
     ContextPersistenceService,
 )
 
-from .base import Observable
-from . import CommandProcessor
-from . import ToolManager
-from . import ConversationManager
+from AgentCrew.modules.chat.message import (
+    CommandProcessor,
+    ToolManager,
+    ConversationManager,
+    Observable,
+)
 
 
 class MessageHandler(Observable):
