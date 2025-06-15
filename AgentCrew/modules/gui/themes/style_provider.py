@@ -12,7 +12,7 @@ class StyleProvider:
         config_manager = ConfigManagement()
         global_config = config_manager.read_global_config_data()
         self.theme = global_config.get("global_settings", {}).get("theme", "dark")
-        
+
         if self.theme == "light":
             self.theme_class = AtomLightTheme
         else:

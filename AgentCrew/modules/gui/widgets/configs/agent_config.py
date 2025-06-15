@@ -113,7 +113,9 @@ class AgentsConfigTab(QWidget):
         editor_container_widget = (
             QWidget()
         )  # Container for stacked widget and save button
-        editor_container_widget.setStyleSheet(style_provider.get_editor_container_widget_style())
+        editor_container_widget.setStyleSheet(
+            style_provider.get_editor_container_widget_style()
+        )
         self.editor_layout = QVBoxLayout(
             editor_container_widget
         )  # editor_layout now on container

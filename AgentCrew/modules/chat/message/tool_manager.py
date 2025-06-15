@@ -3,6 +3,7 @@ import asyncio
 
 from AgentCrew.modules import logger
 from AgentCrew.modules.llm.message import MessageTransformer
+from AgentCrew.modules.config import ConfigManagement
 
 
 class ToolManager:
@@ -13,6 +14,12 @@ class ToolManager:
 
         if isinstance(message_handler, MessageHandler):
             self.message_handler = message_handler
+        config_management = ConfigManagement()
+        global_config = config_management.read_global_config_data()
+
+        self.yolo_mode = self.theme = global_config.get("global_settings", {}).get(
+            "yolo_mode", False
+        )
         self._auto_approved_tools = set()  # Track tools approved for all future calls
         self._pending_confirmations = {}  # Store futures for confirmation requests
         self._next_confirmation_id = 0  # ID counter for confirmation requests
@@ -61,8 +68,9 @@ class ToolManager:
                 )
             return
 
+        print("yolo mode", self.yolo_mode)
         # For all other tools, check if confirmation is needed
-        if tool_name not in self._auto_approved_tools:
+        if not self.yolo_mode and tool_name not in self._auto_approved_tools:
             # Request confirmation from the user
             confirmation = await self._wait_for_tool_confirmation(tool_use)
             action = confirmation.get("action", "deny")

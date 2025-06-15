@@ -37,7 +37,9 @@ class UIStateManager:
             )
         else:
             # Common disabled style for both loading and waiting for response
-            disabled_style = self.chat_window.style_provider.get_button_style("disabled")
+            disabled_style = self.chat_window.style_provider.get_button_style(
+                "disabled"
+            )
             self.chat_window.send_button.setStyleSheet(disabled_style)
             self.chat_window.file_button.setStyleSheet(disabled_style)
 

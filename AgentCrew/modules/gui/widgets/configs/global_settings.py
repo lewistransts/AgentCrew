@@ -143,16 +143,16 @@ class SettingsTab(QWidget):
         api_keys_data = self.global_config.get("api_keys", {})
         for key_name, line_edit in self.api_key_inputs.items():
             line_edit.setText(api_keys_data.get(key_name, ""))
-        
+
         self.load_global_settings()
 
     def load_global_settings(self):
         global_settings_data = self.global_config.get("global_settings", {})
-        
+
         # Load theme setting
         theme = global_settings_data.get("theme", "dark")
         self.theme_dropdown.setCurrentText(theme)
-        
+
         # Load YOLO mode setting
         yolo_mode = global_settings_data.get("yolo_mode", False)
         self.yolo_mode_checkbox.setChecked(yolo_mode)
@@ -167,9 +167,13 @@ class SettingsTab(QWidget):
         # Save global settings
         if "global_settings" not in self.global_config:
             self.global_config["global_settings"] = {}
-        
-        self.global_config["global_settings"]["theme"] = self.theme_dropdown.currentText()
-        self.global_config["global_settings"]["yolo_mode"] = self.yolo_mode_checkbox.isChecked()
+
+        self.global_config["global_settings"]["theme"] = (
+            self.theme_dropdown.currentText()
+        )
+        self.global_config["global_settings"]["yolo_mode"] = (
+            self.yolo_mode_checkbox.isChecked()
+        )
 
         try:
             self.config_manager.write_global_config_data(self.global_config)

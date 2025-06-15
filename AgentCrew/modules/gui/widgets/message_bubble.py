@@ -109,7 +109,7 @@ class MessageBubble(QFrame):
             | Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
 
-        self.message_label.setFont(QFont("Arial", 13))
+        self.message_label.setFont(QFont("Arial", 14))
 
         # Set different text color for message content based on bubble type
         if is_user:
