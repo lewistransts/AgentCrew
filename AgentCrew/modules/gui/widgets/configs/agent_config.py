@@ -25,7 +25,7 @@ from PySide6.QtGui import QDoubleValidator
 from AgentCrew.modules.config import ConfigManagement
 from AgentCrew.modules.agents import AgentManager
 
-from AgentCrew.modules.gui.components import StyleProvider
+from AgentCrew.modules.gui.themes import StyleProvider
 
 
 class AgentsConfigTab(QWidget):

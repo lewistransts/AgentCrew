@@ -29,7 +29,6 @@ from AgentCrew.modules.gui.widgets import MessageBubble
 
 from AgentCrew.modules.gui.worker import LLMWorker
 from AgentCrew.modules.gui.components import (
-    StyleProvider,
     MenuBuilder,
     KeyboardHandler,
     MessageEventHandler,
@@ -40,6 +39,7 @@ from AgentCrew.modules.gui.components import (
     ConversationComponents,
     CommandHandler,
 )
+from AgentCrew.modules.gui.themes import StyleProvider
 
 
 class ChatWindow(QMainWindow, Observer):
@@ -125,17 +125,7 @@ class ChatWindow(QMainWindow, Observer):
         self.splitter.handle(1).installEventFilter(self)
 
         # Update the splitter style to a darker color
-        self.splitter.setStyleSheet("""
-            QSplitter::handle {
-                background-color: #1e1e2e; /* Darker color (Catppuccin Mantle) */
-            }
-            QSplitter::handle:hover {
-                background-color: #313244; /* Catppuccin Surface0 */
-            }
-            QSplitter::handle:pressed {
-                background-color: #45475a; /* Catppuccin Surface1 */
-            }
-        """)
+        self.splitter.setStyleSheet(self.style_provider.get_splitter_style())
 
         self.setCentralWidget(self.splitter)
 
@@ -355,32 +345,7 @@ class ChatWindow(QMainWindow, Observer):
         context_menu = QMenu(self)
 
         # Add Catppuccin styling to context menu
-        context_menu.setStyleSheet("""
-            QMenu {
-                background-color: #181825; /* Catppuccin Mantle */
-                color: #cdd6f4; /* Catppuccin Text */
-                border: 1px solid #45475a; /* Catppuccin Surface1 */
-                padding: 4px;
-                border-radius: 6px;
-            }
-            QMenu::item {
-                padding: 8px 24px 8px 12px;
-                border-radius: 4px;
-                margin: 2px;
-            }
-            QMenu::item:selected {
-                background-color: #45475a; /* Catppuccin Surface1 */
-                color: #b4befe; /* Catppuccin Lavender */
-            }
-            QMenu::item:pressed {
-                background-color: #585b70; /* Catppuccin Surface2 */
-            }
-            QMenu::separator {
-                height: 1px;
-                background: #45475a; /* Catppuccin Surface1 */
-                margin: 4px 8px;
-            }
-        """)
+        context_menu.setStyleSheet(self.style_provider.get_context_menu_style())
 
         # Add menu actions
         copy_action = context_menu.addAction("Copy Last Response")

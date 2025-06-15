@@ -19,7 +19,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QAction
 from typing import List
 
-from AgentCrew.modules.gui.components import StyleProvider
+from AgentCrew.modules.gui.themes import StyleProvider
 
 
 class ConversationSidebar(QWidget):

@@ -879,7 +879,7 @@ GROUP_BOX = """
 background-color: #1e1e2e; /* Catppuccin Base */
 """
 
-SPLITTER_DARK = """
+SPLITTER_COLOR = """
 QSplitter::handle {
     background-color: #1e1e2e; /* Darker color (Catppuccin Mantle) */
 }
@@ -941,4 +941,111 @@ QLabel {
     color: #bac2de; /* Catppuccin Subtext1 */
     padding: 2px;
 }
+"""
+
+# File display label styles
+USER_FILE_NAME_LABEL = """
+QLabel {
+    font-weight: bold;
+    color: #1e1e2e; /* Catppuccin Base */
+    padding-left: 10px;
+}
+"""
+
+ASSISTANT_FILE_NAME_LABEL = """
+QLabel {
+    font-weight: bold;
+    color: #cdd6f4; /* Catppuccin Text */
+    padding-left: 10px;
+}
+"""
+
+USER_FILE_INFO_LABEL = """
+QLabel {
+    color: #313244; /* Catppuccin Surface0 - better contrast on blue background */
+}
+"""
+
+ASSISTANT_FILE_INFO_LABEL = """
+QLabel {
+    color: #6c7086; /* Catppuccin Overlay0 */
+}
+"""
+
+CODE_CSS = """
+pre { line-height: 1; background-color: #181825; border-radius: 8px; padding: 12px; color: #cdd6f4; white-space: pre-wrap; word-wrap: break-word; } /* Mantle, Text */
+td.linenos .normal { color: #6c7086; background-color: transparent; padding-left: 5px; padding-right: 5px; } /* Overlay0 */
+span.linenos { color: #6c7086; background-color: transparent; padding-left: 5px; padding-right: 5px; } /* Overlay0 */
+td.linenos .special { color: #cdd6f4; background-color: #313244; padding-left: 5px; padding-right: 5px; } /* Text, Surface0 */
+span.linenos.special { color: #cdd6f4; background-color: #313244; padding-left: 5px; padding-right: 5px; } /* Text, Surface0 */
+.codehilite .hll { background-color: #313244 } /* Surface0 */
+.codehilite { background: #181825; border-radius: 8px; padding: 10px; color: #cdd6f4; } /* Mantle, Text */
+.codehilite .c { color: #6c7086; font-style: italic } /* Comment -> Overlay0 */
+.codehilite .err { border: 1px solid #f38ba8; color: #f38ba8; } /* Error -> Red */
+.codehilite .k { color: #cba6f7; font-weight: bold } /* Keyword -> Mauve */
+.codehilite .o { color: #94e2d5 } /* Operator -> Teal */
+.codehilite .ch { color: #6c7086; font-style: italic } /* Comment.Hashbang -> Overlay0 */
+.codehilite .cm { color: #6c7086; font-style: italic } /* Comment.Multiline -> Overlay0 */
+.codehilite .cp { color: #f9e2af } /* Comment.Preproc -> Yellow */
+.codehilite .cpf { color: #6c7086; font-style: italic } /* Comment.PreprocFile -> Overlay0 */
+.codehilite .c1 { color: #6c7086; font-style: italic } /* Comment.Single -> Overlay0 */
+.codehilite .cs { color: #6c7086; font-style: italic } /* Comment.Special -> Overlay0 */
+.codehilite .gd { color: #f38ba8 } /* Generic.Deleted -> Red */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #f38ba8 } /* Generic.Error -> Red */
+.codehilite .gh { color: #89b4fa; font-weight: bold } /* Generic.Heading -> Blue */
+.codehilite .gi { color: #a6e3a1 } /* Generic.Inserted -> Green */
+.codehilite .go { color: #cdd6f4 } /* Generic.Output -> Text */
+.codehilite .gp { color: #89b4fa; font-weight: bold } /* Generic.Prompt -> Blue */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #89b4fa; font-weight: bold } /* Generic.Subheading -> Blue */
+.codehilite .gt { color: #f38ba8 } /* Generic.Traceback -> Red */
+.codehilite .kc { color: #cba6f7; font-weight: bold } /* Keyword.Constant -> Mauve */
+.codehilite .kd { color: #cba6f7; font-weight: bold } /* Keyword.Declaration -> Mauve */
+.codehilite .kn { color: #cba6f7; font-weight: bold } /* Keyword.Namespace -> Mauve */
+.codehilite .kp { color: #cba6f7 } /* Keyword.Pseudo -> Mauve */
+.codehilite .kr { color: #cba6f7; font-weight: bold } /* Keyword.Reserved -> Mauve */
+.codehilite .kt { color: #fab387; font-weight: bold } /* Keyword.Type -> Peach */
+.codehilite .m { color: #fab387 } /* Literal.Number -> Peach */
+.codehilite .s { color: #a6e3a1 } /* Literal.String -> Green */
+.codehilite .na { color: #89dceb } /* Name.Attribute -> Sky */
+.codehilite .nb { color: #89b4fa } /* Name.Builtin -> Blue */
+.codehilite .nc { color: #f9e2af; font-weight: bold } /* Name.Class -> Yellow */
+.codehilite .no { color: #fab387 } /* Name.Constant -> Peach */
+.codehilite .nd { color: #cba6f7 } /* Name.Decorator -> Mauve */
+.codehilite .ni { color: #cdd6f4; font-weight: bold } /* Name.Entity -> Text */
+.codehilite .ne { color: #f38ba8; font-weight: bold } /* Name.Exception -> Red */
+.codehilite .nf { color: #89b4fa; font-weight: bold } /* Name.Function -> Blue */
+.codehilite .nl { color: #cdd6f4 } /* Name.Label -> Text */
+.codehilite .nn { color: #f9e2af; font-weight: bold } /* Name.Namespace -> Yellow */
+.codehilite .nt { color: #cba6f7; font-weight: bold } /* Name.Tag -> Mauve */
+.codehilite .nv { color: #f5e0dc } /* Name.Variable -> Rosewater */
+.codehilite .ow { color: #94e2d5; font-weight: bold } /* Operator.Word -> Teal */
+.codehilite .w { color: #45475a } /* Text.Whitespace -> Surface1 */
+.codehilite .mb { color: #fab387 } /* Literal.Number.Bin -> Peach */
+.codehilite .mf { color: #fab387 } /* Literal.Number.Float -> Peach */
+.codehilite .mh { color: #fab387 } /* Literal.Number.Hex -> Peach */
+.codehilite .mi { color: #fab387 } /* Literal.Number.Integer -> Peach */
+.codehilite .mo { color: #fab387 } /* Literal.Number.Oct -> Peach */
+.codehilite .sa { color: #a6e3a1 } /* Literal.String.Affix -> Green */
+.codehilite .sb { color: #a6e3a1 } /* Literal.String.Backtick -> Green */
+.codehilite .sc { color: #a6e3a1 } /* Literal.String.Char -> Green */
+.codehilite .dl { color: #a6e3a1 } /* Literal.String.Delimiter -> Green */
+.codehilite .sd { color: #6c7086; font-style: italic } /* Literal.String.Doc -> Overlay0 */
+.codehilite .s2 { color: #a6e3a1 } /* Literal.String.Double -> Green */
+.codehilite .se { color: #fab387; font-weight: bold } /* Literal.String.Escape -> Peach */
+.codehilite .sh { color: #a6e3a1 } /* Literal.String.Heredoc -> Green */
+.codehilite .si { color: #a6e3a1; font-weight: bold } /* Literal.String.Interpol -> Green */
+.codehilite .sx { color: #a6e3a1 } /* Literal.String.Other -> Green */
+.codehilite .sr { color: #a6e3a1 } /* Literal.String.Regex -> Green */
+.codehilite .s1 { color: #a6e3a1 } /* Literal.String.Single -> Green */
+.codehilite .ss { color: #a6e3a1 } /* Literal.String.Symbol -> Green */
+.codehilite .bp { color: #89b4fa } /* Name.Builtin.Pseudo -> Blue */
+.codehilite .fm { color: #89b4fa; font-weight: bold } /* Name.Function.Magic -> Blue */
+.codehilite .vc { color: #f5e0dc } /* Name.Variable.Class -> Rosewater */
+.codehilite .vg { color: #f5e0dc } /* Name.Variable.Global -> Rosewater */
+.codehilite .vi { color: #f5e0dc } /* Name.Variable.Instance -> Rosewater */
+.codehilite .vm { color: #f5e0dc } /* Name.Variable.Magic -> Rosewater */
+.codehilite .il { color: #fab387 } /* Literal.Number.Integer.Long -> Peach */
 """

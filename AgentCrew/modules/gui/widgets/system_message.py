@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import (
     Qt,
 )
-from .message_bubble import CODE_CSS
+from AgentCrew.modules.gui.themes import StyleProvider
 
 
 class SystemMessageWidget(QWidget):
@@ -37,11 +37,10 @@ class SystemMessageWidget(QWidget):
         # Create label with HTML support
         self.message_label = QLabel()
         self.message_label.setTextFormat(Qt.TextFormat.RichText)
-        from AgentCrew.modules.gui.components import StyleProvider
 
-        style_provider = StyleProvider()
+        self.style_provider = StyleProvider()
         self.message_label.setStyleSheet(
-            style_provider.get_system_message_label_style()
+            self.style_provider.get_system_message_label_style()
         )
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.message_label.setWordWrap(True)
@@ -61,7 +60,7 @@ class SystemMessageWidget(QWidget):
         # Create expand/collapse button
         self.toggle_button = QPushButton("▼ Show More")
         self.toggle_button.setStyleSheet(
-            style_provider.get_system_message_toggle_style()
+            self.style_provider.get_system_message_toggle_style()
         )
         self.toggle_button.setMaximumHeight(16)
         self.toggle_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -104,7 +103,7 @@ class SystemMessageWidget(QWidget):
             html_content = (
                 f"""<style>
             pre {{ white-space: pre-wrap; margin-bottom: 0;}}
-                {CODE_CSS}
+                {self.style_provider.get_code_color_style()}
             </style>"""
                 + html_content
             )
@@ -135,7 +134,7 @@ class SystemMessageWidget(QWidget):
             html_content = (
                 f"""<style>
             pre {{ white-space: pre-wrap; margin-bottom: 0;}}
-                {CODE_CSS}
+                {self.style_provider.get_code_color_style()}
             </style>"""
                 + html_content
             )

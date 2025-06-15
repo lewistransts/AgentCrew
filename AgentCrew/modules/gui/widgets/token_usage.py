@@ -13,7 +13,7 @@ class TokenUsageWidget(QWidget):
         # self.setAutoFillBackground(True) # Remove this line
 
         # Set background color directly via stylesheet
-        from AgentCrew.modules.gui.components import StyleProvider
+        from AgentCrew.modules.gui.themes import StyleProvider
 
         style_provider = StyleProvider()
         self.setStyleSheet(style_provider.get_token_usage_widget_style())

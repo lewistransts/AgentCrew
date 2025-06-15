@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 )
 
 from AgentCrew.modules.config import ConfigManagement
-from AgentCrew.modules.gui.components import StyleProvider
+from AgentCrew.modules.gui.themes import StyleProvider
 from .configs.custom_llm_provider import CustomLLMProvidersConfigTab
 from .configs.global_settings import SettingsTab
 from .configs.agent_config import AgentsConfigTab

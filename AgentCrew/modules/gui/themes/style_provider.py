@@ -1,4 +1,4 @@
-from AgentCrew.modules.gui.themes import catppuccin
+from . import catppuccin
 
 
 class StyleProvider:
@@ -116,6 +116,12 @@ class StyleProvider:
         """Get style for consolidated message bubbles."""
         return catppuccin.CONSOLIDATED_BUBBLE
 
+    def get_splitter_style(self):
+        return catppuccin.SPLITTER_COLOR
+
+    def get_code_color_style(self):
+        return catppuccin.CODE_CSS
+
     def get_rollback_button_style(self):
         """Get style for rollback buttons."""
         return catppuccin.ROLLBACK_BUTTON
@@ -151,3 +157,19 @@ class StyleProvider:
     def get_metadata_header_label_style(self):
         """Get style for metadata header labels."""
         return catppuccin.METADATA_HEADER_LABEL
+
+    def get_user_file_name_label_style(self):
+        """Get style for user file name labels."""
+        return catppuccin.USER_FILE_NAME_LABEL
+
+    def get_assistant_file_name_label_style(self):
+        """Get style for assistant file name labels."""
+        return catppuccin.ASSISTANT_FILE_NAME_LABEL
+
+    def get_user_file_info_label_style(self):
+        """Get style for user file info labels."""
+        return catppuccin.USER_FILE_INFO_LABEL
+
+    def get_assistant_file_info_label_style(self):
+        """Get style for assistant file info labels."""
+        return catppuccin.ASSISTANT_FILE_INFO_LABEL

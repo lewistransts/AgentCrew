@@ -20,7 +20,7 @@ from AgentCrew.modules import logger
 
 from AgentCrew.modules.config import ConfigManagement
 from typing import List, Optional, Dict, Any
-from AgentCrew.modules.gui.components import StyleProvider
+from AgentCrew.modules.gui.themes import StyleProvider
 
 
 class ModelEditorDialog(QDialog):

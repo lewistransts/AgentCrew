@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal
 
 from AgentCrew.modules.config import ConfigManagement
-from AgentCrew.modules.gui.components import StyleProvider
+from AgentCrew.modules.gui.themes import StyleProvider
 
 
 class SettingsTab(QWidget):
