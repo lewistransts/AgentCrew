@@ -3,7 +3,7 @@
 
 class CatppuccinTheme:
     """Static class containing Catppuccin theme styles."""
-    
+
     # Main application styles
     MAIN_STYLE = """
 QMainWindow {
@@ -252,6 +252,9 @@ QPushButton:disabled {
 QGroupBox {
     background-color: #1e1e2e; /* Catppuccin Base */
 }
+QLabel {
+    background-color: #1e1e2e; 
+}
 """
 
     EDITOR_CONTAINER_WIDGET = """
@@ -308,6 +311,50 @@ QPushButton {
     border-radius: 4px; 
     padding: 8px;
     font-weight: bold;
+}
+"""
+
+    COMBO_BOX = """
+QComboBox {
+    background-color: #313244; /* Catppuccin Surface0 */
+    color: #cdd6f4; /* Catppuccin Text */
+    border: 1px solid #45475a; /* Catppuccin Surface1 */
+    border-radius: 4px;
+    padding: 6px 8px;
+    min-width: 120px;
+}
+QComboBox:hover {
+    border: 1px solid #585b70; /* Catppuccin Surface2 */
+}
+QComboBox:focus {
+    border: 1px solid #89b4fa; /* Catppuccin Blue */
+}
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left-width: 1px;
+    border-left-color: #45475a; /* Catppuccin Surface1 */
+    border-left-style: solid;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    background-color: #45475a; /* Catppuccin Surface1 */
+}
+QComboBox::down-arrow {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid #cdd6f4; /* Catppuccin Text */
+}
+QComboBox QAbstractItemView {
+    background-color: #313244; /* Catppuccin Surface0 */
+    color: #cdd6f4; /* Catppuccin Text */
+    border: 1px solid #45475a; /* Catppuccin Surface1 */
+    border-radius: 4px;
+    selection-background-color: #89b4fa; /* Catppuccin Blue */
+    selection-color: #1e1e2e; /* Catppuccin Base */
+    outline: 0px;
 }
 """
 

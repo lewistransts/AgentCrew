@@ -251,6 +251,9 @@ QPushButton:disabled {
 QGroupBox {
     background-color: #ffffff; /* White */
 }
+QLabel {
+    background-color: #ffffff;
+}
 """
 
     EDITOR_CONTAINER_WIDGET = """
@@ -306,6 +309,50 @@ QPushButton {
     border-radius: 4px; 
     padding: 8px;
     font-weight: bold;
+}
+"""
+
+    COMBO_BOX = """
+QComboBox {
+    background-color: #ffffff; /* White */
+    color: #333333; /* Dark gray text */
+    border: 1px solid #cccccc; /* Light gray border */
+    border-radius: 4px;
+    padding: 6px 8px;
+    min-width: 120px;
+}
+QComboBox:hover {
+    border: 1px solid #999999; /* Darker gray border */
+}
+QComboBox:focus {
+    border: 1px solid #4285f4; /* Blue border */
+}
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left-width: 1px;
+    border-left-color: #cccccc; /* Light gray border */
+    border-left-style: solid;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    background-color: #f0f0f0; /* Light gray */
+}
+QComboBox::down-arrow {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid #333333; /* Dark gray arrow */
+}
+QComboBox QAbstractItemView {
+    background-color: #ffffff; /* White */
+    color: #333333; /* Dark gray text */
+    border: 1px solid #cccccc; /* Light gray border */
+    border-radius: 4px;
+    selection-background-color: #4285f4; /* Blue selection */
+    selection-color: #ffffff; /* White text */
+    outline: 0px;
 }
 """
 

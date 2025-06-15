@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QMessageBox,
     QScrollArea,
+    QComboBox,
+    QCheckBox,
 )
 from PySide6.QtCore import Signal
 
@@ -69,6 +71,8 @@ class SettingsTab(QWidget):
         self.global_config = self.config_manager.read_global_config_data()
 
         self.api_key_inputs = {}
+        self.theme_dropdown = None
+        self.yolo_mode_checkbox = None
 
         self.init_ui()
         self.load_api_keys()
@@ -87,6 +91,28 @@ class SettingsTab(QWidget):
         form_layout.setContentsMargins(10, 10, 10, 10)
         form_layout.setSpacing(10)
 
+        # Global Settings Group
+        global_settings_group = QGroupBox("Global Settings")
+        global_settings_group.setStyleSheet(style_provider.get_api_keys_group_style())
+        global_settings_form_layout = QFormLayout()
+
+        # Theme dropdown
+        theme_label = QLabel("Theme:")
+        self.theme_dropdown = QComboBox()
+        self.theme_dropdown.addItems(["dark", "light"])
+        self.theme_dropdown.setCurrentText("dark")  # Default to dark
+        self.theme_dropdown.setStyleSheet(style_provider.get_combo_box_style())
+        global_settings_form_layout.addRow(theme_label, self.theme_dropdown)
+
+        # YOLO Mode checkbox
+        yolo_label = QLabel("YOLO Mode:")
+        self.yolo_mode_checkbox = QCheckBox()
+        self.yolo_mode_checkbox.setChecked(False)  # Default to unchecked
+        global_settings_form_layout.addRow(yolo_label, self.yolo_mode_checkbox)
+
+        global_settings_group.setLayout(global_settings_form_layout)
+        form_layout.addWidget(global_settings_group)
+
         api_keys_group = QGroupBox("API Keys")
         api_keys_group.setStyleSheet(style_provider.get_api_keys_group_style())
         api_keys_form_layout = QFormLayout()
@@ -102,9 +128,9 @@ class SettingsTab(QWidget):
         api_keys_group.setLayout(api_keys_form_layout)
         form_layout.addWidget(api_keys_group)
 
-        self.save_btn = QPushButton("Save API Keys")
+        self.save_btn = QPushButton("Save Settings")
         self.save_btn.setStyleSheet(style_provider.get_button_style("primary"))
-        self.save_btn.clicked.connect(self.save_api_keys)
+        self.save_btn.clicked.connect(self.save_settings)
 
         form_layout.addWidget(self.save_btn)
         editor_widget.setLayout(form_layout)
@@ -117,23 +143,43 @@ class SettingsTab(QWidget):
         api_keys_data = self.global_config.get("api_keys", {})
         for key_name, line_edit in self.api_key_inputs.items():
             line_edit.setText(api_keys_data.get(key_name, ""))
+        
+        self.load_global_settings()
 
-    def save_api_keys(self):
+    def load_global_settings(self):
+        global_settings_data = self.global_config.get("global_settings", {})
+        
+        # Load theme setting
+        theme = global_settings_data.get("theme", "dark")
+        self.theme_dropdown.setCurrentText(theme)
+        
+        # Load YOLO mode setting
+        yolo_mode = global_settings_data.get("yolo_mode", False)
+        self.yolo_mode_checkbox.setChecked(yolo_mode)
+
+    def save_settings(self):
         if "api_keys" not in self.global_config:
             self.global_config["api_keys"] = {}
 
         for key_name, line_edit in self.api_key_inputs.items():
             self.global_config["api_keys"][key_name] = line_edit.text()
 
+        # Save global settings
+        if "global_settings" not in self.global_config:
+            self.global_config["global_settings"] = {}
+        
+        self.global_config["global_settings"]["theme"] = self.theme_dropdown.currentText()
+        self.global_config["global_settings"]["yolo_mode"] = self.yolo_mode_checkbox.isChecked()
+
         try:
             self.config_manager.write_global_config_data(self.global_config)
             QMessageBox.information(
                 self,
                 "Settings Saved",
-                "API Keys saved successfully.\n\nA restart may be required for all changes to take effect.",
+                "Settings saved successfully.\n\nA restart may be required for all changes to take effect.",
             )
             self.config_changed.emit()
         except Exception as e:
             QMessageBox.critical(
-                self, "Error Saving Settings", f"Could not save API keys: {str(e)}"
+                self, "Error Saving Settings", f"Could not save settings: {str(e)}"
             )

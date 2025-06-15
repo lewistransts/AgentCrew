@@ -1,21 +1,22 @@
 from .catppuccin import CatppuccinTheme
 from .atom_light import AtomLightTheme
+from AgentCrew.modules.config import ConfigManagement
 
 
 class StyleProvider:
     """Provides styling for the chat window and components."""
 
-    def __init__(self, theme="atom_light"):
-        """Initialize the style provider with a specific theme.
-
-        Args:
-            theme: Theme name ("catppuccin" or "atom_light")
-        """
-        self.theme = theme
-        if theme == "atom_light":
+    def __init__(self):
+        """Initialize the style provider by reading theme from global config."""
+        # Read theme from global config
+        config_manager = ConfigManagement()
+        global_config = config_manager.read_global_config_data()
+        self.theme = global_config.get("global_settings", {}).get("theme", "dark")
+        
+        if self.theme == "light":
             self.theme_class = AtomLightTheme
         else:
-            self.theme_class = CatppuccinTheme  # Default to Catppuccin
+            self.theme_class = CatppuccinTheme  # Default to Catppuccin for "dark"
 
     def get_main_style(self):
         """Get the main style for the chat window."""
@@ -194,3 +195,7 @@ class StyleProvider:
     def get_editor_container_widget_style(self):
         """Get style for editor container widgets."""
         return self.theme_class.EDITOR_CONTAINER_WIDGET
+
+    def get_combo_box_style(self):
+        """Get style for combo boxes."""
+        return self.theme_class.COMBO_BOX
