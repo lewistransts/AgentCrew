@@ -68,7 +68,6 @@ class ToolManager:
                 )
             return
 
-        print("yolo mode", self.yolo_mode)
         # For all other tools, check if confirmation is needed
         if not self.yolo_mode and tool_name not in self._auto_approved_tools:
             # Request confirmation from the user
