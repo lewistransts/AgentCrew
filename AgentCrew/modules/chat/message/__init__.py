@@ -5,7 +5,7 @@ from .conversation import ConversationManager
 
 __all__ = [
     "Observable",
-    "Observer", 
+    "Observer",
     "CommandProcessor",
     "CommandResult",
     "ToolManager",

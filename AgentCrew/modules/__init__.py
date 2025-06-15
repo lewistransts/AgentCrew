@@ -1,7 +1,7 @@
 import logging
 import sys
 
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.ERROR
 # Create a logger
 logger = logging.getLogger("AgentCrew")
 logger.setLevel(LOG_LEVEL)  # Set default level to DEBUG

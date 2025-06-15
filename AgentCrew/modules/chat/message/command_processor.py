@@ -75,7 +75,7 @@ class CommandProcessor:
         # Jump command
         if user_input.lower().startswith("/jump "):
             jumped = self._handle_jump_command(user_input)
-            return CommandResult(handled=True, clear_flag=True)
+            return CommandResult(handled=jumped, clear_flag=True)
 
         # Agent command
         if user_input.lower().startswith("/agent"):
