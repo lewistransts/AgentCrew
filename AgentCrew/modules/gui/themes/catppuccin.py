@@ -1,7 +1,11 @@
 """Catppuccin theme styles for AgentCrew GUI."""
 
-# Main application styles
-MAIN_STYLE = """
+
+class CatppuccinTheme:
+    """Static class containing Catppuccin theme styles."""
+    
+    # Main application styles
+    MAIN_STYLE = """
 QMainWindow {
     background-color: #1e1e2e; /* Catppuccin Base */
 }
@@ -142,8 +146,8 @@ QLabel QMenu::separator {
 }
 """
 
-# Button styles
-PRIMARY_BUTTON = """
+    # Button styles
+    PRIMARY_BUTTON = """
 QPushButton {
     background-color: #89b4fa; /* Catppuccin Blue */
     color: #1e1e2e; /* Catppuccin Base (for contrast) */
@@ -164,7 +168,7 @@ QPushButton:disabled {
 }
 """
 
-SECONDARY_BUTTON = """
+    SECONDARY_BUTTON = """
 QPushButton {
     background-color: #585b70; /* Catppuccin Surface2 */
     color: #cdd6f4; /* Catppuccin Text */
@@ -185,7 +189,7 @@ QPushButton:disabled {
 }
 """
 
-STOP_BUTTON = """
+    STOP_BUTTON = """
 QPushButton {
     background-color: #f38ba8; /* Catppuccin Red */
     color: #1e1e2e; /* Catppuccin Base (for contrast) */
@@ -202,7 +206,7 @@ QPushButton:pressed {
 }
 """
 
-RED_BUTTON = """
+    RED_BUTTON = """
 QPushButton {
     background-color: #f38ba8; /* Catppuccin Red */
     color: #1e1e2e; /* Catppuccin Base (for contrast) */
@@ -223,7 +227,7 @@ QPushButton:disabled {
 }
 """
 
-GREEN_BUTTON = """
+    GREEN_BUTTON = """
 QPushButton {
     background-color: #a6e3a1; /* Catppuccin Green */
     color: #1e1e2e; /* Catppuccin Base */
@@ -244,19 +248,19 @@ QPushButton:disabled {
 }
 """
 
-API_KEYS_GROUP = """
+    API_KEYS_GROUP = """
 QGroupBox {
     background-color: #1e1e2e; /* Catppuccin Base */
 }
 """
 
-EDITOR_CONTAINER_WIDGET = """
+    EDITOR_CONTAINER_WIDGET = """
 QWidget {
     background-color: #181825; /* Catppuccin Mantle */
 }
 """
 
-MENU_BUTTON = """
+    MENU_BUTTON = """
 QPushButton {
     background-color: #89b4fa; /* Catppuccin Blue */
     color: #1e1e2e; /* Catppuccin Base */
@@ -285,7 +289,7 @@ QPushButton::menu-indicator {
 }
 """
 
-DISABLED_BUTTON = """
+    DISABLED_BUTTON = """
 QPushButton {
     background-color: #45475a; /* Catppuccin Surface1 */
     color: #6c7086; /* Catppuccin Overlay0 */
@@ -296,7 +300,7 @@ QPushButton {
 }
 """
 
-STOP_BUTTON_STOPPING = """
+    STOP_BUTTON_STOPPING = """
 QPushButton {
     background-color: #6c7086; /* Catppuccin Overlay0 - More grey/disabled look */
     color: #9399b2; /* Catppuccin Subtext1 - Muted text */
@@ -307,8 +311,8 @@ QPushButton {
 }
 """
 
-# Input styles
-TEXT_INPUT = """
+    # Input styles
+    TEXT_INPUT = """
 QTextEdit {
     background-color: #313244; /* Catppuccin Surface0 */
     color: #cdd6f4; /* Catppuccin Text */
@@ -321,7 +325,7 @@ QTextEdit:focus {
 }
 """
 
-LINE_EDIT = """
+    LINE_EDIT = """
 QLineEdit {
     background-color: #313244; /* Catppuccin Surface0 */
     color: #cdd6f4; /* Catppuccin Text */
@@ -334,8 +338,8 @@ QLineEdit:focus {
 }
 """
 
-# Menu styles
-MENU_BAR = """
+    # Menu styles
+    MENU_BAR = """
 QMenuBar {
     background-color: #1e1e2e; /* Catppuccin Base */
     color: #cdd6f4; /* Catppuccin Text */
@@ -375,7 +379,7 @@ QMenu::separator {
 }
 """
 
-CONTEXT_MENU = """
+    CONTEXT_MENU = """
 QMenu {
     background-color: #181825; /* Catppuccin Mantle */
     color: #cdd6f4; /* Catppuccin Text */
@@ -402,7 +406,7 @@ QMenu::separator {
 }
 """
 
-AGENT_MENU = """
+    AGENT_MENU = """
 QMenu {
     background-color: #181825; /* Catppuccin Mantle */
     color: #cdd6f4; /* Catppuccin Text */
@@ -427,8 +431,8 @@ QMenu::separator {
 }
 """
 
-# Label styles
-STATUS_INDICATOR = """
+    # Label styles
+    STATUS_INDICATOR = """
 QLabel {
     background-color: #313244; /* Catppuccin Surface0 */
     color: #cdd6f4; /* Catppuccin Text */
@@ -437,7 +441,7 @@ QLabel {
 }
 """
 
-VERSION_LABEL = """
+    VERSION_LABEL = """
 QLabel {
     color: #a6adc8; /* Catppuccin Subtext0 */
     padding: 2px 8px;
@@ -445,7 +449,7 @@ QLabel {
 }
 """
 
-SYSTEM_MESSAGE_TOGGLE_BUTTON = """
+    SYSTEM_MESSAGE_TOGGLE_BUTTON = """
 QPushButton {
     background-color: transparent;
     color: #94e2d5; /* Catppuccin Teal */
@@ -458,12 +462,12 @@ QPushButton:hover {
 }
 """
 
-# Widget-specific styles
-SIDEBAR = """
+    # Widget-specific styles
+    SIDEBAR = """
 background-color: #181825; /* Catppuccin Mantle */
 """
 
-CONVERSATION_LIST = """
+    CONVERSATION_LIST = """
 QListWidget {
     background-color: #1e1e2e; /* Catppuccin Base */
     border: 1px solid #313244; /* Catppuccin Surface0 */
@@ -489,7 +493,7 @@ QListWidget::item:hover:!selected {
 }
 """
 
-SEARCH_BOX = """
+    SEARCH_BOX = """
 QLineEdit {
     background-color: #313244; /* Catppuccin Surface0 */
     color: #cdd6f4; /* Catppuccin Text */
@@ -502,7 +506,7 @@ QLineEdit:focus {
 }
 """
 
-TOKEN_USAGE = """
+    TOKEN_USAGE = """
 QLabel {
     color: #bac2de; /* Catppuccin Subtext1 */
     font-weight: bold;
@@ -512,12 +516,12 @@ QLabel {
 }
 """
 
-TOKEN_USAGE_WIDGET = """
+    TOKEN_USAGE_WIDGET = """
 background-color: #11111b; /* Catppuccin Crust */
 """
 
-# Message bubble styles
-USER_BUBBLE = """
+    # Message bubble styles
+    USER_BUBBLE = """
 QFrame { 
     border-radius: 12px; 
     background-color: #89b4fa; /* Catppuccin Blue */
@@ -526,7 +530,7 @@ QFrame {
 }
 """
 
-ASSISTANT_BUBBLE = """
+    ASSISTANT_BUBBLE = """
 QFrame { 
     border-radius: 12px; 
     background-color: #313244; /* Catppuccin Surface0 */
@@ -535,7 +539,7 @@ QFrame {
 }
 """
 
-THINKING_BUBBLE = """
+    THINKING_BUBBLE = """
 QFrame { 
     border-radius: 12px; 
     background-color: #45475a; /* Catppuccin Surface1 */
@@ -544,7 +548,7 @@ QFrame {
 }
 """
 
-CONSOLIDATED_BUBBLE = """
+    CONSOLIDATED_BUBBLE = """
 QFrame { 
     border-radius: 12px; 
     background-color: #313244; /* Catppuccin Surface0 */
@@ -553,7 +557,7 @@ QFrame {
 }
 """
 
-ROLLBACK_BUTTON = """
+    ROLLBACK_BUTTON = """
 QPushButton {
     background-color: #b4befe; /* Catppuccin Lavender */
     color: #1e1e2e; /* Catppuccin Base */
@@ -573,7 +577,7 @@ QPushButton:pressed {
 }
 """
 
-CONSOLIDATED_BUTTON = """
+    CONSOLIDATED_BUTTON = """
 QPushButton {
     background-color: #b4befe; /* Catppuccin Lavender */
     color: #1e1e2e; /* Catppuccin Base */
@@ -593,8 +597,8 @@ QPushButton:pressed {
 }
 """
 
-# Tool dialog styles
-TOOL_DIALOG_TEXT_EDIT = """
+    # Tool dialog styles
+    TOOL_DIALOG_TEXT_EDIT = """
 QTextEdit {
     background-color: #313244; /* Catppuccin Surface0 */
     color: #cdd6f4; /* Catppuccin Text */
@@ -608,7 +612,7 @@ QTextEdit:focus {
 }
 """
 
-TOOL_DIALOG_YES_BUTTON = """
+    TOOL_DIALOG_YES_BUTTON = """
 QPushButton {
     background-color: #a6e3a1; /* Catppuccin Green */
     color: #1e1e2e; /* Catppuccin Base */
@@ -622,7 +626,7 @@ QPushButton:hover {
 }
 """
 
-TOOL_DIALOG_ALL_BUTTON = """
+    TOOL_DIALOG_ALL_BUTTON = """
 QPushButton {
     background-color: #89b4fa; /* Catppuccin Blue */
     color: #1e1e2e; /* Catppuccin Base */
@@ -636,7 +640,7 @@ QPushButton:hover {
 }
 """
 
-TOOL_DIALOG_NO_BUTTON = """
+    TOOL_DIALOG_NO_BUTTON = """
 QPushButton {
     background-color: #f38ba8; /* Catppuccin Red */
     color: #1e1e2e; /* Catppuccin Base */
@@ -650,8 +654,8 @@ QPushButton:hover {
 }
 """
 
-# Additional button styles
-RED_BUTTON = """
+    # Additional button styles
+    RED_BUTTON = """
 QPushButton {
     background-color: #f38ba8; /* Catppuccin Red */
     color: #1e1e2e; /* Catppuccin Base (for contrast) */
@@ -672,7 +676,7 @@ QPushButton:disabled {
 }
 """
 
-GREEN_BUTTON = """
+    GREEN_BUTTON = """
 QPushButton {
     background-color: #a6e3a1; /* Catppuccin Green */
     color: #1e1e2e; /* Catppuccin Base */
@@ -693,7 +697,7 @@ QPushButton:disabled {
 }
 """
 
-AGENT_MENU_BUTTON = """
+    AGENT_MENU_BUTTON = """
 QPushButton {
     background-color: #89b4fa; /* Catppuccin Blue */
     color: #1e1e2e; /* Catppuccin Base */
@@ -721,13 +725,13 @@ QPushButton::menu-indicator {
 }
 """
 
-# Widget-specific styles
-SYSTEM_MESSAGE_LABEL = """
+    # Widget-specific styles
+    SYSTEM_MESSAGE_LABEL = """
 color: #a6adc8; /* Catppuccin Subtext0 */
 padding: 2px;
 """
 
-SYSTEM_MESSAGE_TOGGLE = """
+    SYSTEM_MESSAGE_TOGGLE = """
 QPushButton {
     background-color: transparent;
     color: #94e2d5; /* Catppuccin Teal */
@@ -740,8 +744,8 @@ QPushButton:hover {
 }
 """
 
-# Config window styles
-CONFIG_DIALOG = """
+    # Config window styles
+    CONFIG_DIALOG = """
 QDialog {
     background-color: #1e1e2e; /* Catppuccin Base */
     color: #cdd6f4; /* Catppuccin Text */
@@ -874,24 +878,24 @@ QSplitter::handle:pressed {
 }
 """
 
-PANEL = """
+    PANEL = """
 background-color: #181825; /* Catppuccin Mantle */
 """
 
-SCROLL_AREA = """
+    SCROLL_AREA = """
 background-color: #181825; /* Catppuccin Mantle */
 border: none;
 """
 
-EDITOR_WIDGET = """
+    EDITOR_WIDGET = """
 background-color: #181825; /* Catppuccin Mantle */
 """
 
-GROUP_BOX = """
+    GROUP_BOX = """
 background-color: #1e1e2e; /* Catppuccin Base */
 """
 
-SPLITTER_COLOR = """
+    SPLITTER_COLOR = """
 QSplitter::handle {
     background-color: #1e1e2e; /* Darker color (Catppuccin Mantle) */
 }
@@ -903,7 +907,7 @@ QSplitter::handle:pressed {
 }
 """
 
-METADATA_HEADER_LABEL = """
+    METADATA_HEADER_LABEL = """
 QLabel {
     color: #a6adc8; /* Catppuccin Subtext0 */
     font-style: italic;
@@ -911,27 +915,27 @@ QLabel {
 }
 """
 
-# Message label styles
-USER_MESSAGE_LABEL = """
+    # Message label styles
+    USER_MESSAGE_LABEL = """
 QLabel {
     color: #1e1e2e; /* Catppuccin Base */
 }
 """
 
-ASSISTANT_MESSAGE_LABEL = """
+    ASSISTANT_MESSAGE_LABEL = """
 QLabel {
     color: #cdd6f4; /* Catppuccin Text */
 }
 """
 
-THINKING_MESSAGE_LABEL = """
+    THINKING_MESSAGE_LABEL = """
 QLabel {
     color: #bac2de; /* Catppuccin Subtext1 */
 }
 """
 
-# Sender label styles
-USER_SENDER_LABEL = """
+    # Sender label styles
+    USER_SENDER_LABEL = """
 QLabel {
     font-weight: bold;
     color: #1e1e2e; /* Catppuccin Base */
@@ -939,7 +943,7 @@ QLabel {
 }
 """
 
-ASSISTANT_SENDER_LABEL = """
+    ASSISTANT_SENDER_LABEL = """
 QLabel {
     font-weight: bold;
     color: #cdd6f4; /* Catppuccin Text */
@@ -947,7 +951,7 @@ QLabel {
 }
 """
 
-THINKING_SENDER_LABEL = """
+    THINKING_SENDER_LABEL = """
 QLabel {
     font-weight: bold;
     color: #bac2de; /* Catppuccin Subtext1 */
@@ -955,8 +959,8 @@ QLabel {
 }
 """
 
-# File display label styles
-USER_FILE_NAME_LABEL = """
+    # File display label styles
+    USER_FILE_NAME_LABEL = """
 QLabel {
     font-weight: bold;
     color: #1e1e2e; /* Catppuccin Base */
@@ -964,7 +968,7 @@ QLabel {
 }
 """
 
-ASSISTANT_FILE_NAME_LABEL = """
+    ASSISTANT_FILE_NAME_LABEL = """
 QLabel {
     font-weight: bold;
     color: #cdd6f4; /* Catppuccin Text */
@@ -972,19 +976,19 @@ QLabel {
 }
 """
 
-USER_FILE_INFO_LABEL = """
+    USER_FILE_INFO_LABEL = """
 QLabel {
     color: #313244; /* Catppuccin Surface0 - better contrast on blue background */
 }
 """
 
-ASSISTANT_FILE_INFO_LABEL = """
+    ASSISTANT_FILE_INFO_LABEL = """
 QLabel {
     color: #6c7086; /* Catppuccin Overlay0 */
 }
 """
 
-CODE_CSS = """
+    CODE_CSS = """
 pre { line-height: 1; background-color: #181825; border-radius: 8px; padding: 12px; color: #cdd6f4; white-space: pre-wrap; word-wrap: break-word; } /* Mantle, Text */
 td.linenos .normal { color: #6c7086; background-color: transparent; padding-left: 5px; padding-right: 5px; } /* Overlay0 */
 span.linenos { color: #6c7086; background-color: transparent; padding-left: 5px; padding-right: 5px; } /* Overlay0 */
