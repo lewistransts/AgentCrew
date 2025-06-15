@@ -88,7 +88,7 @@ class SettingsTab(QWidget):
         form_layout.setSpacing(10)
 
         api_keys_group = QGroupBox("API Keys")
-        api_keys_group.setStyleSheet("background-color: #1e1e2e;")
+        api_keys_group.setStyleSheet(style_provider.get_api_keys_group_style())
         api_keys_form_layout = QFormLayout()
 
         for item in self.API_KEY_DEFINITIONS:

@@ -81,9 +81,7 @@ class MCPsConfigTab(QWidget):
         # right_panel.setStyleSheet("background-color: #181825;") # Set by QDialog stylesheet
 
         self.editor_widget = QWidget()
-        self.editor_widget.setStyleSheet(
-            "background-color: #181825;"
-        )  # Catppuccin Mantle
+        self.editor_widget.setStyleSheet(style_provider.get_editor_container_widget_style())
         self.editor_layout = QVBoxLayout(self.editor_widget)
 
         # Form layout for MCP properties

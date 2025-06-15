@@ -244,6 +244,18 @@ QPushButton:disabled {
 }
 """
 
+API_KEYS_GROUP = """
+QGroupBox {
+    background-color: #1e1e2e; /* Catppuccin Base */
+}
+"""
+
+EDITOR_CONTAINER_WIDGET = """
+QWidget {
+    background-color: #181825; /* Catppuccin Mantle */
+}
+"""
+
 MENU_BUTTON = """
 QPushButton {
     background-color: #89b4fa; /* Catppuccin Blue */

@@ -173,3 +173,11 @@ class StyleProvider:
     def get_assistant_file_info_label_style(self):
         """Get style for assistant file info labels."""
         return catppuccin.ASSISTANT_FILE_INFO_LABEL
+
+    def get_api_keys_group_style(self):
+        """Get style for API keys group boxes."""
+        return catppuccin.API_KEYS_GROUP
+
+    def get_editor_container_widget_style(self):
+        """Get style for editor container widgets."""
+        return catppuccin.EDITOR_CONTAINER_WIDGET
