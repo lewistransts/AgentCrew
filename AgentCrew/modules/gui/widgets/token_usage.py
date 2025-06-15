@@ -13,7 +13,10 @@ class TokenUsageWidget(QWidget):
         # self.setAutoFillBackground(True) # Remove this line
 
         # Set background color directly via stylesheet
-        self.setStyleSheet("background-color: #11111b;")  # Catppuccin Crust
+        from AgentCrew.modules.gui.components import StyleProvider
+
+        style_provider = StyleProvider()
+        self.setStyleSheet(style_provider.get_token_usage_widget_style())
 
         # Create layout
         layout = QVBoxLayout(self)
@@ -23,17 +26,7 @@ class TokenUsageWidget(QWidget):
         self.token_label = QLabel(
             "📊 Token Usage: Input: 0 | Output: 0 | Total: 0 | Cost: $0.0000 | Session: $0.0000"
         )
-        self.token_label.setStyleSheet(
-            """
-            QLabel {
-                color: #bac2de; /* Catppuccin Subtext1 */
-                font-weight: bold;
-                padding: 8px;
-                background-color: #11111b; /* Catppuccin Crust */
-                border-top: 1px solid #313244; /* Catppuccin Surface0 for a subtle separator */
-            }
-            """
-        )
+        self.token_label.setStyleSheet(style_provider.get_token_usage_style())
 
         # Add to layout
         layout.addWidget(self.token_label)

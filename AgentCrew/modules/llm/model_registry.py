@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 from .types import Model
 from .constants import AVAILABLE_MODELS
 from AgentCrew.modules import logger
-from AgentCrew.modules.config.config_management import ConfigManagement
+from AgentCrew.modules.config import ConfigManagement
 
 
 class ModelRegistry:

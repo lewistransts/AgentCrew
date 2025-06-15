@@ -28,7 +28,7 @@ from AgentCrew.modules.gui.widgets import MessageBubble
 
 
 from AgentCrew.modules.gui.worker import LLMWorker
-from AgentCrew.modules.gui.qt import (
+from AgentCrew.modules.gui.components import (
     StyleProvider,
     MenuBuilder,
     KeyboardHandler,

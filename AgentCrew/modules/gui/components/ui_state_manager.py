@@ -37,18 +37,9 @@ class UIStateManager:
             )
         else:
             # Common disabled style for both loading and waiting for response
-            disabled_button_style = """
-                QPushButton {{
-                    background-color: #45475a; /* Catppuccin Surface1 */
-                    color: #6c7086; /* Catppuccin Overlay0 */
-                    border: none;
-                    border-radius: 4px; 
-                    padding: 8px;
-                    font-weight: bold;
-                }}
-            """
-            self.chat_window.send_button.setStyleSheet(disabled_button_style)
-            self.chat_window.file_button.setStyleSheet(disabled_button_style)
+            disabled_style = self.chat_window.style_provider.get_button_style("disabled")
+            self.chat_window.send_button.setStyleSheet(disabled_style)
+            self.chat_window.file_button.setStyleSheet(disabled_style)
 
         # Update waiting state (only relevant for LLM responses)
         if not self.chat_window.loading_conversation:
@@ -99,16 +90,9 @@ class UIStateManager:
             self.chat_window.send_button.setDisabled(True)
 
             # Update button styling to show disabled state more clearly
-            self.chat_window.send_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #6c7086; /* Catppuccin Overlay0 - More grey/disabled look */
-                    color: #9399b2; /* Catppuccin Subtext1 - Muted text */
-                    border: none;
-                    border-radius: 4px; 
-                    padding: 8px;
-                    font-weight: bold;
-                }
-            """)
+            self.chat_window.send_button.setStyleSheet(
+                self.chat_window.style_provider.get_button_style("stop_stopping")
+            )
             self.chat_window.send_button.setText("Stopping...")
 
             # Stop the animation timer since we're now in a disabled state

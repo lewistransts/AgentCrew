@@ -15,6 +15,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QFileInfo, QByteArray
 from PySide6.QtGui import QFont, QPixmap
 
+from AgentCrew.modules.gui.components import StyleProvider
+
 # File display constants
 IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]
 MAX_IMAGE_WIDTH = 600  # Maximum width for displayed images
@@ -119,6 +121,9 @@ class MessageBubble(QFrame):
         self.is_thinking = is_thinking  # Store thinking state
         self.is_consolidated = is_consolidated  # Store consolidated state
 
+        # Initialize style provider
+        self.style_provider = StyleProvider()
+
         # Setup frame appearance
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.setFrameShadow(QFrame.Shadow.Raised)
@@ -127,49 +132,13 @@ class MessageBubble(QFrame):
 
         # Set background color based on sender
         if is_user:
-            self.setStyleSheet(
-                """
-                QFrame { 
-                    border-radius: 12px; 
-                    background-color: #89b4fa; /* Catppuccin Blue */
-                    border: none;
-                    padding: 2px;
-                }
-                """
-            )
+            self.setStyleSheet(self.style_provider.get_user_bubble_style())
         elif is_thinking:  # Check is_thinking before general assistant bubble
-            self.setStyleSheet(
-                """
-                QFrame { 
-                    border-radius: 12px; 
-                    background-color: #45475a; /* Catppuccin Surface1 */
-                    border: none;
-                    padding: 2px;
-                }
-                """
-            )
+            self.setStyleSheet(self.style_provider.get_thinking_bubble_style())
         elif is_consolidated:  # Special styling for consolidated messages
-            self.setStyleSheet(
-                """
-                QFrame { 
-                    border-radius: 12px; 
-                    background-color: #313244; /* Catppuccin Surface0 */
-                    border: 1px solid #45475a; /* Catppuccin Surface1 */
-                    padding: 2px;
-                }
-                """
-            )
+            self.setStyleSheet(self.style_provider.get_consolidated_bubble_style())
         else:  # Assistant bubble
-            self.setStyleSheet(
-                """
-                QFrame { 
-                    border-radius: 12px; 
-                    background-color: #313244; /* Catppuccin Surface0 */
-                    border: none;
-                    padding: 2px;
-                }
-                """
-            )
+            self.setStyleSheet(self.style_provider.get_assistant_bubble_style())
 
         # This setAutoFillBackground(True) might not be necessary if QFrame style is set
         # self.setAutoFillBackground(True) # You can test if this is needed
@@ -194,14 +163,18 @@ class MessageBubble(QFrame):
             )
 
         sender_label = QLabel(label_text)
-        sender_label_color = (
-            "#1e1e2e" if is_user else "#cdd6f4"
-        )  # Base for user, Text for others
-        if is_thinking:
-            sender_label_color = "#bac2de"  # Subtext1 for thinking sender
-        sender_label.setStyleSheet(
-            f"font-weight: bold; color: {sender_label_color}; padding: 2px;"
-        )
+        if is_user:
+            sender_label.setStyleSheet(
+                self.style_provider.get_user_sender_label_style()
+            )
+        elif is_thinking:
+            sender_label.setStyleSheet(
+                self.style_provider.get_thinking_sender_label_style()
+            )
+        else:
+            sender_label.setStyleSheet(
+                self.style_provider.get_assistant_sender_label_style()
+            )
         layout.addWidget(sender_label)
 
         # Create label with HTML support
@@ -217,12 +190,18 @@ class MessageBubble(QFrame):
         self.message_label.setFont(QFont("Arial", 13))
 
         # Set different text color for message content based on bubble type
-        message_text_color = (
-            "#1e1e2e" if is_user else "#cdd6f4"
-        )  # Base for user, Text for assistant
-        if is_thinking:
-            message_text_color = "#bac2de"  # Subtext1 for thinking text
-        self.message_label.setStyleSheet(f"color: {message_text_color};")
+        if is_user:
+            self.message_label.setStyleSheet(
+                self.style_provider.get_user_message_label_style()
+            )
+        elif is_thinking:
+            self.message_label.setStyleSheet(
+                self.style_provider.get_thinking_message_label_style()
+            )
+        else:
+            self.message_label.setStyleSheet(
+                self.style_provider.get_assistant_message_label_style()
+            )
 
         # Set the text content (convert Markdown to HTML)
         if text:
@@ -250,25 +229,9 @@ class MessageBubble(QFrame):
                 "⟲", self
             )  # Anticlockwise gapped circle arrow (more standard rollback icon)
             rollback_button.setToolTip("Rollback to this message")
-            rollback_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #b4befe; /* Catppuccin Lavender */
-                    color: #1e1e2e; /* Catppuccin Base */
-                    border: none;
-                    border-radius: 15px;
-                    padding: 8px;
-                    font-size: 24px;
-                    font-weight: bold;
-                    width: 30px;
-                    height: 30px;
-                }
-                QPushButton:hover {
-                    background-color: #cba6f7; /* Catppuccin Mauve */
-                }
-                QPushButton:pressed {
-                    background-color: #f5c2e7; /* Catppuccin Pink */
-                }
-            """)
+            rollback_button.setStyleSheet(
+                self.style_provider.get_rollback_button_style()
+            )
             rollback_button.hide()
             self.rollback_button = rollback_button
 
@@ -276,25 +239,9 @@ class MessageBubble(QFrame):
             # Create consolidated button with icon only
             consolidated_button = QPushButton("📌", self)  # Pin/bookmark icon
             consolidated_button.setToolTip("Pin this message")
-            consolidated_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #b4befe; /* Catppuccin Lavender */
-                    color: #1e1e2e; /* Catppuccin Base */
-                    border: none;
-                    border-radius: 15px;
-                    padding: 8px;
-                    font-size: 24px;
-                    font-weight: bold;
-                    width: 30px;
-                    height: 30px;
-                }
-                QPushButton:hover {
-                    background-color: #cba6f7; /* Catppuccin Mauve */
-                }
-                QPushButton:pressed {
-                    background-color: #f5c2e7; /* Catppuccin Pink */
-                }
-            """)
+            consolidated_button.setStyleSheet(
+                self.style_provider.get_consolidated_button_style()
+            )
             consolidated_button.hide()
 
             # Store the buttons as properties of the message bubble
@@ -516,13 +463,9 @@ class MessageBubble(QFrame):
     def add_metadata_header(self, header_text):
         """Add a metadata header to the consolidated message."""
         header_label = QLabel(header_text)
-        header_label.setStyleSheet("""
-            QLabel {
-                color: #a6adc8; /* Catppuccin Subtext0 */
-                font-style: italic;
-                padding-bottom: 5px;
-            }
-        """)
+        header_label.setStyleSheet(
+            self.style_provider.get_metadata_header_label_style()
+        )
         # Insert header at position 1, just after the sender label
         self.layout().insertWidget(1, header_label)
 

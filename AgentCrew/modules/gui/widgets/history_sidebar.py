@@ -19,6 +19,8 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QAction
 from typing import List
 
+from AgentCrew.modules.gui.components import StyleProvider
+
 
 class ConversationSidebar(QWidget):
     """Sidebar widget showing conversation history"""
@@ -38,7 +40,8 @@ class ConversationSidebar(QWidget):
 
     def setup_ui(self):
         self.setFixedWidth(250)
-        self.setStyleSheet("background-color: #181825;")  # Catppuccin Mantle
+        style_provider = StyleProvider()
+        self.setStyleSheet(style_provider.get_sidebar_style())
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
@@ -48,20 +51,7 @@ class ConversationSidebar(QWidget):
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText("Search conversations...")
         self.search_box.textChanged.connect(self.filter_conversations)
-        self.search_box.setStyleSheet(
-            """
-            QLineEdit {
-                background-color: #313244; /* Catppuccin Surface0 */
-                color: #cdd6f4; /* Catppuccin Text */
-                border: 1px solid #45475a; /* Catppuccin Surface1 */
-                border-radius: 4px;
-                padding: 8px;
-            }
-            QLineEdit:focus {
-                border: 1px solid #89b4fa; /* Catppuccin Blue */
-            }
-            """
-        )
+        self.search_box.setStyleSheet(style_provider.get_search_box_style())
         layout.addWidget(self.search_box)
 
         # Conversation list
@@ -80,31 +70,7 @@ class ConversationSidebar(QWidget):
             QAbstractItemView.SelectionMode.ExtendedSelection
         )
         self.conversation_list.setStyleSheet(
-            """
-            QListWidget {
-                background-color: #1e1e2e; /* Catppuccin Base */
-                border: 1px solid #313244; /* Catppuccin Surface0 */
-                border-radius: 4px;
-            }
-            QListWidget::item {
-                color: #cdd6f4; /* Catppuccin Text */
-                background-color: #1e1e2e; /* Catppuccin Base */
-                border: none; /* Remove individual item borders if not desired */
-                border-bottom: 1px solid #313244; /* Surface0 for separator */
-                margin: 0px; /* Remove margin if using border for separation */
-                padding: 8px;
-            }
-            /* QListWidget::item:alternate { */ /* Remove if not using alternating */
-            /*     background-color: #1a1a2e; */ /* Slightly different base if needed */
-            /* } */
-            QListWidget::item:selected {
-                background-color: #45475a; /* Catppuccin Surface1 */
-                color: #b4befe; /* Catppuccin Lavender */
-            }
-            QListWidget::item:hover:!selected {
-                background-color: #313244; /* Catppuccin Surface0 */
-            }
-            """
+            style_provider.get_conversation_list_style()
         )
         layout.addWidget(self.conversation_list)
 
@@ -125,30 +91,9 @@ class ConversationSidebar(QWidget):
 
         self.setLayout(layout)
 
-        # Common button style
-        button_style = """
-            QPushButton {
-                background-color: #89b4fa; /* Catppuccin Blue */
-                color: #1e1e2e; /* Catppuccin Base */
-                border: none;
-                border-radius: 4px;
-                padding: 8px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #74c7ec; /* Catppuccin Sapphire */
-            }
-            QPushButton:pressed {
-                background-color: #b4befe; /* Catppuccin Lavender */
-            }
-            QPushButton:disabled {
-                background-color: #45475a; /* Catppuccin Surface1 */
-                color: #6c7086; /* Catppuccin Overlay0 */
-            }
-            """
-
-        self.refresh_btn.setStyleSheet(button_style)
-        self.new_btn.setStyleSheet(button_style)
+        # Apply button styles
+        self.refresh_btn.setStyleSheet(style_provider.get_button_style("primary"))
+        self.new_btn.setStyleSheet(style_provider.get_button_style("primary"))
 
     def update_conversation_list(self):
         """Fetches and displays the list of conversations."""
@@ -222,22 +167,9 @@ class ConversationSidebar(QWidget):
             return
 
         menu = QMenu(self)
-        menu.setStyleSheet("""
-            QMenu {
-                background-color: #1e1e2e; /* Catppuccin Base or Mantle */
-                color: #cdd6f4; /* Catppuccin Text (white-ish) */
-                border: 1px solid #313244; /* Catppuccin Surface0 */
-            }
-            QMenu::item {
-                background-color: transparent;
-                color: #cdd6f4; /* Catppuccin Text */
-                padding: 5px 20px; /* Adjust padding as needed */
-            }
-            QMenu::item:selected {
-                background-color: #45475a; /* Catppuccin Surface1 */
-                color: #b4befe; /* Catppuccin Lavender for selected item text */
-            }
-        """)
+
+        style_provider = StyleProvider()
+        menu.setStyleSheet(style_provider.get_context_menu_style())
 
         num_selected = len(conversation_ids)
         if num_selected == 1:

@@ -11,7 +11,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal
 
-from AgentCrew.modules.config.config_management import ConfigManagement
+from AgentCrew.modules.config import ConfigManagement
+from AgentCrew.modules.gui.components import StyleProvider
 
 
 class SettingsTab(QWidget):
@@ -77,10 +78,11 @@ class SettingsTab(QWidget):
 
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("background-color: #181825; border: none;")
+        style_provider = StyleProvider()
+        scroll_area.setStyleSheet(style_provider.get_sidebar_style())
 
         editor_widget = QWidget()
-        editor_widget.setStyleSheet("background-color: #181825;")
+        editor_widget.setStyleSheet(style_provider.get_sidebar_style())
         form_layout = QFormLayout(editor_widget)
         form_layout.setContentsMargins(10, 10, 10, 10)
         form_layout.setSpacing(10)
@@ -101,23 +103,7 @@ class SettingsTab(QWidget):
         form_layout.addWidget(api_keys_group)
 
         self.save_btn = QPushButton("Save API Keys")
-        self.save_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #89b4fa;
-                color: #1e1e2e;
-                border: none;
-                border-radius: 4px;
-                padding: 8px;
-                font-weight: bold;
-                margin-top: 10px;
-            }
-            QPushButton:hover {
-                background-color: #74c7ec;
-            }
-            QPushButton:pressed {
-                background-color: #b4befe;
-            }
-        """)
+        self.save_btn.setStyleSheet(style_provider.get_button_style("primary"))
         self.save_btn.clicked.connect(self.save_api_keys)
 
         form_layout.addWidget(self.save_btn)

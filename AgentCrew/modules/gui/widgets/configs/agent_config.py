@@ -22,8 +22,10 @@ import os  # Added for path operations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QDoubleValidator
 
-from AgentCrew.modules.config.config_management import ConfigManagement
+from AgentCrew.modules.config import ConfigManagement
 from AgentCrew.modules.agents import AgentManager
+
+from AgentCrew.modules.gui.components import StyleProvider
 
 
 class AgentsConfigTab(QWidget):
@@ -61,7 +63,6 @@ class AgentsConfigTab(QWidget):
 
         # Left panel - Agent list
         left_panel = QWidget()
-        left_panel.setStyleSheet("background-color: #181825;")  # Catppuccin Mantle
         left_layout = QVBoxLayout(left_panel)
 
         self.agents_list = QListWidget()
@@ -71,59 +72,12 @@ class AgentsConfigTab(QWidget):
         list_buttons_layout = QHBoxLayout()
 
         self.add_agent_menu_btn = QPushButton("Add Agent")
-        self.add_agent_menu_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #89b4fa; /* Catppuccin Blue */
-                color: #1e1e2e; /* Catppuccin Base */
-                border: none;
-                border-radius: 4px;
-                padding: 8px;
-                font-weight: bold;
-                padding-left: 12px; /* Add some padding for text */
-            }
-            QPushButton:hover {
-                background-color: #74c7ec; /* Catppuccin Sapphire */
-            }
-            QPushButton:pressed {
-                background-color: #b4befe; /* Catppuccin Lavender */
-            }
-            QPushButton:disabled {
-                background-color: #45475a; /* Catppuccin Surface1 */
-                color: #6c7086; /* Catppuccin Overlay0 */
-            }
-            QPushButton::menu-indicator {
-                /* image: url(myindicator.png); Adjust if using a custom image */
-                subcontrol-origin: padding;
-                subcontrol-position: right center;
-                right: 5px; /* Adjust as needed to position from the right edge */
-                width: 16px; /* Ensure there's enough space for the indicator */
-            }
-        """)
+        style_provider = StyleProvider()
+        self.add_agent_menu_btn.setStyleSheet(
+            style_provider.get_button_style("agent_menu")
+        )
         add_agent_menu = QMenu(self)
-        add_agent_menu.setStyleSheet("""
-            QMenu {
-                background-color: #181825; /* Catppuccin Mantle */
-                color: #cdd6f4; /* Catppuccin Text */
-                border: 1px solid #313244; /* Catppuccin Surface0 */
-                border-radius: 4px;
-                padding: 4px;
-            }
-            QMenu::item {
-                padding: 6px 20px;
-                background-color: transparent;
-            }
-            QMenu::item:selected {
-                background-color: #89b4fa; /* Catppuccin Blue */
-                color: #1e1e2e; /* Catppuccin Base */
-                border-radius: 3px;
-            }
-            QMenu::separator {
-                height: 1px;
-                background-color: #313244; /* Catppuccin Surface0 */
-                margin-left: 5px;
-                margin-right: 5px;
-            }
-        """)
+        add_agent_menu.setStyleSheet(style_provider.get_agent_menu_style())
         add_local_action = add_agent_menu.addAction("Add Local Agent")
         add_remote_action = add_agent_menu.addAction("Add Remote Agent")
         self.add_agent_menu_btn.setMenu(add_agent_menu)
@@ -133,49 +87,11 @@ class AgentsConfigTab(QWidget):
 
         # Add Import button with green styling
         self.import_agents_btn = QPushButton("Import")
-        self.import_agents_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #a6e3a1; /* Catppuccin Green */
-                color: #1e1e2e; /* Catppuccin Base */
-                border: none;
-                border-radius: 4px;
-                padding: 8px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #94e2d5; /* Catppuccin Teal - lighter green for hover */
-            }
-            QPushButton:pressed {
-                background-color: #8bd5ca; /* Slightly darker for pressed state */
-            }
-            QPushButton:disabled {
-                background-color: #45475a; /* Catppuccin Surface1 */
-                color: #6c7086; /* Catppuccin Overlay0 */
-            }
-        """)
+        self.import_agents_btn.setStyleSheet(style_provider.get_button_style("green"))
         self.import_agents_btn.clicked.connect(self.import_agents)
 
         self.remove_agent_btn = QPushButton("Remove")
-        self.remove_agent_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #f38ba8; /* Catppuccin Red */
-                color: #1e1e2e; /* Catppuccin Base (for contrast) */
-                border: none;
-                border-radius: 4px;
-                padding: 8px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #eba0ac; /* Catppuccin Maroon (lighter red for hover) */
-            }
-            QPushButton:pressed {
-                background-color: #e67e8a; /* A slightly darker/more intense red for pressed */
-            }
-            QPushButton:disabled {
-                background-color: #45475a; /* Catppuccin Surface1 */
-                color: #6c7086; /* Catppuccin Overlay0 */
-            }
-        """)
+        self.remove_agent_btn.setStyleSheet(style_provider.get_button_style("red"))
         self.remove_agent_btn.clicked.connect(self.remove_agent)
         self.remove_agent_btn.setEnabled(False)  # Disable until selection
 
@@ -266,26 +182,7 @@ class AgentsConfigTab(QWidget):
         # Save button (common to both editors)
         self.save_btn = QPushButton("Save")
         # ... (save_btn styling and connect remains the same)
-        self.save_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #89b4fa; /* Catppuccin Blue */
-                color: #1e1e2e; /* Catppuccin Base */
-                border: none;
-                border-radius: 4px;
-                padding: 8px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #74c7ec; /* Catppuccin Sapphire */
-            }
-            QPushButton:pressed {
-                background-color: #b4befe; /* Catppuccin Lavender */
-            }
-            QPushButton:disabled {
-                background-color: #45475a; /* Catppuccin Surface1 */
-                color: #6c7086; /* Catppuccin Overlay0 */
-            }
-        """)
+        self.save_btn.setStyleSheet(style_provider.get_button_style("primary"))
         self.save_btn.clicked.connect(self.save_agent)
         self.save_btn.setEnabled(False)
 

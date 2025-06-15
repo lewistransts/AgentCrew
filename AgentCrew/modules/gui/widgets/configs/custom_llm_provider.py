@@ -18,8 +18,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, Signal
 from AgentCrew.modules import logger
 
-from AgentCrew.modules.config.config_management import ConfigManagement
+from AgentCrew.modules.config import ConfigManagement
 from typing import List, Optional, Dict, Any
+from AgentCrew.modules.gui.components import StyleProvider
 
 
 class ModelEditorDialog(QDialog):
@@ -406,7 +407,8 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.add_button.clicked.connect(self.add_new_provider_triggered)
         self.remove_button = QPushButton("Remove Selected Provider")
         self.remove_button.clicked.connect(self.remove_selected_provider)
-        self.remove_button.setStyleSheet("background-color: #f38ba8;")
+        style_provider = StyleProvider()
+        self.remove_button.setStyleSheet(style_provider.get_button_style("red"))
         self.remove_button.setEnabled(False)  # Initially disabled
 
         list_buttons_layout.addWidget(self.add_button)
@@ -478,7 +480,7 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.remove_model_button = QPushButton("Remove Selected Model")
         self.remove_model_button.setEnabled(False)
         self.remove_model_button.clicked.connect(self.remove_model_button_clicked)
-        self.remove_model_button.setStyleSheet("background-color: #f38ba8;")
+        self.remove_model_button.setStyleSheet(style_provider.get_button_style("red"))
 
         model_buttons_layout.addWidget(self.add_model_button)
         model_buttons_layout.addWidget(self.edit_model_button)

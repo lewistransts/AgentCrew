@@ -9,7 +9,7 @@ from AgentCrew.modules.llm.base import BaseLLMService
 from AgentCrew.modules.anthropic import AnthropicService
 from AgentCrew.modules.groq import GroqService
 from AgentCrew.modules.openai import OpenAIService
-from AgentCrew.modules.config.config_management import ConfigManagement
+from AgentCrew.modules.config import ConfigManagement
 
 
 class ServiceManager:

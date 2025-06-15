@@ -86,19 +86,9 @@ class ToolEventHandler:
         text_edit.setText(params_text)
 
         # Style the text edit to match the main theme
-        text_edit.setStyleSheet("""
-            QTextEdit {
-                background-color: #313244; /* Catppuccin Surface0 */
-                color: #cdd6f4; /* Catppuccin Text */
-                border: 1px solid #45475a; /* Catppuccin Surface1 */
-                border-radius: 4px;
-                padding: 8px;
-                font-family: monospace;
-            }
-            QTextEdit:focus {
-                border: 1px solid #89b4fa; /* Catppuccin Blue */
-            }
-        """)
+        text_edit.setStyleSheet(
+            self.chat_window.style_provider.get_tool_dialog_text_edit_style()
+        )
 
         if isinstance(lt, QGridLayout):
             lt.addWidget(
@@ -116,47 +106,17 @@ class ToolEventHandler:
         all_button = dialog.addButton("Yes to All", QMessageBox.ButtonRole.AcceptRole)
 
         # Style the buttons with Catppuccin colors
-        yes_button.setStyleSheet("""
-            QPushButton {
-                background-color: #a6e3a1; /* Catppuccin Green */
-                color: #1e1e2e; /* Catppuccin Base */
-                font-weight: bold;
-                padding: 6px 14px;
-                border: none;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #94e2d5; /* Catppuccin Teal */
-            }
-        """)
+        yes_button.setStyleSheet(
+            self.chat_window.style_provider.get_tool_dialog_yes_button_style()
+        )
 
-        all_button.setStyleSheet("""
-            QPushButton {
-                background-color: #89b4fa; /* Catppuccin Blue */
-                color: #1e1e2e; /* Catppuccin Base */
-                font-weight: bold;
-                padding: 6px 14px;
-                border: none;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #74c7ec; /* Catppuccin Sapphire */
-            }
-        """)
+        all_button.setStyleSheet(
+            self.chat_window.style_provider.get_tool_dialog_all_button_style()
+        )
 
-        no_button.setStyleSheet("""
-            QPushButton {
-                background-color: #f38ba8; /* Catppuccin Red */
-                color: #1e1e2e; /* Catppuccin Base */
-                font-weight: bold;
-                padding: 6px 14px;
-                border: none;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #eba0ac; /* Catppuccin Maroon */
-            }
-        """)
+        no_button.setStyleSheet(
+            self.chat_window.style_provider.get_tool_dialog_no_button_style()
+        )
 
         # Execute dialog and get result
         dialog.exec()

@@ -37,9 +37,12 @@ class SystemMessageWidget(QWidget):
         # Create label with HTML support
         self.message_label = QLabel()
         self.message_label.setTextFormat(Qt.TextFormat.RichText)
+        from AgentCrew.modules.gui.components import StyleProvider
+
+        style_provider = StyleProvider()
         self.message_label.setStyleSheet(
-            "color: #a6adc8; padding: 2px;"
-        )  # Catppuccin Subtext0
+            style_provider.get_system_message_label_style()
+        )
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.message_label.setWordWrap(True)
         self.message_label.setSizePolicy(
@@ -58,18 +61,7 @@ class SystemMessageWidget(QWidget):
         # Create expand/collapse button
         self.toggle_button = QPushButton("▼ Show More")
         self.toggle_button.setStyleSheet(
-            """
-            QPushButton {
-                background-color: transparent;
-                color: #94e2d5; /* Catppuccin Teal */
-                border: none;
-                text-align: left;
-                padding: 2px;
-            }
-            QPushButton:hover {
-                color: #89dceb; /* Catppuccin Sky */
-            }
-            """
+            style_provider.get_system_message_toggle_style()
         )
         self.toggle_button.setMaximumHeight(16)
         self.toggle_button.setCursor(Qt.CursorShape.PointingHandCursor)
