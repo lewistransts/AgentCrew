@@ -154,6 +154,7 @@ class MessageHandler(Observable):
         thinking_signature = ""  # Store the signature
         start_thinking = False
         end_thinking = False
+        has_stop_interupted = False
 
         # Create a reference to the streaming generator
         stream_generator = None
@@ -209,7 +210,7 @@ class MessageHandler(Observable):
             output_tokens += output_tokens_in_turn
 
             # Handle tool use if needed
-            if tool_uses and len(tool_uses) > 0:
+            if not has_stop_interupted and tool_uses and len(tool_uses) > 0:
                 # Add thinking content as a separate message if available
                 thinking_data = (
                     (thinking_content, thinking_signature) if thinking_content else None
@@ -247,7 +248,7 @@ class MessageHandler(Observable):
                 self._notify("agent_continue", self.agent.name)
 
             # Add assistant response to messages
-            if assistant_response:
+            if assistant_response.strip():
                 # Store the latest response
                 self.latest_assistant_response = assistant_response
 
@@ -256,8 +257,8 @@ class MessageHandler(Observable):
                         MessageType.Assistant, {"message": assistant_response}
                     )
                 )
-                # Final assistant message
-                self._notify("response_completed", assistant_response)
+            # Final assistant message
+            self._notify("response_completed", assistant_response)
 
             if self.current_user_input and self.current_user_input_idx >= 0:
                 if self.memory_service:

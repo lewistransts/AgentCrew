@@ -82,7 +82,7 @@ class ToolManager:
                     MessageType.ToolResult,
                     {
                         "tool_use": tool_use,
-                        "tool_result": "User denied permission to execute this tool.",
+                        "tool_result": "User rejected to execute this tool.",
                         "is_error": True,
                     },
                 )
