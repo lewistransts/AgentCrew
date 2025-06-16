@@ -9,7 +9,6 @@ import requests
 import time
 import subprocess
 import platform
-from datetime import datetime
 from AgentCrew.modules.chat import ConsoleUI
 from AgentCrew.modules.gui import ChatWindow
 from AgentCrew.modules.chat import MessageHandler
@@ -404,11 +403,7 @@ tools = ["memory", "clipboard", "web_search", "code_analysis"]
                 tools=agent_def["tools"],
                 temperature=agent_def.get("temperature", None),
             )
-            agent.set_system_prompt(
-                agent_def["system_prompt"].replace(
-                    "{current_date}", datetime.today().strftime("%Y-%m-%d")
-                )
-            )
+            agent.set_system_prompt(agent_def["system_prompt"])
         agent_manager.register_agent(agent)
 
     from AgentCrew.modules.mcpclient.tool import register as mcp_register

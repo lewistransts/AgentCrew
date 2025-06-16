@@ -344,9 +344,7 @@ class ConfigManagement:
                 finally:
                     continue
             existing_agent = agent_manager.get_local_agent(agent_cfg["name"])
-            system_prompt = agent_cfg.get("system_prompt", "").replace(
-                "{current_date}", datetime.today().strftime("%Y-%m-%d")
-            )
+            system_prompt = agent_cfg.get("system_prompt", "")
             if existing_agent:
                 was_active = False
                 if existing_agent.is_active:
