@@ -2,7 +2,7 @@
 Tool for generating images with AI.
 """
 
-from typing import Dict, Any, Callable, Literal, List
+from typing import Dict, Any, Callable, Literal, List, Optional
 from .service import ImageGenerationService
 import asyncio
 
@@ -17,33 +17,32 @@ def get_generate_image_tool_definition(provider="claude") -> Dict[str, Any]:
     Returns:
         Tool definition
     """
-    tool_description = "Generates images based on text prompts using OpenAI's DALL-E, or edits existing images. Creates visual content according to user descriptions."
+    tool_description = "Generates images based on text prompts using OpenAI's GPT IMAGE 1, or edits existing images. Creates visual content according to user descriptions."
     tool_arguments = {
         "prompt": {
             "type": "string",
             "description": "Detailed text description of the image to generate or edit. Be specific and descriptive for best results.",
         },
+        "output_path": {
+            "type": "string",
+            "description": "path to save the generated or edited image.",
+        },
         "size": {
             "type": "string",
-            "description": "Dimensions of the image in pixels. Options: '1024x1024', '1024x1792' (portrait), '1792x1024' (landscape). Only used in generation mode.",
-            "default": "1024x1024",
-        },
-        "style": {
-            "type": "string",
-            "description": "Visual style of the image. Options: 'natural' (photorealistic) or 'vivid' (more enhanced and stylized). Only used in generation mode.",
-            "default": "natural",
+            "description": "Dimensions of the image in pixels. Options: 'auto', '1024x1024', '1024x1792' (portrait), '1792x1024' (landscape). Only used in generation mode.",
+            "default": "auto",
         },
         "quality": {
             "type": "string",
-            "description": "Quality level for the generated image. Options: 'low', 'medium', 'high', 'auto'. Only used in generation mode.",
+            "description": "Quality level for the generated image. Options: 'low', 'medium', 'high', 'auto'.",
             "default": "auto",
         },
         "model": {
             "type": "string",
-            "description": "Specific DALL-E model to use. If not specified, defaults to 'gpt-image-1'.",
-            "default": "",
+            "description": "Specific Image generation model to use. If not specified, defaults to 'gpt-image-1'.",
+            "default": "gpt-image-1",
         },
-        "image_paths": {
+        "editing_image_paths": {
             "type": "array",
             "items": {"type": "string"},
             "description": "Optional list of file paths to images that should be edited. If provided, the tool will operate in 'edit' mode instead of 'generate'.",
@@ -51,7 +50,7 @@ def get_generate_image_tool_definition(provider="claude") -> Dict[str, Any]:
         },
     }
 
-    tool_required = ["prompt"]
+    tool_required = ["prompt", "output_path"]
 
     if provider == "claude":
         return {
@@ -91,6 +90,7 @@ def get_generate_image_tool_handler(image_service: ImageGenerationService) -> Ca
 
     def handle_generate_image(
         prompt: str,
+        output_path: str,
         size: Literal[
             "auto",
             "1024x1024",
@@ -101,10 +101,9 @@ def get_generate_image_tool_handler(image_service: ImageGenerationService) -> Ca
             "1792x1024",
             "1024x1792",
         ] = "1024x1024",
-        style: Literal["vivid", "natural"] = "natural",
         quality: Literal["low", "medium", "high", "auto"] = "auto",
         model: str = "",
-        image_paths: List[str] = None,
+        editing_image_paths: Optional[List[str]] = None,
     ) -> str:
         """
         Generate an image based on the provided prompt or edit existing images.
@@ -123,19 +122,19 @@ def get_generate_image_tool_handler(image_service: ImageGenerationService) -> Ca
         result = asyncio.run(
             image_service.generate_image(
                 prompt=prompt,
+                output_path=output_path,
                 size=size,
-                style=style,
                 quality=quality,
                 model=model if model else None,
-                image_paths=image_paths,
+                image_paths=editing_image_paths,
             )
         )
 
         if not result.get("success", False):
-            return f"🚫 Image {'editing' if image_paths else 'generation'} failed: {result.get('error', 'Unknown error')}"
+            return f"🚫 Image {'editing' if editing_image_paths else 'generation'} failed: {result.get('error', 'Unknown error')}"
 
         # Format successful result
-        operation_type = "edited" if image_paths else "generated"
+        operation_type = "edited" if editing_image_paths else "generated"
         response = f"✅ Image {operation_type} successfully!\n\n"
         response += f"📝 Prompt: {result.get('prompt')}\n"
 

@@ -21,12 +21,7 @@ class ImageGenerationService:
             api_key: The OpenAI API key (optional, will use environment variable if not provided)
         """
         self.api_key = api_key or self._get_api_key()
-        self.generate_image_path = os.getenv(
-            "GENERATED_IMAGES_PATH", "./generated_images"
-        )
         self.client = AsyncOpenAI(api_key=self.api_key)
-        self.output_dir = self.generate_image_path
-        os.makedirs(self.output_dir, exist_ok=True)
         self.logger = logging.getLogger("ImageGenerationService")
 
     def _get_api_key(self) -> str:
@@ -44,6 +39,7 @@ class ImageGenerationService:
     async def generate_image(
         self,
         prompt: str,
+        output_path: str,
         size: Literal[
             "auto",
             "1024x1024",
@@ -54,7 +50,6 @@ class ImageGenerationService:
             "1792x1024",
             "1024x1792",
         ] = "1024x1024",
-        style: Literal["vivid", "natural"] = "natural",
         quality: Literal["low", "medium", "high", "auto"] = "auto",
         model: Optional[str] = None,
         image_paths: Optional[List[str]] = None,
@@ -65,7 +60,6 @@ class ImageGenerationService:
         Args:
             prompt: The text prompt to generate an image from
             size: The size of the image (e.g., "1024x1024")
-            style: The style of the image (e.g., "natural", "vivid")
             quality: Quality setting (e.g., "standard", "hd")
             model: The specific model to use
             image_paths: Optional list of image paths for editing mode
@@ -75,7 +69,7 @@ class ImageGenerationService:
         """
         try:
             return await self._generate_image_internal(
-                prompt, size, style, quality, model, image_paths
+                prompt, output_path, size, quality, model, image_paths
             )
         except Exception as e:
             self.logger.error(f"Image generation failed: {str(e)}")
@@ -84,6 +78,7 @@ class ImageGenerationService:
     async def _generate_image_internal(
         self,
         prompt: str,
+        output_path: str,
         size: Literal[
             "auto",
             "1024x1024",
@@ -94,7 +89,6 @@ class ImageGenerationService:
             "1792x1024",
             "1024x1792",
         ] = "1024x1024",
-        style: Literal["vivid", "natural"] = "natural",
         quality: Literal["low", "medium", "high", "auto"] = "auto",
         model: Optional[str] = None,
         image_paths: Optional[List[str]] = None,
@@ -105,7 +99,6 @@ class ImageGenerationService:
         Args:
             prompt: The text prompt
             size: Image size ("1024x1024", "512x512", or "256x256")
-            style: Image style ("natural" or "vivid")
             quality: Image quality ("standard" or "hd")
             model: Model to use (defaults to "gpt-image-1")
             image_paths: List of paths to images for editing (optional)
@@ -158,9 +151,8 @@ class ImageGenerationService:
             for i, image_data in enumerate(result.data):
                 if hasattr(image_data, "b64_json") and image_data.b64_json:
                     image_binary = base64.b64decode(image_data.b64_json)
-                    image_path = os.path.join(
-                        self.output_dir, f"dalle_{timestamp}_{i}.png"
-                    )
+                    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                    image_path = f"{output_path}_{timestamp}_{i + 1}.png"
                     with open(image_path, "wb") as img_file:
                         img_file.write(image_binary)
                     image_paths.append(image_path)
