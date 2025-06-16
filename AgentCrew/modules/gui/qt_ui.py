@@ -22,6 +22,7 @@ from PySide6.QtCore import (
     Signal,
     QTimer,
 )
+from PySide6.QtGui import QIcon
 from AgentCrew.modules.chat.message_handler import MessageHandler, Observer
 from AgentCrew.modules.gui.widgets import ConversationSidebar, TokenUsageWidget
 from AgentCrew.modules.gui.widgets import MessageBubble
@@ -67,6 +68,11 @@ class ChatWindow(QMainWindow, Observer):
         super().__init__()
         self.setWindowTitle("AgentCrew - Interactive Chat")
         self.setGeometry(100, 100, 1000, 700)  # Adjust size for sidebar
+        
+        # Set application icon
+        icon_path = "AgentCrew/modules/gui/agentcrew_logo.png"
+        self.setWindowIcon(QIcon(icon_path))
+        
         self.setAttribute(Qt.WidgetAttribute.WA_InputMethodEnabled)
 
         # Initialize MessageHandler - kept in main thread

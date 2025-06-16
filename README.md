@@ -13,6 +13,10 @@
 
 ## Introduction
 
+<p align="center">
+  <img src="./AgentCrew/modules/gui/agentcrew_logo.png" alt="AgentCrew Logo" width="128">
+</p>
+
 **What is AgentCrew?**
 
 AgentCrew helps you build AI assistants. You can create a team of AI "agents."
