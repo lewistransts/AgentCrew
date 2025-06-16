@@ -52,19 +52,19 @@ _ANTHROPIC_MODELS = [
 ]
 
 _OPENAI_MODELS = [
+    # Model(
+    #     id="gpt-4o",
+    #     provider="openai",
+    #     name="GPT-4o",
+    #     description="Fast, intelligent, flexible GPT model",
+    #     capabilities=["tool_use", "vision"],
+    #     input_token_price_1m=2.5,
+    #     output_token_price_1m=10.0,
+    # ),
     Model(
-        id="gpt-4o",
+        id="gpt-4.1-mini",
         provider="openai",
-        name="GPT-4o",
-        description="Fast, intelligent, flexible GPT model",
-        capabilities=["tool_use", "vision"],
-        input_token_price_1m=2.5,
-        output_token_price_1m=10.0,
-    ),
-    Model(
-        id="gpt-4o-mini",
-        provider="openai",
-        name="GPT-4o Mini",
+        name="GPT-4.1 Mini",
         description="small, quick GPT model",
         capabilities=["tool_use", "vision"],
         input_token_price_1m=0.15,
