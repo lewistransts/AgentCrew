@@ -465,6 +465,9 @@ class ChatWindow(QMainWindow, Observer):
         ]
 
         if event in message_events:
+            # make sure file bubble is cleared if we are processing a new message
+            if self.current_file_bubble:
+                self.current_file_bubble = None
             self.message_event_handler.handle_event(event, data)
         elif event in tool_events:
             self.tool_event_handler.handle_event(event, data)

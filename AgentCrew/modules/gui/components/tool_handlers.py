@@ -147,8 +147,8 @@ class ToolEventHandler:
         """Display a message about a denied tool execution."""
         tool_use = data["tool_use"]
         self.chat_window.chat_components.add_system_message(
-            f"❌ Tool execution denied: {tool_use['name']}"
+            f"❌ Tool execution rejected: {tool_use['name']}"
         )
         self.chat_window.display_status_message(
-            f"Tool execution denied: {tool_use['name']}"
+            f"Tool execution rejected: {tool_use['name']}"
         )
