@@ -82,6 +82,7 @@ class ConsoleUI(Observer):
             _, assistant_response = data
             self.update_live_display(assistant_response)  # data is the response chunk
         elif event == "tool_use":
+            self.stop_loading_animation()  # Stop loading on first chunk
             self.display_tool_use(data)  # data is the tool use object
         elif event == "tool_result":
             pass
@@ -89,6 +90,7 @@ class ConsoleUI(Observer):
         elif event == "tool_error":
             self.display_tool_error(data)  # data is dict with tool_use and error
         elif event == "tool_confirmation_required":
+            self.stop_loading_animation()  # Stop loading on first chunk
             self.display_tool_confirmation_request(
                 data
             )  # data is the tool use with confirmation ID
