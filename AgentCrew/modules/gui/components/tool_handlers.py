@@ -38,6 +38,18 @@ class ToolEventHandler:
         result_message = f"RESULT: Tool {tool_use['name']}:\n\n```\n{tool_result}\n```"
         self.chat_window.chat_components.add_system_message(result_message)
 
+        # make sure all buffer is printed
+        if self.chat_window.thinking_buffer:
+            self.chat_window.chat_components.display_thinking_chunk(
+                self.chat_window.thinking_buffer
+            )
+            self.chat_window.thinking_buffer = ""
+
+        if self.chat_window.chunk_buffer:
+            self.chat_window.chat_components.display_response_chunk(
+                self.chat_window.chunk_buffer
+            )
+            self.chat_window.chunk_buffer = ""
         # Reset the current response bubble so the next agent message starts in a new bubble
         self.chat_window.current_response_bubble = None
         self.chat_window.current_response_container = None

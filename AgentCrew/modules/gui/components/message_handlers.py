@@ -10,8 +10,6 @@ class MessageEventHandler:
         if isinstance(chat_window, ChatWindow):
             self.chat_window = chat_window
         self.thinking_content = ""
-        self.thinking_buffer = ""
-        self.chunk_buffer = ""
 
     def handle_event(self, event: str, data: Any):
         """Handle a message-related event."""
@@ -40,10 +38,10 @@ class MessageEventHandler:
                     self.chat_window.chat_components.append_message("", False)
                 )
             # Store latest chunk (replace, don't accumulate)
-            self.chunk_buffer = assistant_response
+            self.chat_window.chunk_buffer = assistant_response
             # Restart timer (50ms delay)
             self.chat_window.chunk_timer.stop()
-            self.chat_window.chunk_timer.start(34)
+            self.chat_window.chunk_timer.start(35)
 
     def handle_user_message_created(self, data):
         """Handle user message creation."""
@@ -72,17 +70,17 @@ class MessageEventHandler:
             self.chat_window.chat_components.append_thinking_message(" ", agent_name)
         )
         self.thinking_content = ""  # Initialize thinking content
-        self.thinking_buffer = ""  # Initialize thinking buffer
+        self.chat_window.thinking_buffer = ""  # Initialize thinking buffer
 
     def handle_thinking_chunk(self, data):
         """Handle a chunk of the thinking process."""
         chunk = data
         # Buffer thinking chunks instead of rendering immediately
-        self.thinking_buffer += chunk
+        self.chat_window.thinking_buffer += chunk
 
         # Restart timer (50ms delay, same as response chunks)
         self.chat_window.thinking_timer.stop()
-        self.chat_window.thinking_timer.start(34)
+        self.chat_window.thinking_timer.start(35)
 
     def handle_thinking_completed(self):
         """Handle thinking process completion."""
@@ -99,16 +97,21 @@ class MessageEventHandler:
 
     def _render_buffered_chunks(self):
         """Render the latest buffered chunk."""
-        if self.chunk_buffer:
-            self.chat_window.chat_components.display_response_chunk(self.chunk_buffer)
-            self.chunk_buffer = ""
+        if self.chat_window.chunk_buffer:
+            self.chat_window.chat_components.display_response_chunk(
+                self.chat_window.chunk_buffer
+            )
+            self.chat_window.chunk_buffer = ""
 
     def _render_buffered_thinking(self):
         """Render the latest buffered thinking chunk."""
-        if self.thinking_buffer and self.chat_window.current_thinking_bubble:
+        if (
+            self.chat_window.thinking_buffer
+            and self.chat_window.current_thinking_bubble
+        ):
             # Update the thinking content and display it
             self.chat_window.chat_components.display_thinking_chunk(
-                self.thinking_buffer
+                self.chat_window.thinking_buffer
             )
             # Clear the buffer
-            self.thinking_buffer = ""
+            self.chat_window.thinking_buffer = ""
