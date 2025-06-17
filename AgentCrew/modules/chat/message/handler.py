@@ -251,6 +251,11 @@ class MessageHandler(Observable):
                     {"input_tokens": input_tokens, "output_tokens": output_tokens},
                 )
 
+                if has_stop_interupted:
+                    # return as soon as possible
+                    self._notify("response_completed", assistant_response)
+                    return assistant_response, input_tokens, output_tokens
+
                 return await self.get_assistant_response()
 
             if thinking_content:

@@ -319,7 +319,8 @@ class ConfigManagement:
             config = ConfigManagement(agents_config_path)
             config.update_config(config_data, merge=False)
             config.save_config()
-            config.reload_agents_from_config(agents_config_path)
+            config.reload_agents_from_config()
+            config.reload_mcp_from_config()
         except FileNotFoundError:
             # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(agents_config_path), exist_ok=True)
@@ -328,8 +329,11 @@ class ConfigManagement:
             with open(agents_config_path, "w", encoding="utf-8") as f:
                 toml.dump(config_data, f)
 
-    def reload_agents_from_config(self, agents_config_path):
+    def reload_agents_from_config(self):
         agent_manager = AgentManager.get_instance()
+        agents_config_path = os.getenv(
+            "SW_AGENTS_CONFIG", os.path.expanduser("./agents.toml")
+        )
         new_agents_config = agent_manager.load_agents_from_config(agents_config_path)
         for agent_cfg in new_agents_config:
             # Update existing agent
@@ -430,6 +434,7 @@ class ConfigManagement:
             # Write to file
             with open(mcp_config_path, "w", encoding="utf-8") as f:
                 json.dump(config_data, f, indent=2)
+            self.reload_agents_from_config()
             self.reload_mcp_from_config()
         except Exception as e:
             raise ValueError(f"Error writing MCP configuration: {str(e)}")

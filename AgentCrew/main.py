@@ -490,7 +490,7 @@ def discover_and_register_tools(services=None):
     "--console",
     is_flag=True,
     default=False,
-    help="Use GUI interface instead of console",
+    help="Use console interface instead of GUI",
 )
 def chat(provider, agent_config, mcp_config, memory_llm, console):
     """Start an interactive chat session with LLM"""
