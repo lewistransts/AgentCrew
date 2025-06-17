@@ -33,15 +33,13 @@ class MessageEventHandler:
         _, assistant_response = data
         if assistant_response.strip():
             # Don't wait the buffer we need to initialize the response bubble as soon as possible
+            self.chat_window.chunk_buffer = assistant_response
+            if not self.chat_window.chunk_timer.isActive():
+                self.chat_window.chunk_timer.start(20)
             if self.chat_window.current_response_bubble is None:
                 self.chat_window.current_response_bubble = (
                     self.chat_window.chat_components.append_message("", False)
                 )
-            # Store latest chunk (replace, don't accumulate)
-            self.chat_window.chunk_buffer = assistant_response
-            # Restart timer (50ms delay)
-            self.chat_window.chunk_timer.stop()
-            self.chat_window.chunk_timer.start(35)
 
     def handle_user_message_created(self, data):
         """Handle user message creation."""
@@ -57,6 +55,9 @@ class MessageEventHandler:
             self.chat_window.current_response_bubble.message_index = (
                 len(self.chat_window.message_handler.streamline_messages) - 1
             )
+        self.chat_window.chunk_timer.stop()
+        self._render_buffered_chunks()
+        self.chat_window.chunk_buffer = ""
 
     def handle_thinking_started(self, data):
         """Handle thinking process started."""
@@ -78,9 +79,9 @@ class MessageEventHandler:
         # Buffer thinking chunks instead of rendering immediately
         self.chat_window.thinking_buffer += chunk
 
-        # Restart timer (50ms delay, same as response chunks)
-        self.chat_window.thinking_timer.stop()
-        self.chat_window.thinking_timer.start(35)
+        # Start the timer to render the thinking chunk
+        if not self.chat_window.thinking_timer.isActive():
+            self.chat_window.thinking_timer.start(20)
 
     def handle_thinking_completed(self):
         """Handle thinking process completion."""
@@ -88,6 +89,9 @@ class MessageEventHandler:
         self.chat_window.chat_scroll.verticalScrollBar().setValue(
             self.chat_window.chat_scroll.verticalScrollBar().maximum()
         )
+        self.chat_window.chunk_timer.stop()
+        self._render_buffered_chunks()
+        self.chat_window.thinking_buffer = ""
         # Reset thinking bubble reference
         self.chat_window.current_thinking_bubble = None
 
@@ -101,7 +105,6 @@ class MessageEventHandler:
             self.chat_window.chat_components.display_response_chunk(
                 self.chat_window.chunk_buffer
             )
-            self.chat_window.chunk_buffer = ""
 
     def _render_buffered_thinking(self):
         """Render the latest buffered thinking chunk."""
@@ -113,5 +116,3 @@ class MessageEventHandler:
             self.chat_window.chat_components.display_thinking_chunk(
                 self.chat_window.thinking_buffer
             )
-            # Clear the buffer
-            self.chat_window.thinking_buffer = ""

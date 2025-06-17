@@ -199,7 +199,6 @@ class ChatWindow(QMainWindow, Observer):
         # Add simple throttling
         self.chunk_buffer = ""
         self.chunk_timer = QTimer(self)
-        self.chunk_timer.setSingleShot(True)
         self.chunk_timer.timeout.connect(
             self.message_event_handler._render_buffered_chunks
         )
@@ -207,7 +206,6 @@ class ChatWindow(QMainWindow, Observer):
         # Add thinking message buffering
         self.thinking_buffer = ""
         self.thinking_timer = QTimer(self)
-        self.thinking_timer.setSingleShot(True)
         self.thinking_timer.timeout.connect(
             self.message_event_handler._render_buffered_thinking
         )
