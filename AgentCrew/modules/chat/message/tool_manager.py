@@ -3,7 +3,6 @@ import asyncio
 
 from AgentCrew.modules import logger
 from AgentCrew.modules.llm.message import MessageTransformer
-from AgentCrew.modules.config import ConfigManagement
 
 
 class ToolManager:
@@ -14,15 +13,10 @@ class ToolManager:
 
         if isinstance(message_handler, MessageHandler):
             self.message_handler = message_handler
-        config_management = ConfigManagement()
-        global_config = config_management.read_global_config_data()
-
-        self.yolo_mode = self.theme = global_config.get("global_settings", {}).get(
-            "yolo_mode", False
-        )
         self._auto_approved_tools = set()  # Track tools approved for all future calls
         self._pending_confirmations = {}  # Store futures for confirmation requests
         self._next_confirmation_id = 0  # ID counter for confirmation requests
+        self.yolo_mode = False  # Enable/disable auto-approval mode
 
     async def execute_tool(self, tool_use: Dict[str, Any]):
         """Execute a tool with proper confirmation flow."""
