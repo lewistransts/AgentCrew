@@ -43,7 +43,7 @@ class MessageEventHandler:
             self.chunk_buffer = assistant_response
             # Restart timer (50ms delay)
             self.chat_window.chunk_timer.stop()
-            self.chat_window.chunk_timer.start(50)
+            self.chat_window.chunk_timer.start(34)
 
     def handle_user_message_created(self, data):
         """Handle user message creation."""
@@ -82,7 +82,7 @@ class MessageEventHandler:
 
         # Restart timer (50ms delay, same as response chunks)
         self.chat_window.thinking_timer.stop()
-        self.chat_window.thinking_timer.start(50)
+        self.chat_window.thinking_timer.start(34)
 
     def handle_thinking_completed(self):
         """Handle thinking process completion."""

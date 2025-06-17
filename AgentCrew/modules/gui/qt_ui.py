@@ -1,3 +1,4 @@
+import os
 from typing import Any, Optional
 
 from PySide6.QtWidgets import (
@@ -70,7 +71,11 @@ class ChatWindow(QMainWindow, Observer):
         self.setGeometry(100, 100, 1000, 700)  # Adjust size for sidebar
 
         # Set application icon
-        icon_path = "AgentCrew/assets/agentcrew_logo.png"
+        icon_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "agentcrew_logo.png",
+        )
+        print(icon_path)
         self.setWindowIcon(QIcon(icon_path))
 
         self.setAttribute(Qt.WidgetAttribute.WA_InputMethodEnabled)
