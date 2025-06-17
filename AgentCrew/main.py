@@ -216,7 +216,7 @@ def run_update_command():
 
         if system == "linux" or system == "darwin":  # Darwin is macOS
             # Linux/macOS update command
-            command = "curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/116f24fe3d94f0c1a972da92cac2f278a59fdad6/install.sh | bash"
+            command = "curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/da592b4ec3a583df51eb34a762872ff73a7fe6a8/install.sh | bash"
             click.echo("🐧 Running Linux/macOS update command...")
 
         elif system == "windows":
