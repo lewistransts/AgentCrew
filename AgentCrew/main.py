@@ -221,7 +221,7 @@ def run_update_command():
 
         elif system == "windows":
             # Windows update command
-            command = 'powershell -ExecutionPolicy ByPass -c "irm https://gist.githubusercontent.com/daltonnyx/e2d9a4d371e095bfa07cf5246d7e0746/raw/af138f99ed5351dc59cae81143e058ef95b5fa37/install.ps1 | iex"'
+            command = 'powershell -ExecutionPolicy ByPass -c "irm https://gist.githubusercontent.com/daltonnyx/e2d9a4d371e095bfa07cf5246d7e0746/raw/364cd2afe72e1c1b1fc4cb31f5c923a016151db3/install.ps1 | iex"'
             click.echo("🪟 Running Windows update command...")
 
         else:
