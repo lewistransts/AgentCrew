@@ -117,6 +117,7 @@ def check_and_update():
             ):
                 click.echo("🔄 Starting update...")
                 run_update_command()
+                sys.exit(0)  # Exit after update command
             else:
                 click.echo("⏭️ Skipping update. Starting application...")
         else:
