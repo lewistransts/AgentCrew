@@ -3,6 +3,7 @@ from typing import Tuple
 import os
 
 from AgentCrew.modules.agents.local_agent import LocalAgent
+from AgentCrew.modules.chat.file_handler import FileHandler
 from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules.llm.service_manager import ServiceManager
 from AgentCrew.modules.chat.consolidation import ConversationConsolidator
@@ -363,6 +364,8 @@ class CommandProcessor:
         self.message_handler._notify("file_processing", {"file_path": file_path})
 
         # Process file with the file handling service
+        if self.message_handler.file_handler is None:
+            self.message_handler.file_handler = FileHandler()
         file_content = self.message_handler.file_handler.process_file(file_path)
         # Fallback to llm handle
         if not file_content:

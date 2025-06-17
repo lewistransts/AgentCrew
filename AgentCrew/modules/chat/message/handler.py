@@ -51,7 +51,7 @@ class MessageHandler(Observable):
         self.current_user_input = None
         self.current_user_input_idx = -1
         self.last_assisstant_response_idx = -1
-        self.file_handler = FileHandler()
+        self.file_handler: Optional[FileHandler] = None
         self.stop_streaming = False
         self.streamline_messages = []
         self.current_conversation_id: Optional[str] = None  # ID for persistence

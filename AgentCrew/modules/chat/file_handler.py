@@ -5,11 +5,6 @@ import mimetypes
 from typing import Optional, Dict, Any
 import logging
 
-from docling.datamodel.base_models import InputFormat
-from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
-from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling.document_converter import DocumentConverter, PdfFormatOption
-from docling.exceptions import ConversionError
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +40,14 @@ class FileHandler:
         """Initialize the file handling service."""
         self.converter = None
         if DOCLING_ENABLED:
+            from docling.datamodel.base_models import InputFormat
+            from docling.datamodel.accelerator_options import (
+                AcceleratorDevice,
+                AcceleratorOptions,
+            )
+            from docling.datamodel.pipeline_options import PdfPipelineOptions
+            from docling.document_converter import DocumentConverter, PdfFormatOption
+
             try:
                 pipeline_options = PdfPipelineOptions()
                 pipeline_options.do_ocr = True
@@ -118,6 +121,8 @@ class FileHandler:
 
         # Use Docling for specific formats
         if DOCLING_ENABLED and self.converter and mime_type in DOCLING_FORMATS:
+            from docling.exceptions import ConversionError
+
             try:
                 logger.info(f"Processing file with Docling: {file_path}")
                 result = self.converter.convert(file_path)
