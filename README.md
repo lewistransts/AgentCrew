@@ -14,7 +14,7 @@
 ## Introduction
 
 <p align="center">
-  <img src="./AgentCrew/modules/gui/agentcrew_logo.png" alt="AgentCrew Logo" width="128">
+  <img src="./AgentCrew/assets/agentcrew_logo.png" alt="AgentCrew Logo" width="128">
 </p>
 
 **What is AgentCrew?**
