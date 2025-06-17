@@ -92,7 +92,7 @@ class ConversationSidebar(QWidget):
         self.setLayout(layout)
 
         # Apply button styles
-        self.refresh_btn.setStyleSheet(style_provider.get_button_style("primary"))
+        self.refresh_btn.setStyleSheet(style_provider.get_button_style("secondary"))
         self.new_btn.setStyleSheet(style_provider.get_button_style("primary"))
 
     def update_conversation_list(self):
