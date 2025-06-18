@@ -570,6 +570,7 @@ class ChatWindow(QMainWindow, Observer):
         self.status_indicator.setStyleSheet(
             self.style_provider.get_status_indicator_style()
         )
+        self.version_label.setStyleSheet(self.style_provider.get_version_label_style())
 
         # Display status message about theme change
         self.display_status_message(f"Theme changed to: {theme_name}")
