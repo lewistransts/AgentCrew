@@ -87,6 +87,15 @@ Here are some things AgentCrew can do:
 - Customize each agent's system prompt. You can include information like the
   current date.
 
+**🔄 Adaptive Behaviors for Agents:**
+
+- Use the `adapt` tool to declare rules in a `"when...do..."` format. For
+  example,
+  `when user asks for code examples, do provide complete annotated snippets`.
+- Agents automatically store and apply these behaviors to keep improving
+  interactions.
+- Manage and update adaptive rules at any time for fine-tuned personalization.
+
 **🛠️ Powerful Tools for Agents with User Control:**
 
 - **Tool Call Approval:** You decide if an agent can use a tool. AgentCrew will
