@@ -134,7 +134,7 @@ You can install AgentCrew using a quick script or by following standard steps.
 **Quick Install (Linux and MacOS):**
 
 ```bash
-curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/da592b4ec3a583df51eb34a762872ff73a7fe6a8/install.sh | bash
+curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/83f26a63e516c2653d295d466b1f1f9a1af64514/install.sh | bash
 ```
 
 **Quick Install (Windows):**
