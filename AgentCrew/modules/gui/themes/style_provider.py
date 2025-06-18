@@ -1,6 +1,7 @@
 from .catppuccin import CatppuccinTheme
 from .atom_light import AtomLightTheme
 from .nord import NordTheme
+from .dracula import DraculaTheme
 from AgentCrew.modules.config import ConfigManagement
 from PySide6.QtCore import Signal, QObject
 
@@ -41,6 +42,8 @@ class StyleProvider(QObject):
             self.theme_class = AtomLightTheme
         elif self.theme == "nord":
             self.theme_class = NordTheme
+        elif self.theme == "dracula":
+            self.theme_class = DraculaTheme
         else:
             self.theme_class = CatppuccinTheme  # Default to Catppuccin for "dark"
 

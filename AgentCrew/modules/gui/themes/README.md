@@ -14,11 +14,45 @@ This directory contains the theming system for the AgentCrew GUI application.
 - **Style**: Clean, minimalist light theme with blue accents
 - **Usage**: Activated when `theme = "light"` in config
 
-### 3. Nord Theme (`nord.py`) ⭐ **NEW**
+### 3. Nord Theme (`nord.py`)
 - **Type**: Dark theme
 - **Style**: Arctic-inspired color palette with cool blue/teal accents
 - **Usage**: Activated when `theme = "nord"` in config
 - **Color Palette**: Based on the official [Nord Color Palette](https://www.nordtheme.com/)
+
+### 4. Dracula Theme (`dracula.py`) ⭐ **NEW**
+- **Type**: Dark theme
+- **Style**: Bold, vibrant dark theme with purple and pink accents
+- **Usage**: Activated when `theme = "dracula"` in config
+- **Color Palette**: Based on the official [Dracula Theme](https://draculatheme.com/contribute)
+
+## Dracula Theme Details
+
+The Dracula theme implements the complete official color palette:
+
+### Color Groups
+
+#### Base Colors
+- `#282A36` - Background (Main application background)
+- `#44475A` - Current Line (Secondary elements, input fields)
+- `#F8F8F2` - Foreground (Text color)
+- `#6272A4` - Comment (Secondary text, borders)
+
+#### Accent Colors
+- `#8BE9FD` - Cyan (Focus states, operators)
+- `#50FA7B` - Green (Success states, strings)
+- `#FFB86C` - Orange (Warnings, special text)
+- `#FF79C6` - Pink (Keywords, special buttons)
+- `#BD93F9` - Purple (Primary actions, functions)
+- `#FF5555` - Red (Errors, delete actions)
+- `#F1FA8C` - Yellow (Highlights, classes)
+
+### Design Principles
+
+1. **Bold Contrast**: High contrast for excellent readability
+2. **Vibrant Accents**: Distinctive accent colors for UI elements
+3. **Semantic Consistency**: Colors consistently represent actions and states
+4. **Visual Unity**: Harmonious color combinations throughout the UI
 
 ## Nord Theme Details
 
@@ -59,12 +93,20 @@ The Nord theme implements the complete 16-color Nord palette:
 
 ## Usage
 
-To use the Nord theme in AgentCrew:
+To use a specific theme in AgentCrew:
 
 1. Set the theme in your global configuration:
+   
+   For Nord theme:
    ```toml
    [global_settings]
    theme = "nord"
+   ```
+   
+   For Dracula theme:
+   ```toml
+   [global_settings]
+   theme = "dracula"
    ```
 
 2. Restart the application or reload the configuration
