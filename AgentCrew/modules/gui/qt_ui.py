@@ -378,7 +378,7 @@ class ChatWindow(QMainWindow, Observer):
             self.display_status_message("Cannot rollback: no message index available")
             return
 
-        current_text = message_bubble.message_label.text()
+        current_text = message_bubble.raw_text
 
         # Find the turn number for this message
         turn_number = None
