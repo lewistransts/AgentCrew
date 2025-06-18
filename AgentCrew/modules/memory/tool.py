@@ -147,7 +147,6 @@ def get_memory_retrieve_tool_handler(memory_service: BaseMemoryService) -> Calla
             return "Error: Keywords are required for memory retrieval."
 
         try:
-            print(memory_service.llm_service.model)
             result = asyncio.run(
                 memory_service.retrieve_memory(keywords, limit, current_agent.name)
             )
