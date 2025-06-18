@@ -265,10 +265,10 @@ def setup_services(provider, memory_llm=None):
             llm_service=llm_manager.initialize_standalone_service(memory_llm)
         )
     # use groq if not defined if available
-    elif os.getenv("GROQ_API_KEY"):
-        memory_service = ChromaMemoryService(
-            llm_service=llm_manager.initialize_standalone_service("groq")
-        )
+    # elif os.getenv("GROQ_API_KEY"):
+    #     memory_service = ChromaMemoryService(
+    #         llm_service=llm_manager.initialize_standalone_service("groq")
+    #     )
     # fallback to default provider if no memory_llm specified
     else:
         memory_service = ChromaMemoryService(
