@@ -51,6 +51,7 @@ class MessageEventHandler:
 
     def handle_response_completed(self, data):
         """Handle response completion."""
+        self.chat_window.chunk_buffer = data
         if self.chat_window.current_response_bubble:
             self.chat_window.current_response_bubble.message_index = (
                 len(self.chat_window.message_handler.streamline_messages) - 1
@@ -105,6 +106,8 @@ class MessageEventHandler:
             self.chat_window.chat_components.display_response_chunk(
                 self.chat_window.chunk_buffer
             )
+            # Release the buffer after rendering
+            self.chat_window.chunk_buffer = ""
 
     def _render_buffered_thinking(self):
         """Render the latest buffered thinking chunk."""
@@ -116,3 +119,4 @@ class MessageEventHandler:
             self.chat_window.chat_components.display_thinking_chunk(
                 self.chat_window.thinking_buffer
             )
+            self.chat_window.thinking_buffer = ""  # Clear the buffer after rendering

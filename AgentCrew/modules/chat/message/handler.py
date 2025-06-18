@@ -196,7 +196,7 @@ class MessageHandler(Observable):
                 if chunk_text:
                     # End thinking when chunk_text start
                     if not end_thinking and start_thinking:
-                        self._notify("thinking_completed")
+                        self._notify("thinking_completed", thinking_content)
                         end_thinking = True
                     # Notify about response progress
                     if not self.agent.is_streaming():
@@ -232,7 +232,7 @@ class MessageHandler(Observable):
                     },
                 )
                 self._messages_append(assistant_message)
-                self._notify("assistant_message_added", assistant_message)
+                self._notify("assistant_message_added", assistant_response)
 
                 # This should allows YOLO can be configured on-the-fly without recalled to config too many times
                 config_management = ConfigManagement()
