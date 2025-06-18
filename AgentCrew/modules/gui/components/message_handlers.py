@@ -36,10 +36,6 @@ class MessageEventHandler:
             self.chat_window.chunk_buffer = assistant_response
             if not self.chat_window.chunk_timer.isActive():
                 self.chat_window.chunk_timer.start(20)
-            if self.chat_window.current_response_bubble is None:
-                self.chat_window.current_response_bubble = (
-                    self.chat_window.chat_components.append_message("", False)
-                )
 
     def handle_user_message_created(self, data):
         """Handle user message creation."""

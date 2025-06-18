@@ -1,5 +1,6 @@
 from .catppuccin import CatppuccinTheme
 from .atom_light import AtomLightTheme
+from .nord import NordTheme
 from AgentCrew.modules.config import ConfigManagement
 
 
@@ -15,6 +16,8 @@ class StyleProvider:
 
         if self.theme == "light":
             self.theme_class = AtomLightTheme
+        elif self.theme == "nord":
+            self.theme_class = NordTheme
         else:
             self.theme_class = CatppuccinTheme  # Default to Catppuccin for "dark"
 
