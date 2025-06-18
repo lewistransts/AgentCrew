@@ -175,7 +175,7 @@ class LocalAgent(BaseAgent):
             prompt: The system prompt
         """
         self.system_prompt = prompt.replace(
-            "{current_date}", datetime.today().strftime("%A, %d %B, %Y")
+            "{current_date}", datetime.today().strftime("%A, %d/%m/%Y")
         )
 
     def set_custom_system_prompt(self, prompt: str):
