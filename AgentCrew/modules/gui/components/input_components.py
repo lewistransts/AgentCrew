@@ -43,14 +43,14 @@ class InputComponents:
         buttons_layout.setContentsMargins(0, 0, 5, 0)
 
         # Create Send button
-        self.chat_window.send_button = QPushButton("Send")
+        self.chat_window.send_button = QPushButton("↑")
         self.chat_window.send_button.setFont(QFont("Arial", 12))
         self.chat_window.send_button.setStyleSheet(
             self.chat_window.style_provider.get_button_style("primary")
         )
 
         # Create File button
-        self.chat_window.file_button = QPushButton("File")
+        self.chat_window.file_button = QPushButton("📎")
         self.chat_window.file_button.setFont(QFont("Arial", 12))
         self.chat_window.file_button.setStyleSheet(
             self.chat_window.style_provider.get_button_style("secondary")

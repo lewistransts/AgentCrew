@@ -149,7 +149,7 @@ class MessageBubble(QFrame):
 
             # Create rollback button with icon only
             rollback_button = QPushButton(
-                "⟲", self
+                "↶", self
             )  # Anticlockwise gapped circle arrow (more standard rollback icon)
             rollback_button.setToolTip("Rollback to this message")
             rollback_button.setStyleSheet(
@@ -160,7 +160,7 @@ class MessageBubble(QFrame):
 
         if not self.is_consolidated:
             # Create consolidated button with icon only
-            consolidated_button = QPushButton("📌", self)  # Pin/bookmark icon
+            consolidated_button = QPushButton("✨", self)  # Pin/bookmark icon
             consolidated_button.setToolTip("Pin this message")
             consolidated_button.setStyleSheet(
                 self.style_provider.get_consolidated_button_style()
