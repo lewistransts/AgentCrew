@@ -53,8 +53,9 @@ class MessageEventHandler:
                 len(self.chat_window.message_handler.streamline_messages) - 1
             )
         self.chat_window.chunk_timer.stop()
-        self._render_buffered_chunks()
-        self.chat_window.chunk_buffer = ""
+        if self.chat_window.chunk_buffer.strip():
+            self._render_buffered_chunks()
+            self.chat_window.chunk_buffer = ""
 
     def handle_thinking_started(self, data):
         """Handle thinking process started."""
