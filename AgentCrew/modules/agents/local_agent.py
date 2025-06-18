@@ -417,7 +417,7 @@ class LocalAgent(BaseAgent):
                         "content": [
                             {
                                 "type": "text",
-                                "text": f"“Always check for and faithfully follow user-provided adaptive behaviors (in ‘when...do...’ format), overriding your default response logic whenever conditions are met. Report or explain when your answer is shaped by a behavior. Ask if unsure whether any apply.: \n{adaptive_text}",
+                                "text": f"“Always check for and faithfully follow user-provided adaptive behaviors (in ‘when...do...’ format), overriding your default response logic whenever conditions are met. Ask if unsure whether any apply.: \n{adaptive_text}",
                             }
                         ],
                     }
