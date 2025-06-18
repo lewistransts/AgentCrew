@@ -250,7 +250,7 @@ class ChromaMemoryService(BaseMemoryService):
         Returns:
             Formatted string containing relevant context from past conversations
         """
-        return await self.retrieve_memory(user_input, 5, agent_name=agent_name)
+        return await self.retrieve_memory(user_input, 3, agent_name=agent_name)
 
     async def _semantic_extracting(self, input: str) -> str:
         if self.llm_service:

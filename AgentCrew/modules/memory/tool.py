@@ -94,6 +94,11 @@ def get_memory_retrieve_tool_definition(provider="claude") -> Dict[str, Any]:
             "type": "string",
             "description": "Semantic Keywords used to search for relevant information in memory. Use specific and descriptive terms to narrow the search and retrieve the most useful results. Consider synonyms and related terms to broaden the search.",
         },
+        "limit": {
+            "type": "integer",
+            "default": 5,
+            "description": "Maximum number of memory items to retrieve. Defaults to 5 if not specified. Use this to control the amount of information returned, especially when dealing with large datasets.",
+        },
     }
     tool_required = ["keywords"]
     if provider == "claude":
@@ -134,7 +139,7 @@ def get_memory_retrieve_tool_handler(memory_service: BaseMemoryService) -> Calla
 
     def handle_memory_retrieve(**params) -> str:
         keywords = params.get("keywords")
-        limit = params.get("limit", 10)
+        limit = params.get("limit", 5)
 
         current_agent = AgentManager.get_instance().get_current_agent()
 
@@ -142,6 +147,7 @@ def get_memory_retrieve_tool_handler(memory_service: BaseMemoryService) -> Calla
             return "Error: Keywords are required for memory retrieval."
 
         try:
+            print(memory_service.llm_service.model)
             result = asyncio.run(
                 memory_service.retrieve_memory(keywords, limit, current_agent.name)
             )
@@ -254,7 +260,7 @@ def adaptive_instruction_prompt():
 **Best Practices**:
 - Use descriptive IDs (e.g., "code_explanation_style", "deadline_response")
 - Be specific about triggers and actions
-- Update existing behaviors rather than creating duplicates
+- Update existing behaviors rather when behaviors change
 - Focus on actionable, consistent improvements"""
 
 

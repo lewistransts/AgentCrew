@@ -78,7 +78,6 @@ class ChatWindow(QMainWindow, Observer):
             "assets",
             "agentcrew_logo.png",
         )
-        print(icon_path)
         self.setWindowIcon(QIcon(icon_path))
 
         self.setAttribute(Qt.WidgetAttribute.WA_InputMethodEnabled)
