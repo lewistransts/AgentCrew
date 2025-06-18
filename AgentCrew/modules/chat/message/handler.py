@@ -174,6 +174,7 @@ class MessageHandler(Observable):
                     # Properly close the generator instead of breaking
                     await stream_generator.aclose()
                     self.stop_streaming = False  # Reset flag
+                    has_stop_interupted = True
                     self._notify("streaming_stopped", assistant_response)
                     break
 

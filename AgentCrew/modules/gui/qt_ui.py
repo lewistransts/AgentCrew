@@ -399,7 +399,7 @@ class ChatWindow(QMainWindow, Observer):
 
         # Find and remove all widgets after this message in the UI
         self.chat_components.remove_messages_after(message_bubble)
-        self.message_input.setText(current_text)
+        self.message_input.setPlainText(current_text)
 
     def conslidate_messages(self, message_bubble):
         """Consolidate message to the selected message."""
