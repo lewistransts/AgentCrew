@@ -94,6 +94,9 @@ class ChatWindow(QMainWindow, Observer):
         # Initialize component handlers (these create UI widgets during __init__)
         self._setup_components()
 
+        # Connect to the theme changed signal for hot-reloading
+        self.style_provider.theme_changed.connect(self._handle_theme_changed)
+
         # Set application-wide style
         self.setStyleSheet(self.style_provider.get_main_style())
 
@@ -530,3 +533,43 @@ class ChatWindow(QMainWindow, Observer):
             self.ui_state_manager.set_input_controls_enabled(True)
         elif event == "update_token_usage":
             self._update_cost_info(data["input_tokens"], data["output_tokens"])
+
+    def _handle_theme_changed(self, theme_name):
+        """
+        Handle theme change events by updating the UI components with the new theme.
+
+        Args:
+            theme_name (str): The name of the new theme
+        """
+        # Update main window style
+        self.setStyleSheet(self.style_provider.get_main_style())
+
+        # Update splitter style
+        self.splitter.setStyleSheet(self.style_provider.get_splitter_style())
+
+        # Update all menu styles
+        self.menu_builder.update_menu_style()
+
+        # Refresh context menu style (will be applied next time it's shown)
+
+        # Update token usage widget style
+        self.token_usage.update_style(self.style_provider)
+
+        # Update sidebar style
+        self.sidebar.update_style(self.style_provider)
+
+        self.message_input.setStyleSheet(self.style_provider.get_input_style())
+
+        self.send_button.setStyleSheet(self.style_provider.get_button_style("primary"))
+
+        # Create File button
+        self.file_button.setStyleSheet(
+            self.style_provider.get_button_style("secondary")
+        )
+
+        self.status_indicator.setStyleSheet(
+            self.style_provider.get_status_indicator_style()
+        )
+
+        # Display status message about theme change
+        self.display_status_message(f"Theme changed to: {theme_name}")

@@ -28,6 +28,13 @@ class MenuBuilder:
 
         # Create Settings menu
         self._create_settings_menu(menu_bar)
+        
+    def update_menu_style(self):
+        """Update menu styling when theme changes."""
+        # Update menu bar style
+        menu_bar = self.chat_window.menuBar()
+        if menu_bar:
+            menu_bar.setStyleSheet(self.chat_window.style_provider.get_menu_style())
 
     def refresh_agent_menu(self):
         """Refresh the agents menu after configuration changes."""

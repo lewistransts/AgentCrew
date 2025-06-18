@@ -43,3 +43,16 @@ class TokenUsageWidget(QWidget):
             f"📊 Token Usage: Input: {input_tokens:,} | Output: {output_tokens:,} | "
             f"Total: {input_tokens + output_tokens:,} | Cost: ${total_cost:.4f} | Session: ${session_cost:.4f}"
         )
+
+    def update_style(self, style_provider=None):
+        """Update the widget's style based on the current theme."""
+        if not style_provider:
+            from AgentCrew.modules.gui.themes import StyleProvider
+
+            style_provider = StyleProvider()
+
+        # Update widget style
+        self.setStyleSheet(style_provider.get_token_usage_widget_style())
+
+        # Update label style
+        self.token_label.setStyleSheet(style_provider.get_token_usage_style())

@@ -151,11 +151,13 @@ class SettingsTab(QWidget):
 
         # Load theme setting
         theme = global_settings_data.get("theme", "dark")
-        self.theme_dropdown.setCurrentText(theme)
+        if self.theme_dropdown:
+            self.theme_dropdown.setCurrentText(theme)
 
         # Load YOLO mode setting
         yolo_mode = global_settings_data.get("yolo_mode", False)
-        self.yolo_mode_checkbox.setChecked(yolo_mode)
+        if self.yolo_mode_checkbox:
+            self.yolo_mode_checkbox.setChecked(yolo_mode)
 
     def save_settings(self):
         if "api_keys" not in self.global_config:
@@ -169,20 +171,36 @@ class SettingsTab(QWidget):
             self.global_config["global_settings"] = {}
 
         self.global_config["global_settings"]["theme"] = (
-            self.theme_dropdown.currentText()
+            self.theme_dropdown.currentText() if self.theme_dropdown else "dark"
         )
         self.global_config["global_settings"]["yolo_mode"] = (
-            self.yolo_mode_checkbox.isChecked()
+            self.yolo_mode_checkbox.isChecked() if self.yolo_mode_checkbox else False
         )
 
         try:
+            # Save the configuration
             self.config_manager.write_global_config_data(self.global_config)
-            QMessageBox.information(
-                self,
-                "Settings Saved",
-                "Settings saved successfully.\n\nA restart may be required for all changes to take effect.",
-            )
+
+            # Get the style provider and update the theme
+            style_provider = StyleProvider()
+            theme_changed = style_provider.update_theme()
+
+            # Show different message based on whether theme changed
             self.config_changed.emit()
+            if theme_changed:
+                QMessageBox.information(
+                    self,
+                    "Settings Saved",
+                    "Settings saved successfully. The theme has been updated immediately.\n\n"
+                    "Some components may require a restart to fully apply the new theme.",
+                )
+            else:
+                QMessageBox.information(
+                    self,
+                    "Settings Saved",
+                    "Settings saved successfully.",
+                )
+
         except Exception as e:
             QMessageBox.critical(
                 self, "Error Saving Settings", f"Could not save settings: {str(e)}"

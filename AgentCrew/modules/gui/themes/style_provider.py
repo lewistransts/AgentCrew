@@ -2,24 +2,71 @@ from .catppuccin import CatppuccinTheme
 from .atom_light import AtomLightTheme
 from .nord import NordTheme
 from AgentCrew.modules.config import ConfigManagement
+from PySide6.QtCore import Signal, QObject
 
 
-class StyleProvider:
+class StyleProvider(QObject):
     """Provides styling for the chat window and components."""
+
+    # Signal emitted when theme changes
+    theme_changed = Signal(str)
+
+    _instance = None
+
+    def __new__(cls):
+        """Singleton pattern to ensure only one instance exists."""
+        if cls._instance is None:
+            cls._instance = super(StyleProvider, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
 
     def __init__(self):
         """Initialize the style provider by reading theme from global config."""
+        if self._initialized:
+            return
+
+        super().__init__()
+        self._initialized = True
+
         # Read theme from global config
-        config_manager = ConfigManagement()
-        global_config = config_manager.read_global_config_data()
+        self.config_manager = ConfigManagement()
+        global_config = self.config_manager.read_global_config_data()
         self.theme = global_config.get("global_settings", {}).get("theme", "dark")
 
+        self._set_theme_class()
+
+    def _set_theme_class(self):
+        """Set the theme class based on the current theme setting."""
         if self.theme == "light":
             self.theme_class = AtomLightTheme
         elif self.theme == "nord":
             self.theme_class = NordTheme
         else:
             self.theme_class = CatppuccinTheme  # Default to Catppuccin for "dark"
+
+    def update_theme(self, reload=True):
+        """
+        Update the theme based on the current configuration.
+
+        Args:
+            reload (bool): If True, reload the theme from the configuration.
+                          If False, use the currently set theme.
+
+        Returns:
+            bool: True if the theme changed, False otherwise.
+        """
+        if reload:
+            # Re-read from config
+            global_config = self.config_manager.read_global_config_data()
+            new_theme = global_config.get("global_settings", {}).get("theme", "dark")
+
+            # Check if theme changed
+            if new_theme != self.theme:
+                self.theme = new_theme
+                self._set_theme_class()
+                self.theme_changed.emit(self.theme)
+                return True
+        return False
 
     def get_main_style(self):
         """Get the main style for the chat window."""
