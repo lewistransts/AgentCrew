@@ -12,6 +12,8 @@ from PySide6.QtCore import (
 )
 from AgentCrew.modules.gui.themes import StyleProvider
 
+from PySide6.QtGui import QFont
+
 
 class SystemMessageWidget(QWidget):
     """Widget to display system messages."""
@@ -52,13 +54,10 @@ class SystemMessageWidget(QWidget):
             | Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
 
-        font = self.message_label.font()
-        font_size = font.pointSizeF() * 1.3  # Match MessageBubble
-        font.setPointSizeF(font_size)
-        self.message_label.setFont(font)
+        self.message_label.setFont(QFont("Arial", 11))
 
         # Create expand/collapse button
-        self.toggle_button = QPushButton("▼ Show More")
+        self.toggle_button = QPushButton("Show More ▼")
         self.toggle_button.setStyleSheet(
             self.style_provider.get_system_message_toggle_style()
         )
@@ -110,15 +109,13 @@ class SystemMessageWidget(QWidget):
             if add_ellipsis:
                 # Ensure RichText for the "..." if HTML is used
                 self.message_label.setTextFormat(Qt.TextFormat.RichText)
-                self.message_label.setText(html_content + "...")
+                self.message_label.setText(html_content)
             else:
                 self.message_label.setText(html_content)
         except Exception as e:
             print(f"Error rendering collapsed markdown for system message: {e}")
             # Fallback: use plain text
             fallback_text = text_to_render_md
-            if add_ellipsis:
-                fallback_text += "..."
             self.message_label.setTextFormat(
                 Qt.TextFormat.PlainText
             )  # Set to PlainText for fallback
@@ -153,7 +150,7 @@ class SystemMessageWidget(QWidget):
 
         if self.is_expanded:
             self.set_expanded_text()
-            self.toggle_button.setText("▲ Show Less")
+            self.toggle_button.setText("Show Less ▲")
         else:
             self.set_collapsed_text()
-            self.toggle_button.setText("▼ Show More")
+            self.toggle_button.setText("Show More ▼")

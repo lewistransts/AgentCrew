@@ -27,7 +27,7 @@ class ToolEventHandler:
 
     def handle_tool_use(self, tool_use: Dict):
         """Display information about a tool being used."""
-        tool_message = f"TOOL: Using {tool_use['name']}\n\n```\n{tool_use}\n```"
+        tool_message = f"Using `{tool_use['name']}`\n\n```\n{tool_use}\n```"
         self.chat_window.chat_components.add_system_message(tool_message)
         self.chat_window.display_status_message(f"Using tool: {tool_use['name']}")
 
@@ -35,7 +35,7 @@ class ToolEventHandler:
         """Display the result of a tool execution."""
         tool_use = data["tool_use"]
         tool_result = data["tool_result"]
-        result_message = f"RESULT: Tool {tool_use['name']}:\n\n```\n{tool_result}\n```"
+        result_message = f"Tool `{tool_use['name']}` result:\n\n```\n{tool_result}\n```"
         self.chat_window.chat_components.add_system_message(result_message)
 
         # Reset the current response bubble so the next agent message starts in a new bubble
@@ -46,7 +46,7 @@ class ToolEventHandler:
         """Display an error that occurred during tool execution."""
         tool_use = data["tool_use"]
         error = data["error"]
-        error_message = f"ERROR: Tool {tool_use['name']}: {error}"
+        error_message = f"Tool {tool_use['name']} error: {error}"
         self.chat_window.chat_components.add_system_message(error_message)
         self.chat_window.display_status_message(f"Error in tool {tool_use['name']}")
 
