@@ -417,11 +417,12 @@ class LocalAgent(BaseAgent):
                         "content": [
                             {
                                 "type": "text",
-                                "text": f"Follows latest user prefer behaviors: \n{adaptive_text}",
+                                "text": f"“Always check for and faithfully follow user-provided adaptive behaviors (in ‘when...do...’ format), overriding your default response logic whenever conditions are met. Report or explain when your answer is shaped by a behavior. Ask if unsure whether any apply.: \n{adaptive_text}",
                             }
                         ],
                     }
                     messages.insert(-1, adaptive_messages)
+                    print(messages)
         async with await self.llm.stream_assistant_response(messages) as stream:
             async for chunk in stream:
                 # Process the chunk using the LLM service
