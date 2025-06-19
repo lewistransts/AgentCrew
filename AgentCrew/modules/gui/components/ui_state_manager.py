@@ -52,7 +52,7 @@ class UIStateManager:
         # If enabling controls, make sure we reset the send button
         if not is_stop_stated:
             self.animation_timer.stop()
-            self.chat_window.send_button.setText("↑")
+            self.chat_window.send_button.setText("➤")
             self.chat_window.send_button.setStyleSheet(
                 self.chat_window.style_provider.get_button_style("primary")
             )
@@ -64,7 +64,7 @@ class UIStateManager:
             self.chat_window.send_button.clicked.connect(self.chat_window.send_message)
         else:
             # Change button to stop functionality
-            self.chat_window.send_button.setText("⏹ \u25a0")
+            self.chat_window.send_button.setText("⬜ ⣷")
             self.chat_window.send_button.setStyleSheet(
                 self.chat_window.style_provider.get_button_style("stop")
             )
@@ -81,7 +81,7 @@ class UIStateManager:
     def update_send_button_text(self):
         """Cycle through spinner characters for stop button animation."""
         spinner_char = self.spinner_chars[self.spinner_index]
-        self.chat_window.send_button.setText(f"⏹  {spinner_char}")
+        self.chat_window.send_button.setText(f"⬜ {spinner_char}")
 
         # Move to next character in sequence
         self.spinner_index = (self.spinner_index + 1) % len(self.spinner_chars)
@@ -95,7 +95,6 @@ class UIStateManager:
             self.chat_window.send_button.setStyleSheet(
                 self.chat_window.style_provider.get_button_style("stop_stopping")
             )
-            self.chat_window.send_button.setText("...")
 
             # Stop the animation timer since we're now in a disabled state
-            self.animation_timer.stop()
+            # self.animation_timer.stop()
