@@ -362,57 +362,38 @@ class GoogleAINativeService(BaseLLMService):
         Returns:
             GoogleStreamAdapter: A context manager compatible adapter
         """
-        try:
-            # Convert messages to Google GenAI format
-            google_messages = self._convert_messages_to_google_format(messages)
+        # Convert messages to Google GenAI format
+        google_messages = self._convert_messages_to_google_format(messages)
 
-            # Create configuration with tools
-            config = types.GenerateContentConfig(
-                temperature=self.temperature,
-                max_output_tokens=65536,
-                top_p=0.95,
+        # Create configuration with tools
+        config = types.GenerateContentConfig(
+            temperature=self.temperature,
+            max_output_tokens=65536,
+            top_p=0.95,
+        )
+
+        # Add system instruction if available
+        if self.system_prompt:
+            config.system_instruction = self.system_prompt
+
+        # Add tools if available
+        if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
+            f"{self._provider_name}/{self.model}"
+        ):
+            config.tools = self.tools
+
+        if self.thinking_enabled and self.thinking_budget > 0:
+            config.thinking_config = types.ThinkingConfig(
+                thinking_budget=self.thinking_budget
             )
 
-            # Add system instruction if available
-            if self.system_prompt:
-                config.system_instruction = self.system_prompt
+        # Get the stream generator
+        stream_generator = await self.client.aio.models.generate_content_stream(
+            model=self.model, contents=google_messages, config=config
+        )
 
-            # Add tools if available
-            if self.tools and "tool_use" in ModelRegistry.get_model_capabilities(
-                f"{self._provider_name}/{self.model}"
-            ):
-                config.tools = self.tools
-
-            if self.thinking_enabled and self.thinking_budget > 0:
-                config.thinking_config = types.ThinkingConfig(
-                    thinking_budget=self.thinking_budget
-                )
-
-            # Get the stream generator
-            stream_generator = await self.client.aio.models.generate_content_stream(
-                model=self.model, contents=google_messages, config=config
-            )
-
-            # Wrap in adapter that supports context manager protocol
-            return GoogleStreamAdapter(stream_generator)
-        except Exception as e:
-            logger.error(f"Error creating stream: {str(e)}")
-
-            # Create a dummy adapter that returns an empty response
-            class EmptyStreamAdapter:
-                def __enter__(self):
-                    return self
-
-                def __exit__(self, exc_type, exc_val, exc_tb):
-                    pass
-
-                def __iter__(self):
-                    return self
-
-                def __next__(self):
-                    raise StopIteration
-
-            return EmptyStreamAdapter()
+        # Wrap in adapter that supports context manager protocol
+        return GoogleStreamAdapter(stream_generator)
 
     def _convert_messages_to_google_format(self, messages: List[Dict[str, Any]]):
         """

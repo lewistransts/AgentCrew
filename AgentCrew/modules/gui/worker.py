@@ -77,6 +77,9 @@ class LLMWorker(QObject):
             else:
                 logger.info("No response received from assistant")
                 self.status_message.emit("No response received")
+                self.message_handler._notify(
+                    "error", "No response received from assistant"
+                )
 
         except Exception as e:
             traceback_str = traceback.format_exc()
