@@ -157,7 +157,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://agentcrew.dev/install.ps1 | i
 1. **Get the code:**
 
    ```bash
-   git clone https://github.com/daltonnyx/AgentCrew.git
+   git clone https://github.com/saigontechnology/AgentCrew.git
    cd AgentCrew
    ```
 
