@@ -18,7 +18,6 @@ from AgentCrew.modules.prompts.constants import (
 from .github_copilot_ef import GithubCopilotEmbeddingFunction
 import chromadb.utils.embedding_functions as embedding_functions
 
-from AgentCrew.modules.memory import github_copilot_ef
 
 
 class ChromaMemoryService(BaseMemoryService):

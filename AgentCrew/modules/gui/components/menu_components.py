@@ -28,7 +28,7 @@ class MenuBuilder:
 
         # Create Settings menu
         self._create_settings_menu(menu_bar)
-        
+
     def update_menu_style(self):
         """Update menu styling when theme changes."""
         # Update menu bar style

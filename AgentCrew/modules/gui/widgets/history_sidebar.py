@@ -189,20 +189,22 @@ class ConversationSidebar(QWidget):
         """Update the widget's style based on the current theme."""
         if not style_provider:
             style_provider = StyleProvider()
-            
+
         # Update sidebar style
         self.setStyleSheet(style_provider.get_sidebar_style())
-        
+
         # Update search box style
         self.search_box.setStyleSheet(style_provider.get_search_box_style())
-        
+
         # Update conversation list style
-        self.conversation_list.setStyleSheet(style_provider.get_conversation_list_style())
-        
+        self.conversation_list.setStyleSheet(
+            style_provider.get_conversation_list_style()
+        )
+
         # Update button styles
         self.refresh_btn.setStyleSheet(style_provider.get_button_style("secondary"))
         self.new_btn.setStyleSheet(style_provider.get_button_style("primary"))
-        
+
     def handle_delete_conversation_request(self, conversation_ids: List[str]):
         """Handles the request to delete one or more conversations after confirmation."""
         if not conversation_ids:

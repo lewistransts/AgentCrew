@@ -3,9 +3,9 @@
 
 class DraculaTheme:
     """Static class containing Dracula theme styles.
-    
+
     Based on the Dracula color palette: https://draculatheme.com/contribute
-    
+
     Dracula Palette:
     - Background: #282A36
     - Current Line: #44475A
