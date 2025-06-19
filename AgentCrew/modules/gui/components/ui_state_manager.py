@@ -9,7 +9,20 @@ class UIStateManager:
 
         if isinstance(chat_window, ChatWindow):
             self.chat_window = chat_window
-        self.spinner_chars = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
+        self.spinner_chars = [
+            "⠉⠉",
+            "⠈⠙",
+            "⠀⠹",
+            "⠀⢸",
+            "⠀⣰",
+            "⢀⣠",
+            "⣀⣀",
+            "⣄⡀",
+            "⣆⠀",
+            "⡇⠀",
+            "⠏⠀",
+            "⠋⠁",
+        ]
         self.spinner_index = 0
         self._setup_animation_timer()
 
@@ -64,7 +77,7 @@ class UIStateManager:
             self.chat_window.send_button.clicked.connect(self.chat_window.send_message)
         else:
             # Change button to stop functionality
-            self.chat_window.send_button.setText("▐▐ ⣷")
+            self.chat_window.send_button.setText(f"{self.spinner_chars[-1]}")
             self.chat_window.send_button.setStyleSheet(
                 self.chat_window.style_provider.get_button_style("stop")
             )
@@ -81,7 +94,7 @@ class UIStateManager:
     def update_send_button_text(self):
         """Cycle through spinner characters for stop button animation."""
         spinner_char = self.spinner_chars[self.spinner_index]
-        self.chat_window.send_button.setText(f"▐▐ {spinner_char}")
+        self.chat_window.send_button.setText(f"{spinner_char}")
 
         # Move to next character in sequence
         self.spinner_index = (self.spinner_index + 1) % len(self.spinner_chars)
