@@ -422,7 +422,6 @@ class LocalAgent(BaseAgent):
                         ],
                     }
                     messages.insert(-1, adaptive_messages)
-                    print(messages)
         async with await self.llm.stream_assistant_response(messages) as stream:
             async for chunk in stream:
                 # Process the chunk using the LLM service
