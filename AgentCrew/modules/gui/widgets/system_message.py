@@ -61,6 +61,7 @@ class SystemMessageWidget(QWidget):
         self.toggle_button.setStyleSheet(
             self.style_provider.get_system_message_toggle_style()
         )
+        self.toggle_button.setFont(QFont("Arial", 9))
         self.toggle_button.setMaximumHeight(16)
         self.toggle_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.toggle_button.clicked.connect(self.toggle_expansion)
