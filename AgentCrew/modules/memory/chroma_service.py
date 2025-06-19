@@ -15,7 +15,10 @@ from AgentCrew.modules.prompts.constants import (
     PRE_ANALYZE_PROMPT,
     POST_RETRIEVE_MEMORY,
 )
+from .github_copilot_ef import GithubCopilotEmbeddingFunction
 import chromadb.utils.embedding_functions as embedding_functions
+
+from AgentCrew.modules.memory import github_copilot_ef
 
 
 class ChromaMemoryService(BaseMemoryService):
@@ -63,6 +66,12 @@ class ChromaMemoryService(BaseMemoryService):
                 model_name="voyage-3.5",
             )
             self.embedding_function = voyage_ef
+        elif os.getenv("GITHUB_COPILOT_API_KEY"):
+            github_copilot_ef = GithubCopilotEmbeddingFunction(
+                api_key=os.getenv("GITHUB_COPILOT_API_KEY"),
+                model_name="text-embedding-3-small",
+            )
+            self.embedding_function = github_copilot_ef
         elif os.getenv("OPENAI_API_KEY"):
             openai_ef = embedding_functions.OpenAIEmbeddingFunction(
                 api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-3-small"

@@ -5,7 +5,7 @@ from chromadb.utils.embedding_functions.schemas import validate_config_schema
 import os
 
 
-class VoyageEmbeddingFunction(EmbeddingFunction):
+class VoyageEmbeddingFunction(EmbeddingFunction[Documents]):
     """To use this EmbeddingFunction, you must have the google.generativeai Python package installed and have a Google API key."""
 
     def __init__(

@@ -8,7 +8,7 @@ import numpy.typing as npt
 import os
 
 
-class GoogleGenAiEmbeddingFunction(EmbeddingFunction):
+class GoogleGenAiEmbeddingFunction(EmbeddingFunction[Documents]):
     """To use this EmbeddingFunction, you must have the google.generativeai Python package installed and have a Google API key."""
 
     def __init__(
