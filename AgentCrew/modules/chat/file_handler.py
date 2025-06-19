@@ -32,6 +32,15 @@ DOCLING_FORMATS = [
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ]
 
+EXTENSION_MIME_MAPPING = {
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "pdf": "application/pdf",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "doc": "application/msword",
+    "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "xls": "application/vnd.ms-excel",
+}
+
 
 class FileHandler:
     """Handler for handling file operations with Docling integration."""
@@ -68,6 +77,12 @@ class FileHandler:
             except Exception as e:
                 logger.error(f"Failed to initialize Docling converter: {str(e)}")
 
+    def _guess_mime_by_extension(self, file_path: str) -> Optional[str]:
+        extension = os.path.splitext(file_path)[1].lower().lstrip(".")
+        if extension in EXTENSION_MIME_MAPPING:
+            return EXTENSION_MIME_MAPPING[extension]
+        return None
+
     def validate_file(self, file_path: str) -> bool:
         """
         Validate if the file is allowed based on MIME type and size.
@@ -91,6 +106,9 @@ class FileHandler:
 
         # Check MIME type
         mime_type, _ = mimetypes.guess_type(file_path)
+        if not mime_type:
+            mime_type = self._guess_mime_by_extension(file_path)
+
         if (
             mime_type
             and mime_type not in ALLOWED_MIME_TYPES
@@ -116,8 +134,9 @@ class FileHandler:
             return None
 
         # Get file extension and MIME type
-        _, file_extension = os.path.splitext(file_path)
         mime_type, _ = mimetypes.guess_type(file_path)
+        if not mime_type:
+            mime_type = self._guess_mime_by_extension(file_path)
 
         # Use Docling for specific formats
         if DOCLING_ENABLED and self.converter and mime_type in DOCLING_FORMATS:
