@@ -19,7 +19,6 @@ from .github_copilot_ef import GithubCopilotEmbeddingFunction
 import chromadb.utils.embedding_functions as embedding_functions
 
 
-
 class ChromaMemoryService(BaseMemoryService):
     """Service for storing and retrieving conversation memory using ChromaDB."""
 
