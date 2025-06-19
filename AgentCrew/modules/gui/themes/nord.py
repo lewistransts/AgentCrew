@@ -23,7 +23,7 @@ QScrollArea {
     background-color: #3b4252; /* Nord Polar Night 1 */
 }
 QWidget#chatContainer { /* Specific ID for chat_container */
-    background-color: #3b4252; /* Nord Polar Night 1 */
+    background-color: #2e3440; /* Nord Polar Night 1 */
 }
 QSplitter::handle {
     background-color: #434c5e; /* Nord Polar Night 2 */
@@ -35,7 +35,7 @@ QSplitter::handle:pressed {
     background-color: #5e81ac; /* Nord Frost 3 */
 }
 QStatusBar {
-    background-color: #2e3440; /* Nord Polar Night 0 */
+    background-color: #3b4252; /* Nord Polar Night 0 */
     color: #d8dee9; /* Nord Snow Storm 0 */
 }
 QToolTip {
@@ -396,7 +396,7 @@ QLineEdit:focus {
     # Menu styles
     MENU_BAR = """
 QMenuBar {
-    background-color: #2e3440; /* Nord Polar Night 0 */
+    background-color: #3b4252; /* Nord Polar Night 1 */
     color: #d8dee9; /* Nord Snow Storm 0 */
     padding: 2px;
 }
@@ -492,6 +492,7 @@ QLabel {
     background-color: #434c5e; /* Nord Polar Night 2 */
     color: #e5e9f0; /* Nord Snow Storm 1 */
     padding: 8px; 
+    border-radius: 5px;
     font-weight: bold;
 }
 """

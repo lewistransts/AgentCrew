@@ -14,7 +14,7 @@ QScrollArea {
     background-color: #f8f8f8; /* Light gray */
 }
 QWidget#chatContainer { /* Specific ID for chat_container */
-    background-color: #f8f8f8; /* Light gray */
+    background-color: #ffffff; /* Light gray */
 }
 QSplitter::handle {
     background-color: #e0e0e0; /* Light gray */
@@ -386,7 +386,7 @@ QLineEdit:focus {
     # Menu styles
     MENU_BAR = """
 QMenuBar {
-    background-color: #ffffff; /* White */
+    background-color: #f8f8f8; /* White */
     color: #333333; /* Dark gray text */
     padding: 2px;
 }
@@ -482,6 +482,7 @@ QLabel {
     background-color: #ffffff; /* White */
     color: #333333; /* Dark gray text */
     padding: 8px; 
+    border-radius: 5px;
     font-weight: bold;
 }
 """
@@ -553,7 +554,7 @@ QLabel {
     color: #666666; /* Medium gray */
     font-weight: bold;
     padding: 8px;
-    background-color: #f0f0f0; /* Very light gray */
+    background-color: #ffffff; /* Very light gray */
     border-top: 1px solid #e0e0e0; /* Light gray separator */
 }
 """

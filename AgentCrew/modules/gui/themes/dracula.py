@@ -499,6 +499,7 @@ QLabel {
     background-color: #44475A; /* Dracula Current Line */
     color: #F8F8F2; /* Dracula Foreground */
     padding: 8px; 
+    border-radius: 5px;
     font-weight: bold;
 }
 """

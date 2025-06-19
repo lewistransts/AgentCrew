@@ -14,7 +14,7 @@ QScrollArea {
     background-color: #181825; /* Catppuccin Mantle */
 }
 QWidget#chatContainer { /* Specific ID for chat_container */
-    background-color: #181825; /* Catppuccin Mantle */
+    background-color: #1e1e2e; /* Catppuccin Mantle */
 }
 QSplitter::handle {
     background-color: #313244; /* Catppuccin Surface0 */
@@ -388,7 +388,7 @@ QLineEdit:focus {
     # Menu styles
     MENU_BAR = """
 QMenuBar {
-    background-color: #1e1e2e; /* Catppuccin Base */
+    background-color: #181825; /* Catppuccin Base */
     color: #cdd6f4; /* Catppuccin Text */
     padding: 2px;
 }
@@ -484,6 +484,7 @@ QLabel {
     background-color: #313244; /* Catppuccin Surface0 */
     color: #cdd6f4; /* Catppuccin Text */
     padding: 8px; 
+    border-radius: 5px;
     font-weight: bold;
 }
 """
@@ -558,7 +559,7 @@ QLabel {
     color: #bac2de; /* Catppuccin Subtext1 */
     font-weight: bold;
     padding: 8px;
-    background-color: #11111b; /* Catppuccin Crust */
+    background-color: #1e1e2e; /* Catppuccin Crust */
     border-top: 1px solid #313244; /* Catppuccin Surface0 for a subtle separator */
 }
 """
@@ -944,7 +945,7 @@ background-color: #1e1e2e; /* Catppuccin Base */
 
     SPLITTER_COLOR = """
 QSplitter::handle {
-    background-color: #1e1e2e; /* Darker color (Catppuccin Mantle) */
+    background-color: #181825; /* Darker color (Catppuccin Mantle) */
 }
 QSplitter::handle:hover {
     background-color: #313244; /* Catppuccin Surface0 */
