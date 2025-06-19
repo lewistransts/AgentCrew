@@ -110,7 +110,7 @@ class ChatWindow(QMainWindow, Observer):
         # --- Assemble Chat Area Layout ---
         chat_area_widget = QWidget()  # Container for everything right of the sidebar
         chat_area_layout = QVBoxLayout(chat_area_widget)
-        chat_area_layout.setContentsMargins(0, 0, 0, 0)
+        chat_area_layout.setContentsMargins(5, 5, 5, 0)
         chat_area_layout.addWidget(self.chat_scroll, 1)  # Give chat area more space
         chat_area_layout.addWidget(self.status_indicator)
 

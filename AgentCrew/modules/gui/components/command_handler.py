@@ -67,16 +67,6 @@ class CommandHandler:
     @Slot()
     def clear_chat(self, requested=False):
         """Clear the chat history and UI."""
-        # Only ask for confirmation if triggered by user (e.g., Ctrl+L), not programmatically
-        if not requested:
-            reply = QMessageBox.question(
-                self.chat_window,
-                "Clear Chat",
-                "Are you sure you want to start new conversation?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            )
-            if reply == QMessageBox.StandardButton.No:
-                return  # User cancelled
 
         # Clear the UI immediately
         self.chat_window.chat_components.clear_chat_ui()
@@ -172,7 +162,10 @@ class CommandHandler:
             self.chat_window.session_cost = 0.0
             self.chat_window.token_usage.update_token_info(0, 0, 0.0, 0.0)
             self.chat_window.chat_components.add_system_message(
-                "Chat history cleared by command."
+                "Welcome! Select a past conversation or start a new one."
+            )
+            self.chat_window.chat_components.add_system_message(
+                "Press Ctrl+Enter to send, Ctrl+Shift+C to copy, Ctrl+L to clear chat."
             )
             self.chat_window.loading_conversation = False
             self.chat_window.ui_state_manager.set_input_controls_enabled(True)
