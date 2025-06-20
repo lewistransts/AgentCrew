@@ -465,6 +465,7 @@ class ChatWindow(QMainWindow, Observer):
             "tool_error",
             "tool_confirmation_required",
             "tool_denied",
+            "agent_changed_by_transfer",
         ]
         command_events = [
             "clear_requested",
@@ -473,7 +474,6 @@ class ChatWindow(QMainWindow, Observer):
             "debug_requested",
             "agent_changed",
             "model_changed",
-            "agent_changed_by_transfer",
             "think_budget_set",
             "jump_performed",
         ]

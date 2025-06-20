@@ -127,7 +127,9 @@ class ConsoleUI(Observer):
         elif event == "agent_changed":
             self.display_message(f"{YELLOW}Switched to {data} agent{RESET}")
         elif event == "agent_changed_by_transfer":
-            self.display_message(f"{YELLOW}Transfered to {data} agent{RESET}")
+            self.display_message(
+                f"{YELLOW}Transfered to {data['agent_name'] if 'agent_name' in data else 'other'} agent{RESET}"
+            )
         elif event == "agent_continue":
             self.display_message(f"\n{GREEN}{BOLD}🤖 {data.upper()}:{RESET}")
         elif event == "jump_performed":

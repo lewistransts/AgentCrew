@@ -213,16 +213,16 @@ class CommandHandler:
             )
             return True
 
-        elif event == "agent_changed_by_transfer":
-            self.chat_window.chat_components.add_system_message(
-                f"Transfered to {data} agent"
-            )
-            self.chat_window.status_indicator.setText(
-                f"Agent: {data} | Model: {self.chat_window.message_handler.agent.get_model()}"
-            )
-            self.chat_window.current_response_bubble = None
-            self.chat_window.current_response_container = None
-            return True
+        # elif event == "agent_changed_by_transfer":
+        #     self.chat_window.chat_components.add_system_message(
+        #         f"Transfered to {data} agent"
+        #     )
+        #     self.chat_window.status_indicator.setText(
+        #         f"Agent: {data} | Model: {self.chat_window.message_handler.agent.get_model()}"
+        #     )
+        #     self.chat_window.current_response_bubble = None
+        #     self.chat_window.current_response_container = None
+        #     return True
 
         elif event == "think_budget_set":
             self.chat_window.chat_components.add_system_message(

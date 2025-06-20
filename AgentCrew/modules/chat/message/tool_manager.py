@@ -29,7 +29,7 @@ class ToolManager:
                 tool_result = await self.message_handler.agent.execute_tool_call(
                     tool_name, tool_use["input"]
                 )
-                self._post_tool_transfer(tool_result)
+                self._post_tool_transfer(tool_use, tool_result)
             except Exception as e:
                 # if transfer failed we should add the tool_call message back for record
                 from AgentCrew.modules.agents.base import MessageType
@@ -192,7 +192,7 @@ class ToolManager:
                 **result,
             }
 
-    def _post_tool_transfer(self, tool_result):
+    def _post_tool_transfer(self, tool_use, tool_result):
         """Handle post-transfer operations."""
         if (
             self.message_handler.current_conversation_id
@@ -236,7 +236,8 @@ class ToolManager:
         )
 
         self.message_handler._notify(
-            "agent_changed_by_transfer", self.message_handler.agent.name
+            "agent_changed_by_transfer",
+            {"tool_use": tool_use, "agent_name": self.message_handler.agent.name},
         )
 
     def reset_approved_tools(self):

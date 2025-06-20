@@ -19,6 +19,12 @@ class ToolEventHandler:
             self.handle_tool_use(data)
         elif event == "tool_result":
             self.handle_tool_result(data)
+        elif event == "agent_changed_by_transfer":
+            data["tool_result"] = f"Transfered to Agent: {data['agent_name']}"
+            self.handle_tool_result(data)
+            self.chat_window.status_indicator.setText(
+                f"Agent: {data} | Model: {self.chat_window.message_handler.agent.get_model()}"
+            )
         elif event == "tool_error":
             self.handle_tool_error(data)
         elif event == "tool_confirmation_required":
