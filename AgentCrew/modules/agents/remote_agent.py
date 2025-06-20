@@ -100,7 +100,6 @@ class RemoteAgent(BaseAgent):
         last_user_message = messages[-1]
 
         a2a_message = convert_agent_message_to_a2a(last_user_message)
-        print(a2a_message)
 
         a2a_payload = MessageSendParams(
             metadata={"id": str(uuid4())},
