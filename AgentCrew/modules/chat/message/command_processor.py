@@ -7,6 +7,7 @@ from AgentCrew.modules.chat.file_handler import FileHandler
 from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules.llm.service_manager import ServiceManager
 from AgentCrew.modules.chat.consolidation import ConversationConsolidator
+from AgentCrew.modules.config import ConfigManagement
 
 
 @dataclass
@@ -294,6 +295,14 @@ class CommandProcessor:
                 # Update the agent manager with the new LLM service
                 self.message_handler.agent_manager.update_llm_service(new_llm_service)
 
+                # NEW: Persist the last used model to global config
+                try:
+                    config_manager = ConfigManagement()
+                    config_manager.set_last_used_model(model_id, model.provider)
+                except Exception as e:
+                    # Don't fail the command if config save fails, just log it
+                    print(f"Warning: Failed to save last used model: {e}")
+
                 self.message_handler._notify(
                     "model_changed",
                     {"id": model.id, "name": model.name, "provider": model.provider},
@@ -341,6 +350,15 @@ class CommandProcessor:
             if old_agent:
                 self.message_handler.agent.history = list(old_agent.history)
                 old_agent.history = []
+
+            # NEW: Persist the last used agent to global config
+            try:
+                config_manager = ConfigManagement()
+                config_manager.set_last_used_agent(agent_name)
+            except Exception as e:
+                # Don't fail the command if config save fails, just log it
+                print(f"Warning: Failed to save last used agent: {e}")
+
             self.message_handler._notify("agent_changed", agent_name)
             return True, f"Switched to {agent_name} agent"
         else:

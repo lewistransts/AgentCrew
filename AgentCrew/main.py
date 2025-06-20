@@ -216,12 +216,12 @@ def run_update_command():
 
         if system == "linux" or system == "darwin":  # Darwin is macOS
             # Linux/macOS update command
-            command = "curl -LsSf https://gist.githubusercontent.com/daltonnyx/aa45d64fd8fb6a084067d4012a5710a6/raw/83f26a63e516c2653d295d466b1f1f9a1af64514/install.sh | bash"
+            command = "curl -LsSf https://agentcrew.dev/install.sh | bash"
             click.echo("🐧 Running Linux/macOS update command...")
 
         elif system == "windows":
             # Windows update command
-            command = 'powershell -ExecutionPolicy ByPass -c "irm https://gist.githubusercontent.com/daltonnyx/e2d9a4d371e095bfa07cf5246d7e0746/raw/364cd2afe72e1c1b1fc4cb31f5c923a016151db3/install.ps1 | iex"'
+            command = 'powershell -c "irm https://agentcrew.dev/install.ps1 | iex"'
             click.echo("🪟 Running Windows update command...")
 
         else:
@@ -257,6 +257,29 @@ def setup_services(provider, memory_llm=None):
 
     # Get the LLM service from the manager
     llm_service = llm_manager.get_service(provider)
+
+    try:
+        config_manager = ConfigManagement()
+        last_model = config_manager.get_last_used_model()
+        last_provider = config_manager.get_last_used_provider()
+
+        # Only restore if the last used provider matches current provider or if no specific provider was requested
+        if last_model and last_provider:
+            # Check if we should restore the last used model
+            should_restore = False
+            if provider == last_provider:
+                # Same provider, definitely restore
+                should_restore = True
+            elif provider is None:
+                # No specific provider requested, try to restore anyway
+                should_restore = True
+
+            last_model_class = registry.get_model(last_model)
+            if should_restore and last_model_class:
+                llm_service.model = last_model_class.id
+    except Exception as e:
+        # Don't fail startup if restoration fails
+        click.echo(f"⚠️  Could not restore last used model: {e}")
 
     # Initialize services
     if memory_llm:
@@ -407,8 +430,21 @@ tools = ["memory", "clipboard", "web_search", "code_analysis"]
 
     mcp_register()
 
-    # Select the initial agent if specified
-    if first_agent_name:
+    # NEW: Try to restore last used agent first, then fall back to first_agent_name
+    initial_agent_selected = False
+    try:
+        config_manager = ConfigManagement()
+        last_agent = config_manager.get_last_used_agent()
+
+        if last_agent and last_agent in agent_manager.agents:
+            if agent_manager.select_agent(last_agent):
+                initial_agent_selected = True
+    except Exception as e:
+        # Don't fail startup if restoration fails
+        click.echo(f"⚠️  Could not restore last used agent: {e}")
+
+    # Select the initial agent if specified and no agent was restored
+    if not initial_agent_selected and first_agent_name:
         if not agent_manager.select_agent(first_agent_name):
             available_agents = ", ".join(agent_manager.agents.keys())
             click.echo(
@@ -498,33 +534,76 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
 
         # Only check environment variables if provider wasn't explicitly specified
         if provider is None:
-            if os.getenv("GITHUB_COPILOT_API_KEY"):
-                provider = "github_copilot"
-            elif os.getenv("ANTHROPIC_API_KEY"):
-                provider = "claude"
-            elif os.getenv("GEMINI_API_KEY"):
-                provider = "google"
-            elif os.getenv("OPENAI_API_KEY"):
-                provider = "openai"
-            elif os.getenv("GROQ_API_KEY"):
-                provider = "groq"
-            elif os.getenv("DEEPINFRA_API_KEY"):
-                provider = "deepinfra"
-            else:
-                config = ConfigManagement()
-                custom_providers = config.read_custom_llm_providers_config()
-                if len(custom_providers) > 0:
-                    # Use the first custom provider as default if no API keys found
-                    provider = custom_providers[0]["name"]
-                else:
-                    # Ask user to setup api key if nothing found
-                    from AgentCrew.modules.gui.widgets.config_window import ConfigWindow
+            # NEW: First try to restore last used provider
+            try:
+                config_manager = ConfigManagement()
+                last_provider = config_manager.get_last_used_provider()
+                if last_provider:
+                    # Verify the provider is still available
+                    if last_provider in [
+                        "claude",
+                        "groq",
+                        "openai",
+                        "google",
+                        "deepinfra",
+                        "github_copilot",
+                    ]:
+                        # Check if API key is available for this provider
+                        api_key_map = {
+                            "claude": "ANTHROPIC_API_KEY",
+                            "google": "GEMINI_API_KEY",
+                            "openai": "OPENAI_API_KEY",
+                            "groq": "GROQ_API_KEY",
+                            "deepinfra": "DEEPINFRA_API_KEY",
+                            "github_copilot": "GITHUB_COPILOT_API_KEY",
+                        }
+                        if os.getenv(api_key_map.get(last_provider, "")):
+                            provider = last_provider
+                            click.echo(f"🔄 Restored last used provider: {provider}")
+                    else:
+                        # Check if it's a custom provider
+                        custom_providers = (
+                            config_manager.read_custom_llm_providers_config()
+                        )
+                        if any(p["name"] == last_provider for p in custom_providers):
+                            provider = last_provider
+                            click.echo(
+                                f"🔄 Restored last used custom provider: {provider}"
+                            )
+            except Exception as e:
+                click.echo(f"⚠️  Could not restore last used provider: {e}")
 
-                    app = QApplication(sys.argv)
-                    config_window = ConfigWindow()
-                    config_window.tab_widget.setCurrentIndex(3)  # Show Settings tab
-                    config_window.show()
-                    sys.exit(app.exec())
+            # Fall back to environment variable detection if no provider restored
+            if provider is None:
+                if os.getenv("GITHUB_COPILOT_API_KEY"):
+                    provider = "github_copilot"
+                elif os.getenv("ANTHROPIC_API_KEY"):
+                    provider = "claude"
+                elif os.getenv("GEMINI_API_KEY"):
+                    provider = "google"
+                elif os.getenv("OPENAI_API_KEY"):
+                    provider = "openai"
+                elif os.getenv("GROQ_API_KEY"):
+                    provider = "groq"
+                elif os.getenv("DEEPINFRA_API_KEY"):
+                    provider = "deepinfra"
+                else:
+                    config = ConfigManagement()
+                    custom_providers = config.read_custom_llm_providers_config()
+                    if len(custom_providers) > 0:
+                        # Use the first custom provider as default if no API keys found
+                        provider = custom_providers[0]["name"]
+                    else:
+                        # Ask user to setup api key if nothing found
+                        from AgentCrew.modules.gui.widgets.config_window import (
+                            ConfigWindow,
+                        )
+
+                        app = QApplication(sys.argv)
+                        config_window = ConfigWindow()
+                        config_window.tab_widget.setCurrentIndex(3)  # Show Settings tab
+                        config_window.show()
+                        sys.exit(app.exec())
         services = setup_services(provider, memory_llm)
 
         if mcp_config:
