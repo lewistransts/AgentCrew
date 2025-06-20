@@ -1,7 +1,4 @@
 import nest_asyncio
-
-nest_asyncio.apply()
-
 from AgentCrew.modules.config import ConfigManagement
 import click
 import importlib
@@ -28,6 +25,8 @@ from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules.agents import AgentManager, LocalAgent, RemoteAgent
 from AgentCrew.modules.image_generation import ImageGenerationService
 from PySide6.QtWidgets import QApplication
+
+nest_asyncio.apply()
 
 
 @click.group()

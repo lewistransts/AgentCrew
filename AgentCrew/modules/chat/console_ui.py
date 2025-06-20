@@ -246,22 +246,115 @@ class ConsoleUI(Observer):
     def display_tool_use(self, tool_use: Dict):
         """Display information about a tool being used."""
         self.finish_live_update()
-        print(f"\n{YELLOW}🔧 Using tool: {tool_use['name']}{RESET}")
-        print(f"\n{GRAY}{tool_use}{RESET}")
+
+        # Tool icons mapping
+        tool_icons = {
+            "web_search": "🔍",
+            "fetch_webpage": "🌐",
+            "transfer": "↗️",
+            "adapt": "🧠",
+            "retrieve_memory": "💭",
+            "forget_memory_topic": "🗑️",
+            "analyze_repo": "📂",
+            "read_file": "📄",
+        }
+
+        # Get tool icon or default
+        tool_icon = tool_icons.get(tool_use["name"], "🔧")
+
+        # Display tool header with better formatting
+        print(
+            f"\n{YELLOW}┌───── {tool_icon} Tool: {BOLD}{tool_use['name']}{RESET}{YELLOW} ─────{RESET}"
+        )
+
+        # Format tool input parameters
+        if isinstance(tool_use.get("input"), dict):
+            print(f"{YELLOW}│ Parameters:{RESET}")
+            for key, value in tool_use["input"].items():
+                # Format value based on type
+                if isinstance(value, dict) or isinstance(value, list):
+                    import json
+
+                    formatted_value = json.dumps(value, indent=2)
+                    # Add indentation to all lines after the first
+                    formatted_value = formatted_value.replace(
+                        "\n", f"\n{YELLOW}│ {RESET}    "
+                    )
+                    print(f"{YELLOW}│ • {BLUE}{key}{RESET}: {formatted_value}")
+                else:
+                    print(f"{YELLOW}│ • {BLUE}{key}{RESET}: {value}")
+        else:
+            print(f"{YELLOW}│ Input: {RESET}{tool_use.get('input', '')}")
+
+        print(f"{YELLOW}└{RESET}")
 
     def display_tool_result(self, data: Dict):
         """Display the result of a tool execution."""
         tool_use = data["tool_use"]
         tool_result = data["tool_result"]
-        print(f"{GREEN}✓ Tool result for {tool_use['name']}:{RESET}")
-        print(f"{GRAY}{tool_result}{RESET}")
+
+        # Tool icons mapping
+        tool_icons = {
+            "web_search": "🔍",
+            "fetch_webpage": "🌐",
+            "transfer": "↗️",
+            "adapt": "🧠",
+            "retrieve_memory": "💭",
+            "forget_memory_topic": "🗑️",
+            "analyze_repo": "📂",
+            "read_file": "📄",
+        }
+
+        # Get tool icon or default
+        tool_icon = tool_icons.get(tool_use["name"], "🔧")
+
+        # Display tool result with better formatting
+        print(
+            f"\n{GREEN}┌───── {tool_icon} Tool Result: {BOLD}{tool_use['name']}{RESET}{GREEN} ─────{RESET}"
+        )
+
+        # Format the result based on type
+        result_str = str(tool_result)
+        # If result is very long, try to format it
+        if len(result_str) > 500:
+            print(f"{GREEN}│ {RESET}{result_str[:500]}...")
+            print(
+                f"{GREEN}│ {RESET}(Output truncated, total length: {len(result_str)} characters)"
+            )
+        else:
+            # Split by lines to add prefixes
+            for line in result_str.split("\n"):
+                print(f"{GREEN}│ {RESET}{line}")
+
+        print(f"{GREEN}└{RESET}")
 
     def display_tool_error(self, data: Dict):
         """Display an error that occurred during tool execution."""
         self.finish_live_update()
         tool_use = data["tool_use"]
         error = data["error"]
-        print(f"{RED}❌ Error in tool {tool_use['name']}: {error}{RESET}")
+
+        # Tool icons mapping
+        tool_icons = {
+            "web_search": "🔍",
+            "fetch_webpage": "🌐",
+            "transfer": "↗️",
+            "adapt": "🧠",
+            "retrieve_memory": "💭",
+            "forget_memory_topic": "🗑️",
+            "analyze_repo": "📂",
+            "read_file": "📄",
+        }
+
+        # Get tool icon or default
+        tool_icon = tool_icons.get(tool_use["name"], "🔧")
+
+        # Display tool error with better formatting
+        print(
+            f"\n{RED}┌───── {tool_icon} Tool Error: {BOLD}{tool_use['name']}{RESET}{RED} ─────{RESET}"
+        )
+        print(f"{RED}│ {RESET}{error}")
+        print(f"{RED}└{RESET}")
 
     def display_tool_confirmation_request(self, tool_info):
         """Display tool confirmation request and get user response."""

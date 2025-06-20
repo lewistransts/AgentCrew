@@ -109,7 +109,11 @@ class ConversationComponents:
                 # Add handling for other potential content formats if necessary
                 if "tool_calls" in msg:
                     for tool_call in msg["tool_calls"]:
+                        print(tool_call)
                         self.chat_window.tool_event_handler.handle_tool_use(tool_call)
+                        self.chat_window.tool_event_handler.handle_tool_result(
+                            {"tool_use": tool_call, "tool_result": ""}
+                        )
             elif role == "consolidated":
                 # Handle consolidated message
                 content = msg.get("content", "")

@@ -252,3 +252,78 @@ class StyleProvider(QObject):
     def get_combo_box_style(self):
         """Get style for combo boxes."""
         return self.theme_class.COMBO_BOX
+
+    def get_tool_widget_style(self):
+        """Get style for tool widgets."""
+        return (
+            self.theme_class.TOOL_WIDGET
+            if hasattr(self.theme_class, "TOOL_WIDGET")
+            else ""
+        )
+
+    def get_tool_card_style(self):
+        """Get style for tool widget cards."""
+        return (
+            self.theme_class.TOOL_CARD if hasattr(self.theme_class, "TOOL_CARD") else ""
+        )
+
+    def get_tool_card_error_style(self):
+        """Get style for tool widget cards in error state."""
+        return (
+            self.theme_class.TOOL_CARD_ERROR
+            if hasattr(self.theme_class, "TOOL_CARD_ERROR")
+            else ""
+        )
+
+    def get_tool_header_style(self):
+        """Get style for tool widget headers."""
+        return (
+            self.theme_class.TOOL_HEADER
+            if hasattr(self.theme_class, "TOOL_HEADER")
+            else ""
+        )
+
+    def get_tool_toggle_button_style(self):
+        """Get style for tool widget toggle buttons."""
+        return (
+            self.theme_class.TOOL_TOGGLE_BUTTON
+            if hasattr(self.theme_class, "TOOL_TOGGLE_BUTTON")
+            else ""
+        )
+
+    def get_tool_status_style(self):
+        """Get style for tool widget status indicators."""
+        return (
+            self.theme_class.TOOL_STATUS
+            if hasattr(self.theme_class, "TOOL_STATUS")
+            else ""
+        )
+
+    def get_tool_content_style(self):
+        """Get style for tool widget content."""
+        return (
+            self.theme_class.TOOL_CONTENT
+            if hasattr(self.theme_class, "TOOL_CONTENT")
+            else ""
+        )
+
+    def get_tool_progress_style(self):
+        """Get style for tool widget progress bars."""
+        return (
+            self.theme_class.TOOL_PROGRESS
+            if hasattr(self.theme_class, "TOOL_PROGRESS")
+            else ""
+        )
+
+    def get_tool_separator_style(self):
+        """Get style for tool widget separators."""
+        return (
+            self.theme_class.TOOL_SEPARATOR
+            if hasattr(self.theme_class, "TOOL_SEPARATOR")
+            else ""
+        )
+
+    def get_tool_icon(self, tool_name):
+        """Get icon for a specific tool."""
+        icons = getattr(self.theme_class, "TOOL_ICONS", {})
+        return icons.get(tool_name, icons.get("default", "🔧"))

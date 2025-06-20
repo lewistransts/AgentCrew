@@ -221,6 +221,25 @@ class ChatComponents:
         # Process events and scroll
         QApplication.processEvents()
 
+    def add_tool_widget(self, tool_widget):
+        """Add a tool widget to the chat with proper centering and scrolling."""
+        # Create container for alignment (centered)
+        container = QWidget()
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(0, 5, 0, 5)
+        container_layout.addWidget(tool_widget)
+
+        # Add to chat layout
+        self.chat_window.chat_layout.addWidget(container)
+
+        # Scroll to show the new widget
+        QApplication.processEvents()
+        self.chat_window.chat_scroll.verticalScrollBar().setValue(
+            self.chat_window.chat_scroll.verticalScrollBar().maximum()
+        )
+
+        return container
+
     def clear_chat_ui(self):
         """Clear only the chat message widgets from the UI."""
         while self.chat_window.chat_layout.count():

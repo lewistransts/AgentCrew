@@ -1,6 +1,7 @@
 from typing import Any, Dict
 from PySide6.QtWidgets import QMessageBox, QTextEdit, QGridLayout
 from PySide6.QtCore import Qt
+from AgentCrew.modules.gui.widgets.tool_widget import ToolWidget
 
 
 class ToolEventHandler:
@@ -27,16 +28,33 @@ class ToolEventHandler:
 
     def handle_tool_use(self, tool_use: Dict):
         """Display information about a tool being used."""
-        tool_message = f"Using `{tool_use['name']}`\n\n```\n{tool_use}\n```"
-        self.chat_window.chat_components.add_system_message(tool_message)
+        # Create tool widget
+        tool_widget = ToolWidget(tool_use["name"], tool_use)
+
+        # Store reference to the tool widget for later result update
+        tool_use["tool_widget_ref"] = tool_widget
+
+        # Add to chat using convenience method
+        self.chat_window.chat_components.add_tool_widget(tool_widget)
+
+        # Display status message
         self.chat_window.display_status_message(f"Using tool: {tool_use['name']}")
 
     def handle_tool_result(self, data: Dict):
         """Display the result of a tool execution."""
         tool_use = data["tool_use"]
         tool_result = data["tool_result"]
-        result_message = f"Tool `{tool_use['name']}` result:\n\n```\n{tool_result}\n```"
-        self.chat_window.chat_components.add_system_message(result_message)
+
+        # If we have a reference to the tool widget, update it
+        if "tool_widget_ref" in tool_use:
+            tool_widget = tool_use["tool_widget_ref"]
+            tool_widget.update_with_result(tool_result)
+        else:
+            # Create a new tool widget with both use and result
+            tool_widget = ToolWidget(tool_use["name"], tool_use, tool_result)
+
+            # Add to chat using convenience method
+            self.chat_window.chat_components.add_tool_widget(tool_widget)
 
         # Reset the current response bubble so the next agent message starts in a new bubble
         self.chat_window.current_response_bubble = None
@@ -46,8 +64,18 @@ class ToolEventHandler:
         """Display an error that occurred during tool execution."""
         tool_use = data["tool_use"]
         error = data["error"]
-        error_message = f"Tool {tool_use['name']} error: {error}"
-        self.chat_window.chat_components.add_system_message(error_message)
+
+        # If we have a reference to the tool widget, update it
+        if "tool_widget_ref" in tool_use:
+            tool_widget = tool_use["tool_widget_ref"]
+            tool_widget.update_with_result(error, is_error=True)
+        else:
+            # Create a new tool widget with both use and error result
+            tool_widget = ToolWidget(tool_use["name"], tool_use, error, is_error=True)
+
+            # Add to chat using convenience method
+            self.chat_window.chat_components.add_tool_widget(tool_widget)
+
         self.chat_window.display_status_message(f"Error in tool {tool_use['name']}")
 
         # Reset the current response bubble so the next agent message starts in a new bubble

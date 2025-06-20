@@ -1073,3 +1073,125 @@ span.linenos.special { color: #333333; background-color: #e0e0e0; padding-left: 
 .codehilite .vm { color: #e91e63 } /* Name.Variable.Magic -> Pink */
 .codehilite .il { color: #ff6600 } /* Literal.Number.Integer.Long -> Orange */
 """
+
+    # Tool widget styles
+    # Tool widget styles
+    TOOL_WIDGET = """
+QWidget {
+    background-color: transparent;
+}
+"""
+
+    TOOL_CARD = """
+QFrame#toolCard {
+    border-radius: 6px; /* Reduced from 12px for subtlety */
+    background-color: rgba(66, 133, 244, 0.06); /* More subtle transparency */
+    border: 1px solid rgba(66, 133, 244, 0.3); /* Softer border */
+    padding: 1px; /* Minimal padding */
+}
+"""
+
+    TOOL_CARD_ERROR = """
+QFrame#toolCard {
+    border-radius: 6px; /* Reduced from 12px for subtlety */
+    background-color: rgba(234, 67, 53, 0.06); /* More subtle transparency */
+    border: 1px solid rgba(234, 67, 53, 0.3); /* Softer border */
+    padding: 1px; /* Minimal padding */
+}
+"""
+
+    TOOL_HEADER = """
+QLabel {
+    font-weight: 500; /* Lighter weight for subtlety */
+    color: #666666; /* More muted gray */
+}
+"""
+
+    TOOL_TOGGLE_BUTTON = """
+QPushButton {
+    background-color: transparent;
+    border: none;
+    color: #999999; /* More muted gray */
+    font-weight: normal; /* Reduced from bold */
+    font-size: 10px; /* Smaller font */
+}
+QPushButton:hover {
+    color: #4285f4; /* Blue */
+}
+"""
+
+    TOOL_STATUS = """
+QLabel {
+    font-weight: 500; /* Lighter than bold */
+    padding: 2px; /* Reduced padding */
+    font-size: 10px; /* Smaller status text */
+}
+QLabel[status="running"] {
+    color: #ff9800; /* Orange */
+}
+QLabel[status="complete"] {
+    color: #34a853; /* Green */
+}
+QLabel[status="error"] {
+    color: #ea4335; /* Red */
+}
+"""
+
+    TOOL_CONTENT = """
+QLabel {
+    color: #666666; /* More muted text */
+    padding: 1px; /* Minimal padding */
+    font-size: 9px; /* Smaller content text */
+}
+QLabel[role="title"] {
+    font-weight: 500; /* Lighter than bold */
+    color: #666666;
+    font-size: 10px;
+}
+QLabel[role="key"] {
+    color: #3367d6; /* Slightly muted blue */
+    font-weight: 500;
+    font-size: 9px;
+}
+QLabel[role="value"] {
+    color: #777777; /* More muted */
+    font-size: 9px;
+}
+QLabel[role="error"] {
+    color: #ea4335; /* Red for error messages */
+    font-size: 9px;
+}
+"""
+
+    TOOL_PROGRESS = """
+QProgressBar {
+    border: none;
+    background-color: rgba(224, 224, 224, 0.4); /* Light gray with transparency */
+    border-radius: 5px;
+    text-align: center;
+}
+QProgressBar::chunk {
+    background-color: #4285f4; /* Blue */
+    border-radius: 5px;
+}
+"""
+
+    TOOL_SEPARATOR = """
+QFrame {
+    background-color: rgba(66, 133, 244, 0.3); /* Blue with transparency */
+    border: none;
+}
+"""
+
+    # Tool icons (consistent across all themes)
+    TOOL_ICONS = {
+        "web_search": "🔍",
+        "fetch_webpage": "🌐",
+        "transfer": "↗️",
+        "adapt": "🧠",
+        "retrieve_memory": "💭",
+        "forget_memory_topic": "🗑️",
+        "analyze_repo": "📂",
+        "read_file": "📄",
+        "default": "🔧",  # Default icon for unspecified tools
+    }
