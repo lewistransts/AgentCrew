@@ -315,4 +315,4 @@ bugs, new ideas, or improvements.
 
 ## 📜 License
 
-AgentCrew is available under the [MIT License](LICENSE).
+AgentCrew is available under the [Apache 2.0 License](LICENSE).
