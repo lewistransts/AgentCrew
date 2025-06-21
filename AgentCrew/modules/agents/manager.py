@@ -180,7 +180,6 @@ class AgentManager:
                 for msg in messages_to_process
                 if msg.get("agent", "") == agent.name
                 or msg.get("role") == "consolidated"
-                or msg.get("role") == "user"
             ]
 
             if agent_messages:
