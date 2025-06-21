@@ -1,5 +1,4 @@
 import os
-from time import sleep
 from typing import Any, Optional
 
 from PySide6.QtWidgets import (
