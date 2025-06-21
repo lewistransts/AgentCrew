@@ -1,4 +1,5 @@
 import os
+from time import sleep
 from typing import Any, Optional
 
 from PySide6.QtWidgets import (
@@ -306,6 +307,7 @@ class ChatWindow(QMainWindow, Observer):
         #
         # # Re-enable input controls
         # self.ui_state_manager.set_input_controls_enabled(True)
+        QApplication.processEvents()  # Ensure UI updates immediately
 
     @Slot(str)
     def display_error(self, error):
