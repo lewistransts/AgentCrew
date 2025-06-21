@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
 )
 from PySide6.QtCore import Qt, QStringListModel
-from PySide6.QtGui import QFont, QTextCursor
+from PySide6.QtGui import QTextCursor
 from AgentCrew.modules.chat.completers import DirectoryListingCompleter
 
 

@@ -476,7 +476,7 @@ class ConfigManagement:
     def get_last_used_settings(self) -> Dict[str, Any]:
         """
         Get the last used model and agent settings from the global config.
-        
+
         Returns:
             A dictionary containing last used settings or empty dict if not found.
         """
@@ -486,23 +486,23 @@ class ConfigManagement:
     def set_last_used_model(self, model_id: str, provider: str) -> None:
         """
         Save the last used model to global config.
-        
+
         Args:
             model_id: The model ID that was last used
             provider: The provider of the model
         """
         try:
             global_config = self.read_global_config_data()
-            
+
             # Ensure last_used section exists
             if "last_used" not in global_config:
                 global_config["last_used"] = {}
-            
+
             # Update model and provider
             global_config["last_used"]["model"] = model_id
             global_config["last_used"]["provider"] = provider
             global_config["last_used"]["timestamp"] = datetime.now().isoformat()
-            
+
             self.write_global_config_data(global_config)
         except Exception as e:
             print(f"Warning: Failed to save last used model to config: {e}")
@@ -510,21 +510,21 @@ class ConfigManagement:
     def set_last_used_agent(self, agent_name: str) -> None:
         """
         Save the last used agent to global config.
-        
+
         Args:
             agent_name: The name of the agent that was last used
         """
         try:
             global_config = self.read_global_config_data()
-            
+
             # Ensure last_used section exists
             if "last_used" not in global_config:
                 global_config["last_used"] = {}
-            
+
             # Update agent
             global_config["last_used"]["agent"] = agent_name
             global_config["last_used"]["timestamp"] = datetime.now().isoformat()
-            
+
             self.write_global_config_data(global_config)
         except Exception as e:
             print(f"Warning: Failed to save last used agent to config: {e}")
@@ -532,7 +532,7 @@ class ConfigManagement:
     def get_last_used_model(self) -> Optional[str]:
         """
         Get the last used model from global config.
-        
+
         Returns:
             The last used model ID if found, None otherwise
         """
@@ -542,7 +542,7 @@ class ConfigManagement:
     def get_last_used_provider(self) -> Optional[str]:
         """
         Get the last used provider from global config.
-        
+
         Returns:
             The last used provider if found, None otherwise
         """
@@ -552,7 +552,7 @@ class ConfigManagement:
     def get_last_used_agent(self) -> Optional[str]:
         """
         Get the last used agent from global config.
-        
+
         Returns:
             The last used agent name if found, None otherwise
         """
