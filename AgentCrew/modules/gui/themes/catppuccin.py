@@ -1152,7 +1152,7 @@ QPushButton {
     border: none;
     color: #6c7086; /* More muted overlay color */
     font-weight: normal; /* Reduced from bold */
-    font-size: 10px; /* Smaller font */
+    font-size: 11px; /* Smaller font */
 }
 QPushButton:hover {
     color: #89b4fa; /* Blue */
@@ -1163,7 +1163,7 @@ QPushButton:hover {
 QLabel {
     font-weight: 500; /* Lighter than bold */
     padding: 2px; /* Reduced padding */
-    font-size: 10px; /* Smaller status text */
+    font-size: 11px; /* Smaller status text */
 }
 QLabel[status="running"] {
     color: #f9e2af; /* Yellow */
@@ -1180,25 +1180,25 @@ QLabel[status="error"] {
 QLabel {
     color: #bac2de; /* Subtext1 - more muted */
     padding: 1px; /* Minimal padding */
-    font-size: 9px; /* Smaller content text */
+    font-size: 11px; /* Smaller content text */
 }
 QLabel[role="title"] {
     font-weight: 500; /* Lighter than bold */
     color: #bac2de; /* Subtext1 */
-    font-size: 10px;
+    font-size: 12px;
 }
 QLabel[role="key"] {
     color: #74c7ec; /* Sapphire - more subtle than blue */
     font-weight: 500;
-    font-size: 9px;
+    font-size: 11px;
 }
 QLabel[role="value"] {
     color: #9399b2; /* Subtext0 - more muted */
-    font-size: 9px;
+    font-size: 11px;
 }
 QLabel[role="error"] {
     color: #f38ba8; /* Red for error messages */
-    font-size: 9px;
+    font-size: 11px;
 }
 """
 

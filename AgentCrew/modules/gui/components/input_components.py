@@ -29,7 +29,7 @@ class InputComponents:
         # Input area
         self.chat_window.message_input = QTextEdit()
         input_font = self.chat_window.message_input.font()
-        input_font.setPointSize(12)
+        input_font.setPixelSize(16)
         self.chat_window.message_input.setFont(input_font)
         self.chat_window.message_input.setReadOnly(False)
         self.chat_window.message_input.setMaximumHeight(100)

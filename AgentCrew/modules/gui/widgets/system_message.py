@@ -55,7 +55,7 @@ class SystemMessageWidget(QWidget):
         )
 
         message_label_font = self.message_label.font()
-        message_label_font.setPointSize(11)
+        message_label_font.setPixelSize(13)
         self.message_label.setFont(message_label_font)
 
         # Create expand/collapse button

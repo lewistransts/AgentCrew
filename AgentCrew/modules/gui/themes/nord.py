@@ -1114,7 +1114,7 @@ QPushButton {
     border: none;
     color: #9ca0a4; /* More muted */
     font-weight: normal; /* Reduced from bold */
-    font-size: 10px; /* Smaller font */
+    font-size: 11px; /* Smaller font */
 }
 QPushButton:hover {
     color: #5e81ac; /* Nord Frost 3 */
@@ -1125,7 +1125,7 @@ QPushButton:hover {
 QLabel {
     font-weight: 500; /* Lighter than bold */
     padding: 2px; /* Reduced padding */
-    font-size: 10px; /* Smaller status text */
+    font-size: 11px; /* Smaller status text */
 }
 QLabel[status="running"] {
     color: #ebcb8b; /* Nord Aurora Yellow */
@@ -1142,25 +1142,25 @@ QLabel[status="error"] {
 QLabel {
     color: #d8dee9; /* Nord4 - more muted */
     padding: 1px; /* Minimal padding */
-    font-size: 9px; /* Smaller content text */
+    font-size: 11px; /* Smaller content text */
 }
 QLabel[role="title"] {
     font-weight: 500; /* Lighter than bold */
     color: #d8dee9;
-    font-size: 10px;
+    font-size: 12px;
 }
 QLabel[role="key"] {
     color: #81a1c1; /* Nord10 - slightly muted */
     font-weight: 500;
-    font-size: 9px;
+    font-size: 11px;
 }
 QLabel[role="value"] {
     color: #9ca0a4; /* More muted */
-    font-size: 9px;
+    font-size: 11px;
 }
 QLabel[role="error"] {
     color: #bf616a; /* Nord Aurora Red for error messages */
-    font-size: 9px;
+    font-size: 11px;
 }
 """
 

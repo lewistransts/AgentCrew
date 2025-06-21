@@ -110,7 +110,7 @@ class MessageBubble(QFrame):
         )
 
         font = self.message_label.font()
-        font.setPointSize(13)
+        font.setPixelSize(16)
         self.message_label.setFont(font)
 
         # Set different text color for message content based on bubble type
@@ -154,7 +154,9 @@ class MessageBubble(QFrame):
                 "↶", self
             )  # Anticlockwise gapped circle arrow (more standard rollback icon)
             rollback_button.setToolTip("Rollback to this message")
-            rollback_button.setFont(QFont("sans-serif", 8))
+            rollback_font = rollback_button.font()
+            rollback_font.setPixelSize(12)
+            rollback_button.setFont(rollback_font)
             rollback_button.setStyleSheet(
                 self.style_provider.get_rollback_button_style()
             )
@@ -164,8 +166,10 @@ class MessageBubble(QFrame):
         if not self.is_consolidated:
             # Create consolidated button with icon only
             consolidated_button = QPushButton("✨", self)  # Pin/bookmark icon
-            consolidated_button.setFont(QFont("sans-serif", 8))
-            consolidated_button.setToolTip("Pin this message")
+            consolidated_font = consolidated_button.font()
+            consolidated_font.setPixelSize(9)
+            consolidated_button.setFont(consolidated_font)
+            consolidated_button.setToolTip("Consolidate to this message")
             consolidated_button.setStyleSheet(
                 self.style_provider.get_consolidated_button_style()
             )

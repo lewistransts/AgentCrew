@@ -1121,7 +1121,7 @@ QPushButton {
     border: none;
     color: #6272a4; /* Comment color - more muted */
     font-weight: normal; /* Reduced from bold */
-    font-size: 10px; /* Smaller font */
+    font-size: 11px; /* Smaller font */
 }
 QPushButton:hover {
     color: #8BE9FD; /* Dracula Cyan */
@@ -1132,7 +1132,7 @@ QPushButton:hover {
 QLabel {
     font-weight: 500; /* Lighter than bold */
     padding: 2px; /* Reduced padding */
-    font-size: 10px; /* Smaller status text */
+    font-size: 11px; /* Smaller status text */
 }
 QLabel[status="running"] {
     color: #FFB86C; /* Dracula Orange */
@@ -1149,25 +1149,25 @@ QLabel[status="error"] {
 QLabel {
     color: #c7c9d1; /* More muted foreground */
     padding: 1px; /* Minimal padding */
-    font-size: 9px; /* Smaller content text */
+    font-size: 11px; /* Smaller content text */
 }
 QLabel[role="title"] {
     font-weight: 500; /* Lighter than bold */
     color: #c7c9d1;
-    font-size: 10px;
+    font-size: 12px;
 }
 QLabel[role="key"] {
     color: #8BE9FD; /* Dracula Cyan for key labels */
     font-weight: 500;
-    font-size: 9px;
+    font-size: 11px;
 }
 QLabel[role="value"] {
     color: #a6a9b8; /* More muted */
-    font-size: 9px;
+    font-size: 11px;
 }
 QLabel[role="error"] {
     color: #FF5555; /* Dracula Red for error messages */
-    font-size: 9px;
+    font-size: 11px;
 }
 """
 
