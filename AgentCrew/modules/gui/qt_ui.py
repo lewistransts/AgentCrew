@@ -301,11 +301,11 @@ class ChatWindow(QMainWindow, Observer):
         """Handle the full response from the LLM worker"""
         self._update_cost_info(input_tokens, output_tokens)
 
-        # Reset response expectation
-        self.expecting_response = False
-
-        # Re-enable input controls
-        self.ui_state_manager.set_input_controls_enabled(True)
+        # # Reset response expectation
+        # self.expecting_response = False
+        #
+        # # Re-enable input controls
+        # self.ui_state_manager.set_input_controls_enabled(True)
 
     @Slot(str)
     def display_error(self, error):
@@ -520,6 +520,8 @@ class ChatWindow(QMainWindow, Observer):
         elif event == "conversation_saved":
             self.display_status_message(f"Conversation saved: {data.get('id', 'N/A')}")
             self.sidebar.update_conversation_list()
+            if not self.loading_conversation:
+                self.ui_state_manager.set_input_controls_enabled(True)
         elif event == "conversations_changed":
             self.display_status_message("Conversation list updated.")
             self.sidebar.update_conversation_list()

@@ -282,6 +282,32 @@ class MessageHandler(Observable):
             # Final assistant message
             self._notify("response_completed", assistant_response)
 
+            # --- Start of Persistence Logic ---
+            if self.current_conversation_id and self.last_assisstant_response_idx >= 0:
+                try:
+                    # Get all messages added since the user input for this turn
+                    current_provider = self.agent.get_provider()
+                    messages_for_this_turn = MessageTransformer.standardize_messages(
+                        self.agent.history[self.last_assisstant_response_idx :],
+                        current_provider,
+                        self.agent.name,
+                    )
+                    if (
+                        messages_for_this_turn
+                    ):  # Only save if there are messages for the turn
+                        self.persistent_service.append_conversation_messages(
+                            self.current_conversation_id, messages_for_this_turn
+                        )
+                        self._notify(
+                            "conversation_saved", {"id": self.current_conversation_id}
+                        )
+                except Exception as e:
+                    error_message = f"Failed to save conversation turn to {self.current_conversation_id}: {str(e)}"
+                    logger.error(f"ERROR: {error_message}")
+                    self._notify("error", {"message": error_message})
+            self.last_assisstant_response_idx = len(self.agent.history)
+            # --- End of Persistence Logic ---
+
             if self.current_user_input and self.current_user_input_idx >= 0:
                 if self.memory_service:
                     user_input = ""
@@ -310,32 +336,6 @@ class MessageHandler(Observable):
                 # Store the conversation turn reference for /jump command
                 self.current_user_input = None
                 self.current_user_input_idx = -1
-
-            # --- Start of Persistence Logic ---
-            if self.current_conversation_id and self.last_assisstant_response_idx >= 0:
-                try:
-                    # Get all messages added since the user input for this turn
-                    current_provider = self.agent.get_provider()
-                    messages_for_this_turn = MessageTransformer.standardize_messages(
-                        self.agent.history[self.last_assisstant_response_idx :],
-                        current_provider,
-                        self.agent.name,
-                    )
-                    if (
-                        messages_for_this_turn
-                    ):  # Only save if there are messages for the turn
-                        self.persistent_service.append_conversation_messages(
-                            self.current_conversation_id, messages_for_this_turn
-                        )
-                        self._notify(
-                            "conversation_saved", {"id": self.current_conversation_id}
-                        )
-                except Exception as e:
-                    error_message = f"Failed to save conversation turn to {self.current_conversation_id}: {str(e)}"
-                    logger.error(f"ERROR: {error_message}")
-                    self._notify("error", {"message": error_message})
-            self.last_assisstant_response_idx = len(self.agent.history)
-            # --- End of Persistence Logic ---
 
             return assistant_response, input_tokens, output_tokens
 
