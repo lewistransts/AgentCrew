@@ -28,7 +28,9 @@ class InputComponents:
         """Set up the input area with text input and buttons."""
         # Input area
         self.chat_window.message_input = QTextEdit()
-        self.chat_window.message_input.setFont(QFont("Arial", 12))
+        input_font = self.chat_window.message_input.font()
+        input_font.setPointSize(12)
+        self.chat_window.message_input.setFont(input_font)
         self.chat_window.message_input.setReadOnly(False)
         self.chat_window.message_input.setMaximumHeight(100)
         self.chat_window.message_input.setPlaceholderText(
@@ -44,14 +46,14 @@ class InputComponents:
 
         # Create Send button
         self.chat_window.send_button = QPushButton("▶")
-        self.chat_window.send_button.setFont(QFont("Arial", 12))
+        self.chat_window.send_button.setFont(input_font)
         self.chat_window.send_button.setStyleSheet(
             self.chat_window.style_provider.get_button_style("primary")
         )
 
         # Create File button
         self.chat_window.file_button = QPushButton("📎")
-        self.chat_window.file_button.setFont(QFont("Arial", 12))
+        self.chat_window.file_button.setFont(input_font)
         self.chat_window.file_button.setStyleSheet(
             self.chat_window.style_provider.get_button_style("secondary")
         )

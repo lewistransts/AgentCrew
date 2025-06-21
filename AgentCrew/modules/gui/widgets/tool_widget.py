@@ -93,12 +93,16 @@ class ToolWidget(QWidget):
 
         # Tool icon and name - reduced sizes for subtlety
         tool_icon = QLabel(self._get_tool_icon())
-        tool_icon.setFont(QFont("Arial", 12))  # Reduced from 16px
+        tool_icon_font = tool_icon.font()
+        tool_icon_font.setPointSize(12)
+        tool_icon.setFont(tool_icon_font)  # Reduced from 16px
 
         tool_name_label = QLabel(
             f"<b>{self.tool_name.replace('_', ' ').capitalize()}</b>"
         )
-        tool_name_label.setFont(QFont("Arial", 10))  # Reduced from 12px
+        tool_name_font = tool_name_label.font()
+        tool_name_font.setPointSize(10)
+        tool_name_label.setFont(tool_name_font)
         tool_name_label.setStyleSheet(self.style_provider.get_tool_header_style())
 
         # Status indicator

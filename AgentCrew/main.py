@@ -559,7 +559,6 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
                         }
                         if os.getenv(api_key_map.get(last_provider, "")):
                             provider = last_provider
-                            click.echo(f"🔄 Restored last used provider: {provider}")
                     else:
                         # Check if it's a custom provider
                         custom_providers = (
@@ -567,9 +566,6 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
                         )
                         if any(p["name"] == last_provider for p in custom_providers):
                             provider = last_provider
-                            click.echo(
-                                f"🔄 Restored last used custom provider: {provider}"
-                            )
             except Exception as e:
                 click.echo(f"⚠️  Could not restore last used provider: {e}")
 
