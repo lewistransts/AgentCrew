@@ -105,8 +105,8 @@ _OPENAI_MODELS = [
         name="GPT o3",
         description="a well-rounded and powerful model across domains. It sets a new standard for math, science, coding, and visual reasoning tasks. ",
         capabilities=["thinking", "tool_use", "vision"],
-        input_token_price_1m=10.0,
-        output_token_price_1m=40.0,
+        input_token_price_1m=2.0,
+        output_token_price_1m=8.0,
     ),
 ]
 
