@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QFileIconProvider,
 )
 from PySide6.QtCore import Qt, QFileInfo, QByteArray
-from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtGui import QPixmap
 
 from AgentCrew.modules.gui.themes import StyleProvider
 
