@@ -4,7 +4,7 @@ import os
 import mimetypes
 from typing import Optional, Dict, Any
 import logging
-
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,10 @@ class FileHandler:
                 AcceleratorDevice,
                 AcceleratorOptions,
             )
-            from docling.datamodel.pipeline_options import PdfPipelineOptions
+            from docling.datamodel.pipeline_options import (
+                PdfPipelineOptions,
+                RapidOcrOptions,
+            )
             from docling.document_converter import DocumentConverter, PdfFormatOption
 
             try:
@@ -62,10 +65,16 @@ class FileHandler:
                 pipeline_options.do_ocr = True
                 pipeline_options.do_table_structure = True
                 pipeline_options.table_structure_options.do_cell_matching = True
+                pipeline_options.ocr_options = RapidOcrOptions()
 
                 pipeline_options.accelerator_options = AcceleratorOptions(
-                    num_threads=4, device=AcceleratorDevice.AUTO
+                    num_threads=2, device=AcceleratorDevice.MPS
                 )
+
+                if sys.platform != "darwin":
+                    pipeline_options.accelerator_options = AcceleratorOptions(
+                        num_threads=4, device=AcceleratorDevice.AUTO
+                    )
                 self.converter = DocumentConverter(
                     format_options={
                         InputFormat.PDF: PdfFormatOption(
