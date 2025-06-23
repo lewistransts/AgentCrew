@@ -198,19 +198,8 @@ class ChatWindow(QMainWindow, Observer):
         # Track session cost
         self.session_cost = 0.0
 
-        # Add simple throttling
-        self.chunk_buffer = ""
-        self.chunk_timer = QTimer(self)
-        self.chunk_timer.timeout.connect(
-            self.message_event_handler._render_buffered_chunks
-        )
-
-        # Add thinking message buffering
-        self.thinking_buffer = ""
-        self.thinking_timer = QTimer(self)
-        self.thinking_timer.timeout.connect(
-            self.message_event_handler._render_buffered_thinking
-        )
+        # Individual message bubbles now handle their own streaming
+        # No need for global chunk buffering timers
 
         # Add welcome message
         self.chat_components.add_system_message(
@@ -353,6 +342,11 @@ class ChatWindow(QMainWindow, Observer):
         if self.waiting_for_response:
             self.ui_state_manager.stop_button_stopping_state()
             self.message_handler.stop_streaming = True
+            # Also stop UI streaming
+            if self.current_response_bubble:
+                self.current_response_bubble.stop_streaming()
+            if self.current_thinking_bubble:
+                self.current_thinking_bubble.stop_streaming()
             self.display_status_message("Stopping message stream...")
 
     def show_context_menu(self, position):

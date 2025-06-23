@@ -10,8 +10,9 @@ from PySide6.QtWidgets import (
     QPushButton,
     QHBoxLayout,
     QFileIconProvider,
+    QScrollArea,
 )
-from PySide6.QtCore import Qt, QFileInfo, QByteArray
+from PySide6.QtCore import Qt, QFileInfo, QByteArray, QTimer
 from PySide6.QtGui import QPixmap
 
 from AgentCrew.modules.gui.themes import StyleProvider
@@ -44,6 +45,13 @@ class MessageBubble(QFrame):
 
         # Initialize style provider
         self.style_provider = StyleProvider()
+
+        # Add streaming support
+        self.is_streaming = False
+        self.raw_text_buffer = ""
+        self.streaming_timer = QTimer()
+        self.streaming_timer.timeout.connect(self._render_next_character)
+        self.character_queue = []
 
         # Setup frame appearance
         self.setFrameShape(QFrame.Shape.StyledPanel)
@@ -286,8 +294,92 @@ class MessageBubble(QFrame):
             print(f"Error rendering markdown: {e}")
             self.message_label.setText(text)
 
+    def start_streaming(self):
+        """Start character-by-character streaming mode."""
+        self.is_streaming = True
+        self.raw_text_buffer = ""
+        self.character_queue = []
+
+        # Use plain text initially for smooth streaming
+        self.message_label.setTextFormat(Qt.TextFormat.MarkdownText)
+        self.message_label.setText("")
+
+    def add_streaming_chunk(self, chunk: str):
+        """Add a chunk of text to the streaming queue."""
+        if not chunk:  # Skip empty chunks
+            return
+
+        if not self.is_streaming:
+            self.start_streaming()
+
+        # Add characters to queue for smooth rendering
+        self.character_queue.extend(list(chunk))
+        self.raw_text_buffer += chunk
+
+        # Start the streaming timer if not active
+        if not self.streaming_timer.isActive():
+            self.streaming_timer.start(20)
+
+    def _render_next_character(self):
+        """Render the next character(s) from the queue."""
+        if not self.character_queue:
+            # self.streaming_timer.stop()
+            # self._finalize_streaming()
+            return
+
+        # Adaptive rendering speed based on queue size
+        if len(self.character_queue) > 200:
+            chars_per_frame = 5  # Speed up for large queues
+        elif len(self.character_queue) > 100:
+            chars_per_frame = 3
+        else:
+            chars_per_frame = 2  # Slower for natural effect
+
+        # Render characters for this frame
+        new_chars = ""
+        for _ in range(min(chars_per_frame, len(self.character_queue))):
+            if self.character_queue:
+                new_chars += self.character_queue.pop(0)
+
+        if new_chars:
+            current_text = self.message_label.text()
+            self.message_label.setText(current_text + new_chars)
+
+            # Auto-scroll to keep latest content visible
+            # self._ensure_visible()
+
+    def _finalize_streaming(self):
+        """Convert to formatted text once streaming is complete."""
+        self.is_streaming = False
+        self.streaming_timer.stop()
+
+        self.message_label.setTextFormat(Qt.TextFormat.RichText)
+        # Now convert to markdown with full formatting
+        self.set_text(self.raw_text_buffer)
+
+    def stop_streaming(self):
+        """Force stop streaming and finalize immediately."""
+        if self.is_streaming:
+            self._finalize_streaming()
+
+    def _ensure_visible(self):
+        """Ensure the latest content is visible by scrolling."""
+        try:
+            # Get the parent scroll area and scroll to bottom
+            parent = self.parent()
+            while parent and not isinstance(parent, QScrollArea):
+                parent = parent.parent()
+
+            if parent and hasattr(parent, "verticalScrollBar"):
+                scrollbar = parent.verticalScrollBar()
+                if scrollbar:
+                    scrollbar.setValue(scrollbar.maximum())
+        except Exception:
+            # Silently handle any scrolling errors to avoid disrupting streaming
+            pass
+
     def append_text(self, text):
-        """Append text to the existing message."""
+        """Update method to handle both streaming and normal modes."""
         self.set_text(text)
 
     def display_file(self, file_path: str):

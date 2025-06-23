@@ -240,6 +240,12 @@ class ChatComponents:
 
     def clear_chat_ui(self):
         """Clear only the chat message widgets from the UI."""
+        # Stop any active streaming before clearing
+        if self.chat_window.current_response_bubble:
+            self.chat_window.current_response_bubble.stop_streaming()
+        if self.chat_window.current_thinking_bubble:
+            self.chat_window.current_thinking_bubble.stop_streaming()
+
         while self.chat_window.chat_layout.count():
             item = self.chat_window.chat_layout.takeAt(0)
             widget = item.widget()
@@ -251,46 +257,6 @@ class ChatComponents:
         self.chat_window.current_thinking_bubble = None
         self.chat_window.thinking_content = ""
         self.chat_window.expecting_response = False
-
-    def display_response_chunk(self, chunk: str):
-        """Display a response chunk from the assistant."""
-        # If we're expecting a response and don't have a bubble yet, create one
-        if (
-            self.chat_window.expecting_response
-            and self.chat_window.current_response_bubble is None
-        ):
-            self.chat_window.current_response_bubble = self.append_message(
-                chunk, False
-            )  # False = assistant message
-        # If we already have a response bubble, append to it
-        elif (
-            self.chat_window.expecting_response
-            and self.chat_window.current_response_bubble is not None
-        ):
-            self.chat_window.current_response_bubble.append_text(chunk)
-            # Force update and scroll
-            QApplication.processEvents()
-            # self.chat_window.chat_scroll.verticalScrollBar().setValue(
-            #     self.chat_window.chat_scroll.verticalScrollBar().maximum()
-            # )
-        # Otherwise, create a new message (should not happen in normal operation)
-        else:
-            self.chat_window.current_response_bubble = self.append_message(chunk, False)
-
-    def display_thinking_chunk(self, chunk: str):
-        """Display a chunk of the thinking process."""
-        if (
-            hasattr(self.chat_window, "current_thinking_bubble")
-            and self.chat_window.current_thinking_bubble
-        ):
-            # Append to the thinking content
-            self.chat_window.thinking_content += chunk
-            self.chat_window.current_thinking_bubble.append_text(
-                self.chat_window.thinking_content
-            )
-
-            # Force update and scroll
-            QApplication.processEvents()
 
     def remove_messages_after(self, message_bubble):
         """Remove all message widgets that appear after the given message bubble."""
