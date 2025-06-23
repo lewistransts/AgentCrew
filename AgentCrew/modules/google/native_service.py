@@ -454,11 +454,12 @@ class GoogleAINativeService(BaseLLMService):
                 # Add tool calls if present
                 if "tool_calls" in msg:
                     for tool_call in msg["tool_calls"]:
-                        # We can't directly add function calls in this format
-                        # so we'll add a text representation
-                        tool_text = f"\nUsing tool: {tool_call.get('name', '')}\n"
-                        tool_text += f"Arguments: {json.dumps(tool_call.get('arguments', {}), indent=2)}"
-                        parts.append(Part.from_text(text=tool_text))
+                        parts.append(
+                            Part.from_function_call(
+                                name=tool_call.get("name", ""),
+                                args=tool_call.get("arguments", {}),
+                            )
+                        )
 
                 google_messages.append(Content(role="model", parts=parts))
 
