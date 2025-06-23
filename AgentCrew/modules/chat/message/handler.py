@@ -106,15 +106,17 @@ class MessageHandler(Observable):
                         {
                             "type": "text",
                             "text": f"""Memories related to the user request:
-                                ---
-                                {
-                                await self.memory_service.generate_user_context(
-                                    user_input, self.agent.name
-                                )
-                            }
-                                ---
-                                Do not use the above context as a response, but rather as a reference to understand the user's request better.
-                            """,
+---
+{await self.memory_service.generate_user_context(user_input, self.agent.name)}
+---
+INSTRUCTIONS:
+1. EXTRACT relevant facts and context from memories
+2. PRIORITIZE recent memories when information conflicts
+3. INCORPORATE memory insights to enhance your response
+4. PRESERVE the user's original intent - memories should supplement, not override
+5. RESPOND directly to the current request first and foremost
+
+IMPORTANT: Memory serves to enhance responses, never to reinterpret or redirect the user's explicit request.""",
                         }
                     ],
                 }

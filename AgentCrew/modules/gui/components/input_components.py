@@ -87,7 +87,8 @@ class InputComponents:
 
     def check_for_path_completion(self):
         """Check if the current text contains a path that should trigger completion."""
-        self.chat_window.file_completer.popup().hide()
+        if self.chat_window.file_completer.popup().isVisible():
+            self.chat_window.file_completer.popup().hide()
         text = self.chat_window.message_input.toPlainText()
         cursor_position = self.chat_window.message_input.textCursor().position()
 

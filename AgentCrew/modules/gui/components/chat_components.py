@@ -184,9 +184,9 @@ class ChatComponents:
         QApplication.processEvents()
 
         # Scroll to the bottom to show new message
-        self.chat_window.chat_scroll.verticalScrollBar().setValue(
-            self.chat_window.chat_scroll.verticalScrollBar().maximum()
-        )
+        # self.chat_window.chat_scroll.verticalScrollBar().setValue(
+        #     self.chat_window.chat_scroll.verticalScrollBar().maximum()
+        # )
 
         return message_bubble
 
@@ -270,9 +270,9 @@ class ChatComponents:
             self.chat_window.current_response_bubble.append_text(chunk)
             # Force update and scroll
             QApplication.processEvents()
-            self.chat_window.chat_scroll.verticalScrollBar().setValue(
-                self.chat_window.chat_scroll.verticalScrollBar().maximum()
-            )
+            # self.chat_window.chat_scroll.verticalScrollBar().setValue(
+            #     self.chat_window.chat_scroll.verticalScrollBar().maximum()
+            # )
         # Otherwise, create a new message (should not happen in normal operation)
         else:
             self.chat_window.current_response_bubble = self.append_message(chunk, False)
