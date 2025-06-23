@@ -2,50 +2,51 @@ name: Test Package Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test-build:
     name: Test package build
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
-    
-    - name: Set up Python
-      run: uv python install 3.12
-    
-    - name: Create virtual environment and install dependencies
-      run: |
-        uv venv .venv
-        source .venv/bin/activate
-        uv pip install check-wheel-contents
-    
-    - name: Build package
-      run: uv build
-    
-    - name: Check package structure
-      run: |
-        source .venv/bin/activate
-        check-wheel-contents dist/*.whl
-    
-    - name: Test package contents
-      run: |
-        if [ -f "verify_package.py" ]; then
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Create virtual environment and install dependencies
+        run: |
+          uv venv .venv
           source .venv/bin/activate
-          python verify_package.py
-        else
-          echo "verify_package.py not found, skipping verification"
-        fi
-    
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: dist-files
-        path: dist/
-        retention-days: 7
+          uv pip install check-wheel-contents
+
+      - name: Build package
+        run: uv build
+
+      - name: Check package structure
+        run: |
+          source .venv/bin/activate
+          check-wheel-contents dist/*.whl
+
+      - name: Test package contents
+        run: |
+          if [ -f "verify_package.py" ]; then
+            source .venv/bin/activate
+            python verify_package.py
+          else
+            echo "verify_package.py not found, skipping verification"
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-files
+          path: dist/
+          retention-days: 7
+

@@ -3,7 +3,7 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - 'v*'  # Push events to tags matching v*, e.g., v1.0.0, v2.0.0.beta
+      - "v*" # Push events to tags matching v*, e.g., v1.0.0, v2.0.0.beta
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
         run: uv build
 
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
@@ -73,7 +73,7 @@ jobs:
 
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
@@ -85,4 +85,3 @@ jobs:
         run: uv publish --repository testpypi
         env:
           UV_TRUSTED_PUBLISHER: true
-
