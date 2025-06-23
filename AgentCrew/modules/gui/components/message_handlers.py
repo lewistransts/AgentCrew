@@ -44,7 +44,6 @@ class MessageEventHandler:
 
             # Use the individual chunk for smooth streaming
             if self.chat_window.current_response_bubble:
-                print(chunk_text)
                 self.chat_window.current_response_bubble.add_streaming_chunk(chunk_text)
 
     def handle_user_message_created(self, data):
