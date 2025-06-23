@@ -7,7 +7,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QLabel,
     QFrame,
-    QSizePolicy,
     QPushButton,
     QHBoxLayout,
     QFileIconProvider,

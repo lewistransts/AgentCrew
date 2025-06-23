@@ -4,9 +4,7 @@ Verification script for AgentCrew package.
 This script verifies that the built package contains all the necessary files.
 """
 
-import os
 import sys
-import glob
 import zipfile
 import tarfile
 from pathlib import Path
