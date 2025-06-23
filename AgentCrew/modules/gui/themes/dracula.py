@@ -583,7 +583,7 @@ background-color: #282A36; /* Dracula Background */
     # Message bubble styles
     USER_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #BD93F9; /* Dracula Purple */
     border: none;
     padding: 2px;
@@ -592,7 +592,7 @@ QFrame {
 
     ASSISTANT_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #44475A; /* Dracula Current Line */
     border: none;
     padding: 2px;
@@ -601,7 +601,7 @@ QFrame {
 
     THINKING_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #6272A4; /* Dracula Comment */
     border: none;
     padding: 2px;
@@ -610,7 +610,7 @@ QFrame {
 
     CONSOLIDATED_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #44475A; /* Dracula Current Line */
     border: 1px solid #6272A4; /* Dracula Comment */
     padding: 2px;

@@ -571,7 +571,7 @@ background-color: #11111b; /* Catppuccin Crust */
     # Message bubble styles
     USER_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #89b4fa; /* Catppuccin Blue */
     border: none;
     padding: 2px;
@@ -580,7 +580,7 @@ QFrame {
 
     ASSISTANT_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #313244; /* Catppuccin Surface0 */
     border: none;
     padding: 2px;
@@ -589,7 +589,7 @@ QFrame {
 
     THINKING_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #45475a; /* Catppuccin Surface1 */
     border: none;
     padding: 2px;
@@ -598,7 +598,7 @@ QFrame {
 
     CONSOLIDATED_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #313244; /* Catppuccin Surface0 */
     border: 1px solid #45475a; /* Catppuccin Surface1 */
     padding: 2px;

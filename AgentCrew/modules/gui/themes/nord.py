@@ -576,7 +576,7 @@ background-color: #2e3440; /* Nord Polar Night 0 */
     # Message bubble styles
     USER_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #5e81ac; /* Nord Frost 3 */
     border: none;
     padding: 2px;
@@ -585,7 +585,7 @@ QFrame {
 
     ASSISTANT_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #434c5e; /* Nord Polar Night 2 */
     border: none;
     padding: 2px;
@@ -594,7 +594,7 @@ QFrame {
 
     THINKING_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #4c566a; /* Nord Polar Night 3 */
     border: none;
     padding: 2px;
@@ -603,7 +603,7 @@ QFrame {
 
     CONSOLIDATED_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #434c5e; /* Nord Polar Night 2 */
     border: 1px solid #4c566a; /* Nord Polar Night 3 */
     padding: 2px;

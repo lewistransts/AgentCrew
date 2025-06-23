@@ -566,7 +566,7 @@ background-color: #f0f0f0; /* Very light gray */
     # Message bubble styles
     USER_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #4285f4; /* Blue */
     border: none;
     padding: 2px;
@@ -578,7 +578,7 @@ QLabel {
 
     ASSISTANT_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #ffffff; /* White */
     border: 1px solid #e0e0e0; /* Light gray border */
     padding: 2px;
@@ -590,7 +590,7 @@ QLabel {
 
     THINKING_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #f8f8f8; /* Light gray */
     border: 1px solid #cccccc; /* Gray border */
     padding: 2px;
@@ -602,7 +602,7 @@ QLabel {
 
     CONSOLIDATED_BUBBLE = """
 QFrame { 
-    border-radius: 12px; 
+    border-radius: 5px; 
     background-color: #ffffff; /* White */
     border: 1px solid #cccccc; /* Gray border */
     padding: 2px;

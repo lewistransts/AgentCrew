@@ -132,17 +132,16 @@ class MessageBubble(QFrame):
             self.raw_text = text
             self.set_text(text)
 
-        self.message_label.setMinimumWidth(800)
-        self.message_label.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
-        )
+        # self.message_label.setSizePolicy(
+        #     QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum
+        # )
 
         if text is not None:
             # Add to layout
             layout.addWidget(self.message_label)
 
         # Set size policies
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        # self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         # For user messages, add hover button functionality
         if is_user and message_index is not None:

@@ -143,9 +143,9 @@ class ChatComponents:
             )
         if is_user:
             container_layout.addWidget(message_bubble)
-            container_layout.addStretch(1)  # Push to left
+            # container_layout.addStretch(1)  # Push to left
         else:
-            container_layout.addStretch(1)  # Push to right
+            # container_layout.addStretch(1)  # Push to right
             container_layout.addWidget(message_bubble)
 
         # Add the container to the chat layout
@@ -212,9 +212,7 @@ class ChatComponents:
             )
 
         # Center the consolidated message
-        container_layout.addStretch(1)
         container_layout.addWidget(message_bubble)
-        container_layout.addStretch(1)
 
         self.chat_window.chat_layout.addWidget(container)
 
