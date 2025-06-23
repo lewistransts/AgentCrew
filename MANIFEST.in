@@ -7,8 +7,10 @@ include LICENSE
 include CONTRIBUTING.md
 
 # Include configuration examples
-include examples/agents/*.toml
-include mcp_servers.json.example
+exclude examples/**/*
+exclude mcp_servers.json.example
+
+exclude tests/**/*
 
 # Include any other important files
 graft AgentCrew/modules
