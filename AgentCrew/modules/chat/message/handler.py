@@ -105,12 +105,16 @@ class MessageHandler(Observable):
                     "content": [
                         {
                             "type": "text",
-                            "text": f"""Context from your memory:
+                            "text": f"""Memories related to the user request:
+                                ---
                                 {
                                 await self.memory_service.generate_user_context(
                                     user_input, self.agent.name
                                 )
-                            }""",
+                            }
+                                ---
+                                Do not use the above context as a response, but rather as a reference to understand the user's request better.
+                            """,
                         }
                     ],
                 }

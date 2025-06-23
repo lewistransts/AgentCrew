@@ -95,7 +95,9 @@ class ConversationComponents:
                 elif (
                     message_content.strip()
                     and not message_content.startswith("<transfer_tool>")
-                    and not message_content.startswith("Context from your memory:")
+                    and not message_content.startswith(
+                        "Memories related to the user request:"
+                    )
                     and not message_content.startswith(
                         "Need to tailor response bases on this"
                     )

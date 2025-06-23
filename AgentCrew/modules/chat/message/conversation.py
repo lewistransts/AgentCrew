@@ -133,7 +133,7 @@ class ConversationManager:
                         if (
                             message_content
                             and not message_content.startswith(
-                                "Context from your memory:"
+                                "Memories related to the user request:"
                             )
                             and not message_content.startswith("Content of ")
                         ):
