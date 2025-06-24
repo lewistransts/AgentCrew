@@ -216,12 +216,12 @@ def run_update_command():
 
         if system == "linux" or system == "darwin":  # Darwin is macOS
             # Linux/macOS update command
-            command = "curl -LsSf https://agentcrew.dev/install.sh | bash"
+            command = "uv tool upgrade agentcrew-ai"
             click.echo("🐧 Running Linux/macOS update command...")
 
         elif system == "windows":
             # Windows update command
-            command = 'powershell -c "irm https://agentcrew.dev/install.ps1 | iex"'
+            command = "uv tool upgrade agentcrew-ai"
             click.echo("🪟 Running Windows update command...")
 
         else:

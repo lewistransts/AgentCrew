@@ -12,7 +12,7 @@ resolution-markers = [
 
 [[package]]
 name = "agentcrew-ai"
-version = "0.6.0.post2"
+version = "0.6.0rc3"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
