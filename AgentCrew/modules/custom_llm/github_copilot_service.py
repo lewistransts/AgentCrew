@@ -19,6 +19,7 @@ class GithubCopilotService(CustomLLMService):
             is_stream=True,
             extra_headers={
                 "Copilot-Integration-Id": "vscode-chat",
+                "Editor-Plugin-Version": "CopilotChat.nvim/*",
                 "Editor-Version": "Neovim/0.9.0",
             },
         )

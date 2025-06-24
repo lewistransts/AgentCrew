@@ -313,7 +313,7 @@ class MessageBubble(QFrame):
 
         # Start the streaming timer if not active
         if not self.streaming_timer.isActive():
-            self.streaming_timer.start(16)
+            self.streaming_timer.start(50)
 
         # Add characters to queue for smooth rendering
         self.character_queue = chunk_queue
@@ -327,11 +327,11 @@ class MessageBubble(QFrame):
 
         # Adaptive rendering speed based on queue size
         if len(self.character_queue) > 100:
-            chars_per_frame = 7  # Speed up for large queues
+            chars_per_frame = 21  # Speed up for large queues
         elif len(self.character_queue) > 50:
-            chars_per_frame = 5
+            chars_per_frame = 15
         else:
-            chars_per_frame = 3  # Slower for natural effect
+            chars_per_frame = 10  # Slower for natural effect
 
         # Render characters for this frame
         new_chars = ""
