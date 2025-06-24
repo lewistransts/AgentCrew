@@ -1016,8 +1016,15 @@ class ConsoleUI(Observer):
                     )
                 )
 
-                prompt_text = f"[{self.message_handler.agent.name}:{self.message_handler.agent.get_model()}] > "
-                print(prompt_text, end="")
+                agent_info = Text(
+                    f"[{self.message_handler.agent.name}", style=RICH_STYLE_RED
+                )
+                agent_info.append(":")
+                agent_info.append(
+                    f"{self.message_handler.agent.get_model()}] > ",
+                    style=RICH_STYLE_BLUE,
+                )
+                self.console.print(agent_info, end="")
 
         @kb.add(Keys.Up)
         def _(event):
@@ -1190,6 +1197,11 @@ class ConsoleUI(Observer):
                                     style=RICH_STYLE_YELLOW,
                                 )
                             )
+                        continue
+
+                    # Handle help command directly
+                    if user_input.strip() == "/help":
+                        self.print_welcome_message()
                         continue
 
                     # Start loading animation while waiting for response
