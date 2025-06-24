@@ -21,7 +21,6 @@ from PySide6.QtCore import (
     Slot,
     QThread,
     Signal,
-    QTimer,
 )
 from PySide6.QtGui import QIcon
 from AgentCrew.modules.chat.message_handler import MessageHandler, Observer
