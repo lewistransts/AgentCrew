@@ -393,15 +393,21 @@ class CustomLLMService(OpenAIService):
 
             if self._is_thinking:
                 thinking_content = chunk_text
+                if "<think>" in thinking_content:
+                    thinking_content = thinking_content.replace("<think>", "")
+                if "</think>" in thinking_content:
+                    # Remove thinking end tag
+                    thinking_content = thinking_content.replace("</think>", "")
             else:
                 assistant_response += chunk_text
 
             if "</think>" in chunk_text:
                 self._is_thinking = False
+                chunk_text = None
 
-            # Remove chunk_text if still in thinking mode
             if self._is_thinking:
                 chunk_text = None
+            # Remove chunk_text if still in thinking mode
 
         # Handle final chunk with usage information
         if hasattr(chunk, "usage"):

@@ -10,6 +10,8 @@ class MessageEventHandler:
         if isinstance(chat_window, ChatWindow):
             self.chat_window = chat_window
         self.thinking_content = ""
+        self.chunk_buffer_queue = []
+        self.think_buffer_queue = []
 
     def handle_event(self, event: str, data: Any):
         """Handle a message-related event."""
@@ -31,6 +33,7 @@ class MessageEventHandler:
     def handle_response_chunk(self, data):
         """Handle response chunks with smooth streaming."""
         chunk_text, full_response = data
+        self.chunk_buffer_queue.extend(list(chunk_text))
 
         if full_response.strip():
             # Create bubble immediately if needed
@@ -42,9 +45,11 @@ class MessageEventHandler:
                     self.chat_window.chat_components.append_message("", False)
                 )
 
-            # Use the individual chunk for smooth streaming
-            if self.chat_window.current_response_bubble:
-                self.chat_window.current_response_bubble.add_streaming_chunk(chunk_text)
+        # Use the individual chunk for smooth streaming
+        if self.chat_window.current_response_bubble:
+            self.chat_window.current_response_bubble.add_streaming_chunk(
+                self.chunk_buffer_queue
+            )
 
     def handle_user_message_created(self, data):
         """Handle user message creation."""
@@ -53,22 +58,24 @@ class MessageEventHandler:
                 self.chat_window.message_handler.current_user_input_idx
             )
             self.chat_window.current_user_bubble = None
+            self.chat_window.chat_scroll.verticalScrollBar().setValue(
+                self.chat_window.chat_scroll.verticalScrollBar().maximum()
+            )
 
     def handle_response_completed(self, data):
         """Handle response completion."""
+        self.chunk_buffer_queue = []
         if self.chat_window.current_response_bubble:
             # Finalize streaming and ensure full content is rendered
+            self.chat_window.current_response_bubble.raw_text_buffer = data
             self.chat_window.current_response_bubble._finalize_streaming()
             self.chat_window.current_response_bubble.message_index = (
                 len(self.chat_window.message_handler.streamline_messages) - 1
             )
 
-        # # Reset response expectation flag
-        # self.chat_window.expecting_response = False
-        # self.chat_window.current_response_bubble = None
-
     def handle_thinking_started(self, data):
         """Handle thinking process started."""
+        self.think_buffer_queue = []
         agent_name = data
         self.chat_window.chat_components.add_system_message(
             f"💭 {agent_name.upper()}'s thinking process started"
@@ -76,28 +83,32 @@ class MessageEventHandler:
 
         # Create a new thinking bubble
         self.chat_window.current_thinking_bubble = (
-            self.chat_window.chat_components.append_thinking_message(" ", agent_name)
+            self.chat_window.chat_components.append_thinking_message("", agent_name)
         )
         self.thinking_content = ""  # Initialize thinking content
         # self.chat_window.thinking_buffer = ""  # Initialize thinking buffer
 
-    def handle_thinking_chunk(self, data):
+    def handle_thinking_chunk(self, chunk):
         """Handle a chunk of the thinking process."""
-        chunk = data
+        self.think_buffer_queue.extend(list(chunk))
+        self.thinking_content += chunk
         # Use smooth streaming for thinking chunks too
         if self.chat_window.current_thinking_bubble:
-            self.chat_window.current_thinking_bubble.add_streaming_chunk(chunk)
+            self.chat_window.current_thinking_bubble.add_streaming_chunk(
+                self.think_buffer_queue
+            )
 
     def handle_thinking_completed(self):
         """Handle thinking process completion."""
         self.chat_window.display_status_message("Thinking completed.")
-        # self.chat_window.chat_scroll.verticalScrollBar().setValue(
-        #     self.chat_window.chat_scroll.verticalScrollBar().maximum()
-        # )
         # Finalize thinking stream if active
         if self.chat_window.current_thinking_bubble:
+            self.chat_window.current_thinking_bubble.raw_text_buffer = (
+                self.thinking_content
+            )
             self.chat_window.current_thinking_bubble._finalize_streaming()
         # Reset thinking bubble reference
+        self.think_buffer_queue = []
         self.chat_window.current_thinking_bubble = None
 
     def handle_user_context_request(self):

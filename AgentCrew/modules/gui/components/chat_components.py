@@ -72,10 +72,8 @@ class ChatComponents:
         self.chat_window.chat_layout.addWidget(system_widget)
 
         # Scroll to show the new message
-        QApplication.processEvents()
-        self.chat_window.chat_scroll.verticalScrollBar().setValue(
-            self.chat_window.chat_scroll.verticalScrollBar().maximum()
-        )
+        if not self.chat_window.loading_conversation:
+            QApplication.processEvents()
 
     def append_file(self, file_path, is_user=False, is_base64=False):
         """Add a file display to the chat."""
@@ -109,7 +107,8 @@ class ChatComponents:
         self.chat_window.chat_layout.addWidget(container)
 
         # Process events and scroll to show the new message
-        QApplication.processEvents()
+        if not self.chat_window.loading_conversation:
+            QApplication.processEvents()
         return message_bubble
 
     def append_message(self, text, is_user=True, message_index=None, agent_name=None):
@@ -159,7 +158,8 @@ class ChatComponents:
             self.chat_window.current_user_bubble = message_bubble
 
         # Process events to ensure UI updates immediately
-        QApplication.processEvents()
+        if not self.chat_window.loading_conversation:
+            QApplication.processEvents()
 
         return message_bubble
 
@@ -174,19 +174,14 @@ class ChatComponents:
         message_bubble = MessageBubble(text, False, agent_name, is_thinking=True)
 
         # Add bubble to container with appropriate alignment (same as assistant messages)
-        container_layout.addStretch(1)  # Push to right
         container_layout.addWidget(message_bubble)
 
         # Add the container to the chat layout
         self.chat_window.chat_layout.addWidget(container)
 
         # Process events to ensure UI updates immediately
-        QApplication.processEvents()
-
-        # Scroll to the bottom to show new message
-        # self.chat_window.chat_scroll.verticalScrollBar().setValue(
-        #     self.chat_window.chat_scroll.verticalScrollBar().maximum()
-        # )
+        if not self.chat_window.loading_conversation:
+            QApplication.processEvents()
 
         return message_bubble
 
@@ -217,7 +212,8 @@ class ChatComponents:
         self.chat_window.chat_layout.addWidget(container)
 
         # Process events and scroll
-        QApplication.processEvents()
+        if not self.chat_window.loading_conversation:
+            QApplication.processEvents()
 
     def add_tool_widget(self, tool_widget):
         """Add a tool widget to the chat with proper centering and scrolling."""
@@ -231,10 +227,8 @@ class ChatComponents:
         self.chat_window.chat_layout.addWidget(container)
 
         # Scroll to show the new widget
-        QApplication.processEvents()
-        self.chat_window.chat_scroll.verticalScrollBar().setValue(
-            self.chat_window.chat_scroll.verticalScrollBar().maximum()
-        )
+        if not self.chat_window.loading_conversation:
+            QApplication.processEvents()
 
         return container
 

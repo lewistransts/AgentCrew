@@ -300,25 +300,23 @@ class MessageBubble(QFrame):
         self.raw_text_buffer = ""
         self.character_queue = []
 
-        # Use plain text initially for smooth streaming
         self.message_label.setTextFormat(Qt.TextFormat.MarkdownText)
         self.message_label.setText("")
 
-    def add_streaming_chunk(self, chunk: str):
+    def add_streaming_chunk(self, chunk_queue: list):
         """Add a chunk of text to the streaming queue."""
-        if not chunk:  # Skip empty chunks
+        if not chunk_queue:  # Skip empty chunks
             return
 
         if not self.is_streaming:
             self.start_streaming()
 
-        # Add characters to queue for smooth rendering
-        self.character_queue.extend(list(chunk))
-        self.raw_text_buffer += chunk
-
         # Start the streaming timer if not active
         if not self.streaming_timer.isActive():
-            self.streaming_timer.start(20)
+            self.streaming_timer.start(16)
+
+        # Add characters to queue for smooth rendering
+        self.character_queue = chunk_queue
 
     def _render_next_character(self):
         """Render the next character(s) from the queue."""
@@ -328,12 +326,12 @@ class MessageBubble(QFrame):
             return
 
         # Adaptive rendering speed based on queue size
-        if len(self.character_queue) > 200:
-            chars_per_frame = 5  # Speed up for large queues
-        elif len(self.character_queue) > 100:
-            chars_per_frame = 3
+        if len(self.character_queue) > 100:
+            chars_per_frame = 7  # Speed up for large queues
+        elif len(self.character_queue) > 50:
+            chars_per_frame = 5
         else:
-            chars_per_frame = 2  # Slower for natural effect
+            chars_per_frame = 3  # Slower for natural effect
 
         # Render characters for this frame
         new_chars = ""

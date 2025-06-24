@@ -1,6 +1,6 @@
 from typing import Any, Dict
 from PySide6.QtCore import Slot
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox, QApplication
 from AgentCrew.modules.gui.widgets import ConversationLoader
 
 
@@ -140,6 +140,7 @@ class ConversationComponents:
             f"Loaded conversation: {conversation_id}"
         )
         self.chat_window.loading_conversation = False
+        QApplication.processEvents()
         self.chat_window.ui_state_manager.set_input_controls_enabled(True)
 
     @Slot(str)
