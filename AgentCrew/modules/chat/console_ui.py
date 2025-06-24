@@ -6,6 +6,8 @@ import re
 import threading
 import random
 import itertools
+import queue
+from threading import Thread, Event
 from typing import Dict, Any, List
 from rich.console import Console
 from rich.markdown import Markdown
@@ -15,6 +17,7 @@ from rich.style import Style
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
+from prompt_toolkit.formatted_text import HTML
 import AgentCrew
 
 from AgentCrew.modules.agents.base import MessageType
@@ -64,6 +67,12 @@ class ConsoleUI(Observer):
 
         # Set up key bindings
         self.kb = self._setup_key_bindings()
+
+        # Threading for user input
+        self._input_queue = queue.Queue()
+        self._input_thread = None
+        self._input_stop_event = Event()
+        self._current_prompt_session = None
 
     def listen(self, event: str, data: Any = None):
         """
@@ -776,9 +785,99 @@ class ConsoleUI(Observer):
         )
         return str(content)
 
-    def get_user_input(self, conversation_turns=None):
+    def _input_thread_worker(self):
+        """Worker thread for handling user input."""
+        while not self._input_stop_event.is_set():
+            try:
+                session = PromptSession(
+                    key_bindings=self.kb,
+                    completer=ChatCompleter(self.message_handler.conversation_turns),
+                )
+                self._current_prompt_session = session
+
+                # Create a dynamic prompt that includes agent and model info using HTML formatting
+                prompt_text = HTML(
+                    f"[<ansired>{self.message_handler.agent.name}</ansired>:<ansiblue>{self.message_handler.agent.get_model()}</ansiblue>] > "
+                )
+
+                user_input = session.prompt(prompt_text, multiline=True)
+
+                # Reset history position after submission
+                self.message_handler.history_manager.reset_position()
+
+                # Put the input in the queue
+                self._input_queue.put(user_input)
+
+            except KeyboardInterrupt:
+                # Handle Ctrl+C in input thread
+                current_time = time.time()
+                if (
+                    hasattr(self, "_last_ctrl_c_time")
+                    and current_time - self._last_ctrl_c_time < 2
+                ):
+                    self._input_queue.put("__EXIT__")
+                    break
+                else:
+                    self._last_ctrl_c_time = current_time
+                    self._input_queue.put("__INTERRUPT__")
+                    continue
+            except Exception as e:
+                self._input_queue.put(f"__ERROR__:{str(e)}")
+                break
+
+    def _stop_input_thread(self):
+        """Stop the input thread cleanly."""
+        if self._input_thread and self._input_thread.is_alive():
+            # Don't try to join if we're in the same thread
+            if threading.current_thread() == self._input_thread:
+                # We're in the input thread, just set the stop event
+                self._input_stop_event.set()
+                return
+
+            self._input_stop_event.set()
+            if self._current_prompt_session:
+                # Try to interrupt the current prompt session
+                try:
+                    if (
+                        hasattr(self._current_prompt_session, "app")
+                        and self._current_prompt_session.app
+                    ):
+                        self._current_prompt_session.app.exit()
+                except Exception:
+                    pass
+            self._input_thread.join(timeout=1.0)
+
+    def _handle_keyboard_interrupt(self):
+        """Handle Ctrl+C pressed during streaming or other operations."""
+        self.stop_loading_animation()
+        self.message_handler.stop_streaming = True
+
+        current_time = time.time()
+        if (
+            hasattr(self, "_last_ctrl_c_time")
+            and current_time - self._last_ctrl_c_time < 2
+        ):
+            self.console.print(
+                Text(
+                    "\n🎮 Confirmed exit. Goodbye!",
+                    style=RICH_STYLE_YELLOW_BOLD,
+                )
+            )
+            self._stop_input_thread()
+            sys.exit(0)
+        else:
+            self._last_ctrl_c_time = current_time
+            self.console.print(
+                Text(
+                    "\n🎮 Chat interrupted. Press Ctrl+C again within 2 seconds to exit.",
+                    style=RICH_STYLE_YELLOW_BOLD,
+                )
+            )
+
+    def get_user_input(self):
         """
         Get multiline input from the user with support for command history.
+        Now runs in a separate thread to allow events to display during input.
 
         Args:
             conversation_turns: Optional list of conversation turns for completions.
@@ -786,40 +885,75 @@ class ConsoleUI(Observer):
         Returns:
             The user input as a string.
         """
-        agent_info = Text("🤖 Agent: ", style=RICH_STYLE_YELLOW)
-        agent_info.append(self.message_handler.agent.name, style=RICH_STYLE_GREEN)
-        agent_info.append(" 🧠 Model: ", style=RICH_STYLE_YELLOW)
-        agent_info.append(self.message_handler.agent.get_model(), style=RICH_STYLE_BLUE)
+        agent_info = Text(f"[{self.message_handler.agent.name}", style=RICH_STYLE_RED)
+        agent_info.append(":")
         agent_info.append(
+            f"{self.message_handler.agent.get_model()}] > ", style=RICH_STYLE_BLUE
+        )
+        title = Text("👤 YOU:", style=RICH_STYLE_BLUE_BOLD)
+        title.append(
             "\n(Press Enter for new line, Ctrl+S to submit, Up/Down for history)",
             style=RICH_STYLE_YELLOW,
         )
-        self.console.print(agent_info)
-        self.console.print(Text("\n👤 YOU:", style=RICH_STYLE_BLUE_BOLD))
+        self.console.print(title)
 
-        session = PromptSession(
-            key_bindings=self.kb,
-            completer=ChatCompleter(
-                conversation_turns or self.message_handler.conversation_turns
-            ),
-        )
+        # Start input thread if not already running
+        if self._input_thread is None or not self._input_thread.is_alive():
+            self._input_stop_event.clear()
+            self._input_thread = Thread(target=self._input_thread_worker, daemon=True)
+            self._input_thread.start()
+        else:
+            self.console.print(agent_info, end="")
 
-        try:
-            # Create a dynamic prompt that includes agent and model info
-            prompt_text = f"[{self.message_handler.agent.name}:{self.message_handler.agent.get_model()}] > "
-            user_input = session.prompt(prompt_text)
-            # Reset history position after submission
-            self.message_handler.history_manager.reset_position()
-            self.display_divider()
-            return user_input
-        except KeyboardInterrupt:
-            self.console.print(
-                Text(
-                    "\n🎮 Chat interrupted. Press Ctrl+C again to exit.",
-                    style=RICH_STYLE_YELLOW_BOLD,
+        # Wait for input while allowing events to be processed
+        while True:
+            try:
+                # Check for input with a short timeout to allow event processing
+                user_input = self._input_queue.get(timeout=0.2)
+
+                # Add None check here
+                if user_input is None:
+                    continue
+
+                if user_input == "__EXIT__":
+                    self.console.print(
+                        Text(
+                            "\n🎮 Confirmed exit. Goodbye!",
+                            style=RICH_STYLE_YELLOW_BOLD,
+                        )
+                    )
+                    self._stop_input_thread()
+                    sys.exit(0)
+                elif user_input == "__INTERRUPT__":
+                    self.console.print(
+                        Text(
+                            "\n🎮 Chat interrupted. Press Ctrl+C again within 2 seconds to exit.",
+                            style=RICH_STYLE_YELLOW_BOLD,
+                        )
+                    )
+                    return ""
+                elif user_input.startswith("__ERROR__:"):
+                    error_msg = user_input[10:]  # Remove "__ERROR__:" prefix
+                    self.console.print(
+                        Text(f"\nInput error: {error_msg}", style=RICH_STYLE_RED)
+                    )
+                    return ""
+                else:
+                    self.display_divider()
+                    return user_input
+
+            except queue.Empty:
+                # No input yet, continue waiting
+                continue
+            except KeyboardInterrupt:
+                # Handle KeyboardInterrupt from the prompt session exit
+                self.console.print(
+                    Text(
+                        "\n🎮 Confirmed exit. Goodbye!",
+                        style=RICH_STYLE_YELLOW_BOLD,
+                    )
                 )
-            )
-            return ""  # Return empty string to continue the chat
+                sys.exit(0)
 
     def start_streaming_response(self, agent_name: str):
         """
@@ -829,7 +963,7 @@ class ConsoleUI(Observer):
             agent_name: The name of the agent providing the response.
         """
         self.console.print(
-            Text(f"\n🤖 {agent_name.upper()}:", style=RICH_STYLE_GREEN_BOLD)
+            Text(f"🤖 {agent_name.upper()}:", style=RICH_STYLE_GREEN_BOLD)
         )
         self.live = Live(
             "", console=self.console, refresh_per_second=24, vertical_overflow="crop"
@@ -863,21 +997,27 @@ class ConsoleUI(Observer):
             current_time = time.time()
             if (
                 hasattr(self, "_last_ctrl_c_time")
-                and current_time - self._last_ctrl_c_time < 1
+                and current_time - self._last_ctrl_c_time < 2
             ):
                 self.console.print(
                     Text("\n🎮 Confirmed exit. Goodbye!", style=RICH_STYLE_YELLOW_BOLD)
                 )
-                sys.exit(0)
+                # Don't try to join from within the same thread - just exit
+                event.app.exit("__EXIT__")
             else:
                 self._last_ctrl_c_time = current_time
+                if self.live:
+                    self.message_handler.stop_streaming = True
+
                 self.console.print(
                     Text(
-                        "\nPress Ctrl+C again within 1 seconds to exit.",
+                        "\nPress Ctrl+C again within 2 seconds to exit.",
                         style=RICH_STYLE_YELLOW,
                     )
                 )
-                print("> ", end="")
+
+                prompt_text = f"[{self.message_handler.agent.name}:{self.message_handler.agent.get_model()}] > "
+                print(prompt_text, end="")
 
         @kb.add(Keys.Up)
         def _(event):
@@ -1021,87 +1161,80 @@ class ConsoleUI(Observer):
         self.session_cost = 0.0
         self._cached_conversations = []  # Add this to cache conversation list
 
-        while True:
-            try:
-                # Get user input
-                self.stop_loading_animation()  # Stop if any
-                user_input = self.get_user_input()
+        try:
+            while True:
+                try:
+                    # Get user input (now in separate thread)
+                    self.stop_loading_animation()  # Stop if any
+                    user_input = self.get_user_input()
 
-                # Handle list command directly
-                if user_input.strip() == "/list":
-                    self._cached_conversations = (
-                        self.message_handler.list_conversations()
-                    )
-                    self.display_conversations(self._cached_conversations)
-                    continue
+                    # Handle list command directly
+                    if user_input.strip() == "/list":
+                        self._cached_conversations = (
+                            self.message_handler.list_conversations()
+                        )
+                        self.display_conversations(self._cached_conversations)
+                        continue
 
-                # Handle load command directly
-                if user_input.strip().startswith("/load "):
-                    load_arg = user_input.strip()[
-                        6:
-                    ].strip()  # Extract argument after "/load "
-                    if load_arg:
-                        self.handle_load_conversation(load_arg)
-                    else:
-                        self.console.print(
-                            Text(
-                                "Usage: /load <conversation_id> or /load <number>",
-                                style=RICH_STYLE_YELLOW,
+                    # Handle load command directly
+                    if user_input.strip().startswith("/load "):
+                        load_arg = user_input.strip()[
+                            6:
+                        ].strip()  # Extract argument after "/load "
+                        if load_arg:
+                            self.handle_load_conversation(load_arg)
+                        else:
+                            self.console.print(
+                                Text(
+                                    "Usage: /load <conversation_id> or /load <number>",
+                                    style=RICH_STYLE_YELLOW,
+                                )
                             )
-                        )
-                    continue
+                        continue
 
-                # Start loading animation while waiting for response
-                if not user_input.startswith("/") or user_input.startswith("/file "):
-                    self.start_loading_animation()
+                    # Start loading animation while waiting for response
+                    if not user_input.startswith("/") or user_input.startswith(
+                        "/file "
+                    ):
+                        self.start_loading_animation()
 
-                # Process user input and commands
-                # self.start_streaming_response(self.message_handler.agent_name)
-                should_exit, was_cleared = asyncio.run(
-                    self.message_handler.process_user_input(user_input)
-                )
-
-                # Exit if requested
-                if should_exit:
-                    break
-
-                # Skip to next iteration if messages were cleared
-                if was_cleared:
-                    continue
-
-                # Skip to next iteration if no messages to process
-                if not self.message_handler.agent.history:
-                    continue
-
-                # Get assistant response
-                assistant_response, input_tokens, output_tokens = asyncio.run(
-                    self.message_handler.get_assistant_response()
-                )
-
-                # Ensure loading animation is stopped
-                self.stop_loading_animation()
-
-                total_cost = self._calculate_token_usage(input_tokens, output_tokens)
-
-                if assistant_response:
-                    # Calculate and display token usage
-                    self.display_token_usage(
-                        input_tokens, output_tokens, total_cost, self.session_cost
+                    # Process user input and commands
+                    should_exit, was_cleared = asyncio.run(
+                        self.message_handler.process_user_input(user_input)
                     )
-            except KeyboardInterrupt:
-                self.stop_loading_animation()  # Stop loading on interrupt
-                self.message_handler.stop_streaming = True
-                # Display whatever text was generated so far
-                if self.live:
-                    last_response = self._live_text_data
-                    self.message_handler._messages_append(
-                        self.message_handler.agent.format_message(
-                            MessageType.Assistant, {"message": last_response}
-                        )
+
+                    # Exit if requested
+                    if should_exit:
+                        break
+
+                    # Skip to next iteration if messages were cleared
+                    if was_cleared:
+                        continue
+
+                    # Skip to next iteration if no messages to process
+                    if not self.message_handler.agent.history:
+                        continue
+
+                    # Get assistant response
+                    assistant_response, input_tokens, output_tokens = asyncio.run(
+                        self.message_handler.get_assistant_response()
                     )
-                    self.live.stop()
-                    self.live = None
-                self.display_message(
-                    Text("Message streaming stopped by user.", style=RICH_STYLE_YELLOW)
-                )
-                break  # Exit the loop instead of continuing
+
+                    # Ensure loading animation is stopped
+                    self.stop_loading_animation()
+
+                    total_cost = self._calculate_token_usage(
+                        input_tokens, output_tokens
+                    )
+
+                    if assistant_response:
+                        # Calculate and display token usage
+                        self.display_token_usage(
+                            input_tokens, output_tokens, total_cost, self.session_cost
+                        )
+                except KeyboardInterrupt:
+                    self._handle_keyboard_interrupt()
+                    continue  # Continue the loop instead of breaking
+        finally:
+            # Clean up input thread when exiting
+            self._stop_input_thread()
