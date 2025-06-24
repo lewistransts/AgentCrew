@@ -786,15 +786,16 @@ class ConsoleUI(Observer):
         Returns:
             The user input as a string.
         """
-        self.console.print(Text("\n👤 YOU:", style=RICH_STYLE_BLUE_BOLD))
-        self.console.print(
-            Text(
-                "🤖 "
-                f"{self.message_handler.agent.name} 🧠 {self.message_handler.agent.get_model()}\n"
-                "(Press Enter for new line, Ctrl+S to submit, Up/Down for history)",
-                style=RICH_STYLE_YELLOW,
-            )
+        agent_info = Text("🤖 Agent: ", style=RICH_STYLE_YELLOW)
+        agent_info.append(self.message_handler.agent.name, style=RICH_STYLE_GREEN)
+        agent_info.append(" 🧠 Model: ", style=RICH_STYLE_YELLOW)
+        agent_info.append(self.message_handler.agent.get_model(), style=RICH_STYLE_BLUE)
+        agent_info.append(
+            "\n(Press Enter for new line, Ctrl+S to submit, Up/Down for history)",
+            style=RICH_STYLE_YELLOW,
         )
+        self.console.print(agent_info)
+        self.console.print(Text("\n👤 YOU:", style=RICH_STYLE_BLUE_BOLD))
 
         session = PromptSession(
             key_bindings=self.kb,
@@ -804,7 +805,9 @@ class ConsoleUI(Observer):
         )
 
         try:
-            user_input = session.prompt("> ")
+            # Create a dynamic prompt that includes agent and model info
+            prompt_text = f"[{self.message_handler.agent.name}:{self.message_handler.agent.get_model()}] > "
+            user_input = session.prompt(prompt_text)
             # Reset history position after submission
             self.message_handler.history_manager.reset_position()
             self.display_divider()
