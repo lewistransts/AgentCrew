@@ -11,6 +11,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.text import Text
 from rich.live import Live
+from rich.style import Style
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
@@ -20,17 +21,18 @@ from AgentCrew.modules.agents.base import MessageType
 from AgentCrew.modules.chat.message_handler import MessageHandler, Observer
 from AgentCrew.modules import logger
 from AgentCrew.modules.chat.completers import ChatCompleter
-from AgentCrew.modules.chat.constants import (
-    YELLOW,
-    GREEN,
-    BLUE,
-    RED,
-    GRAY,
-    RESET,
-    BOLD,
-    RICH_YELLOW,
-    RICH_GRAY,
-)
+
+# Rich styles
+RICH_STYLE_YELLOW = Style(color="yellow", bold=False)
+RICH_STYLE_GREEN = Style(color="green", bold=False)
+RICH_STYLE_BLUE = Style(color="blue", bold=False)
+RICH_STYLE_RED = Style(color="red", bold=False)
+RICH_STYLE_GRAY = Style(color="grey66", bold=False)
+
+RICH_STYLE_YELLOW_BOLD = Style(color="yellow", bold=True)
+RICH_STYLE_GREEN_BOLD = Style(color="green", bold=True)
+RICH_STYLE_BLUE_BOLD = Style(color="blue", bold=True)
+RICH_STYLE_RED_BOLD = Style(color="red", bold=True)
 
 CODE_THEME = "lightbulb"
 
@@ -102,10 +104,12 @@ class ConsoleUI(Observer):
         elif event == "error":
             self.display_error(data)  # data is the error message or dict
         elif event == "clear_requested":
-            self.display_message(f"{YELLOW}{BOLD}🎮 Chat history cleared.{RESET}")
+            self.display_message(
+                Text("🎮 Chat history cleared.", style=RICH_STYLE_YELLOW_BOLD)
+            )
         elif event == "exit_requested":
             self.display_message(
-                f"{YELLOW}{BOLD}🎮 Ending chat session. Goodbye!{RESET}"
+                Text("🎮 Ending chat session. Goodbye!", style=RICH_STYLE_YELLOW_BOLD)
             )
             sys.exit(0)
         elif event == "copy_requested":
@@ -113,44 +117,57 @@ class ConsoleUI(Observer):
         elif event == "debug_requested":
             self.display_debug_info(data)  # data is the debug information
         elif event == "think_budget_set":
-            self.display_message(
-                f"{YELLOW}Thinking budget set to {data} tokens.{RESET}"
-            )
+            thinking_text = Text("Thinking budget set to ", style=RICH_STYLE_YELLOW)
+            thinking_text.append(f"{data} tokens.")
+            self.display_message(thinking_text)
         elif event == "models_listed":
             self.display_models(data)  # data is dict of models by provider
         elif event == "model_changed":
-            self.display_message(
-                f"{YELLOW}Switched to {data['name']} ({data['id']}){RESET}"
-            )
+            model_text = Text("Switched to ", style=RICH_STYLE_YELLOW)
+            model_text.append(f"{data['name']} ({data['id']})")
+            self.display_message(model_text)
         elif event == "agents_listed":
             self.display_agents(data)  # data is dict of agent info
         elif event == "agent_changed":
-            self.display_message(f"{YELLOW}Switched to {data} agent{RESET}")
+            agent_text = Text("Switched to ", style=RICH_STYLE_YELLOW)
+            agent_text.append(f"{data} agent")
+            self.display_message(agent_text)
         elif event == "agent_changed_by_transfer":
-            self.display_message(
-                f"{YELLOW}Transfered to {data['agent_name'] if 'agent_name' in data else 'other'} agent{RESET}"
+            transfer_text = Text("Transfered to ", style=RICH_STYLE_YELLOW)
+            transfer_text.append(
+                f"{data['agent_name'] if 'agent_name' in data else 'other'} agent"
             )
+            self.display_message(transfer_text)
         elif event == "agent_continue":
-            self.display_message(f"\n{GREEN}{BOLD}🤖 {data.upper()}:{RESET}")
-        elif event == "jump_performed":
             self.display_message(
-                f"{YELLOW}{BOLD}🕰️ Jumping to turn {data['turn_number']}...{RESET}\n"
-                f"{YELLOW}Conversation rewound to: {data['preview']}{RESET}"
+                Text(f"\n🤖 {data.upper()}:", style=RICH_STYLE_GREEN_BOLD)
             )
+        elif event == "jump_performed":
+            jump_text = Text(
+                f"🕰️ Jumping to turn {data['turn_number']}...\n",
+                style=RICH_STYLE_YELLOW_BOLD,
+            )
+            preview_text = Text("Conversation rewound to: ", style=RICH_STYLE_YELLOW)
+            preview_text.append(data["preview"])
+
+            self.display_message(jump_text)
+            self.display_message(preview_text)
         elif event == "thinking_completed":
             self.console.print("\n")
             self.display_divider()
         elif event == "file_processed":
             self.stop_loading_animation()  # Stop loading on first chunk
-            self.display_message(f"{YELLOW}Processed file: {data['file_path']}{RESET}")
+            file_text = Text("Processed file: ", style=RICH_STYLE_YELLOW)
+            file_text.append(data["file_path"])
+            self.display_message(file_text)
         elif event == "consolidation_completed":
             self.display_consolidation_result(data)
         elif event == "conversations_listed":
             self.display_conversations(data)  # data is list of conversation metadata
         elif event == "conversation_loaded":
-            self.display_message(
-                f"{YELLOW}Loaded conversation: {data.get('id', 'N/A')}{RESET}"
-            )
+            loaded_text = Text("Loaded conversation: ", style=RICH_STYLE_YELLOW)
+            loaded_text.append(data.get("id", "N/A"))
+            self.display_message(loaded_text)
         elif event == "conversation_saved":
             logger.info(f"Conversation saved: {data.get('id', 'N/A')}")
             # self.display_message(
@@ -164,7 +181,10 @@ class ConsoleUI(Observer):
     def display_thinking_started(self, agent_name: str):
         """Display the start of the thinking process."""
         self.console.print(
-            Text(f"\n💭 {agent_name.upper()}'s thinking process:", style=RICH_YELLOW)
+            Text(
+                f"\n💭 {agent_name.upper()}'s thinking process:",
+                style=RICH_STYLE_YELLOW,
+            )
         )
 
     def _loading_animation(self, stop_event):
@@ -223,7 +243,7 @@ class ConsoleUI(Observer):
 
     def display_thinking_chunk(self, chunk: str):
         """Display a chunk of the thinking process."""
-        self.console.print(Text(chunk, style=RICH_GRAY), end="", soft_wrap=True)
+        self.console.print(Text(chunk, style=RICH_STYLE_GRAY), end="", soft_wrap=True)
 
     def update_live_display(self, chunk: str):
         """Update the live display with a new chunk of the response."""
@@ -265,13 +285,14 @@ class ConsoleUI(Observer):
         tool_icon = tool_icons.get(tool_use["name"], "🔧")
 
         # Display tool header with better formatting
-        print(
-            f"\n{YELLOW}┌───── {tool_icon} Tool: {BOLD}{tool_use['name']}{RESET}{YELLOW} ─────{RESET}"
-        )
+        header = Text(f"\n┌───── {tool_icon} Tool: ", style=RICH_STYLE_YELLOW)
+        header.append(tool_use["name"], style=RICH_STYLE_YELLOW_BOLD)
+        header.append(" ─────", style=RICH_STYLE_YELLOW)
+        self.console.print(header)
 
         # Format tool input parameters
         if isinstance(tool_use.get("input"), dict):
-            print(f"{YELLOW}│ Parameters:{RESET}")
+            self.console.print(Text("│ Parameters:", style=RICH_STYLE_YELLOW))
             for key, value in tool_use["input"].items():
                 # Format value based on type
                 if isinstance(value, dict) or isinstance(value, list):
@@ -279,16 +300,27 @@ class ConsoleUI(Observer):
 
                     formatted_value = json.dumps(value, indent=2)
                     # Add indentation to all lines after the first
-                    formatted_value = formatted_value.replace(
-                        "\n", f"\n{YELLOW}│ {RESET}    "
-                    )
-                    print(f"{YELLOW}│ • {BLUE}{key}{RESET}: {formatted_value}")
-                else:
-                    print(f"{YELLOW}│ • {BLUE}{key}{RESET}: {value}")
-        else:
-            print(f"{YELLOW}│ Input: {RESET}{tool_use.get('input', '')}")
+                    formatted_lines = formatted_value.split("\n")
+                    param_text = Text("│ • ", style=RICH_STYLE_YELLOW)
+                    param_text.append(key, style=RICH_STYLE_BLUE)
+                    param_text.append(": " + formatted_lines[0])
+                    self.console.print(param_text)
 
-        print(f"{YELLOW}└{RESET}")
+                    for line in formatted_lines[1:]:
+                        indent_text = Text("│     ", style=RICH_STYLE_YELLOW)
+                        indent_text.append(line)
+                        self.console.print(indent_text)
+                else:
+                    param_text = Text("│ • ", style=RICH_STYLE_YELLOW)
+                    param_text.append(key, style=RICH_STYLE_BLUE)
+                    param_text.append(f": {value}")
+                    self.console.print(param_text)
+        else:
+            input_text = Text("│ Input: ", style=RICH_STYLE_YELLOW)
+            input_text.append(str(tool_use.get("input", "")))
+            self.console.print(input_text)
+
+        self.console.print(Text("└", style=RICH_STYLE_YELLOW))
 
     def display_tool_result(self, data: Dict):
         """Display the result of a tool execution."""
@@ -311,24 +343,32 @@ class ConsoleUI(Observer):
         tool_icon = tool_icons.get(tool_use["name"], "🔧")
 
         # Display tool result with better formatting
-        print(
-            f"\n{GREEN}┌───── {tool_icon} Tool Result: {BOLD}{tool_use['name']}{RESET}{GREEN} ─────{RESET}"
-        )
+        header = Text(f"\n┌───── {tool_icon} Tool Result: ", style=RICH_STYLE_GREEN)
+        header.append(tool_use["name"], style=RICH_STYLE_GREEN_BOLD)
+        header.append(" ─────", style=RICH_STYLE_GREEN)
+        self.console.print(header)
 
         # Format the result based on type
         result_str = str(tool_result)
         # If result is very long, try to format it
         if len(result_str) > 500:
-            print(f"{GREEN}│ {RESET}{result_str[:500]}...")
-            print(
-                f"{GREEN}│ {RESET}(Output truncated, total length: {len(result_str)} characters)"
+            result_line = Text("│ ", style=RICH_STYLE_GREEN)
+            result_line.append(result_str[:500] + "...")
+            self.console.print(result_line)
+
+            truncated_line = Text("│ ", style=RICH_STYLE_GREEN)
+            truncated_line.append(
+                f"(Output truncated, total length: {len(result_str)} characters)"
             )
+            self.console.print(truncated_line)
         else:
             # Split by lines to add prefixes
             for line in result_str.split("\n"):
-                print(f"{GREEN}│ {RESET}{line}")
+                result_line = Text("│ ", style=RICH_STYLE_GREEN)
+                result_line.append(line)
+                self.console.print(result_line)
 
-        print(f"{GREEN}└{RESET}")
+        self.console.print(Text("└", style=RICH_STYLE_GREEN))
 
     def display_tool_error(self, data: Dict):
         """Display an error that occurred during tool execution."""
@@ -352,11 +392,16 @@ class ConsoleUI(Observer):
         tool_icon = tool_icons.get(tool_use["name"], "🔧")
 
         # Display tool error with better formatting
-        print(
-            f"\n{RED}┌───── {tool_icon} Tool Error: {BOLD}{tool_use['name']}{RESET}{RED} ─────{RESET}"
-        )
-        print(f"{RED}│ {RESET}{error}")
-        print(f"{RED}└{RESET}")
+        header = Text(f"\n┌───── {tool_icon} Tool Error: ", style=RICH_STYLE_RED)
+        header.append(tool_use["name"], style=RICH_STYLE_RED_BOLD)
+        header.append(" ─────", style=RICH_STYLE_RED)
+        self.console.print(header)
+
+        error_line = Text("│ ", style=RICH_STYLE_RED)
+        error_line.append(str(error))
+        self.console.print(error_line)
+
+        self.console.print(Text("└", style=RICH_STYLE_RED))
 
     def display_tool_confirmation_request(self, tool_info):
         """Display tool confirmation request and get user response."""
@@ -365,22 +410,38 @@ class ConsoleUI(Observer):
         tool_use = tool_info.copy()
         confirmation_id = tool_use.pop("confirmation_id")
 
-        print(f"\n{YELLOW}🔧 Tool execution requires your permission:{RESET}")
-        print(f"{YELLOW}Tool: {tool_use['name']}{RESET}")
+        self.console.print(
+            Text(
+                "\n🔧 Tool execution requires your permission:", style=RICH_STYLE_YELLOW
+            )
+        )
+        tool_name = Text("Tool: ", style=RICH_STYLE_YELLOW)
+        tool_name.append(tool_use["name"])
+        self.console.print(tool_name)
 
         # Display tool parameters
         if isinstance(tool_use["input"], dict):
-            print(f"{YELLOW}Parameters:{RESET}")
+            self.console.print(Text("Parameters:", style=RICH_STYLE_YELLOW))
             for key, value in tool_use["input"].items():
-                print(f"  - {key}: {value}")
+                param_text = Text(f"  - {key}: ", style=RICH_STYLE_YELLOW)
+                param_text.append(str(value))
+                self.console.print(param_text)
         else:
-            print(f"{YELLOW}Input: {tool_use['input']}{RESET}")
+            input_text = Text("Input: ", style=RICH_STYLE_YELLOW)
+            input_text.append(str(tool_use["input"]))
+            self.console.print(input_text)
 
         # Get user response
         while True:
-            response = input(
-                f"\n{YELLOW}Allow this tool to run? [y]es/[n]o/[all] future calls: {RESET}"
-            ).lower()
+            # Use Rich to print the prompt but still need to use input() for user interaction
+            self.console.print(
+                Text(
+                    "\nAllow this tool to run? [y]es/[n]o/[all] future calls: ",
+                    style=RICH_STYLE_YELLOW,
+                ),
+                end="",
+            )
+            response = input().lower()
 
             if response in ["y", "yes"]:
                 self.message_handler.resolve_tool_confirmation(
@@ -396,17 +457,24 @@ class ConsoleUI(Observer):
                 self.message_handler.resolve_tool_confirmation(
                     confirmation_id, {"action": "approve_all"}
                 )
-                print(
-                    f"{YELLOW}✓ Approved all future calls to '{tool_use['name']}' for this session.{RESET}"
+                approved_text = Text(
+                    "✓ Approved all future calls to '", style=RICH_STYLE_YELLOW
                 )
+                approved_text.append(tool_use["name"])
+                approved_text.append("' for this session.")
+                self.console.print(approved_text)
                 break
             else:
-                print(f"{YELLOW}Please enter 'y', 'n', or 'all'.{RESET}")
+                self.console.print(
+                    Text("Please enter 'y', 'n', or 'all'.", style=RICH_STYLE_YELLOW)
+                )
 
     def display_tool_denied(self, data):
         """Display information about a denied tool execution."""
         tool_use = data["tool_use"]
-        print(f"\n{RED}❌ Tool execution denied: {tool_use['name']}{RESET}")
+        denied_text = Text("\n❌ Tool execution denied: ", style=RICH_STYLE_RED)
+        denied_text.append(tool_use["name"])
+        self.console.print(denied_text)
 
     def finish_live_update(self):
         """stop the live update display."""
@@ -434,70 +502,87 @@ class ConsoleUI(Observer):
         """Display an error message."""
         self.stop_loading_animation()  # Stop loading on error
         if isinstance(error, dict):
-            print(f"\n{RED}❌ Error: {error['message']}{RESET}")
+            error_text = Text("\n❌ Error: ", style=RICH_STYLE_RED)
+            error_text.append(error["message"])
+            self.console.print(error_text)
             if "traceback" in error:
-                print(f"{GRAY}{error['traceback']}{RESET}")
+                self.console.print(Text(error["traceback"], style=RICH_STYLE_GRAY))
         else:
-            print(f"\n{RED}❌ Error: {error}{RESET}")
+            error_text = Text("\n❌ Error: ", style=RICH_STYLE_RED)
+            error_text.append(str(error))
+            self.console.print(error_text)
         if self.live:
             self.live.update("")
             self.live.stop()
             self.live = None
 
-    def display_message(self, message: str):
+    def display_message(self, message: Text):
         """Display a generic message."""
-        print(message)
+        # Check if message contains ANSI color codes and convert to Rich styling
+        self.console.print(message)
 
     def display_divider(self):
         """Display a divider line."""
         divider = "─" * self.console.size.width
-        print(divider)
+        self.console.print(divider, style=RICH_STYLE_GRAY)
 
     def copy_to_clipboard(self, text: str):
         """Copy text to clipboard and show confirmation."""
         if text:
             pyperclip.copy(text)
-            print(f"\n{YELLOW}✓ Text copied to clipboard!{RESET}")
+            self.console.print(
+                Text("\n✓ Text copied to clipboard!", style=RICH_STYLE_YELLOW)
+            )
         else:
-            print(f"\n{YELLOW}! No text to copy.{RESET}")
+            self.console.print(Text("\n! No text to copy.", style=RICH_STYLE_YELLOW))
 
     def display_debug_info(self, debug_info):
         """Display debug information."""
         import json
 
-        print(f"{YELLOW}Current messages:{RESET}")
+        self.console.print(Text("Current messages:", style=RICH_STYLE_YELLOW))
         try:
             self.console.print(json.dumps(debug_info, indent=2))
         except Exception:
-            print(debug_info)
+            self.console.print(debug_info)
 
     def display_models(self, models_by_provider: Dict):
         """Display available models grouped by provider."""
-        print(f"{YELLOW}Available models:{RESET}")
+        self.console.print(Text("Available models:", style=RICH_STYLE_YELLOW))
         for provider, models in models_by_provider.items():
-            print(f"\n{YELLOW}{provider.capitalize()} models:{RESET}")
+            self.console.print(
+                Text(f"\n{provider.capitalize()} models:", style=RICH_STYLE_YELLOW)
+            )
             for model in models:
                 current = " (current)" if model["current"] else ""
-                print(f"  - {model['id']}: {model['name']}{current}")
-                print(f"    {model['description']}")
-                print(f"    Capabilities: {', '.join(model['capabilities'])}")
+                self.console.print(f"  - {model['id']}: {model['name']}{current}")
+                self.console.print(f"    {model['description']}")
+                self.console.print(
+                    f"    Capabilities: {', '.join(model['capabilities'])}"
+                )
 
     def display_agents(self, agents_info: Dict):
         """Display available agents."""
-        print(f"{YELLOW}Current agent: {agents_info['current']}{RESET}")
-        print(f"{YELLOW}Available agents:{RESET}")
+        self.console.print(
+            Text(f"Current agent: {agents_info['current']}", style=RICH_STYLE_YELLOW)
+        )
+        self.console.print(Text("Available agents:", style=RICH_STYLE_YELLOW))
 
         for agent_name, agent_data in agents_info["available"].items():
             current = " (current)" if agent_data["current"] else ""
-            print(f"  - {agent_name}{current}: {agent_data['description']}")
+            self.console.print(
+                f"  - {agent_name}{current}: {agent_data['description']}"
+            )
 
     def display_conversations(self, conversations: List[Dict[str, Any]]):
         """Display available conversations."""
         if not conversations:
-            print(f"{YELLOW}No saved conversations found.{RESET}")
+            self.console.print(
+                Text("No saved conversations found.", style=RICH_STYLE_YELLOW)
+            )
             return
 
-        print(f"{YELLOW}Available conversations:{RESET}")
+        self.console.print(Text("Available conversations:", style=RICH_STYLE_YELLOW))
         for i, convo in enumerate(conversations[:30], 1):
             # Format timestamp for better readability
             timestamp = convo.get("timestamp", "Unknown")
@@ -512,13 +597,13 @@ class ConsoleUI(Observer):
             convo_id = convo.get("id", "unknown")
 
             # Display conversation with index for easy selection
-            print(f"  {i}. {title} [{convo_id}]")
-            print(f"     Created: {timestamp}")
+            self.console.print(f"  {i}. {title} [{convo_id}]")
+            self.console.print(f"     Created: {timestamp}")
 
             # Show a preview if available
             if "preview" in convo:
-                print(f"     Preview: {convo['preview']}")
-            print()
+                self.console.print(f"     Preview: {convo['preview']}")
+            self.console.print("")
 
     def handle_load_conversation(self, load_arg: str):
         """
@@ -539,22 +624,37 @@ class ConsoleUI(Observer):
                 if 0 <= index < len(self._cached_conversations):
                     convo_id = self._cached_conversations[index].get("id")
                     if convo_id:
-                        print(f"{YELLOW}Loading conversation #{load_arg}...{RESET}")
+                        self.console.print(
+                            Text(
+                                f"Loading conversation #{load_arg}...",
+                                style=RICH_STYLE_YELLOW,
+                            )
+                        )
                         messages = self.message_handler.load_conversation(convo_id)
                         if messages:
                             self.display_loaded_conversation(messages)
                         return
-                print(
-                    f"{RED}Invalid conversation number. Use '/list' to see available conversations.{RESET}"
+                self.console.print(
+                    Text(
+                        "Invalid conversation number. Use '/list' to see available conversations.",
+                        style=RICH_STYLE_RED,
+                    )
                 )
             else:
                 # Assume it's a conversation ID
-                print(f"{YELLOW}Loading conversation with ID: {load_arg}...{RESET}")
+                self.console.print(
+                    Text(
+                        f"Loading conversation with ID: {load_arg}...",
+                        style=RICH_STYLE_YELLOW,
+                    )
+                )
                 messages = self.message_handler.load_conversation(load_arg)
                 if messages:
                     self.display_loaded_conversation(messages)
         except Exception as e:
-            print(f"{RED}Error loading conversation: {str(e)}{RESET}")
+            self.console.print(
+                Text(f"Error loading conversation: {str(e)}", style=RICH_STYLE_RED)
+            )
 
     def display_consolidation_result(self, result: Dict[str, Any]):
         """
@@ -563,10 +663,14 @@ class ConsoleUI(Observer):
         Args:
             result: Dictionary containing consolidation results
         """
-        print(f"\n{YELLOW}🔄 Conversation Consolidated:{RESET}")
-        print(f"  • {result['messages_consolidated']} messages summarized")
-        print(f"  • {result['messages_preserved']} recent messages preserved")
-        print(
+        self.console.print(
+            Text("\n🔄 Conversation Consolidated:", style=RICH_STYLE_YELLOW)
+        )
+        self.console.print(f"  • {result['messages_consolidated']} messages summarized")
+        self.console.print(
+            f"  • {result['messages_preserved']} recent messages preserved"
+        )
+        self.console.print(
             f"  • ~{result['original_token_count'] - result['consolidated_token_count']} tokens saved"
         )
         self.display_loaded_conversation(self.message_handler.streamline_messages)
@@ -577,7 +681,9 @@ class ConsoleUI(Observer):
         Args:
             messages: List of message dictionaries from the loaded conversation
         """
-        print(f"\n{YELLOW}Displaying conversation history:{RESET}")
+        self.console.print(
+            Text("\nDisplaying conversation history:", style=RICH_STYLE_YELLOW)
+        )
         self.display_divider()
 
         last_consolidated_idx = 0
@@ -591,13 +697,15 @@ class ConsoleUI(Observer):
         for msg in messages[last_consolidated_idx:]:
             role = msg.get("role")
             if role == "user":
-                print(f"\n{BLUE}{BOLD}👤 YOU:{RESET}")
+                self.console.print(Text("\n👤 YOU:", style=RICH_STYLE_BLUE_BOLD))
                 content = self._extract_message_content(msg)
-                print(content)
+                self.console.print(content)
                 self.display_divider()
             elif role == "assistant":
                 agent_name = self.message_handler.agent.name
-                print(f"\n{GREEN}{BOLD}🤖 {agent_name.upper()}:{RESET}")
+                self.console.print(
+                    Text(f"\n🤖 {agent_name.upper()}:", style=RICH_STYLE_GREEN_BOLD)
+                )
                 content = self._extract_message_content(msg)
                 # Format as markdown for better display
                 self.console.print(Markdown(content, code_theme=CODE_THEME))
@@ -607,7 +715,9 @@ class ConsoleUI(Observer):
                         self.display_tool_use(tool_call)
                 self.display_divider()
             elif role == "consolidated":
-                print(f"\n{YELLOW}📝 CONVERSATION SUMMARY:{RESET}")
+                self.console.print(
+                    Text("\n📝 CONVERSATION SUMMARY:", style=RICH_STYLE_YELLOW)
+                )
                 content = self._extract_message_content(msg)
 
                 # Display metadata if available
@@ -619,15 +729,20 @@ class ConsoleUI(Observer):
                     token_savings = metadata.get(
                         "original_token_count", 0
                     ) - metadata.get("consolidated_token_count", 0)
-                    print(
-                        f"{YELLOW}({consolidated_count} messages consolidated, ~{token_savings} tokens saved){RESET}"
+                    self.console.print(
+                        Text(
+                            f"({consolidated_count} messages consolidated, ~{token_savings} tokens saved)",
+                            style=RICH_STYLE_YELLOW,
+                        )
                     )
 
                 # Format the summary with markdown
                 self.console.print(Markdown(content, code_theme=CODE_THEME))
                 self.display_divider()
 
-        print(f"{YELLOW}End of conversation history{RESET}\n")
+        self.console.print(
+            Text("End of conversation history\n", style=RICH_STYLE_YELLOW)
+        )
 
     def _extract_message_content(self, message):
         """Extract the content from a message, handling different formats.
@@ -671,12 +786,14 @@ class ConsoleUI(Observer):
         Returns:
             The user input as a string.
         """
-        print(f"\n{BLUE}{BOLD}👤 YOU:{RESET}")
-        print(
-            f"{YELLOW}🤖 "
-            f"{self.message_handler.agent.name} 🧠 {self.message_handler.agent.get_model()}\n"
-            f"(Press Enter for new line, Ctrl+S to submit, Up/Down for history)"
-            f"{RESET}"
+        self.console.print(Text("\n👤 YOU:", style=RICH_STYLE_BLUE_BOLD))
+        self.console.print(
+            Text(
+                "🤖 "
+                f"{self.message_handler.agent.name} 🧠 {self.message_handler.agent.get_model()}\n"
+                "(Press Enter for new line, Ctrl+S to submit, Up/Down for history)",
+                style=RICH_STYLE_YELLOW,
+            )
         )
 
         session = PromptSession(
@@ -693,9 +810,11 @@ class ConsoleUI(Observer):
             self.display_divider()
             return user_input
         except KeyboardInterrupt:
-            # This should not be reached with our custom handler, but keep as fallback
-            print(
-                f"\n{YELLOW}{BOLD}🎮 Chat interrupted. Press Ctrl+C again to exit.{RESET}"
+            self.console.print(
+                Text(
+                    "\n🎮 Chat interrupted. Press Ctrl+C again to exit.",
+                    style=RICH_STYLE_YELLOW_BOLD,
+                )
             )
             return ""  # Return empty string to continue the chat
 
@@ -706,7 +825,9 @@ class ConsoleUI(Observer):
         Args:
             agent_name: The name of the agent providing the response.
         """
-        print(f"\n{GREEN}{BOLD}🤖 {agent_name.upper()}:{RESET}")
+        self.console.print(
+            Text(f"\n🤖 {agent_name.upper()}:", style=RICH_STYLE_GREEN_BOLD)
+        )
         self.live = Live(
             "", console=self.console, refresh_per_second=24, vertical_overflow="crop"
         )
@@ -741,11 +862,18 @@ class ConsoleUI(Observer):
                 hasattr(self, "_last_ctrl_c_time")
                 and current_time - self._last_ctrl_c_time < 1
             ):
-                print(f"\n{YELLOW}{BOLD}🎮 Confirmed exit. Goodbye!{RESET}")
+                self.console.print(
+                    Text("\n🎮 Confirmed exit. Goodbye!", style=RICH_STYLE_YELLOW_BOLD)
+                )
                 sys.exit(0)
             else:
                 self._last_ctrl_c_time = current_time
-                print(f"\n{YELLOW}Press Ctrl+C again within 1 seconds to exit.{RESET}")
+                self.console.print(
+                    Text(
+                        "\nPress Ctrl+C again within 1 seconds to exit.",
+                        style=RICH_STYLE_YELLOW,
+                    )
+                )
                 print("> ", end="")
 
         @kb.add(Keys.Up)
@@ -797,28 +925,62 @@ class ConsoleUI(Observer):
         version = getattr(AgentCrew, "__version__", "Unknown")
 
         welcome_messages = [
-            f"\n{YELLOW}{BOLD}🎮 Welcome to AgentCrew v{version} interactive chat!{RESET}",
-            f"{YELLOW}Press Ctrl+C twice to exit.{RESET}",
-            f"{YELLOW}Type 'exit' or 'quit' to end the session.{RESET}",
-            f"{YELLOW}Use '/file <file_path>' to include a file in your message.{RESET}",
-            f"{YELLOW}Use '/clear' to clear the conversation history.{RESET}",
-            f"{YELLOW}Use '/think <budget>' to enable Claude's thinking mode (min 1024 tokens).{RESET}",
-            f"{YELLOW}Use '/think 0' to disable thinking mode.{RESET}",
-            f"{YELLOW}Use '/model [model_id]' to switch models or list available models.{RESET}",
-            f"{YELLOW}Use '/jump <turn_number>' to rewind the conversation to a previous turn.{RESET}",
-            f"{YELLOW}Use '/copy' to copy the latest assistant response to clipboard.{RESET}",
-            f"{YELLOW}Press Alt/Meta+C to copy the latest assistant response.{RESET}",
-            f"{YELLOW}Use Up/Down arrow keys to navigate through command history.{RESET}",
-            f"{YELLOW}Use '/agent [agent_name]' to switch agents or list available agents.{RESET}",
-            f"{YELLOW}Use '/list' to list saved conversations.{RESET}",
-            f"{YELLOW}Use '/load <id>' or '/load <number>' to load a conversation.{RESET}",
-            f"{YELLOW}Use '/consolidate [count]' to summarize older messages (default: 10 recent messages preserved).{RESET}",
-            f"{YELLOW}Tool calls require confirmation before execution.{RESET}",
-            f"{YELLOW}Use 'y' to approve once, 'n' to deny, 'all' to approve future calls to the same tool.{RESET}",
+            Text(
+                "\n🎮 Welcome to AgentCrew v" + version + " interactive chat!",
+                style=RICH_STYLE_YELLOW_BOLD,
+            ),
+            Text("Press Ctrl+C twice to exit.", style=RICH_STYLE_YELLOW),
+            Text("Type 'exit' or 'quit' to end the session.", style=RICH_STYLE_YELLOW),
+            Text(
+                "Use '/file <file_path>' to include a file in your message.",
+                style=RICH_STYLE_YELLOW,
+            ),
+            Text(
+                "Use '/clear' to clear the conversation history.",
+                style=RICH_STYLE_YELLOW,
+            ),
+            Text(
+                "Use '/think <budget>' to enable Claude's thinking mode (min 1024 tokens).",
+                style=RICH_STYLE_YELLOW,
+            ),
+            Text("Use '/think 0' to disable thinking mode.", style=RICH_STYLE_YELLOW),
+            Text(
+                "Use '/model [model_id]' to switch models or list available models.",
+                style=RICH_STYLE_YELLOW,
+            ),
+            Text(
+                "Use '/jump <turn_number>' to rewind the conversation to a previous turn.",
+                style=RICH_STYLE_YELLOW,
+            ),
+            Text(
+                "Use '/copy' to copy the latest assistant response to clipboard.",
+                style=RICH_STYLE_YELLOW,
+            ),
+            Text(
+                "Use '/agent [agent_name]' to switch agents or list available agents.",
+                style=RICH_STYLE_YELLOW,
+            ),
+            Text("Use '/list' to list saved conversations.", style=RICH_STYLE_YELLOW),
+            Text(
+                "Use '/load <id>' or '/load <number>' to load a conversation.",
+                style=RICH_STYLE_YELLOW,
+            ),
+            Text(
+                "Use '/consolidate [count]' to summarize older messages (default: 10 recent messages preserved).",
+                style=RICH_STYLE_YELLOW,
+            ),
+            Text(
+                "Tool calls require confirmation before execution.",
+                style=RICH_STYLE_YELLOW,
+            ),
+            Text(
+                "Use 'y' to approve once, 'n' to deny, 'all' to approve future calls to the same tool.",
+                style=RICH_STYLE_YELLOW,
+            ),
         ]
 
         for message in welcome_messages:
-            print(message)
+            self.console.print(message)
         self.display_divider()
 
     def display_token_usage(
@@ -829,12 +991,18 @@ class ConsoleUI(Observer):
         session_cost: float,
     ):
         """Display token usage and cost information."""
-        print("\n")
+        self.console.print("\n")
         self.display_divider()
-        print(
-            f"{YELLOW}📊 Token Usage: Input: {input_tokens:,} | Output: {output_tokens:,} | "
-            f"Total: {input_tokens + output_tokens:,} | Cost: ${total_cost:.4f} | Total: {session_cost:.4f}{RESET}"
+        token_info = Text("📊 Token Usage: ", style=RICH_STYLE_YELLOW)
+        token_info.append(
+            f"Input: {input_tokens:,} | Output: {output_tokens:,} | ",
+            style=RICH_STYLE_YELLOW,
         )
+        token_info.append(
+            f"Total: {input_tokens + output_tokens:,} | Cost: ${total_cost:.4f} | Total: {session_cost:.4f}",
+            style=RICH_STYLE_YELLOW,
+        )
+        self.console.print(token_info)
         self.display_divider()
 
     def _calculate_token_usage(self, input_tokens: int, output_tokens: int):
@@ -872,8 +1040,11 @@ class ConsoleUI(Observer):
                     if load_arg:
                         self.handle_load_conversation(load_arg)
                     else:
-                        print(
-                            f"{YELLOW}Usage: /load <conversation_id> or /load <number>{RESET}"
+                        self.console.print(
+                            Text(
+                                "Usage: /load <conversation_id> or /load <number>",
+                                style=RICH_STYLE_YELLOW,
+                            )
                         )
                     continue
 
@@ -928,5 +1099,6 @@ class ConsoleUI(Observer):
                     self.live.stop()
                     self.live = None
                 self.display_message(
-                    f"{YELLOW}Message streaming stopped by user.{RESET}"
+                    Text("Message streaming stopped by user.", style=RICH_STYLE_YELLOW)
                 )
+                break  # Exit the loop instead of continuing
