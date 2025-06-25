@@ -9,9 +9,10 @@ import itertools
 import queue
 from threading import Thread, Event
 from typing import Dict, Any, List
-from rich.console import Console
+from rich.console import Console, Group
 from rich.markdown import Markdown
 from rich.text import Text
+from rich.panel import Panel
 from rich.live import Live
 from rich.style import Style
 from prompt_toolkit import PromptSession
@@ -605,8 +606,9 @@ class ConsoleUI(Observer):
 
     def display_divider(self):
         """Display a divider line."""
-        divider = "─" * self.console.size.width
-        self.console.print(divider, style=RICH_STYLE_GRAY)
+        pass
+        # divider = "─" * self.console.size.width
+        # self.console.print(divider, style=RICH_STYLE_GRAY)
 
     def copy_to_clipboard(self, text: str):
         """Copy text to clipboard and show confirmation."""
@@ -869,11 +871,9 @@ class ConsoleUI(Observer):
                 self._current_prompt_session = session
 
                 # Create a dynamic prompt that includes agent and model info using HTML formatting
-                prompt_text = HTML(
-                    f"[<ansired>{self.message_handler.agent.name}</ansired>:<ansiblue>{self.message_handler.agent.get_model()}</ansiblue>] > "
-                )
+                prompt_text = HTML("<ansiblue>👤 YOU:</ansiblue> ")
 
-                user_input = session.prompt(prompt_text, multiline=True)
+                user_input = session.prompt(prompt_text)
 
                 # Reset history position after submission
                 self.message_handler.history_manager.reset_position()
@@ -965,9 +965,14 @@ class ConsoleUI(Observer):
         Returns:
             The user input as a string.
         """
-        title = Text("👤 YOU:", style=RICH_STYLE_BLUE_BOLD)
+        title = Text(f"\n[{self.message_handler.agent.name}", style=RICH_STYLE_RED)
+        title.append(":")
         title.append(
-            "\n(Press Enter for new line, Ctrl+S/Alt+Enter to submit, Up/Down for history)",
+            f"{self.message_handler.agent.get_model()}]",
+            style=RICH_STYLE_BLUE,
+        )
+        title.append(
+            "\n(Press Enter for new line, Ctrl+S/Alt+Enter to submit, Up/Down for history)\n",
             style=RICH_STYLE_YELLOW,
         )
         self.console.print(title)
@@ -1044,13 +1049,8 @@ class ConsoleUI(Observer):
         self.live.start()
 
     def _print_prompt_prefix(self):
-        agent_info = Text(f"[{self.message_handler.agent.name}", style=RICH_STYLE_RED)
-        agent_info.append(":")
-        agent_info.append(
-            f"{self.message_handler.agent.get_model()}] > ",
-            style=RICH_STYLE_BLUE,
-        )
-        self.console.print(agent_info, end="")
+        prompt = Text("👤 YOU: ", style=RICH_STYLE_BLUE_BOLD)
+        self.console.print(prompt, end="")
 
     def _setup_key_bindings(self):
         """Set up key bindings for multiline input."""
@@ -1149,9 +1149,9 @@ class ConsoleUI(Observer):
         # Get version information
         version = getattr(AgentCrew, "__version__", "Unknown")
 
-        welcome_messages = [
+        welcome_messages = Group(
             Text(
-                "\n🎮 Welcome to AgentCrew v" + version + " interactive chat!",
+                "🎮 Welcome to AgentCrew v" + version + " interactive chat!",
                 style=RICH_STYLE_YELLOW_BOLD,
             ),
             Text("Press Ctrl+C twice to exit.", style=RICH_STYLE_YELLOW),
@@ -1202,10 +1202,9 @@ class ConsoleUI(Observer):
                 "Use 'y' to approve once, 'n' to deny, 'all' to approve future calls to the same tool.",
                 style=RICH_STYLE_YELLOW,
             ),
-        ]
+        )
 
-        for message in welcome_messages:
-            self.console.print(message)
+        self.console.print(Panel(welcome_messages))
         self.display_divider()
 
     def display_token_usage(
@@ -1227,7 +1226,7 @@ class ConsoleUI(Observer):
             f"Total: {input_tokens + output_tokens:,} | Cost: ${total_cost:.4f} | Total: {session_cost:.4f}",
             style=RICH_STYLE_YELLOW,
         )
-        self.console.print(token_info)
+        self.console.print(Panel(token_info))
         self.display_divider()
 
     def _calculate_token_usage(self, input_tokens: int, output_tokens: int):
