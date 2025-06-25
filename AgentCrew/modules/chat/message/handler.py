@@ -316,6 +316,9 @@ class MessageHandler(Observable):
             # --- End of Persistence Logic ---
 
             if self.current_user_input and self.current_user_input_idx >= 0:
+                self.conversation_manager.store_conversation_turn(
+                    self.current_user_input, self.current_user_input_idx
+                )
                 if self.memory_service:
                     user_input = ""
                     user_message = self.current_user_input  # Get the user message
@@ -337,9 +340,6 @@ class MessageHandler(Observable):
                         self._notify(
                             "error", f"Failed to store conversation in memory: {str(e)}"
                         )
-                self.conversation_manager.store_conversation_turn(
-                    self.current_user_input, self.current_user_input_idx
-                )
                 # Store the conversation turn reference for /jump command
                 self.current_user_input = None
                 self.current_user_input_idx = -1

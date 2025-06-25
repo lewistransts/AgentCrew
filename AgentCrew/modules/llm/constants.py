@@ -255,6 +255,15 @@ _DEEPINFRA_MODELS = [
         output_token_price_1m=0.3,
     ),
     Model(
+        id="Qwen/QwQ-32B",
+        provider="deepinfra",
+        name="Qwen QwQ 32B",
+        description="QwQ is the reasoning model of the Qwen series",
+        capabilities=["text-generation", "stream", "thinking"],
+        input_token_price_1m=0.15,
+        output_token_price_1m=0.2,
+    ),
+    Model(
         id="deepseek-ai/DeepSeek-V3-0324",
         provider="deepinfra",
         name="DeepSeek V3 0324",
