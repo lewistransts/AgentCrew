@@ -16,7 +16,6 @@ class GithubCopilotService(CustomLLMService):
             api_key=api_key,
             base_url="https://api.githubcopilot.com",
             provider_name="github_copilot",
-            is_stream=True,
             extra_headers={
                 "Copilot-Integration-Id": "vscode-chat",
                 "Editor-Plugin-Version": "CopilotChat.nvim/*",

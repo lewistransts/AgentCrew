@@ -16,7 +16,6 @@ class CustomLLMService(OpenAIService):
         base_url: str,
         api_key: str,
         provider_name: str,
-        is_stream: bool = False,
         extra_headers: Optional[Dict[str, str]] = None,
     ):
         """
@@ -34,7 +33,6 @@ class CustomLLMService(OpenAIService):
         logger.info(
             f"Initialized Custom LLM Service for provider: {provider_name} at {base_url}"
         )
-        self._is_stream = is_stream
         self.extra_headers = extra_headers
 
     def format_tool_result(
@@ -168,7 +166,9 @@ class CustomLLMService(OpenAIService):
         if self.reasoning_effort is None:
             stream_params["reasoning_effort"] = "none"
 
-        if self._is_stream:
+        if "stream" in ModelRegistry.get_model_capabilities(
+            f"{self._provider_name}/{self.model}"
+        ):
             self._is_thinking = False
             return await self.client.chat.completions.create(
                 **stream_params,
@@ -196,7 +196,9 @@ class CustomLLMService(OpenAIService):
     def process_stream_chunk(
         self, chunk, assistant_response: str, tool_uses: List[Dict]
     ) -> Tuple[str, List[Dict], int, int, Optional[str], Optional[tuple]]:
-        if self._is_stream:
+        if "stream" in ModelRegistry.get_model_capabilities(
+            f"{self._provider_name}/{self.model}"
+        ):
             return self._process_stream_chunk(chunk, assistant_response, tool_uses)
         else:
             return self._process_non_stream_chunk(chunk, assistant_response, tool_uses)

@@ -28,7 +28,7 @@ class ModelEditorDialog(QDialog):
         self,
         provider_name: str,
         model_data: Optional[Dict[str, Any]] = None,
-        existing_model_ids: List[str] = None,
+        existing_model_ids: Optional[List[str]] = None,
         parent=None,
     ):
         super().__init__(parent)
@@ -61,6 +61,7 @@ class ModelEditorDialog(QDialog):
         self.capabilities_tool_use_checkbox = QCheckBox("Tool Use")
         self.capabilities_thinking_checkbox = QCheckBox("Thinking")
         self.capabilities_vision_checkbox = QCheckBox("Vision")
+        self.capabilities_stream_checkbox = QCheckBox("Stream")
 
         self.input_price_edit = QDoubleSpinBox()
         self.input_price_edit.setDecimals(6)  # Increased precision
@@ -83,6 +84,7 @@ class ModelEditorDialog(QDialog):
         capabilities_layout.addWidget(self.capabilities_tool_use_checkbox)
         capabilities_layout.addWidget(self.capabilities_thinking_checkbox)
         capabilities_layout.addWidget(self.capabilities_vision_checkbox)
+        capabilities_layout.addWidget(self.capabilities_stream_checkbox)
         capabilities_layout.addStretch()  # To push checkboxes to the left
         form_layout.addRow("Capabilities:", capabilities_layout)
 
@@ -115,6 +117,7 @@ class ModelEditorDialog(QDialog):
             "thinking" in current_capabilities
         )
         self.capabilities_vision_checkbox.setChecked("vision" in current_capabilities)
+        self.capabilities_stream_checkbox.setChecked("stream" in current_capabilities)
 
         self.input_price_edit.setValue(data.get("input_token_price_1m", 0.0))
         self.output_price_edit.setValue(data.get("output_token_price_1m", 0.0))
@@ -130,11 +133,12 @@ class ModelEditorDialog(QDialog):
             capabilities_list.append("thinking")
         if self.capabilities_vision_checkbox.isChecked():
             capabilities_list.append("vision")
+        if self.capabilities_stream_checkbox.isChecked():
+            capabilities_list.append("stream")
 
         # Ensure Model Pydantic types are respected
         return {
             "id": self.id_edit.text().strip(),
-            "provider": self.provider_name,  # Name of the custom provider
             "name": self.name_edit.text().strip(),
             "description": self.description_edit.toPlainText().strip(),
             "capabilities": capabilities_list,
@@ -254,13 +258,11 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_base_url_edit.clear()
         self.api_key_edit.clear()
         self.default_model_id_edit.clear()
-        self.is_stream_checkbox.setChecked(False)
 
         self.name_edit.setEnabled(False)
         self.api_base_url_edit.setEnabled(False)
         self.api_key_edit.setEnabled(False)
         self.default_model_id_edit.setEnabled(False)
-        self.is_stream_checkbox.setEnabled(False)
 
         self.save_button.setEnabled(False)
         self.remove_button.setEnabled(False)
@@ -294,7 +296,6 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_base_url_edit.setText(provider_data.get("api_base_url", ""))
         self.api_key_edit.setText(provider_data.get("api_key", ""))
         self.default_model_id_edit.setText(provider_data.get("default_model_id", ""))
-        self.is_stream_checkbox.setChecked(provider_data.get("is_stream", False))
 
         # Clear and reload header fields
         self.clear_header_fields()
@@ -311,7 +312,6 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_base_url_edit.setEnabled(True)
         self.api_key_edit.setEnabled(True)
         self.default_model_id_edit.setEnabled(True)
-        self.is_stream_checkbox.setEnabled(True)
 
         self.save_button.setEnabled(True)
         self.remove_button.setEnabled(True)
@@ -357,9 +357,6 @@ class CustomLLMProvidersConfigTab(QWidget):
 
         self.default_model_id_edit.setEnabled(True)
         self.default_model_id_edit.clear()
-
-        self.is_stream_checkbox.setEnabled(True)
-        self.is_stream_checkbox.setChecked(False)
 
         # Clear existing headers and enable adding new ones
         self.clear_header_fields()
@@ -425,14 +422,12 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_base_url_edit = QLineEdit()
         self.api_key_edit = QLineEdit()
         self.default_model_id_edit = QLineEdit()
-        self.is_stream_checkbox = QCheckBox("Enable Streaming")
 
         form_layout.addRow("Name:", self.name_edit)
         form_layout.addRow("Type:", self.type_display)
         form_layout.addRow("Base URL:", self.api_base_url_edit)
         form_layout.addRow("API Key:", self.api_key_edit)
         form_layout.addRow("Default Model ID:", self.default_model_id_edit)
-        form_layout.addRow("Streaming:", self.is_stream_checkbox)
 
         editor_layout.addLayout(form_layout)
 
@@ -501,7 +496,6 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_base_url_edit.setEnabled(False)
         self.api_key_edit.setEnabled(False)
         self.default_model_id_edit.setEnabled(False)
-        self.is_stream_checkbox.setEnabled(False)
         self.save_button.setEnabled(False)
 
         self.setLayout(main_layout)
@@ -608,7 +602,6 @@ class CustomLLMProvidersConfigTab(QWidget):
         api_base_url = self.api_base_url_edit.text().strip()
         api_key = self.api_key_edit.text().strip()
         default_model_id = self.default_model_id_edit.text().strip()
-        is_stream = self.is_stream_checkbox.isChecked()
 
         if not name or not api_base_url:
             QMessageBox.warning(
@@ -645,7 +638,6 @@ class CustomLLMProvidersConfigTab(QWidget):
             "api_key": api_key,
             "default_model_id": default_model_id,
             "available_models": available_models_data,  # List of model dictionaries
-            "is_stream": is_stream,
             "extra_headers": extra_headers,  # Add the extra_headers field
         }
 

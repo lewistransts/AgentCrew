@@ -9,7 +9,7 @@ class MessageEventHandler:
 
         if isinstance(chat_window, ChatWindow):
             self.chat_window = chat_window
-        self.thinking_content = ""
+        self.chat_window.thinking_content = ""
         self.chunk_buffer_queue = []
         self.think_buffer_queue = []
 
@@ -85,13 +85,12 @@ class MessageEventHandler:
         self.chat_window.current_thinking_bubble = (
             self.chat_window.chat_components.append_thinking_message("", agent_name)
         )
-        self.thinking_content = ""  # Initialize thinking content
-        # self.chat_window.thinking_buffer = ""  # Initialize thinking buffer
+        self.chat_window.thinking_content = ""  # Initialize thinking content
 
     def handle_thinking_chunk(self, chunk):
         """Handle a chunk of the thinking process."""
         self.think_buffer_queue.extend(list(chunk))
-        self.thinking_content += chunk
+        self.chat_window.thinking_content += chunk
         # Use smooth streaming for thinking chunks too
         if self.chat_window.current_thinking_bubble:
             self.chat_window.current_thinking_bubble.add_streaming_chunk(
@@ -104,12 +103,13 @@ class MessageEventHandler:
         # Finalize thinking stream if active
         if self.chat_window.current_thinking_bubble:
             self.chat_window.current_thinking_bubble.raw_text_buffer = (
-                self.thinking_content
+                self.chat_window.thinking_content
             )
             self.chat_window.current_thinking_bubble._finalize_streaming()
         # Reset thinking bubble reference
         self.think_buffer_queue = []
         self.chat_window.current_thinking_bubble = None
+        self.chat_window.thinking_content = ""
 
     def handle_user_context_request(self):
         """Handle user context request."""

@@ -88,6 +88,14 @@ class ToolEventHandler:
         self.chat_window.current_response_bubble = None
         self.chat_window.current_response_container = None
 
+        if self.chat_window.current_thinking_bubble:
+            self.chat_window.current_thinking_bubble.raw_text_buffer = (
+                self.chat_window.thinking_content
+            )
+            self.chat_window.current_thinking_bubble._finalize_streaming()
+            self.chat_window.current_thinking_bubble = None
+        self.chat_window.thinking_content = ""
+
     def handle_tool_confirmation_required(self, tool_info):
         """Display a dialog for tool confirmation request."""
         tool_use = tool_info.copy()

@@ -61,7 +61,6 @@ class ServiceManager:
                     self.custom_provider_details[name] = {
                         "api_base_url": provider_config.get("api_base_url"),
                         "api_key": provider_config.get("api_key", ""),
-                        "is_stream": provider_config.get("is_stream", False),
                         "extra_headers": provider_config.get("extra_headers", {}),
                     }
         except Exception as e:
@@ -75,7 +74,6 @@ class ServiceManager:
         if provider in self.custom_provider_details:
             details = self.custom_provider_details[provider]
             api_key = details.get("api_key", "")
-            is_stream_val = details.get("is_stream", False)
             extra_headers = details.get("extra_headers", None)
 
             if not details.get("api_base_url"):
@@ -87,7 +85,6 @@ class ServiceManager:
                 base_url=details["api_base_url"],
                 api_key=api_key,
                 provider_name=provider,
-                is_stream=is_stream_val,
                 extra_headers=extra_headers,
             )
         elif provider in self.service_classes:
@@ -119,7 +116,6 @@ class ServiceManager:
         if provider in self.custom_provider_details:
             details = self.custom_provider_details[provider]
             api_key = details.get("api_key", "")
-            is_stream_val = details.get("is_stream", False)
             extra_headers = details.get("extra_headers", None)
 
             if not details.get("api_base_url"):
@@ -132,7 +128,6 @@ class ServiceManager:
                     base_url=details["api_base_url"],
                     api_key=api_key,
                     provider_name=provider,
-                    is_stream=is_stream_val,
                     extra_headers=extra_headers,
                 )
             except Exception as e:

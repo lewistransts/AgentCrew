@@ -47,17 +47,13 @@ class ModelRegistry:
                 provider_name = provider_config.get("name")
                 for model_data_dict in provider_config.get("available_models", []):
                     try:
-                        # Ensure provider name from the outer config is used if not in model_data_dict
-                        if "provider" not in model_data_dict or not model_data_dict.get(
-                            "provider"
-                        ):
-                            if provider_name:
-                                model_data_dict["provider"] = provider_name
-                            else:
-                                print(
-                                    f"Warning: Skipping model due to missing provider name in config: ID '{model_data_dict.get('id', 'N/A')}'"
-                                )
-                                continue
+                        if provider_name:
+                            model_data_dict["provider"] = provider_name
+                        else:
+                            print(
+                                f"Warning: Skipping model due to missing provider name in config: ID '{model_data_dict.get('id', 'N/A')}'"
+                            )
+                            continue
                         model = Model(**model_data_dict)
                         self.register_model(model)
                     except Exception as e:
