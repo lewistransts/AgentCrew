@@ -88,6 +88,8 @@ class ConsoleUI(Observer):
             self.display_thinking_started(data)  # data is agent_name
         elif event == "thinking_chunk":
             self.display_thinking_chunk(data)  # data is the thinking chunk
+        elif event == "user_message_created":
+            self.console.print("\n")
         elif event == "response_chunk":
             self.stop_loading_animation()  # Stop loading on first chunk
             _, assistant_response = data
@@ -965,20 +967,20 @@ class ConsoleUI(Observer):
         Returns:
             The user input as a string.
         """
-        title = Text(f"\n[{self.message_handler.agent.name}", style=RICH_STYLE_RED)
-        title.append(":")
-        title.append(
-            f"{self.message_handler.agent.get_model()}]",
-            style=RICH_STYLE_BLUE,
-        )
-        title.append(
-            "\n(Press Enter for new line, Ctrl+S/Alt+Enter to submit, Up/Down for history)\n",
-            style=RICH_STYLE_YELLOW,
-        )
-        self.console.print(title)
 
         # Start input thread if not already running
         if self._input_thread is None or not self._input_thread.is_alive():
+            title = Text(f"\n[{self.message_handler.agent.name}", style=RICH_STYLE_RED)
+            title.append(":")
+            title.append(
+                f"{self.message_handler.agent.get_model()}]",
+                style=RICH_STYLE_BLUE,
+            )
+            title.append(
+                "\n(Press Enter for new line, Ctrl+S/Alt+Enter to submit, Up/Down for history)\n",
+                style=RICH_STYLE_YELLOW,
+            )
+            self.console.print(title)
             self._start_input_thread()
         else:
             self._print_prompt_prefix()
@@ -1049,6 +1051,17 @@ class ConsoleUI(Observer):
         self.live.start()
 
     def _print_prompt_prefix(self):
+        title = Text(f"\n[{self.message_handler.agent.name}", style=RICH_STYLE_RED)
+        title.append(":")
+        title.append(
+            f"{self.message_handler.agent.get_model()}]",
+            style=RICH_STYLE_BLUE,
+        )
+        title.append(
+            "\n(Press Enter for new line, Ctrl+S/Alt+Enter to submit, Up/Down for history)\n",
+            style=RICH_STYLE_YELLOW,
+        )
+        self.console.print(title)
         prompt = Text("👤 YOU: ", style=RICH_STYLE_BLUE_BOLD)
         self.console.print(prompt, end="")
 
