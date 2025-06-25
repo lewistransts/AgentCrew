@@ -46,7 +46,7 @@ class ModelEditorDialog(QDialog):
         else:  # Add mode
             self.setWindowTitle("Add Model")
 
-        self.setMinimumWidth(450)  # Increased width for better layout
+        self.setMinimumWidth(500)  # Increased width for better layout
 
         layout = QVBoxLayout(self)
         form_layout = QFormLayout()
