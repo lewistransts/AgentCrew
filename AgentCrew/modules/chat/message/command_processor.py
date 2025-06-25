@@ -217,27 +217,22 @@ class CommandProcessor:
                 )
                 return False, False
             server_id, prompt_name = full_name.split("/", 1)
-            if mcp_service:
-                try:
-                    prompt = await mcp_service.get_prompt(server_id, prompt_name)
-                    prompt_content = prompt.get("content", [])
-                    if len(prompt_content) > 0:
-                        prompt_text = prompt_content[0].content.text
-                        self.message_handler._notify(
-                            "mcp_prompt",
-                            f"{prompt_text}",
-                        )
-                    else:
-                        self.message_handler._notify(
-                            "error", f"Prompt {server_id}.{prompt_name} not found."
-                        )
-                except Exception as e:
+            try:
+                prompt = await mcp_service.get_prompt(server_id, prompt_name)
+                prompt_content = prompt.get("content", [])
+                if len(prompt_content) > 0:
+                    prompt_text = prompt_content[0].content.text
                     self.message_handler._notify(
-                        "error", f"Error fetching prompt: {str(e)}"
+                        "mcp_prompt",
+                        {"name": prompt_name, "content": f"{prompt_text}"},
                     )
-            else:
+                else:
+                    self.message_handler._notify(
+                        "error", f"Prompt {server_id}.{prompt_name} not found."
+                    )
+            except Exception as e:
                 self.message_handler._notify(
-                    "error", "MCP server does not support get_prompt."
+                    "error", f"Error fetching prompt: {str(e)}"
                 )
             return False, False
         else:

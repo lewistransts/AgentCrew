@@ -143,7 +143,7 @@ class ConsoleUI(Observer):
         elif event == "system_message":
             self.display_message(data)
         elif event == "mcp_prompt":
-            self._input_queue.put(data)
+            self.display_mcp_prompt_confirmation(data)
         elif event == "agent_changed_by_transfer":
             transfer_text = Text("Transfered to ", style=RICH_STYLE_YELLOW)
             transfer_text.append(
@@ -443,6 +443,7 @@ class ConsoleUI(Observer):
             self.console.print(input_text)
 
         # Get user response
+        self._stop_input_thread()
         while True:
             # Use Rich to print the prompt but still need to use input() for user interaction
             self.console.print(
@@ -479,6 +480,7 @@ class ConsoleUI(Observer):
                 self.console.print(
                     Text("Please enter 'y', 'n', or 'all'.", style=RICH_STYLE_YELLOW)
                 )
+        self._start_input_thread()
 
     def display_tool_denied(self, data):
         """Display information about a denied tool execution."""
@@ -486,6 +488,75 @@ class ConsoleUI(Observer):
         denied_text = Text("\n❌ Tool execution denied: ", style=RICH_STYLE_RED)
         denied_text.append(tool_use["name"])
         self.console.print(denied_text)
+
+    def display_mcp_prompt_confirmation(self, prompt_data):
+        """Display MCP prompt confirmation request and get user response."""
+        self.finish_live_update()
+
+        self.console.print(
+            Text("\n🤖 MCP Tool wants to execute a prompt:", style=RICH_STYLE_YELLOW)
+        )
+
+        # Display the prompt content
+        if isinstance(prompt_data, dict):
+            if "name" in prompt_data:
+                prompt_name = Text("Prompt: ", style=RICH_STYLE_YELLOW)
+                prompt_name.append(prompt_data["name"])
+                self.console.print(prompt_name)
+
+            if "content" in prompt_data:
+                self.console.print(Text("Content:", style=RICH_STYLE_YELLOW))
+                # Display content with proper formatting
+                content = str(prompt_data["content"])
+                if len(content) > 1000:
+                    self.console.print(f"  {content[:1000]}...")
+                    self.console.print(
+                        Text(
+                            f"  (Content truncated, total length: {len(content)} characters)",
+                            style=RICH_STYLE_GRAY,
+                        )
+                    )
+                else:
+                    self.console.print(f"  {content}")
+
+        # Get user response
+        self._stop_input_thread()
+        while True:
+            self.console.print(
+                Text(
+                    "\nAllow this prompt to be executed? [y]es/[n]o: ",
+                    style=RICH_STYLE_YELLOW,
+                ),
+                end="",
+            )
+            response = input().lower()
+
+            if response in ["y", "yes"]:
+                # User approved, put the prompt data in the input queue
+                self.console.print(
+                    Text(
+                        "✓ MCP prompt approved and queued for execution.",
+                        style=RICH_STYLE_GREEN,
+                    )
+                )
+
+                self._input_queue.put(prompt_data["content"])
+                break
+            elif response in ["n", "no"]:
+                # User denied, don't queue the prompt
+                self.console.print(
+                    Text("❌ MCP prompt execution denied.", style=RICH_STYLE_RED)
+                )
+                break
+            else:
+                self.console.print(
+                    Text(
+                        "Please enter 'y' for yes or 'n' for no.",
+                        style=RICH_STYLE_YELLOW,
+                    )
+                )
+
+        self._start_input_thread()
 
     def finish_live_update(self):
         """stop the live update display."""
@@ -877,6 +948,12 @@ class ConsoleUI(Observer):
                 )
             )
 
+    def _start_input_thread(self):
+        if self._input_thread is None or not self._input_thread.is_alive():
+            self._input_stop_event.clear()
+            self._input_thread = Thread(target=self._input_thread_worker, daemon=True)
+            self._input_thread.start()
+
     def get_user_input(self):
         """
         Get multiline input from the user with support for command history.
@@ -890,16 +967,14 @@ class ConsoleUI(Observer):
         """
         title = Text("👤 YOU:", style=RICH_STYLE_BLUE_BOLD)
         title.append(
-            "\n(Press Enter for new line, Ctrl+S to submit, Up/Down for history)",
+            "\n(Press Enter for new line, Ctrl+S/Alt+Enter to submit, Up/Down for history)",
             style=RICH_STYLE_YELLOW,
         )
         self.console.print(title)
 
         # Start input thread if not already running
         if self._input_thread is None or not self._input_thread.is_alive():
-            self._input_stop_event.clear()
-            self._input_thread = Thread(target=self._input_thread_worker, daemon=True)
-            self._input_thread.start()
+            self._start_input_thread()
         else:
             self._print_prompt_prefix()
 
@@ -982,6 +1057,7 @@ class ConsoleUI(Observer):
         kb = KeyBindings()
 
         @kb.add(Keys.ControlS)
+        @kb.add("escape", "enter")
         def _(event):
             """Submit on Ctrl+S."""
             if event.current_buffer.text.strip():
