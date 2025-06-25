@@ -140,6 +140,10 @@ class ConsoleUI(Observer):
             agent_text = Text("Switched to ", style=RICH_STYLE_YELLOW)
             agent_text.append(f"{data} agent")
             self.display_message(agent_text)
+        elif event == "system_message":
+            self.display_message(data)
+        elif event == "mcp_prompt":
+            self._input_queue.put(data)
         elif event == "agent_changed_by_transfer":
             transfer_text = Text("Transfered to ", style=RICH_STYLE_YELLOW)
             transfer_text.append(
@@ -161,7 +165,6 @@ class ConsoleUI(Observer):
             self.display_message(jump_text)
             self.display_message(preview_text)
         elif event == "thinking_completed":
-            self.console.print("\n")
             self.display_divider()
         elif event == "file_processed":
             self.stop_loading_animation()  # Stop loading on first chunk
@@ -790,7 +793,7 @@ class ConsoleUI(Observer):
             try:
                 session = PromptSession(
                     key_bindings=self.kb,
-                    completer=ChatCompleter(self.message_handler.conversation_turns),
+                    completer=ChatCompleter(self.message_handler),
                 )
                 self._current_prompt_session = session
 
@@ -863,6 +866,7 @@ class ConsoleUI(Observer):
                 )
             )
             self._stop_input_thread()
+
             sys.exit(0)
         else:
             self._last_ctrl_c_time = current_time
@@ -884,11 +888,6 @@ class ConsoleUI(Observer):
         Returns:
             The user input as a string.
         """
-        agent_info = Text(f"[{self.message_handler.agent.name}", style=RICH_STYLE_RED)
-        agent_info.append(":")
-        agent_info.append(
-            f"{self.message_handler.agent.get_model()}] > ", style=RICH_STYLE_BLUE
-        )
         title = Text("👤 YOU:", style=RICH_STYLE_BLUE_BOLD)
         title.append(
             "\n(Press Enter for new line, Ctrl+S to submit, Up/Down for history)",
@@ -902,7 +901,7 @@ class ConsoleUI(Observer):
             self._input_thread = Thread(target=self._input_thread_worker, daemon=True)
             self._input_thread.start()
         else:
-            self.console.print(agent_info, end="")
+            self._print_prompt_prefix()
 
         # Wait for input while allowing events to be processed
         while True:
@@ -969,6 +968,15 @@ class ConsoleUI(Observer):
         )
         self.live.start()
 
+    def _print_prompt_prefix(self):
+        agent_info = Text(f"[{self.message_handler.agent.name}", style=RICH_STYLE_RED)
+        agent_info.append(":")
+        agent_info.append(
+            f"{self.message_handler.agent.get_model()}] > ",
+            style=RICH_STYLE_BLUE,
+        )
+        self.console.print(agent_info, end="")
+
     def _setup_key_bindings(self):
         """Set up key bindings for multiline input."""
         kb = KeyBindings()
@@ -988,7 +996,7 @@ class ConsoleUI(Observer):
         def _(event):
             """Copy latest assistant response to clipboard."""
             self.copy_to_clipboard(self.latest_assistant_response)
-            print("> ", end="")
+            self._print_prompt_prefix()
 
         @kb.add(Keys.ControlC)
         def _(event):
@@ -1015,15 +1023,7 @@ class ConsoleUI(Observer):
                     )
                 )
 
-                agent_info = Text(
-                    f"[{self.message_handler.agent.name}", style=RICH_STYLE_RED
-                )
-                agent_info.append(":")
-                agent_info.append(
-                    f"{self.message_handler.agent.get_model()}] > ",
-                    style=RICH_STYLE_BLUE,
-                )
-                self.console.print(agent_info, end="")
+                self._print_prompt_prefix()
 
         @kb.add(Keys.Up)
         def _(event):

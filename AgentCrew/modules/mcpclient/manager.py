@@ -1,5 +1,5 @@
 from .config import MCPConfigManager
-from .service import MCPService
+from AgentCrew.modules.mcpclient import MCPService
 from AgentCrew.modules import logger
 
 

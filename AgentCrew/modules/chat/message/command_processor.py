@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Optional, Tuple
 import os
 
 from AgentCrew.modules.agents.local_agent import LocalAgent
@@ -8,6 +8,7 @@ from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules.llm.service_manager import ServiceManager
 from AgentCrew.modules.chat.consolidation import ConversationConsolidator
 from AgentCrew.modules.config import ConfigManagement
+from AgentCrew.modules.mcpclient import MCPService
 
 
 @dataclass
@@ -37,19 +38,19 @@ class CommandProcessor:
             return CommandResult(handled=True, exit_flag=True)
 
         # Clear command
-        if user_input.lower() == "/clear":
+        elif user_input.lower() == "/clear":
             self.message_handler.start_new_conversation()
             return CommandResult(handled=True, clear_flag=True)
 
         # Copy command
-        if user_input.lower() == "/copy":
+        elif user_input.lower() == "/copy":
             self.message_handler._notify(
                 "copy_requested", self.message_handler.latest_assistant_response
             )
             return CommandResult(handled=True, clear_flag=True)
 
         # Debug command
-        if user_input.lower() == "/debug":
+        elif user_input.lower() == "/debug":
             self.message_handler._notify(
                 "debug_requested", self.message_handler.agent.history
             )
@@ -59,7 +60,7 @@ class CommandProcessor:
             return CommandResult(handled=True, clear_flag=True)
 
         # Think command
-        if user_input.lower().startswith("/think "):
+        elif user_input.lower().startswith("/think "):
             try:
                 budget = user_input[7:].strip()
                 self.message_handler.agent.configure_think(budget)
@@ -71,16 +72,16 @@ class CommandProcessor:
             return CommandResult(handled=True, clear_flag=True)
 
         # Consolidate command
-        if user_input.lower().startswith("/consolidate"):
+        elif user_input.lower().startswith("/consolidate"):
             return await self._handle_consolidate_command(user_input)
 
         # Jump command
-        if user_input.lower().startswith("/jump "):
+        elif user_input.lower().startswith("/jump "):
             jumped = self._handle_jump_command(user_input)
             return CommandResult(handled=jumped, clear_flag=True)
 
         # Agent command
-        if user_input.lower().startswith("/agent"):
+        elif user_input.lower().startswith("/agent"):
             success, message = self._handle_agent_command(user_input)
             self.message_handler._notify(
                 "agent_command_result", {"success": success, "message": message}
@@ -88,14 +89,19 @@ class CommandProcessor:
             return CommandResult(handled=True, clear_flag=True)
 
         # Model command
-        if user_input.lower().startswith("/model"):
+        elif user_input.lower().startswith("/model"):
             exit_flag, clear_flag = self._handle_model_command(user_input)
+            return CommandResult(
+                handled=True, exit_flag=exit_flag, clear_flag=clear_flag
+            )
+        elif user_input.lower().startswith("/mcp"):
+            exit_flag, clear_flag = await self._handle_mcp_command(user_input)
             return CommandResult(
                 handled=True, exit_flag=exit_flag, clear_flag=clear_flag
             )
 
         # File command
-        if user_input.startswith("/file "):
+        elif user_input.startswith("/file "):
             return self._handle_file_command(user_input)
 
         # Not a command
@@ -175,6 +181,68 @@ class CommandProcessor:
                 "error", f"Error during consolidation: {str(e)}"
             )
             return CommandResult(handled=True, clear_flag=True)
+
+    async def _handle_mcp_command(self, command: str) -> Tuple[bool, bool]:
+        """
+        Handle the /mcp command: list prompts or fetch a specific prompt content.
+
+        Returns:
+            Tuple of (exit_flag, clear_flag)
+        """
+        parts = command.strip().split()
+        mcp_service: Optional[MCPService] = self.message_handler.mcp_manager.mcp_service
+        # /mcp with no args: list all prompts
+        if len(parts) == 1:
+            # Aggregate prompts from all servers
+            prompts = []
+            if mcp_service:
+                for server_id, prompt_list in mcp_service.server_prompts.items():
+                    for prompt in prompt_list:
+                        prompt_name = prompt.name
+                        if prompt_name:
+                            prompts.append(f"{server_id}/{prompt_name}")
+            msg = (
+                "Available MCP prompts:\n" + "\n".join(prompts)
+                if prompts
+                else "No MCP prompts found."
+            )
+            self.message_handler._notify("system_message", msg)
+            return False, False
+        # /mcp <server_id.prompt_name>: fetch and show the prompt
+        elif len(parts) == 2:
+            full_name = parts[1]
+            if "/" not in full_name:
+                self.message_handler._notify(
+                    "error", "Please use format: /mcp server_id/prompt_name"
+                )
+                return False, False
+            server_id, prompt_name = full_name.split("/", 1)
+            if mcp_service:
+                try:
+                    prompt = await mcp_service.get_prompt(server_id, prompt_name)
+                    prompt_content = prompt.get("content", [])
+                    if len(prompt_content) > 0:
+                        prompt_text = prompt_content[0].content.text
+                        self.message_handler._notify(
+                            "mcp_prompt",
+                            f"{prompt_text}",
+                        )
+                    else:
+                        self.message_handler._notify(
+                            "error", f"Prompt {server_id}.{prompt_name} not found."
+                        )
+                except Exception as e:
+                    self.message_handler._notify(
+                        "error", f"Error fetching prompt: {str(e)}"
+                    )
+            else:
+                self.message_handler._notify(
+                    "error", "MCP server does not support get_prompt."
+                )
+            return False, False
+        else:
+            self.message_handler._notify("error", "Usage: /mcp [server_id.prompt_name]")
+            return False, False
 
     def _handle_jump_command(self, command: str) -> bool:
         """Handle the /jump command to rewind conversation to a previous turn."""

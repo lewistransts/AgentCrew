@@ -13,6 +13,7 @@ from AgentCrew.modules.memory import (
     BaseMemoryService,
     ContextPersistenceService,
 )
+from AgentCrew.modules.mcpclient import MCPSessionManager
 
 from AgentCrew.modules.chat.message import (
     CommandProcessor,
@@ -43,6 +44,7 @@ class MessageHandler(Observable):
         """
         super().__init__()
         self.agent_manager = AgentManager.get_instance()
+        self.mcp_manager = MCPSessionManager.get_instance()
         self.agent = self.agent_manager.get_current_agent()
         self.memory_service = memory_service
         self.persistent_service = context_persistent_service

@@ -58,6 +58,13 @@ class MCPService:
                         for agent_name in server_config.enabledForAgents:
                             await self.register_server_tools(server_id, agent_name)
 
+                        try:
+                            prompts = await self.sessions[server_id].list_prompts()
+                            self.server_prompts[server_id] = prompts.prompts
+
+                        except Exception as e:
+                            print(f"{str(e)}")
+
                         logger.info(
                             f"MCPService: {server_id} setup complete. Waiting for shutdown signal."
                         )
@@ -390,6 +397,44 @@ class MCPService:
             for srv_id in list(self.sessions.keys()):
                 all_tools.extend(await self.list_tools(srv_id))
             return all_tools
+
+    async def get_prompt(
+        self,
+        server_id: str,
+        prompt_name: str,
+        arguments: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Get a specific prompt from a connected MCP server.
+
+        Args:
+            server_id: ID of the server to get the prompt from
+            prompt_name: Name of the prompt to retrieve
+
+        Returns:
+            Prompt object if found, None otherwise
+        """
+
+        print(server_id, prompt_name)
+        if server_id not in self.sessions or not self.connected_servers.get(server_id):
+            return {
+                "content": f"Cannot call tool: Server '{server_id}' is not connected",
+                "status": "error",
+            }
+
+        try:
+            session = self.sessions[server_id]
+            result = self._run_async(session.get_prompt(prompt_name, arguments))
+            return {"content": result.messages, "status": "success"}
+        except Exception as e:
+            logger.error(
+                f"Error retrieving prompt '{prompt_name}' from server '{server_id}': {str(e)}"
+            )
+            self.connected_servers[server_id] = False
+            return {
+                "content": f"Error calling tool '{prompt_name}' on server '{server_id}': {str(e)}",
+                "status": "error",
+            }
 
     async def call_tool(
         self, server_id: str, tool_name: str, tool_args: Dict[str, Any]

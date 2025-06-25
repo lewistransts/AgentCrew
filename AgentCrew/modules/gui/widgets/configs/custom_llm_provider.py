@@ -423,6 +423,8 @@ class CustomLLMProvidersConfigTab(QWidget):
         self.api_key_edit = QLineEdit()
         self.default_model_id_edit = QLineEdit()
 
+        self.api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
+
         form_layout.addRow("Name:", self.name_edit)
         form_layout.addRow("Type:", self.type_display)
         form_layout.addRow("Base URL:", self.api_base_url_edit)

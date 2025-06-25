@@ -9,8 +9,8 @@ import re
 class JumpCompleter(Completer):
     """Completer that shows available conversation turns when typing /jump command."""
 
-    def __init__(self, conversation_turns=None):
-        self.conversation_turns = conversation_turns or []
+    def __init__(self, message_handler=None):
+        self.message_handler = message_handler
 
     def get_completions(self, document, complete_event):
         text = document.text
@@ -19,8 +19,11 @@ class JumpCompleter(Completer):
         if text.startswith("/jump "):
             word_before_cursor = document.get_word_before_cursor()
 
+            conversation_turns = (
+                self.message_handler.conversation_turns if self.message_handler else []
+            )
             # Get all available turn numbers
-            for i, turn in enumerate(self.conversation_turns, 1):
+            for i, turn in enumerate(conversation_turns, 1):
                 turn_str = str(i)
                 if turn_str.startswith(word_before_cursor):
                     # Use the stored preview
@@ -103,11 +106,12 @@ class AgentCompleter(Completer):
 class ChatCompleter(Completer):
     """Combined completer for chat commands."""
 
-    def __init__(self, conversation_turns=None):
+    def __init__(self, message_handler=None):
         self.file_completer = DirectoryListingCompleter()
         self.model_completer = ModelCompleter()
         self.agent_completer = AgentCompleter()
-        self.jump_completer = JumpCompleter(conversation_turns)
+        self.jump_completer = JumpCompleter(message_handler)
+        self.mcp_completer = MCPCompleter(message_handler)
 
     def get_completions(self, document, complete_event):
         text = document.text
@@ -121,8 +125,40 @@ class ChatCompleter(Completer):
         elif text.startswith("/jump "):
             # Use jump completer for /jump command
             yield from self.jump_completer.get_completions(document, complete_event)
+        elif text.startswith("/mcp"):
+            yield from self.mcp_completer.get_completions(document, complete_event)
         else:
             yield from self.file_completer.get_completions(document, complete_event)
+
+
+class MCPCompleter(Completer):
+    """Completer that shows available MCP prompts when typing /mcp command."""
+
+    def __init__(self, message_handler=None):
+        if message_handler:
+            self.mcp_service = message_handler.mcp_manager.mcp_service
+
+    def get_completions(self, document, complete_event):
+        text = document.text
+        if text.startswith("/mcp "):
+            word_before_cursor = document.get_word_before_cursor()
+            # Collect all prompts from all servers
+            if self.mcp_service and hasattr(self.mcp_service, "server_prompts"):
+                for server_id, prompts in self.mcp_service.server_prompts.items():
+                    for prompt in prompts:
+                        # Each prompt may be a dict or object; support both
+                        prompt_name = getattr(prompt, "name", None) or prompt.get(
+                            "name"
+                        )
+                        if prompt_name and f"{server_id}/{prompt_name}".startswith(
+                            word_before_cursor
+                        ):
+                            display = f"{server_id}/{prompt_name}"
+                            yield Completion(
+                                display,
+                                start_position=-len(word_before_cursor),
+                                display=display,
+                            )
 
 
 class DirectoryListingCompleter(Completer):
