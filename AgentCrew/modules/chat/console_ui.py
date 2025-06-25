@@ -20,7 +20,6 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.formatted_text import HTML
 import AgentCrew
 
-from AgentCrew.modules.agents.base import MessageType
 from AgentCrew.modules.chat.message_handler import MessageHandler, Observer
 from AgentCrew.modules import logger
 from AgentCrew.modules.chat.completers import ChatCompleter

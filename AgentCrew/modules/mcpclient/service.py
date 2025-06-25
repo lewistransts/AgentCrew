@@ -1,7 +1,7 @@
 from AgentCrew.modules import logger
 from typing import Dict, Any, List, Optional, Callable
 from mcp import ClientSession, StdioServerParameters
-from mcp.types import EmbeddedResource, ImageContent, TextContent
+from mcp.types import Content, Prompt
 from mcp.client.stdio import stdio_client
 from AgentCrew.modules.agents import AgentManager
 from AgentCrew.modules.tools.registry import ToolRegistry
@@ -21,6 +21,7 @@ class MCPService:
         self.loop = asyncio.new_event_loop()
         self._server_connection_tasks: Dict[str, asyncio.Task] = {}
         self._server_shutdown_events: Dict[str, asyncio.Event] = {}
+        self.server_prompts: Dict[str, List[Prompt]] = {}
 
     async def _manage_single_connection(self, server_config: MCPServerConfig):
         """Manages the lifecycle of a single MCP server connection."""
@@ -86,6 +87,13 @@ class MCPService:
 
                         for agent_name in server_config.enabledForAgents:
                             await self.register_server_tools(server_id, agent_name)
+
+                        try:
+                            prompts = await self.sessions[server_id].list_prompts()
+                            self.server_prompts[server_id] = prompts.prompts
+
+                        except Exception as e:
+                            print(f"{str(e)}")
 
                         logger.info(
                             f"MCPService: {server_id} setup complete. Waiting for shutdown signal."
@@ -209,7 +217,6 @@ class MCPService:
             return
 
         try:
-            # Get tools from server
             response = await self.sessions[server_id].list_tools()
 
             # Cache tools
@@ -322,9 +329,7 @@ class MCPService:
             # This is the actual async handler the agent will await.
             def actual_tool_executor(
                 **params,
-            ) -> list[
-                TextContent | ImageContent | EmbeddedResource
-            ]:  # Type hint from mcp.py
+            ) -> list[Content]:
                 if server_id not in self.sessions or not self.connected_servers.get(
                     server_id
                 ):

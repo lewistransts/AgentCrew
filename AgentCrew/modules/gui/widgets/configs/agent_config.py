@@ -56,28 +56,30 @@ class AgentsConfigTab(QWidget):
         self.load_agents()
 
     @staticmethod
-    def _determine_file_format_and_path(file_path: str, selected_filter: str) -> tuple[str, str]:
+    def _determine_file_format_and_path(
+        file_path: str, selected_filter: str
+    ) -> tuple[str, str]:
         """
         Determine file format and ensure correct file extension.
-        
+
         Args:
             file_path: The selected file path
             selected_filter: The filter selected in the file dialog
-            
+
         Returns:
             Tuple of (final_file_path, file_format)
         """
         # Prioritize existing extension if present
-        if file_path.lower().endswith('.toml'):
+        if file_path.lower().endswith(".toml"):
             return file_path, "toml"
-        elif file_path.lower().endswith('.json'):
+        elif file_path.lower().endswith(".json"):
             return file_path, "json"
-        
+
         # If no extension, use filter preference or default to JSON
         if "toml" in selected_filter.lower():
-            return file_path + '.toml', "toml"
+            return file_path + ".toml", "toml"
         else:
-            return file_path + '.json', "json"
+            return file_path + ".json", "json"
 
     def init_ui(self):
         """Initialize the UI components."""
@@ -92,7 +94,9 @@ class AgentsConfigTab(QWidget):
         left_layout = QVBoxLayout(left_panel)
 
         self.agents_list = QListWidget()
-        self.agents_list.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)  # Enable multi-select
+        self.agents_list.setSelectionMode(
+            QListWidget.SelectionMode.ExtendedSelection
+        )  # Enable multi-select
         self.agents_list.currentItemChanged.connect(self.on_agent_selected)
         self.agents_list.itemSelectionChanged.connect(self.on_selection_changed)
 
@@ -127,9 +131,7 @@ class AgentsConfigTab(QWidget):
         self.remove_agent_btn.clicked.connect(self.remove_agent)
         self.remove_agent_btn.setEnabled(False)  # Disable until selection
 
-        list_buttons_layout.addWidget(
-            self.add_agent_menu_btn
-        )
+        list_buttons_layout.addWidget(self.add_agent_menu_btn)
         list_buttons_layout.addWidget(self.import_agents_btn)
         list_buttons_layout.addWidget(self.export_agents_btn)
         list_buttons_layout.addWidget(self.remove_agent_btn)
@@ -272,7 +274,7 @@ class AgentsConfigTab(QWidget):
         """Handle selection changes to update button states."""
         selected_items = self.agents_list.selectedItems()
         has_selection = len(selected_items) > 0
-        
+
         # Enable/disable export and remove buttons based on selection
         self.export_agents_btn.setEnabled(has_selection)
         self.remove_agent_btn.setEnabled(has_selection)
@@ -288,9 +290,7 @@ class AgentsConfigTab(QWidget):
         self.set_editor_enabled(True)
 
         agent_data = current.data(Qt.ItemDataRole.UserRole)
-        agent_type = agent_data.get(
-            "agent_type", "local"
-        )
+        agent_type = agent_data.get("agent_type", "local")
 
         all_editor_widgets = [
             self.name_input,
@@ -457,8 +457,14 @@ class AgentsConfigTab(QWidget):
             agent_name = agent_data.get("name", "this agent")
             message = f"Are you sure you want to delete the agent '{agent_name}'?"
         else:
-            agent_names = [item.data(Qt.ItemDataRole.UserRole).get("name", "unnamed") for item in selected_items]
-            message = f"Are you sure you want to delete {len(selected_items)} agents?\n\n• " + "\n• ".join(agent_names)
+            agent_names = [
+                item.data(Qt.ItemDataRole.UserRole).get("name", "unnamed")
+                for item in selected_items
+            ]
+            message = (
+                f"Are you sure you want to delete {len(selected_items)} agents?\n\n• "
+                + "\n• ".join(agent_names)
+            )
 
         reply = QMessageBox.question(
             self,
@@ -469,7 +475,9 @@ class AgentsConfigTab(QWidget):
 
         if reply == QMessageBox.StandardButton.Yes:
             # Remove items in reverse order to maintain valid row indices
-            rows_to_remove = sorted([self.agents_list.row(item) for item in selected_items], reverse=True)
+            rows_to_remove = sorted(
+                [self.agents_list.row(item) for item in selected_items], reverse=True
+            )
             for row in rows_to_remove:
                 self.agents_list.takeItem(row)
 
@@ -740,29 +748,29 @@ class AgentsConfigTab(QWidget):
         selected_items = self.agents_list.selectedItems()
         if not selected_items:
             QMessageBox.warning(
-                self,
-                "No Selection",
-                "Please select one or more agents to export."
+                self, "No Selection", "Please select one or more agents to export."
             )
             return
 
         selected_agents_data = []
         selected_remote_agents_data = []
-        
+
         for item in selected_items:
             agent_data = item.data(Qt.ItemDataRole.UserRole)
             agent_type = agent_data.get("agent_type", "local")
-            
+
             export_data = agent_data.copy()
             export_data.pop("agent_type", None)
-            
+
             if agent_type == "local":
                 selected_agents_data.append(export_data)
             elif agent_type == "remote":
                 selected_remote_agents_data.append(export_data)
 
         if len(selected_items) == 1:
-            agent_name = selected_items[0].data(Qt.ItemDataRole.UserRole).get("name", "agent")
+            agent_name = (
+                selected_items[0].data(Qt.ItemDataRole.UserRole).get("name", "agent")
+            )
             default_filename = f"{agent_name}_export"
         else:
             default_filename = f"agents_export_{len(selected_items)}_agents"
@@ -795,7 +803,7 @@ class AgentsConfigTab(QWidget):
             if selected_remote_agents_data:
                 export_config["remote_agents"] = selected_remote_agents_data
 
-            with open(export_file_path, 'w', encoding='utf-8') as f:
+            with open(export_file_path, "w", encoding="utf-8") as f:
                 if file_format == "toml":
                     toml.dump(export_config, f)
                 else:
@@ -806,14 +814,12 @@ class AgentsConfigTab(QWidget):
             QMessageBox.information(
                 self,
                 "Export Successful",
-                f"Successfully exported {agent_count} {agent_word} to:\n{export_file_path}"
+                f"Successfully exported {agent_count} {agent_word} to:\n{export_file_path}",
             )
 
         except Exception as e:
             QMessageBox.critical(
-                self,
-                "Export Error",
-                f"Failed to export agents:\n{str(e)}"
+                self, "Export Error", f"Failed to export agents:\n{str(e)}"
             )
 
     def save_all_agents(self):
@@ -826,9 +832,7 @@ class AgentsConfigTab(QWidget):
             agent_data = item.data(Qt.ItemDataRole.UserRole)
 
             config_data = agent_data.copy()
-            agent_type_for_sorting = config_data.pop(
-                "agent_type", "local"
-            )
+            agent_type_for_sorting = config_data.pop("agent_type", "local")
 
             if agent_type_for_sorting == "local":
                 local_agents_list.append(config_data)
