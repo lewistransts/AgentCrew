@@ -36,13 +36,13 @@ class KeyboardHandler:
         self.stop_shortcut.activated.connect(self.chat_window.stop_message_stream)
 
     def _handle_completer_accept(self, completer, event):
-        current_index = self.chat_window.file_completer.popup().currentIndex()
+        current_index = completer.popup().currentIndex()
         if current_index.isValid():
-            completion = self.chat_window.file_completer.completionModel().data(
+            completion = completer.completionModel().data(
                 current_index, Qt.ItemDataRole.DisplayRole
             )
             self.chat_window.input_components.insert_completion(completion)
-            self.chat_window.file_completer.popup().hide()
+            completer.popup().hide()
             event.accept()
             return
 
