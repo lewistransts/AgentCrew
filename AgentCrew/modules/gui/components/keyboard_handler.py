@@ -35,39 +35,44 @@ class KeyboardHandler:
         self.stop_shortcut = QShortcut(QKeySequence("Escape"), self.chat_window)
         self.stop_shortcut.activated.connect(self.chat_window.stop_message_stream)
 
+    def _handle_completer_accept(self, completer, event):
+        current_index = self.chat_window.file_completer.popup().currentIndex()
+        if current_index.isValid():
+            completion = self.chat_window.file_completer.completionModel().data(
+                current_index, Qt.ItemDataRole.DisplayRole
+            )
+            self.chat_window.input_components.insert_completion(completion)
+            self.chat_window.file_completer.popup().hide()
+            event.accept()
+            return
+
     def handle_key_press(self, event):
         """Handle key press events for the message input."""
         # Handle Tab key for completion
-        if (
-            event.key() == Qt.Key.Key_Tab
-            and self.chat_window.file_completer.popup().isVisible()
-        ):
+        if event.key() == Qt.Key.Key_Tab:
             # Select the current completion
-            current_index = self.chat_window.file_completer.popup().currentIndex()
-            if current_index.isValid():
-                completion = self.chat_window.file_completer.completionModel().data(
-                    current_index, Qt.ItemDataRole.DisplayRole
+            if self.chat_window.file_completer.popup().isVisible():
+                return self._handle_completer_accept(
+                    self.chat_window.file_completer, event
                 )
-                self.chat_window.input_components.insert_completion(completion)
-                self.chat_window.file_completer.popup().hide()
-                event.accept()
-                return
+            elif self.chat_window.command_completer.popup().isVisible():
+                return self._handle_completer_accept(
+                    self.chat_window.command_completer, event
+                )
+            QTextEdit.keyPressEvent(self.chat_window.message_input, event)
 
         # Handle Enter key for completion
-        elif (
-            event.key() == Qt.Key.Key_Return
-            and self.chat_window.file_completer.popup().isVisible()
-        ):
+        elif event.key() == Qt.Key.Key_Return:
             # Select the current completion
-            current_index = self.chat_window.file_completer.popup().currentIndex()
-            if current_index.isValid():
-                completion = self.chat_window.file_completer.completionModel().data(
-                    current_index, Qt.ItemDataRole.DisplayRole
+            if self.chat_window.file_completer.popup().isVisible():
+                return self._handle_completer_accept(
+                    self.chat_window.file_completer, event
                 )
-                self.chat_window.input_components.insert_completion(completion)
-                self.chat_window.file_completer.popup().hide()
-                event.accept()
-                return
+            elif self.chat_window.command_completer.popup().isVisible():
+                return self._handle_completer_accept(
+                    self.chat_window.command_completer, event
+                )
+            QTextEdit.keyPressEvent(self.chat_window.message_input, event)
 
         # Ctrl+Enter to send
         elif (

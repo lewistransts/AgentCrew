@@ -56,6 +56,7 @@ class ChatWindow(QMainWindow, Observer):
     file_button: QPushButton
     message_input: QTextEdit
     file_completer: QCompleter
+    command_completer: QCompleter
     # Custom Widgets
     token_usage: TokenUsageWidget
 
@@ -528,6 +529,8 @@ class ChatWindow(QMainWindow, Observer):
             self.ui_state_manager.set_input_controls_enabled(True)
         elif event == "update_token_usage":
             self._update_cost_info(data["input_tokens"], data["output_tokens"])
+        elif event == "mcp_prompt":
+            self.message_input.setPlainText(data.get("content", ""))
 
     def _handle_theme_changed(self, theme_name):
         """

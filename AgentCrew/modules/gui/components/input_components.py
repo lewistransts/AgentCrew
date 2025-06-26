@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QStringListModel
 from PySide6.QtGui import QTextCursor
 from AgentCrew.modules.chat.completers import DirectoryListingCompleter
+from .completers import GuiChatCompleter
 
 
 class InputComponents:
@@ -32,10 +33,11 @@ class InputComponents:
         input_font.setPixelSize(16)
         self.chat_window.message_input.setFont(input_font)
         self.chat_window.message_input.setReadOnly(False)
-        self.chat_window.message_input.setMaximumHeight(100)
+        self.chat_window.message_input.setMaximumHeight(120)
         self.chat_window.message_input.setPlaceholderText(
             "Type your message here... (Ctrl+Enter to send)"
         )
+        self.chat_window.message_input.setAcceptRichText(False)
         self.chat_window.message_input.setStyleSheet(
             self.chat_window.style_provider.get_input_style()
         )
@@ -81,6 +83,23 @@ class InputComponents:
 
         self.directory_completer = DirectoryListingCompleter()
         self.path_prefix = ""
+
+        # Add chat command completion
+        self.chat_completer = GuiChatCompleter(
+            getattr(self.chat_window, "message_handler", None)
+        )
+        self.chat_window.command_completer = QCompleter(self.chat_window)
+        self.chat_window.command_completer.setCompletionMode(
+            QCompleter.CompletionMode.PopupCompletion
+        )
+        self.chat_window.command_completer.setCaseSensitivity(
+            Qt.CaseSensitivity.CaseSensitive
+        )
+        self.chat_window.command_completer.setWidget(self.chat_window.message_input)
+        self.chat_window.command_completer.activated.connect(
+            self.insert_command_completion
+        )
+
         self.chat_window.message_input.textChanged.connect(
             self.check_for_path_completion
         )
@@ -89,11 +108,18 @@ class InputComponents:
         """Check if the current text contains a path that should trigger completion."""
         if self.chat_window.file_completer.popup().isVisible():
             self.chat_window.file_completer.popup().hide()
+        if self.chat_window.command_completer.popup().isVisible():
+            self.chat_window.command_completer.popup().hide()
         text = self.chat_window.message_input.toPlainText()
         cursor_position = self.chat_window.message_input.textCursor().position()
 
         # Get the text up to the cursor position
         text_to_cursor = text[:cursor_position]
+
+        # First check for command completion
+        if text_to_cursor.startswith("/"):
+            self.check_for_command_completion()
+            return
 
         # Look for path patterns that should trigger completion
         path_match = re.search(r"((~|\.{1,2})?/[^\s]*|~)$", text_to_cursor)
@@ -122,7 +148,7 @@ class InputComponents:
 
                 # Calculate position for the popup
                 rect = self.chat_window.message_input.cursorRect()
-                rect.setWidth(300)
+                rect.setWidth(400)
 
                 # Show the popup
                 self.chat_window.file_completer.complete(rect)
@@ -136,6 +162,9 @@ class InputComponents:
         text = self.chat_window.message_input.toPlainText()
         position = cursor.position()
 
+        if text.startswith("/"):
+            self.insert_command_completion(completion)
+            return
         # Find the start of the path
         text_to_cursor = text[:position]
         path_match = re.search(r"((~|\.{1,2})?/[^\s]*|~)$", text_to_cursor)
@@ -174,6 +203,48 @@ class InputComponents:
 
                 # Send the file command to the worker thread
                 self.chat_window.llm_worker.process_request.emit(file_command)
+
+    def check_for_command_completion(self):
+        """Check if the current text should trigger command completion."""
+        text = self.chat_window.message_input.toPlainText()
+        cursor_position = self.chat_window.message_input.textCursor().position()
+
+        # Get the text up to the cursor position
+        text_to_cursor = text[:cursor_position]
+
+        # Check if we're typing a command
+        if text_to_cursor.startswith("/"):
+            completions = self.chat_completer.get_completions(text_to_cursor)
+
+            if completions:
+                model = QStringListModel(completions)
+                self.chat_window.command_completer.setModel(model)
+
+                popup = self.chat_window.command_completer.popup()
+                popup.setCurrentIndex(
+                    self.chat_window.command_completer.completionModel().index(0, 0)
+                )
+
+                # Show completion popup
+                rect = self.chat_window.message_input.cursorRect()
+                rect.setWidth(400)
+                self.chat_window.command_completer.complete(rect)
+            else:
+                self.chat_window.command_completer.popup().hide()
+
+    def insert_command_completion(self, completion: str):
+        """Insert the selected command completion."""
+        cursor = self.chat_window.message_input.textCursor()
+        text = self.chat_window.message_input.toPlainText()
+        position = cursor.position()
+
+        # Find the start of the command
+        text_to_cursor = text[:position]
+        if text_to_cursor.startswith("/"):
+            # Replace the current command with the completion
+            cut_off = completion.replace(text_to_cursor, "")
+            cursor.setPosition(position, QTextCursor.MoveMode.KeepAnchor)
+            cursor.insertText(cut_off)
 
     def get_input_layout(self):
         """Get the input row layout for integration with main window."""

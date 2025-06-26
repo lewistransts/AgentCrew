@@ -108,7 +108,7 @@ class CommandProcessor:
         return CommandResult(handled=False)
 
     def _is_exit_command(self, user_input: str) -> bool:
-        return user_input.lower() in ["exit", "quit"]
+        return user_input.lower() in ["/exit", "/quit"]
 
     async def _handle_consolidate_command(self, user_input: str) -> CommandResult:
         """Handle consolidate command."""
@@ -207,7 +207,7 @@ class CommandProcessor:
                 else "No MCP prompts found."
             )
             self.message_handler._notify("system_message", msg)
-            return False, False
+            return False, True
         # /mcp <server_id.prompt_name>: fetch and show the prompt
         elif len(parts) == 2:
             full_name = parts[1]
@@ -215,7 +215,7 @@ class CommandProcessor:
                 self.message_handler._notify(
                     "error", "Please use format: /mcp server_id/prompt_name"
                 )
-                return False, False
+                return False, True
             server_id, prompt_name = full_name.split("/", 1)
             try:
                 prompt = await mcp_service.get_prompt(server_id, prompt_name)
@@ -234,10 +234,10 @@ class CommandProcessor:
                 self.message_handler._notify(
                     "error", f"Error fetching prompt: {str(e)}"
                 )
-            return False, False
+            return False, True
         else:
             self.message_handler._notify("error", "Usage: /mcp [server_id.prompt_name]")
-            return False, False
+            return False, True
 
     def _handle_jump_command(self, command: str) -> bool:
         """Handle the /jump command to rewind conversation to a previous turn."""

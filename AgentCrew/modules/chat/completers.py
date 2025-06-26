@@ -127,8 +127,54 @@ class ChatCompleter(Completer):
             yield from self.jump_completer.get_completions(document, complete_event)
         elif text.startswith("/mcp"):
             yield from self.mcp_completer.get_completions(document, complete_event)
+        elif text.startswith("/"):
+            yield from self.get_command_completions(document)
+
         else:
             yield from self.file_completer.get_completions(document, complete_event)
+
+    def get_command_completions(self, document):
+        """Yield completions for all available commands based on user input."""
+
+        commands = [
+            ("/clear", "Clear the conversation history"),
+            ("/copy", "Copy the latest assistant response to clipboard"),
+            (
+                "/debug",
+                "Show debug information (agent history and streamline messages)",
+            ),
+            ("/think", "Set thinking budget (usage: /think <budget>)"),
+            (
+                "/consolidate",
+                "Consolidate conversation messages (usage: /consolidate [count])",
+            ),
+            (
+                "/jump",
+                "Jump to a previous conversation turn (usage: /jump <turn_number>)",
+            ),
+            ("/agent", "Switch agent or list available agents (usage: /agent [name])"),
+            ("/model", "Switch model or list available models (usage: /model [id])"),
+            (
+                "/mcp",
+                "List MCP prompts or fetch specific prompt (usage: /mcp [server_id/prompt_name])",
+            ),
+            ("/file", "Process a file (usage: /file <path>)"),
+            ("/list", "List available conversations"),
+            ("/load", "Load a conversation (usage: /load <conversation_id>)"),
+            ("/help", "Show help message"),
+            ("/exit", "Exit the application"),
+            ("/quit", "Exit the application"),
+        ]
+
+        # Filter commands based on what the user has typed
+        for command, description in commands:
+            # Use document.text instead of word_before_cursor for filtering commands that start with /
+            if command.startswith(document.text):
+                yield Completion(
+                    command,
+                    start_position=-len(document.text),
+                    display=f"{command} - {description}",
+                )
 
 
 class MCPCompleter(Completer):
