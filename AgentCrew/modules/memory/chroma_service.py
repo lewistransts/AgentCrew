@@ -45,7 +45,7 @@ class ChromaMemoryService(BaseMemoryService):
         ## set to groq if key available
         if self.llm_service:
             if self.llm_service.provider_name == "google":
-                self.llm_service.model = "gemini-2.0-flash"
+                self.llm_service.model = "gemini-2.5-flash-lite-preview-06-17"
             elif self.llm_service.provider_name == "claude":
                 self.llm_service.model = "claude-3-5-haiku-latest"
             elif self.llm_service.provider_name == "openai":
