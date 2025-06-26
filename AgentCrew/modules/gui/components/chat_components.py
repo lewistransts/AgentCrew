@@ -97,11 +97,10 @@ class ChatComponents:
             message_bubble.display_file(file_path)
 
         if is_user:
-            container_layout.addWidget(message_bubble)
             container_layout.addStretch(1)  # Push to left
+            container_layout.addWidget(message_bubble, 1)
         else:
-            container_layout.addStretch(1)  # Push to left
-            container_layout.addWidget(message_bubble)
+            container_layout.addWidget(message_bubble, 1)
 
         # Add the container to the chat layout
         self.chat_window.chat_layout.addWidget(container)
@@ -141,8 +140,8 @@ class ChatComponents:
                 lambda: self.chat_window.conslidate_messages(message_bubble)
             )
         if is_user:
-            container_layout.addWidget(message_bubble)
-            # container_layout.addStretch(1)  # Push to left
+            container_layout.addStretch(1)  # Push to left
+            container_layout.addWidget(message_bubble, 1)
         else:
             # container_layout.addStretch(1)  # Push to right
             container_layout.addWidget(message_bubble)
