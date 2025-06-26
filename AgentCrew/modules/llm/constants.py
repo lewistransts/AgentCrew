@@ -170,22 +170,22 @@ _GROQ_MODELS = [
 
 _GOOGLE_MODELS = [
     Model(
-        id="gemini-2.0-flash",
+        id="gemini-2.5-flash-lite-preview-06-17",
         provider="google",
-        name="Gemini 2.0 Flash",
-        description="Gemini 2.0 Flash is a powerful language model from Google, designed for both text and visual inputs.",
+        name="Gemini 2.5 Lite",
+        description="Gemini 2.0 Flash Lite is low latancy, balanced language model from Google, designed for both text and visual inputs.",
         capabilities=["tool_use", "vision"],
         input_token_price_1m=0.1,
         output_token_price_1m=0.4,
     ),
     Model(
-        id="gemini-2.5-flash-preview-05-20",
+        id="gemini-2.5-flash",
         provider="google",
-        name="Gemini 2.5 Flash Preview",
+        name="Gemini 2.5 Flash ",
         description="Gemini 2.5 Flash is Google's first fully hybrid reasoning AI model, designed for high speed and cost-efficiency, allowing developers to toggle advanced reasoning on or off as needed.",
         capabilities=["tool_use", "vision", "thinking"],
-        input_token_price_1m=0.15,
-        output_token_price_1m=3.5,
+        input_token_price_1m=0.3,
+        output_token_price_1m=2.5,
         default=True,
     ),
     Model(
@@ -195,7 +195,7 @@ _GOOGLE_MODELS = [
         description="Gemini 2.5 Pro with thinking",
         capabilities=["tool_use", "thinking", "vision"],
         input_token_price_1m=1.25,
-        output_token_price_1m=2.5,
+        output_token_price_1m=10,
     ),
 ]
 
