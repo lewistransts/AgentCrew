@@ -284,6 +284,7 @@ class MessageBubble(QFrame):
             )
             html_content = (
                 f"""<style>
+                * {{line-height: 1.5}}
             pre {{ white-space: pre-wrap; margin-bottom: 0;}}
                 {self.style_provider.get_code_color_style()}
             </style>"""
