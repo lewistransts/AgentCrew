@@ -301,7 +301,7 @@ class MessageBubble(QFrame):
         self.raw_text_buffer = ""
         self.character_queue = []
 
-        self.message_label.setTextFormat(Qt.TextFormat.PlainText)
+        self.message_label.setTextFormat(Qt.TextFormat.MarkdownText)
         self.message_label.setText("")
 
     def add_streaming_chunk(self, chunk_queue: list):
