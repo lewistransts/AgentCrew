@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QTextEdit
+import sys
 
 
 class KeyboardHandler:
@@ -31,6 +32,9 @@ class KeyboardHandler:
             lambda: self.chat_window.command_handler.clear_chat(requested=False)
         )
 
+        self.history_shortcut = QShortcut(QKeySequence("Ctrl+H"), self.chat_window)
+        self.history_shortcut.activated.connect(self.chat_window.toggleSidebar)
+
         # Escape shortcut (stop message stream) - changed from Ctrl+C to avoid conflict
         self.stop_shortcut = QShortcut(QKeySequence("Escape"), self.chat_window)
         self.stop_shortcut.activated.connect(self.chat_window.stop_message_stream)
@@ -49,6 +53,11 @@ class KeyboardHandler:
     def handle_key_press(self, event):
         """Handle key press events for the message input."""
         # Handle Tab key for completion
+        real_control_key = (
+            Qt.KeyboardModifier.ControlModifier
+            if sys.platform != "darwin"
+            else Qt.KeyboardModifier.MetaModifier
+        )
         if event.key() == Qt.Key.Key_Tab:
             # Select the current completion
             if self.chat_window.file_completer.popup().isVisible():
@@ -86,7 +95,7 @@ class KeyboardHandler:
         # Up arrow to navigate history
         elif (
             event.key() == Qt.Key.Key_Up
-            and event.modifiers() == Qt.KeyboardModifier.ControlModifier
+            and event.modifiers() == real_control_key
             and not self.chat_window.file_completer.popup().isVisible()
         ):
             self.history_navigate(-1)
@@ -96,7 +105,7 @@ class KeyboardHandler:
         # Down arrow to navigate history
         elif (
             event.key() == Qt.Key.Key_Down
-            and event.modifiers() == Qt.KeyboardModifier.ControlModifier
+            and event.modifiers() == real_control_key
             and not self.chat_window.file_completer.popup().isVisible()
         ):
             self.history_navigate(1)

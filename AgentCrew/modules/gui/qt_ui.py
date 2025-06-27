@@ -429,16 +429,19 @@ class ChatWindow(QMainWindow, Observer):
             obj is self.splitter.handle(1)
             and event.type() == event.Type.MouseButtonDblClick
         ):
-            # Get current sizes
-            sizes = self.splitter.sizes()
-            if sizes[0] > 0:
-                # If sidebar is visible, hide it
-                self.splitter.setSizes([0, sum(sizes)])
-            else:
-                # If sidebar is hidden, show it
-                self.splitter.setSizes([250, max(sum(sizes) - 250, 0)])
+            self.toggleSidebar()
             return True
         return super().eventFilter(obj, event)
+
+    def toggleSidebar(self):
+        # Get current sizes
+        sizes = self.splitter.sizes()
+        if sizes[0] > 0:
+            # If sidebar is visible, hide it
+            self.splitter.setSizes([0, sum(sizes)])
+        else:
+            # If sidebar is hidden, show it
+            self.splitter.setSizes([250, max(sum(sizes) - 250, 0)])
 
     @Slot(str, object)
     def handle_event(self, event: str, data: Any):
