@@ -8,7 +8,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/saigontechnology/AgentCrew)](https://github.com/saigontechnology/AgentCrew/stargazers)
 [![Pylint](https://github.com/saigontechnology/AgentCrew/actions/workflows/pylint.yml/badge.svg)](https://github.com/saigontechnology/AgentCrew/actions/workflows/pylint.yml)
 [![CodeQL](https://github.com/saigontechnology/AgentCrew/actions/workflows/codeql.yml/badge.svg)](https://github.com/saigontechnology/AgentCrew/actions/workflows/codeql.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/saigontechnology/AgentCrew/blob/main/LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-yellow.svg)](https://github.com/saigontechnology/AgentCrew/blob/main/LICENSE)
 [![Status: Beta](https://img.shields.io/badge/Status-Beta-blue)](https://github.com/saigontechnology/AgentCrew/releases)
 [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/release/python-3120/)
 
@@ -48,7 +48,7 @@ AgentCrew can help.
 
 **Short Demo**
 
-<https://github.com/user-attachments/assets/f0d8d2a2-a163-446d-9536-45e54e6bde37>
+<https://github.com/user-attachments/assets/32876eac-b5e6-4608-bd5e-82d6fa4db80f>
 
 ## 💡 Core Ideas Behind AgentCrew
 
