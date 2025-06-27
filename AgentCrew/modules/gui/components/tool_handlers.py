@@ -61,10 +61,12 @@ class ToolEventHandler:
 
             # Add to chat using convenience method
             self.chat_window.chat_components.add_tool_widget(tool_widget)
-
-        # Reset the current response bubble so the next agent message starts in a new bubble
+        self.chat_window.message_event_handler.chunk_buffer_queue = []
+        self.chat_window.message_event_handler.think_buffer_queue = []
         self.chat_window.current_response_bubble = None
         self.chat_window.current_response_container = None
+
+        # Reset the current response bubble so the next agent message starts in a new bubble
 
     def handle_tool_error(self, data: Dict):
         """Display an error that occurred during tool execution."""

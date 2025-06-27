@@ -242,9 +242,12 @@ class InputComponents:
         text_to_cursor = text[:position]
         if text_to_cursor.startswith("/"):
             # Replace the current command with the completion
-            cut_off = completion.replace(text_to_cursor, "")
+            for word in text_to_cursor.split():
+                print("Inserting command completion:", completion, word)
+                if completion.find(word) != -1:
+                    position = text_to_cursor.rfind(word)
             cursor.setPosition(position, QTextCursor.MoveMode.KeepAnchor)
-            cursor.insertText(cut_off)
+            cursor.insertText(completion)
 
     def get_input_layout(self):
         """Get the input row layout for integration with main window."""
