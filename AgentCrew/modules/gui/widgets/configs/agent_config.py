@@ -186,11 +186,12 @@ class AgentsConfigTab(QWidget):
 
         self.system_prompt_input = QTextEdit()
         self.system_prompt_input.setMinimumHeight(200)
+        self.system_prompt_input.setAcceptRichText(False)
 
         local_agent_layout.addLayout(local_form_layout)
         local_agent_layout.addWidget(tools_group)
         local_agent_layout.addWidget(QLabel("System Prompt:"))
-        local_agent_layout.addWidget(self.system_prompt_input)
+        local_agent_layout.addWidget(self.system_prompt_input, 1)
         local_agent_layout.addStretch()
 
         # Remote Agent Editor Widget
