@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QCompleter,
     QFileDialog,
+    QSizePolicy,
 )
 from PySide6.QtCore import Qt, QStringListModel
 from PySide6.QtGui import QTextCursor
@@ -40,6 +41,9 @@ class InputComponents:
         self.chat_window.message_input.setAcceptRichText(False)
         self.chat_window.message_input.setStyleSheet(
             self.chat_window.style_provider.get_input_style()
+        )
+        self.chat_window.message_input.setSizePolicy(
+            QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
         )
 
         # Create buttons layout

@@ -140,7 +140,7 @@ class MessageBubble(QFrame):
             self.set_text(text)
 
         # self.message_label.setSizePolicy(
-        #     QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum
+        #     QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
         # )
 
         if text is not None:
@@ -314,7 +314,7 @@ class MessageBubble(QFrame):
 
         # Start the streaming timer if not active
         if not self.streaming_timer.isActive():
-            self.streaming_timer.start(24)
+            self.streaming_timer.start(40)
 
         # Add characters to queue for smooth rendering
         self.character_queue = chunk_queue
@@ -328,11 +328,11 @@ class MessageBubble(QFrame):
 
         # Adaptive rendering speed based on queue size
         if len(self.character_queue) > 100:
-            chars_per_frame = 21  # Speed up for large queues
+            chars_per_frame = 40  # Speed up for large queues
         elif len(self.character_queue) > 50:
-            chars_per_frame = 15
+            chars_per_frame = 30
         else:
-            chars_per_frame = 10  # Slower for natural effect
+            chars_per_frame = 20  # Slower for natural effect
 
         # Render characters for this frame
         new_chars = ""
@@ -354,6 +354,10 @@ class MessageBubble(QFrame):
 
         self.message_label.setTextFormat(Qt.TextFormat.RichText)
         # Now convert to markdown with full formatting
+        self.message_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+            | Qt.TextInteractionFlag.LinksAccessibleByMouse
+        )
         self.set_text(self.raw_text_buffer)
 
     def stop_streaming(self):

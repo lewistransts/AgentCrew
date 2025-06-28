@@ -81,7 +81,7 @@ class UIStateManager:
             self.chat_window.send_button.setStyleSheet(
                 self.chat_window.style_provider.get_button_style("stop")
             )
-            self.animation_timer.setInterval(150)  # Update every 150ms for spinner
+            self.animation_timer.setInterval(80)  # Update every 150ms for spinner
             self.animation_timer.start()
 
             # Change the button to stop functionality

@@ -31,9 +31,6 @@ class ChatComponents:
         # Create widget for chat messages
         self.chat_window.chat_container = QWidget()
         self.chat_window.chat_container.setObjectName("chatContainer")
-        self.chat_window.chat_layout = QVBoxLayout(self.chat_window.chat_container)
-        self.chat_window.chat_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.chat_window.chat_layout.setSpacing(10)
 
         # Create a scroll area for messages
         self.chat_window.chat_scroll = QScrollArea()
@@ -45,6 +42,11 @@ class ChatComponents:
         self.chat_window.chat_scroll.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
+
+        self.chat_window.chat_layout = QVBoxLayout(self.chat_window.chat_container)
+        self.chat_window.chat_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.chat_window.chat_layout.setSpacing(15)
+        self.chat_window.chat_layout.setContentsMargins(5, 5, 10, 10)
 
     def _setup_status_components(self):
         """Set up status and token usage components."""

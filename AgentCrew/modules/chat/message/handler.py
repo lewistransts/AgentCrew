@@ -348,6 +348,8 @@ class MessageHandler(Observable):
 
             return assistant_response, input_tokens, output_tokens
 
+        except GeneratorExit:
+            return assistant_response, input_tokens, output_tokens
         except Exception as e:
             if self.current_user_input:
                 self.conversation_manager.store_conversation_turn(
