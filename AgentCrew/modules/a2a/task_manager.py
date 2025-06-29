@@ -8,7 +8,7 @@ from typing import Dict, AsyncIterable, Optional, Any, Union
 from AgentCrew.modules.agents import AgentManager, LocalAgent
 from AgentCrew.modules.agents.base import MessageType
 
-from .common.types import (
+from a2a.types import (
     CancelTaskResponse,
     GetTaskResponse,
     GetTaskSuccessResponse,

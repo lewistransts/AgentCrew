@@ -9,9 +9,7 @@ import httpx
 from httpx._types import TimeoutTypes
 from httpx_sse import aconnect_sse
 
-from AgentCrew.modules.a2a.common.types import (
-    A2AClientHTTPError,
-    A2AClientJSONError,
+from a2a.types import (
     A2ARequest,
     AgentCard,
     CancelTaskRequest,
@@ -70,9 +68,7 @@ class A2AClient:
                             json.loads(sse.data)
                         )
                 except json.JSONDecodeError as e:
-                    raise A2AClientJSONError(str(e)) from e
-                except httpx.RequestError as e:
-                    raise A2AClientHTTPError(400, str(e)) from e
+                    raise httpx.DecodingError(str(e)) from e
 
     async def _send_request(self, request: A2ARequest) -> dict[str, Any]:
         async with httpx.AsyncClient() as client:
@@ -83,10 +79,8 @@ class A2AClient:
                 )
                 response.raise_for_status()
                 return response.json()
-            except httpx.HTTPStatusError as e:
-                raise A2AClientHTTPError(e.response.status_code, str(e)) from e
             except json.JSONDecodeError as e:
-                raise A2AClientJSONError(str(e)) from e
+                raise httpx.DecodingError(str(e)) from e
 
     async def get_task(self, payload: TaskQueryParams) -> GetTaskResponse:
         request = GetTaskRequest(id=str(uuid4()), params=payload)

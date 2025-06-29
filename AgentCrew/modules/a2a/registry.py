@@ -5,7 +5,7 @@ Registry for managing A2A agents and their capabilities.
 from typing import Dict, List, Optional
 from pydantic import BaseModel
 from AgentCrew.modules.agents import AgentManager, LocalAgent
-from .common.types import AgentCard
+from a2a.types import AgentCard
 from .agent_cards import create_agent_card
 
 

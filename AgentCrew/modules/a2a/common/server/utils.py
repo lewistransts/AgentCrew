@@ -1,5 +1,6 @@
-from AgentCrew.modules.a2a.common.types import (
+from a2a.types import (
     ContentTypeNotSupportedError,
+    JSONRPCErrorResponse,
     JSONRPCResponse,
     UnsupportedOperationError,
 )
@@ -21,8 +22,12 @@ def are_modalities_compatible(
 
 
 def new_incompatible_types_error(request_id):
-    return JSONRPCResponse(id=request_id, error=ContentTypeNotSupportedError())
+    return JSONRPCResponse(
+        root=JSONRPCErrorResponse(id=request_id, error=ContentTypeNotSupportedError())
+    )
 
 
 def new_not_implemented_error(request_id):
-    return JSONRPCResponse(id=request_id, error=UnsupportedOperationError())
+    return JSONRPCResponse(
+        root=JSONRPCErrorResponse(id=request_id, error=UnsupportedOperationError())
+    )

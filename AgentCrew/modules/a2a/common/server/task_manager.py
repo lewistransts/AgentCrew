@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterable
 
 from AgentCrew.modules.a2a.common.server.utils import new_not_implemented_error
-from AgentCrew.modules.a2a.common.types import (
+from a2a.types import (
     Artifact,
     CancelTaskRequest,
     CancelTaskResponse,
@@ -13,8 +13,13 @@ from AgentCrew.modules.a2a.common.types import (
     GetTaskPushNotificationConfigResponse,
     GetTaskRequest,
     GetTaskResponse,
+    SetTaskPushNotificationConfigSuccessResponse,
+    GetTaskPushNotificationConfigSuccessResponse,
+    SendStreamingMessageSuccessResponse,
     InternalError,
     JSONRPCError,
+    GetTaskSuccessResponse,
+    JSONRPCErrorResponse,
     JSONRPCResponse,
     PushNotificationConfig,
     SendMessageRequest,
@@ -104,13 +109,17 @@ class InMemoryTaskManager(TaskManager):
         async with self.lock:
             task = self.tasks.get(task_query_params.id)
             if task is None:
-                return GetTaskResponse(error=TaskNotFoundError(), id=request.id)
+                return GetTaskResponse(
+                    root=JSONRPCErrorResponse(error=TaskNotFoundError(), id=request.id)
+                )
 
             task_result = self.append_task_history(
                 task, task_query_params.historyLength
             )
 
-        return GetTaskResponse(result=task_result, id=request.id)
+        return GetTaskResponse(
+            root=GetTaskSuccessResponse(result=task_result, id=request.id)
+        )
 
     async def on_cancel_task(self, request: CancelTaskRequest) -> CancelTaskResponse:
         logger.info(f"Cancelling task {request.params.id}")
@@ -119,9 +128,13 @@ class InMemoryTaskManager(TaskManager):
         async with self.lock:
             task = self.tasks.get(task_id_params.id)
             if task is None:
-                return CancelTaskResponse(error=TaskNotFoundError(), id=request.id)
+                return CancelTaskResponse(
+                    root=JSONRPCErrorResponse(error=TaskNotFoundError(), id=request.id)
+                )
 
-        return CancelTaskResponse(error=TaskNotCancelableError(), id=request.id)
+        return CancelTaskResponse(
+            root=JSONRPCErrorResponse(error=TaskNotCancelableError(), id=request.id)
+        )
 
     @abstractmethod
     async def on_send_message(self, request: SendMessageRequest) -> SendMessageResponse:
@@ -168,15 +181,19 @@ class InMemoryTaskManager(TaskManager):
             )
         except Exception as e:
             logger.error(f"Error while setting push notification info: {e}")
-            return JSONRPCResponse(
-                id=request.id,
-                error=InternalError(
-                    message="An error occurred while setting push notification info"
-                ),
+            return SetTaskPushNotificationConfigResponse(
+                root=JSONRPCErrorResponse(
+                    id=request.id,
+                    error=InternalError(
+                        message="An error occurred while setting push notification info"
+                    ),
+                )
             )
 
         return SetTaskPushNotificationConfigResponse(
-            id=request.id, result=task_notification_params
+            root=SetTaskPushNotificationConfigSuccessResponse(
+                id=request.id, result=task_notification_params
+            )
         )
 
     async def on_get_task_push_notification(
@@ -190,17 +207,21 @@ class InMemoryTaskManager(TaskManager):
         except Exception as e:
             logger.error(f"Error while getting push notification info: {e}")
             return GetTaskPushNotificationConfigResponse(
-                id=request.id,
-                error=InternalError(
-                    message="An error occurred while getting push notification info"
-                ),
+                root=JSONRPCErrorResponse(
+                    id=request.id,
+                    error=InternalError(
+                        message="An error occurred while getting push notification info"
+                    ),
+                )
             )
 
         return GetTaskPushNotificationConfigResponse(
-            id=request.id,
-            result=TaskPushNotificationConfig(
-                taskId=task_params.id, pushNotificationConfig=notification_info
-            ),
+            root=GetTaskPushNotificationConfigSuccessResponse(
+                id=request.id,
+                result=TaskPushNotificationConfig(
+                    taskId=task_params.id, pushNotificationConfig=notification_info
+                ),
+            )
         )
 
     async def upsert_task(self, message_send_params: MessageSendParams) -> Task:
@@ -296,10 +317,16 @@ class InMemoryTaskManager(TaskManager):
             while True:
                 event = await sse_event_queue.get()
                 if isinstance(event, JSONRPCError):
-                    yield SendStreamingMessageResponse(id=request_id, error=event)
+                    yield SendStreamingMessageResponse(
+                        root=JSONRPCErrorResponse(id=request_id, error=event)
+                    )
                     break
 
-                yield SendStreamingMessageResponse(id=request_id, result=event)
+                yield SendStreamingMessageResponse(
+                    root=SendStreamingMessageSuccessResponse(
+                        id=request_id, result=event
+                    )
+                )
                 if isinstance(event, TaskStatusUpdateEvent) and event.final:
                     break
         finally:

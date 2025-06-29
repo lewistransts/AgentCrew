@@ -4,9 +4,10 @@ Adapters for converting between SwissKnife and A2A message formats.
 
 import base64
 from typing import Dict, Any, List, Optional
-from .common.types import (
+from a2a.types import (
     GetTaskResponse,
     Message,
+    Task,
     TextPart,
     FilePart,
     FileWithBytes,
@@ -14,6 +15,7 @@ from .common.types import (
     Artifact,
     Part,
     SendMessageResponse,
+    JSONRPCErrorResponse,
     DataPart,
     Role,
 )
@@ -34,14 +36,14 @@ def convert_a2a_message_to_agent(message: Message) -> Dict[str, Any]:
     content = []
 
     for part in message.parts:
-        part_data = part.root if hasattr(part, "root") else part
+        part_data = part.root
 
         if part_data.kind == "text":
             content.append({"type": "text", "text": part_data.text})
         elif part_data.kind == "file":
             # Handle file content
             file_data = part_data.file
-            if hasattr(file_data, "bytes") and file_data.bytes:
+            if isinstance(file_data, FileWithBytes) and file_data.bytes:
                 # Base64 encoded file
                 content.append(
                     {
@@ -51,7 +53,7 @@ def convert_a2a_message_to_agent(message: Message) -> Dict[str, Any]:
                         "mime_type": file_data.mimeType or "application/octet-stream",
                     }
                 )
-            elif hasattr(file_data, "uri") and file_data.uri:
+            elif isinstance(file_data, FileWithUri) and file_data.uri:
                 # File URI
                 content.append(
                     {
@@ -70,7 +72,7 @@ def convert_a2a_message_to_agent(message: Message) -> Dict[str, Any]:
 
 # TODO: cover all of cases for images
 def convert_agent_message_to_a2a(
-    message: Dict[str, Any], message_id: str = None
+    message: Dict[str, Any], message_id: Optional[str] = None
 ) -> Message:
     """
     Convert a SwissKnife message to A2A format.
@@ -104,7 +106,7 @@ def convert_agent_message_to_a2a(
                             file=FileWithBytes(
                                 name=part.get("file_name"),
                                 mimeType=part.get("mime_type"),
-                                bytes=part.get("file_data"),
+                                bytes=part.get("file_data", ""),
                             )
                         )
                     )
@@ -115,7 +117,7 @@ def convert_agent_message_to_a2a(
                             file=FileWithUri(
                                 name=part.get("file_name"),
                                 mimeType=part.get("mime_type"),
-                                uri=part.get("uri"),
+                                uri=part.get("uri", ""),
                             )
                         )
                     )
@@ -134,7 +136,7 @@ def convert_agent_message_to_a2a(
 def convert_agent_response_to_a2a(
     response: str,
     tool_uses: Optional[List[Dict[str, Any]]] = None,
-    artifact_id: str = None,
+    artifact_id: Optional[str] = None,
 ) -> Artifact:
     """
     Convert a SwissKnife response to an A2A artifact.
@@ -147,7 +149,7 @@ def convert_agent_response_to_a2a(
     Returns:
         The response as an A2A artifact
     """
-    parts = [TextPart(text=response)]
+    parts = [Part(root=TextPart(text=response))]
 
     # If there were tool uses, we could add them as metadata
     metadata = None
@@ -188,8 +190,10 @@ def convert_file_to_a2a_part(
     # Encode file content as base64
     base64_content = base64.b64encode(file_content).decode("utf-8")
 
-    return FilePart(
-        file=FileWithBytes(name=file_name, mimeType=mime_type, bytes=base64_content)
+    return Part(
+        root=FilePart(
+            file=FileWithBytes(name=file_name, mimeType=mime_type, bytes=base64_content)
+        )
     )
 
 
@@ -200,25 +204,26 @@ def convert_a2a_send_task_response_to_agent_message(
     if not response or not hasattr(response, "root"):
         return None
 
-    result = response.root.result if hasattr(response.root, "result") else None
-    if not result:
+    if isinstance(response.root, JSONRPCErrorResponse):
         return None
 
+    result = response.root.result if hasattr(response.root, "result") else None
+
     # Handle both Task and Message results
-    if hasattr(result, "artifacts") and result.artifacts:
+    if isinstance(result, Task) and result.artifacts:
         # Task result with artifacts
         latest_artifact = result.artifacts[-1]
         content_parts = []
         for part in latest_artifact.parts:
-            part_data = part.root if hasattr(part, "root") else part
+            part_data = part.root
             if part_data.kind == "text":
                 content_parts.append(part_data.text)
         return "\n".join(content_parts)
-    elif hasattr(result, "parts"):
+    elif isinstance(result, Message) and result.parts:
         # Direct message result
         content_parts = []
         for part in result.parts:
-            part_data = part.root if hasattr(part, "root") else part
+            part_data = part.root
             if part_data.kind == "text":
                 content_parts.append(part_data.text)
         return "\n".join(content_parts)

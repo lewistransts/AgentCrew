@@ -4,7 +4,7 @@ Functions for generating A2A agent cards from SwissKnife agents.
 
 from typing import List
 from AgentCrew.modules.agents import LocalAgent
-from .common.types import AgentCard, AgentCapabilities, AgentSkill, AgentProvider
+from a2a.types import AgentCard, AgentCapabilities, AgentSkill, AgentProvider
 
 
 def map_tool_to_skill(tool_name: str, tool_def) -> AgentSkill:
