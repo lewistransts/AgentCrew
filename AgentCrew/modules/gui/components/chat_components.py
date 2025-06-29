@@ -143,7 +143,7 @@ class ChatComponents:
             )
         if is_user:
             container_layout.addStretch(1)  # Push to left
-            container_layout.addWidget(message_bubble, 1)
+            container_layout.addWidget(message_bubble, 2)
         else:
             # container_layout.addStretch(1)  # Push to right
             container_layout.addWidget(message_bubble)

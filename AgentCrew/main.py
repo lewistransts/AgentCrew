@@ -216,12 +216,12 @@ def run_update_command():
 
         if system == "linux" or system == "darwin":  # Darwin is macOS
             # Linux/macOS update command
-            command = "uv tool upgrade agentcrew-ai"
+            command = "uv tool install --reinstall --python=3.12 agentcrew-ai@latest"
             click.echo("🐧 Running Linux/macOS update command...")
 
         elif system == "windows":
             # Windows update command
-            command = "uv tool upgrade agentcrew-ai"
+            command = "uv tool install --reinstall --python=3.12 agentcrew-ai@latest"
             click.echo("🪟 Running Windows update command...")
 
         else:

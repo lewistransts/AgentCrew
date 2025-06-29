@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 from typing import Dict, Any, List, Optional
 from AgentCrew.modules.llm.base import BaseLLMService
 from AgentCrew.modules.llm.message import MessageTransformer
@@ -176,7 +177,7 @@ class LocalAgent(BaseAgent):
         """
         self.system_prompt = prompt.replace(
             "{current_date}", datetime.today().strftime("%A, %d/%m/%Y")
-        )
+        ).replace("{cwd}", os.getcwd())
 
     def set_custom_system_prompt(self, prompt: str):
         """

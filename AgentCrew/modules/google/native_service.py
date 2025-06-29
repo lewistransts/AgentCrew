@@ -255,11 +255,21 @@ class GoogleAINativeService(BaseLLMService):
             type=types.Type(param_type),
             description=param_def.get("description", None),
         )
+        if "const" in param_def.keys():
+            schema.default = param_def.get("const", None)
+
+        if "enum" in param_def.keys():
+            schema.enum = param_def.get("enum", [])
+
+        if "anyOf" in param_def.keys():
+            schema.any_of = [
+                self._build_schema(item) for item in param_def.get("anyOf", [])
+            ]
         if param_type == "OBJECT":
             schema.properties = {}
-            if "properties" in param_def:
+            if "properties" in param_def.keys():
                 for key in param_def.get("properties", {}):
-                    prop = param_def.get("properties").get("key", {})
+                    prop = param_def.get("properties").get(key, {})
                     schema.properties[key] = self._build_schema(prop)
         elif param_type == "ARRAY":
             itemsSchema = self._build_schema(param_def.get("items"))
@@ -293,10 +303,12 @@ class GoogleAINativeService(BaseLLMService):
                 tool_definition["function"].get("parameters", {}).get("required", [])
             )
             description = tool_definition["function"].get("description", "")
+            defs = tool_definition["function"].get("parameters", {}).get("$defs", {})
         else:
             parameters = tool_definition.get("parameters", {}).get("properties", {})
             required = tool_definition.get("parameters", {}).get("required", [])
             description = tool_definition.get("description", "")
+            defs = tool_definition.get("parameters", {}).get("$defs", {})
 
         # Create a function declaration for Google GenAI
         function_declaration = types.FunctionDeclaration(
@@ -315,6 +327,14 @@ class GoogleAINativeService(BaseLLMService):
                 function_declaration.parameters is not None
                 and function_declaration.parameters.properties is not None
             ):
+                if param_def.get("$ref", ""):
+                    ref_key = param_def["$ref"].lstrip("#/$defs/")
+                    if ref_key in defs.keys():
+                        function_declaration.parameters.properties[param_name] = (
+                            self._build_schema(defs[ref_key])
+                        )
+                        continue
+
                 function_declaration.parameters.properties[param_name] = (
                     self._build_schema(param_def)
                 )
