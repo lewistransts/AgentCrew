@@ -243,13 +243,20 @@ class MessageHandler(Observable):
                         MessageType.Assistant,
                         {
                             "message": assistant_response,
-                            "tool_uses": [
-                                t for t in tool_uses if t["name"] != "transfer"
-                            ],
+                            "tool_uses": tool_uses_without_transfer,
                         },
                     )
                     self._messages_append(assistant_message)
-                    self._notify("assistant_message_added", assistant_response)
+                # ignore if message is empty
+                elif assistant_response.strip():
+                    assistant_message = self.agent.format_message(
+                        MessageType.Assistant,
+                        {
+                            "message": assistant_response,
+                        },
+                    )
+                    self._messages_append(assistant_message)
+                self._notify("assistant_message_added", assistant_response)
 
                 # This should allows YOLO can be configured on-the-fly without recalled to config too many times
                 config_management = ConfigManagement()

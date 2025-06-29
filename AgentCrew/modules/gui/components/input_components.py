@@ -247,7 +247,6 @@ class InputComponents:
         if text_to_cursor.startswith("/"):
             # Replace the current command with the completion
             for word in text_to_cursor.split():
-                print("Inserting command completion:", completion, word)
                 if completion.find(word) != -1:
                     position = text_to_cursor.rfind(word)
             cursor.setPosition(position, QTextCursor.MoveMode.KeepAnchor)
