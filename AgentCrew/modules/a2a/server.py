@@ -23,6 +23,10 @@ from a2a.types import (
     InvalidRequestError,
     JSONParseError,
     InternalError,
+    SendMessageRequest,
+    SendStreamingMessageRequest,
+    GetTaskRequest,
+    CancelTaskRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -160,13 +164,17 @@ class A2AServer:
                 method = json_rpc_request.root.method
                 logger.debug(f"Processing method: {method}")
 
-                if method == "message/send":
+                if method == "message/send" and isinstance(
+                    json_rpc_request.root, SendMessageRequest
+                ):
                     logger.debug("Handling message/send request")
                     result = await task_manager.on_send_message(json_rpc_request.root)
                     logger.debug(f"message/send result: {result}")
                     return JSONResponse(result.model_dump(exclude_none=True))
 
-                elif method == "message/stream":
+                elif method == "message/stream" and isinstance(
+                    json_rpc_request.root, SendStreamingMessageRequest
+                ):
                     result_stream = task_manager.on_send_message_streaming(
                         json_rpc_request.root
                     )
@@ -182,13 +190,17 @@ class A2AServer:
 
                     return EventSourceResponse(event_generator())
 
-                elif method == "tasks/send":
+                elif method == "tasks/send" and isinstance(
+                    json_rpc_request.root, SendMessageRequest
+                ):
                     logger.debug("Handling legacy tasks/send request")
                     result = await task_manager.on_send_task(json_rpc_request.root)
                     logger.debug(f"tasks/send result: {result}")
                     return JSONResponse(result.model_dump(exclude_none=True))
 
-                elif method == "tasks/sendSubscribe":
+                elif method == "tasks/sendSubscribe" and isinstance(
+                    json_rpc_request.root, SendStreamingMessageRequest
+                ):
                     result_stream = task_manager.on_send_task_subscribe(
                         json_rpc_request.root
                     )
@@ -204,11 +216,15 @@ class A2AServer:
 
                     return EventSourceResponse(event_generator())
 
-                elif method == "tasks/get":
+                elif method == "tasks/get" and isinstance(
+                    json_rpc_request.root, GetTaskRequest
+                ):
                     result = await task_manager.on_get_task(json_rpc_request.root)
                     return JSONResponse(result.model_dump(exclude_none=True))
 
-                elif method == "tasks/cancel":
+                elif method == "tasks/cancel" and isinstance(
+                    json_rpc_request.root, CancelTaskRequest
+                ):
                     result = await task_manager.on_cancel_task(json_rpc_request.root)
                     return JSONResponse(result.model_dump(exclude_none=True))
 
