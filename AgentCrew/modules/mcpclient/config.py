@@ -16,6 +16,7 @@ class MCPServerConfig:
     env: Optional[Dict[str, str]] = None
     streaming_server: bool = False
     url: str = ""
+    headers: Optional[Dict[str, str]] = None
 
 
 class MCPConfigManager:
@@ -68,6 +69,7 @@ class MCPConfigManager:
                     enabledForAgents=config.get("enabledForAgents", []),
                     streaming_server=config.get("streaming_server", False),
                     url=config.get("url", ""),
+                    headers=config.get("headers"),
                 )
 
             return self.configs

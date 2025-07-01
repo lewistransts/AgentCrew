@@ -86,16 +86,7 @@ class MCPsConfigTab(QWidget):
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
 
-        # Add toggle button for view mode
-        toggle_layout = QHBoxLayout()
-        self.show_code_btn = QPushButton("Show Code")
-        self.show_code_btn.setStyleSheet(style_provider.get_button_style("primary"))
-        self.show_code_btn.clicked.connect(self._toggle_view_mode)
-        self.show_code_btn.setEnabled(False)  # Disable until selection
-        toggle_layout.addWidget(self.show_code_btn)
-        toggle_layout.addStretch()
-
-        right_layout.addLayout(toggle_layout)
+        right_layout.addLayout(QHBoxLayout())  # Empty layout placeholder
 
         # Create stacked widget for switching between form and code views
         self.stacked_widget = QStackedWidget()
@@ -172,6 +163,23 @@ class MCPsConfigTab(QWidget):
         self.env_layout.addLayout(env_btn_layout)
         env_group.setLayout(self.env_layout)
 
+        # Headers section (for streaming servers)
+        headers_group = QGroupBox("HTTP Headers")
+        self.headers_group = headers_group  # Store reference
+        self.headers_layout = QVBoxLayout()
+        self.header_inputs = []
+
+        # Add button for headers
+        headers_btn_layout = QHBoxLayout()
+        self.add_header_btn = QPushButton("Add Header")
+        self.add_header_btn.setStyleSheet(style_provider.get_button_style("primary"))
+        self.add_header_btn.clicked.connect(lambda: self.add_header_field("", ""))
+        headers_btn_layout.addWidget(self.add_header_btn)
+        headers_btn_layout.addStretch()
+
+        self.headers_layout.addLayout(headers_btn_layout)
+        headers_group.setLayout(self.headers_layout)
+
         # Enabled for agents section
         enabled_group = QGroupBox("Enabled For Agents")
         enabled_layout = QVBoxLayout()
@@ -188,18 +196,12 @@ class MCPsConfigTab(QWidget):
 
         enabled_group.setLayout(enabled_layout)
 
-        # Save button
-        self.save_btn = QPushButton("Save")
-        self.save_btn.setStyleSheet(style_provider.get_button_style("primary"))
-        self.save_btn.clicked.connect(self.save_mcp)
-        self.save_btn.setEnabled(False)  # Disable until selection
-
-        # Add all components to editor layout
+        # Add all components to editor layout (Save button moved to right_layout)
         self.editor_layout.addLayout(form_layout)
         self.editor_layout.addWidget(args_group)
         self.editor_layout.addWidget(env_group)
+        self.editor_layout.addWidget(headers_group)
         self.editor_layout.addWidget(enabled_group)
-        self.editor_layout.addWidget(self.save_btn)
         self.editor_layout.addStretch()
 
         form_scroll.setWidget(self.editor_widget)
@@ -214,6 +216,26 @@ class MCPsConfigTab(QWidget):
         self.stacked_widget.addWidget(self.json_editor)  # Index 1 - Code view
 
         right_layout.addWidget(self.stacked_widget)
+
+        # Button layout with Show Code and Save buttons in same row
+        button_layout = QHBoxLayout()
+
+        # Show Code button (secondary color)
+        self.show_code_btn = QPushButton("Show Code")
+        self.show_code_btn.setStyleSheet(style_provider.get_button_style("secondary"))
+        self.show_code_btn.clicked.connect(self._toggle_view_mode)
+        self.show_code_btn.setEnabled(False)  # Disable until selection
+
+        # Save button (primary color)
+        self.save_btn = QPushButton("Save")
+        self.save_btn.setStyleSheet(style_provider.get_button_style("primary"))
+        self.save_btn.clicked.connect(self.save_mcp)
+        self.save_btn.setEnabled(False)  # Disable until selection
+
+        button_layout.addWidget(self.show_code_btn)
+        button_layout.addWidget(self.save_btn)
+
+        right_layout.addLayout(button_layout)
 
         # Add panels to splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -305,6 +327,12 @@ class MCPsConfigTab(QWidget):
         for key, value in env.items():
             self.add_env_field(key, value, mark_dirty_on_add=False)
 
+        self.clear_header_fields()
+
+        headers = server_config.get("headers", {})
+        for key, value in headers.items():
+            self.add_header_field(key, value, mark_dirty_on_add=False)
+
         # Set agent checkboxes
         enabled_agents = server_config.get("enabledForAgents", [])
         for agent, checkbox in self.agent_checkboxes.items():
@@ -323,6 +351,13 @@ class MCPsConfigTab(QWidget):
     def _set_sse_fields_visisble(self, visible: bool):
         self.url_input.setVisible(visible)
         self.url_label.setVisible(visible)
+        self.add_header_btn.setVisible(visible)
+        for header_input in self.header_inputs:
+            header_input["key_input"].setVisible(visible)
+            header_input["value_input"].setVisible(visible)
+            header_input["remove_btn"].setVisible(visible)
+        if hasattr(self, "headers_group"):
+            self.headers_group.setVisible(visible)
 
     def _set_stdio_fields_visible(self, visible: bool):
         self.command_input.setVisible(visible)
@@ -369,12 +404,15 @@ class MCPsConfigTab(QWidget):
                 self.args_group.setVisible(False)
             if hasattr(self, "env_group"):
                 self.env_group.setVisible(False)
+            if hasattr(self, "headers_group"):
+                self.headers_group.setVisible(False)
 
         # Always enable/disable these regardless of visibility
         self.url_input.setEnabled(enabled)
         self.command_input.setEnabled(enabled)
         self.add_arg_btn.setEnabled(enabled)
         self.add_env_btn.setEnabled(enabled)
+        self.add_header_btn.setEnabled(enabled)
 
         for checkbox in self.agent_checkboxes.values():
             checkbox.setEnabled(enabled)
@@ -397,7 +435,16 @@ class MCPsConfigTab(QWidget):
                 env_input["value_input"].setVisible(not is_streaming)
                 env_input["remove_btn"].setVisible(not is_streaming)
 
-        # Enable/disable JSON editor
+        for header_input in self.header_inputs:
+            header_input["key_input"].setEnabled(enabled)
+            header_input["value_input"].setEnabled(enabled)
+            header_input["remove_btn"].setEnabled(enabled)
+            if enabled:
+                is_streaming = self.streaming_server_checkbox.isChecked()
+                header_input["key_input"].setVisible(is_streaming)
+                header_input["value_input"].setVisible(is_streaming)
+                header_input["remove_btn"].setVisible(is_streaming)
+
         self.json_editor.set_read_only(not enabled)
 
         if not enabled:
@@ -518,6 +565,68 @@ class MCPsConfigTab(QWidget):
         while self.env_inputs:
             self.remove_env_field(self.env_inputs[0])
 
+    def add_header_field(self, key="", value="", mark_dirty_on_add=True):
+        """Add a field for an HTTP header."""
+        header_layout = QHBoxLayout()
+
+        key_input = QLineEdit()
+        key_input.setText(str(key))
+        key_input.setPlaceholderText("Header Name (e.g., Authorization)")
+        key_input.textChanged.connect(self._mark_dirty)
+
+        value_input = QLineEdit()
+        value_input.setText(str(value))
+        value_input.setPlaceholderText("Header Value (e.g., Bearer token)")
+        value_input.textChanged.connect(self._mark_dirty)
+
+        remove_btn = QPushButton("Remove")
+        remove_btn.setMaximumWidth(80)
+
+        style_provider = StyleProvider()
+        remove_btn.setStyleSheet(style_provider.get_button_style("red"))
+
+        header_layout.addWidget(key_input)
+        header_layout.addWidget(value_input)
+        header_layout.addWidget(remove_btn)
+
+        # Insert before the add button
+        self.headers_layout.insertLayout(len(self.header_inputs), header_layout)
+
+        # Store references
+        header_data = {
+            "layout": header_layout,
+            "key_input": key_input,
+            "value_input": value_input,
+            "remove_btn": remove_btn,
+        }
+        self.header_inputs.append(header_data)
+
+        # Connect remove button
+        remove_btn.clicked.connect(lambda: self.remove_header_field(header_data))
+
+        if mark_dirty_on_add:
+            self._mark_dirty()
+        return header_data
+
+    def remove_header_field(self, header_data):
+        """Remove an HTTP header field."""
+        # Remove from layout
+        self.headers_layout.removeItem(header_data["layout"])
+
+        # Delete widgets
+        header_data["key_input"].deleteLater()
+        header_data["value_input"].deleteLater()
+        header_data["remove_btn"].deleteLater()
+
+        # Remove from list
+        self.header_inputs.remove(header_data)
+        self._mark_dirty()
+
+    def clear_header_fields(self):
+        """Clear all HTTP header fields."""
+        while self.header_inputs:
+            self.remove_header_field(self.header_inputs[0])
+
     def add_new_mcp(self):
         """Add a new MCP server to the configuration."""
         # Create a new server with default values
@@ -530,6 +639,7 @@ class MCPsConfigTab(QWidget):
             "enabledForAgents": [],
             "streaming_server": False,
             "url": "",
+            "headers": {},
         }
 
         # Add to list
@@ -574,6 +684,7 @@ class MCPsConfigTab(QWidget):
             self.command_input.clear()
             self.clear_argument_fields()
             self.clear_env_fields()
+            self.clear_header_fields()
             for checkbox in self.agent_checkboxes.values():
                 checkbox.setChecked(False)
             self.save_all_mcps()
@@ -672,9 +783,7 @@ class MCPsConfigTab(QWidget):
         server_id, server_config = current_item.data(Qt.ItemDataRole.UserRole)
 
         if self.is_code_view:
-            # Switching from code view to form view
             try:
-                # Get JSON data from editor and update form
                 json_data = self.json_editor.get_json()
                 self._update_form_from_json(json_data, server_id)
                 self.stacked_widget.setCurrentIndex(0)  # Form view
@@ -688,8 +797,6 @@ class MCPsConfigTab(QWidget):
                 )
                 return
         else:
-            # Switching from form view to code view
-            # Update server data from form and set JSON
             server_data = self._get_form_data()
             if server_data:  # Only proceed if form data is valid
                 self.json_editor.set_json(server_data)
@@ -720,6 +827,14 @@ class MCPsConfigTab(QWidget):
             if key:
                 env[key] = value
 
+        # Get headers
+        headers = {}
+        for header_data in self.header_inputs:
+            key = header_data["key_input"].text().strip()
+            value = header_data["value_input"].text().strip()
+            if key:
+                headers[key] = value
+
         # Get enabled agents
         enabled_agents = [
             agent
@@ -735,6 +850,7 @@ class MCPsConfigTab(QWidget):
             "enabledForAgents": enabled_agents,
             "streaming_server": streaming_server,
             "url": url,
+            "headers": headers,
         }
 
     def _update_form_from_json(self, json_data: dict, server_id: str):
@@ -759,6 +875,10 @@ class MCPsConfigTab(QWidget):
         self.clear_env_fields()
         for key, value in json_data.get("env", {}).items():
             self.add_env_field(key, value, mark_dirty_on_add=False)
+
+        self.clear_header_fields()
+        for key, value in json_data.get("headers", {}).items():
+            self.add_header_field(key, value, mark_dirty_on_add=False)
 
         enabled_agents = json_data.get("enabledForAgents", [])
         for agent, checkbox in self.agent_checkboxes.items():

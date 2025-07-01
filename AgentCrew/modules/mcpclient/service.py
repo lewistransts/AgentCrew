@@ -36,7 +36,13 @@ class MCPService:
                 from mcp.client.streamable_http import streamablehttp_client
 
                 logger.info(f"MCPService: Using streaming HTTP client for {server_id}")
-                async with streamablehttp_client(server_config.url) as (
+
+                # Prepare headers for the streamable HTTP client
+                headers = server_config.headers if server_config.headers else {}
+
+                async with streamablehttp_client(
+                    server_config.url, headers=headers
+                ) as (
                     read_stream,
                     write_stream,
                     _,
