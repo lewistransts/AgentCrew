@@ -4,7 +4,16 @@ Functions for generating A2A agent cards from SwissKnife agents.
 
 from typing import List
 from AgentCrew.modules.agents import LocalAgent
-from a2a.types import AgentCard, AgentCapabilities, AgentSkill, AgentProvider
+from a2a.types import (
+    AgentCard,
+    AgentCapabilities,
+    AgentSkill,
+    AgentProvider,
+    In,
+    SecurityScheme,
+    APIKeySecurityScheme,
+)
+from AgentCrew import __version__
 
 
 def map_tool_to_skill(tool_name: str, tool_def) -> AgentSkill:
@@ -92,6 +101,11 @@ def create_agent_card(agent: LocalAgent, base_url: str) -> AgentCard:
         organization="AgentCrew",
         url="https://github.com/daltonnyx/AgentCrew",
     )
+    security_schemes = SecurityScheme(
+        root=APIKeySecurityScheme.model_validate(
+            {"name": "Authorization", "in": "header"}
+        )
+    )
 
     return AgentCard(
         name=agent.name if hasattr(agent, "name") else "AgentCrew Assistant",
@@ -100,10 +114,11 @@ def create_agent_card(agent: LocalAgent, base_url: str) -> AgentCard:
         else "An AI assistant powered by AgentCrew",
         url=base_url,
         provider=provider,
-        version="1.0.0",  # Should match AgentCrew version
+        version=__version__,  # Should match AgentCrew version
         capabilities=capabilities,
         skills=skills,
         # Most SwissKnife agents work with text and files
         defaultInputModes=["text/plain", "application/octet-stream"],
         defaultOutputModes=["text/plain", "application/octet-stream"],
+        securitySchemes={"apiKey": security_schemes},
     )
