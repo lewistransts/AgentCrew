@@ -2,7 +2,7 @@
 Registry for managing A2A agents and their capabilities.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 from AgentCrew.modules.agents import AgentManager, LocalAgent
 from a2a.types import AgentCard
@@ -15,7 +15,7 @@ class AgentInfo(BaseModel):
     name: str
     description: str
     endpoint: str
-    capabilities: Dict[str, bool]
+    capabilities: Dict[str, Any]
 
 
 class AgentRegistry:
