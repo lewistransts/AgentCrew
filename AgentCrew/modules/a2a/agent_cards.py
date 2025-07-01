@@ -9,7 +9,6 @@ from a2a.types import (
     AgentCapabilities,
     AgentSkill,
     AgentProvider,
-    In,
     SecurityScheme,
     APIKeySecurityScheme,
 )
