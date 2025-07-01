@@ -1196,3 +1196,68 @@ QFrame {
         "read_file": "📄",
         "default": "🔧",  # Default icon for unspecified tools
     }
+
+    # JSON Editor styles
+    JSON_EDITOR_COLORS = {
+        "background": "#2e3440",
+        "text": "#d8dee9",
+        "border": "#4c566a",
+        "string": "#a3be8c",  # Green
+        "number": "#d08770",  # Orange
+        "keyword": "#b48ead",  # Purple
+        "punctuation": "#d8dee9",  # Text
+        "error": "#bf616a",  # Red
+    }
+
+    JSON_EDITOR_STYLE = """
+QPlainTextEdit {
+    background-color: #2e3440; /* Nord Polar Night */
+    color: #d8dee9; /* Nord Snow Storm */
+    border: 1px solid #4c566a; /* Nord Polar Night */
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+QPlainTextEdit:focus {
+    border: 1px solid #5e81ac; /* Nord Frost Blue focus border */
+}
+"""
+
+    # Markdown Editor styles
+    MARKDOWN_EDITOR_COLORS = {
+        "background": "#2e3440",  # Nord Polar Night 0
+        "text": "#d8dee9",  # Nord Snow Storm 0
+        "border": "#4c566a",  # Nord Polar Night 3
+        "header": "#5e81ac",  # Nord Frost 3 - for headers
+        "bold": "#d08770",  # Nord Aurora Orange - for bold text
+        "italic": "#a3be8c",  # Nord Aurora Green - for italic text
+        "code": "#b48ead",  # Nord Aurora Purple - for code blocks
+        "code_background": "#3b4252",  # Nord Polar Night 1 - code background
+        "link": "#88c0d0",  # Nord Frost 1 - for links
+        "image": "#81a1c1",  # Nord Frost 2 - for images
+        "list": "#ebcb8b",  # Nord Aurora Yellow - for list markers
+        "blockquote": "#8fbcbb",  # Nord Frost 0 - for blockquotes
+        "hr": "#4c566a",  # Nord Polar Night 3 - for horizontal rules
+        "strikethrough": "#bf616a",  # Nord Aurora Red - for strikethrough text
+        "error": "#bf616a",  # Nord Aurora Red - for errors
+    }
+
+    MARKDOWN_EDITOR_STYLE = """
+QPlainTextEdit {
+    background-color: #2e3440; /* Nord Polar Night 0 */
+    color: #d8dee9; /* Nord Snow Storm 0 */
+    border: 1px solid #4c566a; /* Nord Polar Night 3 */
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    selection-background-color: #434c5e; /* Nord Polar Night 2 */
+    selection-color: #eceff4; /* Nord Snow Storm 2 */
+}
+QPlainTextEdit:focus {
+    border: 1px solid #5e81ac; /* Nord Frost 3 focus border */
+}
+"""

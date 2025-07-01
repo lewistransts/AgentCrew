@@ -327,3 +327,57 @@ class StyleProvider(QObject):
         """Get icon for a specific tool."""
         icons = getattr(self.theme_class, "TOOL_ICONS", {})
         return icons.get(tool_name, icons.get("default", "🔧"))
+
+    def get_json_editor_colors(self):
+        """Get color scheme for JSON editor from current theme."""
+        return self.theme_class.JSON_EDITOR_COLORS
+
+    def get_json_editor_style(self):
+        """Get complete stylesheet for JSON editor."""
+        return self.theme_class.JSON_EDITOR_STYLE
+
+    def get_markdown_editor_colors(self):
+        """Get color scheme for Markdown editor from current theme."""
+        return getattr(
+            self.theme_class,
+            "MARKDOWN_EDITOR_COLORS",
+            {
+                "background": "#313244",
+                "text": "#cdd6f4",
+                "border": "#45475a",
+                "header": "#89b4fa",
+                "bold": "#fab387",
+                "italic": "#a6e3a1",
+                "code": "#f5c2e7",
+                "code_background": "#45475a",
+                "link": "#74c7ec",
+                "image": "#cba6f7",
+                "list": "#f9e2af",
+                "blockquote": "#94e2d5",
+                "hr": "#6c7086",
+                "strikethrough": "#eba0ac",
+                "error": "#f38ba8",
+            },
+        )
+
+    def get_markdown_editor_style(self):
+        """Get complete stylesheet for Markdown editor."""
+        return getattr(
+            self.theme_class,
+            "MARKDOWN_EDITOR_STYLE",
+            """
+QPlainTextEdit {
+    background-color: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+QPlainTextEdit:focus {
+    border: 1px solid #89b4fa;
+}
+""",
+        )

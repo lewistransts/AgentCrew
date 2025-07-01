@@ -1195,3 +1195,68 @@ QFrame {
         "read_file": "📄",
         "default": "🔧",  # Default icon for unspecified tools
     }
+
+    # JSON Editor styles
+    JSON_EDITOR_COLORS = {
+        "background": "#fafafa",
+        "text": "#383a42",
+        "border": "#e5e5e6",
+        "string": "#50a14f",  # Green
+        "number": "#986801",  # Orange
+        "keyword": "#a626a4",  # Purple
+        "punctuation": "#383a42",  # Dark gray
+        "error": "#e45649",  # Red
+    }
+
+    JSON_EDITOR_STYLE = """
+QPlainTextEdit {
+    background-color: #fafafa;
+    color: #383a42;
+    border: 1px solid #e5e5e6;
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+QPlainTextEdit:focus {
+    border: 1px solid #4285f4; /* Blue focus border */
+}
+"""
+
+    # Markdown Editor styles
+    MARKDOWN_EDITOR_COLORS = {
+        "background": "#fafafa",  # Light background
+        "text": "#383a42",  # Dark text
+        "border": "#e5e5e6",  # Light border
+        "header": "#4285f4",  # Blue - for headers
+        "bold": "#986801",  # Orange - for bold text
+        "italic": "#50a14f",  # Green - for italic text
+        "code": "#a626a4",  # Purple - for code blocks
+        "code_background": "#f0f0f0",  # Very light gray - code background
+        "link": "#0066cc",  # Blue - for links
+        "image": "#9c27b0",  # Purple - for images
+        "list": "#ff6600",  # Orange - for list markers
+        "blockquote": "#666666",  # Gray - for blockquotes
+        "hr": "#cccccc",  # Light gray - for horizontal rules
+        "strikethrough": "#ea4335",  # Red - for strikethrough text
+        "error": "#ea4335",  # Red - for errors
+    }
+
+    MARKDOWN_EDITOR_STYLE = """
+QPlainTextEdit {
+    background-color: #fafafa; /* Light background */
+    color: #383a42; /* Dark text */
+    border: 1px solid #e5e5e6; /* Light border */
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    selection-background-color: #e8f0fe; /* Light blue selection */
+    selection-color: #383a42; /* Dark text */
+}
+QPlainTextEdit:focus {
+    border: 1px solid #4285f4; /* Blue focus border */
+}
+"""

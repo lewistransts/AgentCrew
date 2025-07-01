@@ -1234,3 +1234,68 @@ QFrame {
         "read_file": "📄",
         "default": "🔧",  # Default icon for unspecified tools
     }
+
+    # JSON Editor styles
+    JSON_EDITOR_COLORS = {
+        "background": "#313244",  # Surface0
+        "text": "#cdd6f4",  # Text
+        "border": "#45475a",  # Surface1
+        "string": "#a6e3a1",  # Green
+        "number": "#fab387",  # Peach
+        "keyword": "#cba6f7",  # Mauve
+        "punctuation": "#cdd6f4",  # Text
+        "error": "#f38ba8",  # Red
+    }
+
+    JSON_EDITOR_STYLE = """
+QPlainTextEdit {
+    background-color: #313244; /* Surface0 */
+    color: #cdd6f4; /* Text */
+    border: 1px solid #45475a; /* Surface1 */
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+QPlainTextEdit:focus {
+    border: 1px solid #89b4fa; /* Blue focus border */
+}
+"""
+
+    # Markdown Editor styles
+    MARKDOWN_EDITOR_COLORS = {
+        "background": "#313244",  # Surface0
+        "text": "#cdd6f4",  # Text
+        "border": "#45475a",  # Surface1
+        "header": "#89b4fa",  # Blue - for headers
+        "bold": "#fab387",  # Peach - for bold text
+        "italic": "#a6e3a1",  # Green - for italic text
+        "code": "#f5c2e7",  # Pink - for code blocks
+        "code_background": "#45475a",  # Surface1 - code background
+        "link": "#74c7ec",  # Sapphire - for links
+        "image": "#cba6f7",  # Mauve - for images
+        "list": "#f9e2af",  # Yellow - for list markers
+        "blockquote": "#94e2d5",  # Teal - for blockquotes
+        "hr": "#6c7086",  # Overlay0 - for horizontal rules
+        "strikethrough": "#eba0ac",  # Maroon - for strikethrough text
+        "error": "#f38ba8",  # Red - for errors
+    }
+
+    MARKDOWN_EDITOR_STYLE = """
+QPlainTextEdit {
+    background-color: #313244; /* Surface0 */
+    color: #cdd6f4; /* Text */
+    border: 1px solid #45475a; /* Surface1 */
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    selection-background-color: #585b70; /* Surface2 */
+    selection-color: #cdd6f4; /* Text */
+}
+QPlainTextEdit:focus {
+    border: 1px solid #89b4fa; /* Blue focus border */
+}
+"""

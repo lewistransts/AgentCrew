@@ -1203,3 +1203,68 @@ QFrame {
         "read_file": "📄",
         "default": "🔧",  # Default icon for unspecified tools
     }
+
+    # JSON Editor styles
+    JSON_EDITOR_COLORS = {
+        "background": "#282a36",
+        "text": "#f8f8f2",
+        "border": "#44475a",
+        "string": "#50fa7b",  # Green
+        "number": "#ffb86c",  # Orange
+        "keyword": "#bd93f9",  # Purple
+        "punctuation": "#f8f8f2",  # Text
+        "error": "#ff5555",  # Red
+    }
+
+    JSON_EDITOR_STYLE = """
+QPlainTextEdit {
+    background-color: #282a36; /* Dracula Background */
+    color: #f8f8f2; /* Dracula Foreground */
+    border: 1px solid #44475a; /* Dracula Comment */
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+QPlainTextEdit:focus {
+    border: 1px solid #8be9fd; /* Dracula Cyan focus border */
+}
+"""
+
+    # Markdown Editor styles
+    MARKDOWN_EDITOR_COLORS = {
+        "background": "#282a36",  # Dracula Background
+        "text": "#f8f8f2",  # Dracula Foreground
+        "border": "#44475a",  # Dracula Current Line
+        "header": "#bd93f9",  # Dracula Purple - for headers
+        "bold": "#ffb86c",  # Dracula Orange - for bold text
+        "italic": "#50fa7b",  # Dracula Green - for italic text
+        "code": "#ff79c6",  # Dracula Pink - for code blocks
+        "code_background": "#44475a",  # Dracula Current Line - code background
+        "link": "#8be9fd",  # Dracula Cyan - for links
+        "image": "#bd93f9",  # Dracula Purple - for images
+        "list": "#f1fa8c",  # Dracula Yellow - for list markers
+        "blockquote": "#6272a4",  # Dracula Comment - for blockquotes
+        "hr": "#44475a",  # Dracula Current Line - for horizontal rules
+        "strikethrough": "#ff5555",  # Dracula Red - for strikethrough text
+        "error": "#ff5555",  # Dracula Red - for errors
+    }
+
+    MARKDOWN_EDITOR_STYLE = """
+QPlainTextEdit {
+    background-color: #282a36; /* Dracula Background */
+    color: #f8f8f2; /* Dracula Foreground */
+    border: 1px solid #44475a; /* Dracula Current Line */
+    border-radius: 4px;
+    padding: 8px;
+    font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    selection-background-color: #44475a; /* Dracula Current Line */
+    selection-color: #f8f8f2; /* Dracula Foreground */
+}
+QPlainTextEdit:focus {
+    border: 1px solid #8be9fd; /* Dracula Cyan focus border */
+}
+"""

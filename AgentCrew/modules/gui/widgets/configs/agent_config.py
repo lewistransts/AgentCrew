@@ -7,7 +7,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLabel,
     QLineEdit,
-    QTextEdit,
     QCheckBox,
     QGroupBox,
     QFormLayout,
@@ -28,6 +27,7 @@ from AgentCrew.modules.config import ConfigManagement
 from AgentCrew.modules.agents import AgentManager
 
 from AgentCrew.modules.gui.themes import StyleProvider
+from AgentCrew.modules.gui.widgets.markdown_editor import MarkdownEditor
 
 
 class AgentsConfigTab(QWidget):
@@ -184,9 +184,10 @@ class AgentsConfigTab(QWidget):
             tools_layout.addWidget(checkbox)
         tools_group.setLayout(tools_layout)
 
-        self.system_prompt_input = QTextEdit()
+        self.system_prompt_input = MarkdownEditor()
         self.system_prompt_input.setMinimumHeight(200)
-        self.system_prompt_input.setAcceptRichText(False)
+        # Clear the default content and start empty
+        self.system_prompt_input.clear()
 
         local_agent_layout.addLayout(local_form_layout)
         local_agent_layout.addWidget(tools_group)
@@ -231,7 +232,7 @@ class AgentsConfigTab(QWidget):
         self.name_input.textChanged.connect(self._on_editor_field_changed)
         self.description_input.textChanged.connect(self._on_editor_field_changed)
         self.temperature_input.textChanged.connect(self._on_editor_field_changed)
-        self.system_prompt_input.textChanged.connect(self._on_editor_field_changed)
+        self.system_prompt_input.markdown_changed.connect(self._on_editor_field_changed)
         self.enabled_checkbox.stateChanged.connect(self._on_editor_field_changed)
         for checkbox in self.tool_checkboxes.values():
             checkbox.stateChanged.connect(self._on_editor_field_changed)
@@ -315,7 +316,7 @@ class AgentsConfigTab(QWidget):
             tools = agent_data.get("tools", [])
             for tool, checkbox in self.tool_checkboxes.items():
                 checkbox.setChecked(tool in tools)
-            self.system_prompt_input.setText(agent_data.get("system_prompt", ""))
+            self.system_prompt_input.set_markdown(agent_data.get("system_prompt", ""))
             # Clear remote fields just in case
             self.remote_name_input.clear()
             self.remote_base_url_input.clear()
@@ -503,7 +504,7 @@ class AgentsConfigTab(QWidget):
         if agent_type == "local":
             name = self.name_input.text().strip()
             description = self.description_input.text().strip()
-            system_prompt = self.system_prompt_input.toPlainText().strip()
+            system_prompt = self.system_prompt_input.get_markdown().strip()
             try:
                 temperature = float(self.temperature_input.text().strip() or "0.5")
                 temperature = max(0.0, min(2.0, temperature))

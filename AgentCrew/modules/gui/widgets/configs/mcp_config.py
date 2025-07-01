@@ -13,12 +13,13 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QScrollArea,
     QSplitter,
+    QStackedWidget,
 )
 from PySide6.QtCore import Qt, Signal
 
 from AgentCrew.modules.config import ConfigManagement
 from AgentCrew.modules.agents import AgentManager
-
+from AgentCrew.modules.gui.widgets.json_editor import JsonEditor
 from AgentCrew.modules.gui.themes import StyleProvider
 
 
@@ -33,12 +34,18 @@ class MCPsConfigTab(QWidget):
         self.config_manager = config_manager
         self.agent_manager = AgentManager.get_instance()
         self.is_dirty = False  # Track unsaved changes
+        self.is_code_view = False  # Track current view mode
+        self.current_server_data = None  # Store current server data for view switching
+        self.style_provider = StyleProvider()
 
         # Load MCP configuration
         self.mcps_config = self.config_manager.read_mcp_config()
 
         self.init_ui()
         self.load_mcps()
+
+        # Connect to theme changes
+        self.style_provider.theme_changed.connect(self._on_theme_changed)
 
     def init_ui(self):
         """Initialize the UI components."""
@@ -75,10 +82,27 @@ class MCPsConfigTab(QWidget):
         left_layout.addWidget(self.mcps_list)
         left_layout.addLayout(list_buttons_layout)
 
-        # Right panel - MCP editor
-        right_panel = QScrollArea()
-        right_panel.setWidgetResizable(True)
-        # right_panel.setStyleSheet("background-color: #181825;") # Set by QDialog stylesheet
+        # Right panel - MCP editor with view toggle
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
+
+        # Add toggle button for view mode
+        toggle_layout = QHBoxLayout()
+        self.show_code_btn = QPushButton("Show Code")
+        self.show_code_btn.setStyleSheet(style_provider.get_button_style("primary"))
+        self.show_code_btn.clicked.connect(self._toggle_view_mode)
+        self.show_code_btn.setEnabled(False)  # Disable until selection
+        toggle_layout.addWidget(self.show_code_btn)
+        toggle_layout.addStretch()
+
+        right_layout.addLayout(toggle_layout)
+
+        # Create stacked widget for switching between form and code views
+        self.stacked_widget = QStackedWidget()
+
+        # Form view (existing editor)
+        form_scroll = QScrollArea()
+        form_scroll.setWidgetResizable(True)
 
         self.editor_widget = QWidget()
         self.editor_widget.setStyleSheet(
@@ -178,7 +202,18 @@ class MCPsConfigTab(QWidget):
         self.editor_layout.addWidget(self.save_btn)
         self.editor_layout.addStretch()
 
-        right_panel.setWidget(self.editor_widget)
+        form_scroll.setWidget(self.editor_widget)
+
+        # Code view (JSON editor)
+        self.json_editor = JsonEditor()
+        self.json_editor.json_changed.connect(self._on_json_changed)
+        self.json_editor.validation_error.connect(self._on_json_validation_error)
+
+        # Add both views to stacked widget
+        self.stacked_widget.addWidget(form_scroll)  # Index 0 - Form view
+        self.stacked_widget.addWidget(self.json_editor)  # Index 1 - Code view
+
+        right_layout.addWidget(self.stacked_widget)
 
         # Add panels to splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -239,6 +274,12 @@ class MCPsConfigTab(QWidget):
 
         # Get MCP data
         server_id, server_config = current.data(Qt.ItemDataRole.UserRole)
+        self.current_server_data = server_config
+
+        # Reset to form view when switching items
+        self.is_code_view = False
+        self.stacked_widget.setCurrentIndex(0)
+        self.show_code_btn.setText("Show Code")
 
         # Populate form
         self.name_input.setText(server_config.get("name", ""))
@@ -308,6 +349,7 @@ class MCPsConfigTab(QWidget):
         """Enable or disable the editor form."""
         self.name_input.setEnabled(enabled)
         self.streaming_server_checkbox.setEnabled(enabled)
+        self.show_code_btn.setEnabled(enabled)
 
         # For visibility-controlled fields, only disable them when editor is disabled
         # Their visibility is controlled by streaming_server state
@@ -355,8 +397,14 @@ class MCPsConfigTab(QWidget):
                 env_input["value_input"].setVisible(not is_streaming)
                 env_input["remove_btn"].setVisible(not is_streaming)
 
+        # Enable/disable JSON editor
+        self.json_editor.set_read_only(not enabled)
+
         if not enabled:
             self.is_dirty = False
+            self.is_code_view = False
+            self.stacked_widget.setCurrentIndex(0)  # Reset to form view
+            self.show_code_btn.setText("Show Code")
         self._update_save_button_state()
 
     def add_argument_field(self, value="", mark_dirty_on_add=True):
@@ -538,11 +586,26 @@ class MCPsConfigTab(QWidget):
 
         server_id, old_config = current_item.data(Qt.ItemDataRole.UserRole)
 
-        # Get values from form
-        name = self.name_input.text().strip()
-        streaming_server = self.streaming_server_checkbox.isChecked()
-        url = self.url_input.text().strip()
-        command = self.command_input.text().strip()
+        if self.is_code_view:
+            # Get data from JSON editor
+            try:
+                server_config = self.json_editor.get_json()
+            except ValueError as e:
+                QMessageBox.warning(
+                    self,
+                    "Invalid JSON",
+                    f"Cannot save configuration: {str(e)}\nPlease fix the JSON syntax first.",
+                )
+                return
+        else:
+            # Get data from form
+            server_config = self._get_form_data()
+
+        # Extract values for validation
+        name = server_config.get("name", "").strip()
+        streaming_server = server_config.get("streaming_server", False)
+        url = server_config.get("url", "").strip()
+        command = server_config.get("command", "").strip()
 
         # Validate
         if not name:
@@ -568,42 +631,12 @@ class MCPsConfigTab(QWidget):
                 )
                 return
 
-        # Get arguments
-        args = []
-        for arg_data in self.arg_inputs:
-            arg_value = arg_data["input"].text().strip()
-            if arg_value:
-                args.append(arg_value)
-
-        # Get environment variables
-        env = {}
-        for env_data in self.env_inputs:
-            key = env_data["key_input"].text().strip()
-            value = env_data["value_input"].text().strip()
-            if key:
-                env[key] = value
-
-        # Get enabled agents
-        enabled_agents = [
-            agent
-            for agent, checkbox in self.agent_checkboxes.items()
-            if checkbox.isChecked()
-        ]
-
-        # Update server data
-        server_config = {
-            "name": name,
-            "command": command,
-            "args": args,
-            "env": env,
-            "enabledForAgents": enabled_agents,
-            "streaming_server": streaming_server,
-            "url": url,
-        }
-
-        # Update item in list
         current_item.setText(name)
         current_item.setData(Qt.ItemDataRole.UserRole, (server_id, server_config))
+
+        if not self.is_code_view:
+            # Refresh form to ensure consistency
+            self._update_form_from_json(server_config, server_id)
 
         # Mark as clean since we just saved
         self.is_dirty = False
@@ -629,3 +662,133 @@ class MCPsConfigTab(QWidget):
 
         # Emit signal that configuration changed
         self.config_changed.emit()
+
+    def _toggle_view_mode(self):
+        """Toggle between form view and code view."""
+        if not self.mcps_list.currentItem():
+            return
+
+        current_item = self.mcps_list.currentItem()
+        server_id, server_config = current_item.data(Qt.ItemDataRole.UserRole)
+
+        if self.is_code_view:
+            # Switching from code view to form view
+            try:
+                # Get JSON data from editor and update form
+                json_data = self.json_editor.get_json()
+                self._update_form_from_json(json_data, server_id)
+                self.stacked_widget.setCurrentIndex(0)  # Form view
+                self.show_code_btn.setText("Show Code")
+                self.is_code_view = False
+            except ValueError as e:
+                QMessageBox.warning(
+                    self,
+                    "Invalid JSON",
+                    f"Cannot switch to form view: {str(e)}\nPlease fix the JSON syntax first.",
+                )
+                return
+        else:
+            # Switching from form view to code view
+            # Update server data from form and set JSON
+            server_data = self._get_form_data()
+            if server_data:  # Only proceed if form data is valid
+                self.json_editor.set_json(server_data)
+                self.stacked_widget.setCurrentIndex(1)  # Code view
+                self.show_code_btn.setText("Show Form")
+                self.is_code_view = True
+
+    def _get_form_data(self) -> dict:
+        """Get the current form data as a dictionary."""
+        # Get values from form
+        name = self.name_input.text().strip()
+        streaming_server = self.streaming_server_checkbox.isChecked()
+        url = self.url_input.text().strip()
+        command = self.command_input.text().strip()
+
+        # Get arguments
+        args = []
+        for arg_data in self.arg_inputs:
+            arg_value = arg_data["input"].text().strip()
+            if arg_value:
+                args.append(arg_value)
+
+        # Get environment variables
+        env = {}
+        for env_data in self.env_inputs:
+            key = env_data["key_input"].text().strip()
+            value = env_data["value_input"].text().strip()
+            if key:
+                env[key] = value
+
+        # Get enabled agents
+        enabled_agents = [
+            agent
+            for agent, checkbox in self.agent_checkboxes.items()
+            if checkbox.isChecked()
+        ]
+
+        return {
+            "name": name,
+            "command": command,
+            "args": args,
+            "env": env,
+            "enabledForAgents": enabled_agents,
+            "streaming_server": streaming_server,
+            "url": url,
+        }
+
+    def _update_form_from_json(self, json_data: dict, server_id: str):
+        """Update the form fields from JSON data."""
+        current_item = self.mcps_list.currentItem()
+        if current_item:
+            current_item.setData(Qt.ItemDataRole.UserRole, (server_id, json_data))
+            if "name" in json_data:
+                current_item.setText(json_data["name"])
+
+        self.name_input.setText(json_data.get("name", ""))
+        self.streaming_server_checkbox.setChecked(
+            json_data.get("streaming_server", False)
+        )
+        self.url_input.setText(json_data.get("url", ""))
+        self.command_input.setText(json_data.get("command", ""))
+
+        self.clear_argument_fields()
+        for arg in json_data.get("args", []):
+            self.add_argument_field(arg, mark_dirty_on_add=False)
+
+        self.clear_env_fields()
+        for key, value in json_data.get("env", {}).items():
+            self.add_env_field(key, value, mark_dirty_on_add=False)
+
+        enabled_agents = json_data.get("enabledForAgents", [])
+        for agent, checkbox in self.agent_checkboxes.items():
+            checkbox.setChecked(agent in enabled_agents)
+
+        # Update field visibility based on streaming server
+        self._on_streaming_server_changed(
+            Qt.CheckState.Checked.value
+            if json_data.get("streaming_server", False)
+            else Qt.CheckState.Unchecked.value
+        )
+
+        # Mark as dirty since data changed
+        self.is_dirty = True
+        self._update_save_button_state()
+
+    def _on_json_changed(self, json_data: dict):
+        """Handle JSON editor content changes."""
+        # Mark as dirty when JSON changes in code view
+        if self.is_code_view:
+            self.is_dirty = True
+            self._update_save_button_state()
+
+    def _on_json_validation_error(self, error_msg: str):
+        """Handle JSON validation errors."""
+        # Disable save button when JSON is invalid
+        if self.is_code_view:
+            self.save_btn.setEnabled(False)
+
+    def _on_theme_changed(self, theme_name: str):
+        """Handle theme changes by updating the JSON editor."""
+        # Update JSON editor theme
+        self.json_editor.update_theme()
