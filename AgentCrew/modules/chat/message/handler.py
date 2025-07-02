@@ -167,21 +167,20 @@ class MessageHandler(Observable):
         has_stop_interupted = False
 
         # Create a reference to the streaming generator
-        stream_generator = None
+        self.stream_generator = None
 
         try:
             # Store the generator in a variable so we can properly close it if needed
-            stream_generator = self.agent.process_messages()
+            self.stream_generator = self.agent.process_messages()
 
             async for (
                 assistant_response,
                 chunk_text,
                 thinking_chunk,
-            ) in stream_generator:
+            ) in self.stream_generator:
                 # Check if stop was requested
                 if self.stop_streaming:
                     # Properly close the generator instead of breaking
-                    await stream_generator.aclose()
                     self.stop_streaming = False  # Reset flag
                     has_stop_interupted = True
                     self._notify("streaming_stopped", assistant_response)
@@ -282,6 +281,8 @@ class MessageHandler(Observable):
 
                 return await self.get_assistant_response()
 
+            self.stream_generator = None
+
             if thinking_content:
                 self._notify("agent_continue", self.agent.name)
 
@@ -321,6 +322,7 @@ class MessageHandler(Observable):
                     error_message = f"Failed to save conversation turn to {self.current_conversation_id}: {str(e)}"
                     logger.error(f"ERROR: {error_message}")
                     self._notify("error", {"message": error_message})
+
             self.last_assisstant_response_idx = len(self.agent.history)
             # --- End of Persistence Logic ---
 

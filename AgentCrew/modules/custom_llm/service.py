@@ -1,7 +1,6 @@
 from AgentCrew.modules.llm.model_registry import ModelRegistry
 from AgentCrew.modules.openai import OpenAIService
 from AgentCrew.modules.llm.base import AsyncIterator
-from mcp.types import ImageContent, TextContent
 from typing import Dict, Any, List, Optional, Tuple
 import json
 from AgentCrew.modules import logger

@@ -43,7 +43,7 @@ class InputComponents:
             self.chat_window.style_provider.get_input_style()
         )
         self.chat_window.message_input.setSizePolicy(
-            QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+            QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
         )
 
         # Create buttons layout

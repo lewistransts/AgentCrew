@@ -9,7 +9,6 @@ from rich.live import Live
 from typing import Dict, Any, List, Optional, Tuple
 from groq import AsyncGroq
 from dotenv import load_dotenv
-from mcp.types import TextContent, ImageContent
 from AgentCrew.modules.llm.base import (
     BaseLLMService,
     read_binary_file,
