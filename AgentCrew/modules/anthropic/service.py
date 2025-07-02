@@ -1,12 +1,12 @@
 import os
 import mimetypes
 from typing import Dict, Any, Optional, List
-from mcp.types import TextContent
 from anthropic import AsyncAnthropic
 from anthropic.types import TextBlock
 from dotenv import load_dotenv
 from AgentCrew.modules.llm.base import BaseLLMService, read_binary_file, read_text_file
 from AgentCrew.modules.llm.model_registry import ModelRegistry
+from AgentCrew.modules.llm.message import MessageTransformer
 from AgentCrew.modules import logger
 
 
@@ -289,12 +289,9 @@ class AnthropicService(BaseLLMService):
         if isinstance(tool_result, List):
             parsed_tool_result = []
             for tool in tool_result:
-                if isinstance(tool, TextContent):
+                if tool.get("type", "image_url"):
                     parsed_tool_result.append(
-                        {
-                            "type": tool.type,
-                            "text": tool.text,
-                        }
+                        MessageTransformer._convert_content_to_claude_format(tool)
                     )
                 else:
                     parsed_tool_result.append(tool)

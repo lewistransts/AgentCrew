@@ -158,7 +158,7 @@ class GithubCopilotEmbeddingFunction(EmbeddingFunction[Documents]):
         self.github_copilot_token_to_open_ai_key(self.api_key)
 
         # Get embeddings
-        response = self.client.embeddings.create(**embedding_params)
+        response = self.client.embeddings.create(**embedding_params, timeout=60)
 
         # Extract embeddings from response
         return [np.array(data.embedding, dtype=np.float32) for data in response.data]

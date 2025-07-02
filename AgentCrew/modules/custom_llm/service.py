@@ -54,13 +54,12 @@ class CustomLLMService(OpenAIService):
         if isinstance(tool_result, list):
             parsed_tool_result = []
             for res in tool_result:
-                if isinstance(res, TextContent):
-                    parsed_tool_result.append(res.text)
-                if isinstance(res, ImageContent):
-                    parsed_tool_result.append(res.data)
+                if res.get("type", "text") == "image_url":
+                    if "vision" in ModelRegistry.get_model_capabilities(self.model):
+                        parsed_tool_result.append(res)
                 else:
-                    parsed_tool_result.append(str(res))
-            tool_result = "\n---\n".join(parsed_tool_result)
+                    parsed_tool_result.append(res)
+            tool_result = parsed_tool_result
         message = {
             "role": "tool",
             "tool_call_id": tool_use["id"],
@@ -113,8 +112,13 @@ class CustomLLMService(OpenAIService):
                     self.base_url = self.base_url.rstrip("/")
                     self.github_copilot_token_to_open_ai_key(self.api_key)
 
+            if self.extra_headers:
+                self.extra_headers["X-Initiator"] = "user"
+                self.extra_headers["X-Request-Id"] = str(uuid4())
+
             response = await self.client.chat.completions.create(
                 model=self.model,
+                timeout=60,
                 max_tokens=3000,
                 temperature=temperature,
                 messages=[
@@ -178,6 +182,27 @@ class CustomLLMService(OpenAIService):
                         else "agent"
                     )
                     self.extra_headers["X-Request-Id"] = str(uuid4())
+                    if (
+                        len(
+                            [
+                                m
+                                for m in messages
+                                if isinstance(m.get("content", ""), list)
+                                and len(
+                                    [
+                                        n
+                                        for n in m.get("content", [])
+                                        if n.get("type", "text") == "image_url"
+                                    ]
+                                )
+                                > 0
+                            ]
+                        )
+                        > 0
+                    ):
+                        if "vision" in ModelRegistry.get_model_capabilities(self.model):
+                            self.extra_headers["Copilot-Vision-Request"] = "true"
+
                     # if self._interaction_id:
                     #     self.extra_headers["X-Interaction-Id"] = self._interaction_id
 

@@ -76,7 +76,7 @@ class ToolManager:
                     MessageType.ToolResult,
                     {
                         "tool_use": tool_use,
-                        "tool_result": "User rejected to execute this tool.",
+                        "tool_result": "User is not approved for this action, Stop the current task and ask for more information.",
                         "is_error": True,
                     },
                 )

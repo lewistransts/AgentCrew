@@ -1,7 +1,7 @@
 from AgentCrew.modules import logger
 from typing import Dict, Any, List, Optional, Callable
 from mcp import ClientSession, StdioServerParameters
-from mcp.types import Content, Prompt
+from mcp.types import Prompt, ContentBlock, TextContent, ImageContent
 from mcp.client.stdio import stdio_client
 from AgentCrew.modules.agents import AgentManager
 from AgentCrew.modules.tools.registry import ToolRegistry
@@ -342,7 +342,7 @@ class MCPService:
             # This is the actual async handler the agent will await.
             def actual_tool_executor(
                 **params,
-            ) -> list[Content]:
+            ) -> list[Dict[str, Any]]:
                 if server_id not in self.sessions or not self.connected_servers.get(
                     server_id
                 ):
@@ -355,7 +355,7 @@ class MCPService:
                     # The call to session.call_tool is already async.
                     session = self.sessions[server_id]
                     result = self._run_async(session.call_tool(tool_name, params))
-                    return result.content
+                    return self._format_contents(result.content)
                 except Exception as e:
                     raise e  # Re-raise the exception to be handled by the agent/tool execution framework
 
@@ -442,6 +442,26 @@ class MCPService:
                 "status": "error",
             }
 
+    def _format_contents(self, content: List[ContentBlock]) -> List[Dict[str, Any]]:
+        result = []
+        for c in content:
+            if isinstance(c, TextContent):
+                result.append(
+                    {
+                        "type": "text",
+                        "text": c.text,
+                    }
+                )
+            elif isinstance(c, ImageContent):
+                result.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{c.mimeType};base64,{c.data}"},
+                    }
+                )
+
+        return result
+
     async def call_tool(
         self, server_id: str, tool_name: str, tool_args: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -478,7 +498,10 @@ class MCPService:
 
         try:
             result = await self.sessions[server_id].call_tool(tool_name, tool_args)
-            return {"content": result.content, "status": "success"}
+            return {
+                "content": self._format_contents(result.content),
+                "status": "success",
+            }
         except Exception as e:
             self.connected_servers[server_id] = False
             return {
