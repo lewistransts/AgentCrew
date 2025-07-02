@@ -4,6 +4,7 @@ from typing import Dict, Any, List, Optional
 from AgentCrew.modules.llm.base import BaseLLMService
 from AgentCrew.modules.llm.message import MessageTransformer
 from AgentCrew.modules.agents.base import BaseAgent, MessageType
+from AgentCrew.modules import logger
 
 
 class LocalAgent(BaseAgent):
@@ -117,9 +118,11 @@ class LocalAgent(BaseAgent):
 
                         register_image_generation(service, self)
                     else:
-                        print(f"⚠️ Tool {tool_name} not found in services")
+                        logger.warning(f"⚠️ Tool {tool_name} not found in services")
             else:
-                print(f"⚠️ Service {tool_name} not available for tool registration")
+                logger.warning(
+                    f"⚠️ Service {tool_name} not available for tool registration"
+                )
 
     def register_tool(self, definition_func, handler_factory, service_instance=None):
         """
@@ -279,9 +282,8 @@ class LocalAgent(BaseAgent):
                 # Register with LLM
                 self.llm.register_tool(tool_def, handler)
                 self.registered_tools.add(tool_name)
-                # print(f"Resgitered tool {tool_name}")
             except Exception as e:
-                print(f"Error registering tool {tool_name}: {e}")
+                logger.error(f"Error registering tool {tool_name}: {e}")
 
     def _clear_tools_from_llm(self):
         """
@@ -393,7 +395,9 @@ class LocalAgent(BaseAgent):
         self.output_tokens_usage = 0
         # Ensure the first message is a system message with the agent's prompt
         if not messages:
-            messages = list(self.history)
+            final_messages = list(self.history)
+        else:
+            final_messages = list(messages)
         if "context_persistent" in self.services and isinstance(
             self.services["context_persistent"], ContextPersistenceService
         ):
@@ -402,12 +406,12 @@ class LocalAgent(BaseAgent):
             ].get_adaptive_behaviors(self.name)
             if (
                 len(adaptive_behaviors.keys()) > 0
-                and messages[-1].get("role", "assistant") == "user"
+                and final_messages[-1].get("role", "assistant") == "user"
             ):
                 # adaptive behaviors are only added if the last message is from the user
-                if isinstance(messages[-1]["content"], str) or (
-                    isinstance(messages[-1]["content"], list)
-                    and messages[-1]["content"][0].get("type") != "tool_result"
+                if isinstance(final_messages[-1]["content"], str) or (
+                    isinstance(final_messages[-1]["content"], list)
+                    and final_messages[-1]["content"][0].get("type") != "tool_result"
                 ):
                     adaptive_text = ""
                     for key, value in adaptive_behaviors.items():
@@ -422,8 +426,8 @@ class LocalAgent(BaseAgent):
                             }
                         ],
                     }
-                    messages.insert(-1, adaptive_messages)
-        async with await self.llm.stream_assistant_response(messages) as stream:
+                    final_messages.insert(-1, adaptive_messages)
+        async with await self.llm.stream_assistant_response(final_messages) as stream:
             async for chunk in stream:
                 # Process the chunk using the LLM service
                 (

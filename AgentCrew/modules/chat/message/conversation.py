@@ -2,6 +2,7 @@ from typing import List, Dict, Any, Optional
 
 from AgentCrew.modules import logger
 from AgentCrew.modules.chat.history import ConversationTurn
+from AgentCrew.modules.agents import RemoteAgent
 
 
 class ConversationManager:
@@ -39,6 +40,9 @@ class ConversationManager:
             self.message_handler.last_assisstant_response_idx = 0
             self.message_handler.current_user_input = None
             self.message_handler.current_user_input_idx = -1
+            if isinstance(self.message_handler.agent, RemoteAgent):
+                # Reset remote agent state
+                self.message_handler.agent.current_task_id = None
 
             # Notify UI about the new conversation
             self.message_handler._notify(

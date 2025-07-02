@@ -9,8 +9,6 @@ from a2a.types import (
     AgentCapabilities,
     AgentSkill,
     AgentProvider,
-    SecurityScheme,
-    APIKeySecurityScheme,
 )
 from AgentCrew import __version__
 
@@ -100,11 +98,11 @@ def create_agent_card(agent: LocalAgent, base_url: str) -> AgentCard:
         organization="AgentCrew",
         url="https://github.com/daltonnyx/AgentCrew",
     )
-    security_schemes = SecurityScheme(
-        root=APIKeySecurityScheme.model_validate(
-            {"name": "Authorization", "in": "header"}
-        )
-    )
+    # security_schemes = SecurityScheme(
+    #     root=APIKeySecurityScheme.model_validate(
+    #         {"name": "Authorization", "in": "header"}
+    #     )
+    # )
 
     return AgentCard(
         name=agent.name if hasattr(agent, "name") else "AgentCrew Assistant",
@@ -119,5 +117,5 @@ def create_agent_card(agent: LocalAgent, base_url: str) -> AgentCard:
         # Most SwissKnife agents work with text and files
         defaultInputModes=["text/plain", "application/octet-stream"],
         defaultOutputModes=["text/plain", "application/octet-stream"],
-        securitySchemes={"apiKey": security_schemes},
+        # securitySchemes={"apiKey": security_schemes},
     )

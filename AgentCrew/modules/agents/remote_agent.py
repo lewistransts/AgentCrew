@@ -23,6 +23,7 @@ class RemoteAgent(BaseAgent):
         self.agent_card = self.card_resolver.get_agent_card()
         self.client = A2AClient(self.agent_card, timeout=600)
         super().__init__(name, self.agent_card.description)
+        self.current_task_id = None
 
     def activate(self) -> bool:
         """
@@ -97,9 +98,13 @@ class RemoteAgent(BaseAgent):
         if not messages:
             messages = self.history
 
+        if not self.current_task_id:
+            self.current_task_id = str(uuid4())
+
         last_user_message = messages[-1]
 
         a2a_message = convert_agent_message_to_a2a(last_user_message)
+        a2a_message.taskId = self.current_task_id
 
         a2a_payload = MessageSendParams(
             metadata={"id": str(uuid4())},
@@ -122,6 +127,7 @@ class RemoteAgent(BaseAgent):
                 current_thinking_chunk_text = ""
 
                 if isinstance(event, TaskArtifactUpdateEvent):
+                    self.current_task_id = event.taskId
                     for part in event.artifact.parts:
                         if isinstance(part.root, TextPart):
                             current_content_chunk_text += part.root.text
@@ -134,6 +140,7 @@ class RemoteAgent(BaseAgent):
                         )
 
                 elif isinstance(event, TaskStatusUpdateEvent):
+                    self.current_task_id = event.taskId
                     if event.status.message and event.status.message.parts:
                         for part in event.status.message.parts:
                             if isinstance(part.root, TextPart):

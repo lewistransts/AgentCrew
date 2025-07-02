@@ -133,7 +133,7 @@ def convert_agent_message_to_a2a(
     )
 
 
-def convert_agent_response_to_a2a(
+def convert_agent_response_to_a2a_artifact(
     response: str,
     tool_uses: Optional[List[Dict[str, Any]]] = None,
     artifact_id: Optional[str] = None,
@@ -160,6 +160,38 @@ def convert_agent_response_to_a2a(
         artifactId=artifact_id or f"artifact_{hash(response)}",
         parts=parts,
         metadata=metadata,
+    )
+
+
+def convert_agent_response_to_a2a_message(
+    response: str,
+    tool_uses: Optional[List[Dict[str, Any]]] = None,
+    message_id: Optional[str] = None,
+    role: Role = Role.agent,
+) -> Message:
+    """
+    Convert a SwissKnife response to an A2A artifact.
+
+    Args:
+        response: The response text from SwissKnife
+        tool_uses: Optional list of tool uses
+        artifact_id: Optional artifact ID
+
+    Returns:
+        The response as an A2A artifact
+    """
+    parts = [Part(root=TextPart(text=response))]
+
+    # If there were tool uses, we could add them as metadata
+    metadata = None
+    if tool_uses:
+        metadata = {"tool_uses": tool_uses}
+
+    return Message(
+        messageId=message_id or f"message_{hash(response)}",
+        parts=parts,
+        metadata=metadata,
+        role=role,
     )
 
 

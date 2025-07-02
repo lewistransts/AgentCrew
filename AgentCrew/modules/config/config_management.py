@@ -3,9 +3,8 @@ import json
 import toml
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-from AgentCrew.modules import logging
+from AgentCrew.modules import logger
 
-from AgentCrew.modules.agents import LocalAgent, RemoteAgent
 from AgentCrew.modules.agents import AgentManager
 from AgentCrew.modules.mcpclient import MCPSessionManager
 
@@ -237,7 +236,7 @@ class ConfigManagement:
             with open(config_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if not isinstance(data, dict):
-                    print(
+                    logger.warning(
                         f"Warning: Global config file {config_path} does not contain a valid JSON object. Returning default."
                     )
                     return {"api_keys": {}}
@@ -246,12 +245,12 @@ class ConfigManagement:
                     data["api_keys"] = {}
                 return data
         except json.JSONDecodeError:
-            print(
+            logger.warning(
                 f"Warning: Error decoding global config file {config_path}. Returning default config."
             )
             return {"api_keys": {}}
         except Exception as e:
-            print(
+            logger.warning(
                 f"Warning: Could not read global config file {config_path}: {e}. Returning default config."
             )
             return {"api_keys": {}}
@@ -331,6 +330,8 @@ class ConfigManagement:
                 toml.dump(config_data, f)
 
     def reload_agents_from_config(self):
+        from AgentCrew.modules.agents import RemoteAgent, LocalAgent
+
         agent_manager = AgentManager.get_instance()
         agents_config_path = os.getenv(
             "SW_AGENTS_CONFIG", os.path.expanduser("./agents.toml")
@@ -344,7 +345,7 @@ class ConfigManagement:
                         agent_cfg["name"], agent_cfg["base_url"]
                     )
                 except Exception as e:
-                    logging.error(str(e))
+                    logger.error(str(e))
                 finally:
                     continue
             existing_agent = agent_manager.get_local_agent(agent_cfg["name"])
@@ -505,7 +506,7 @@ class ConfigManagement:
 
             self.write_global_config_data(global_config)
         except Exception as e:
-            print(f"Warning: Failed to save last used model to config: {e}")
+            logger.warning(f"Warning: Failed to save last used model to config: {e}")
 
     def set_last_used_agent(self, agent_name: str) -> None:
         """
@@ -527,7 +528,7 @@ class ConfigManagement:
 
             self.write_global_config_data(global_config)
         except Exception as e:
-            print(f"Warning: Failed to save last used agent to config: {e}")
+            logger.warning(f"Warning: Failed to save last used agent to config: {e}")
 
     def get_last_used_model(self) -> Optional[str]:
         """

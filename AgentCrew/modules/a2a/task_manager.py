@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Dict, AsyncIterable, Optional, Any, Union
 from AgentCrew.modules.agents import AgentManager, LocalAgent
 from AgentCrew.modules.agents.base import MessageType
+from AgentCrew.modules import logger
 
 from a2a.types import (
     CancelTaskResponse,
@@ -39,7 +40,7 @@ from a2a.types import (
 )
 from .adapters import (
     convert_a2a_message_to_agent,
-    convert_agent_response_to_a2a,
+    convert_agent_response_to_a2a_artifact,
     convert_agent_message_to_a2a,
 )
 from .common.server.task_manager import TaskManager
@@ -52,6 +53,7 @@ class AgentTaskManager(TaskManager):
         self.agent_name = agent_name
         self.agent_manager = agent_manager
         self.tasks: Dict[str, Task] = {}
+        self.task_history: Dict[str, list[Dict[str, Any]]] = {}
         self.streaming_tasks: Dict[str, asyncio.Queue] = {}
 
     async def on_send_message(
@@ -78,26 +80,33 @@ class AgentTaskManager(TaskManager):
             )
 
         agent.activate()
-        # Convert A2A message to SwissKnife format
-        message = convert_a2a_message_to_agent(request.params.message)
 
         # Generate task ID from message
         task_id = (
             request.params.message.taskId or f"task_{request.params.message.messageId}"
         )
 
-        # Create task with initial state
-        task = Task(
-            id=task_id,
-            contextId=request.params.message.contextId or f"ctx_{task_id}",
-            status=TaskStatus(
-                state=TaskState.working, timestamp=datetime.now().isoformat()
-            ),
-        )
-        self.tasks[task.id] = task
+        if task_id not in self.tasks:
+            # Create task with initial state
+            task = Task(
+                id=task_id,
+                contextId=request.params.message.contextId or f"ctx_{task_id}",
+                status=TaskStatus(
+                    state=TaskState.working, timestamp=datetime.now().isoformat()
+                ),
+            )
+            self.tasks[task.id] = task
+
+        task = self.tasks[task_id]
+        if task_id not in self.task_history:
+            self.task_history[task_id] = []
+
+        # Convert A2A message to SwissKnife format
+        message = convert_a2a_message_to_agent(request.params.message)
+        self.task_history[task_id].append(message)
 
         # Process with agent (non-blocking)
-        asyncio.create_task(self._process_agent_task(agent, message, task))
+        asyncio.create_task(self._process_agent_task(agent, task))
 
         # Return initial task state
         return SendMessageResponse(
@@ -149,9 +158,7 @@ class AgentTaskManager(TaskManager):
             # Clean up
             self.streaming_tasks.pop(task_id, None)
 
-    async def _process_agent_task(
-        self, agent: LocalAgent, message: Dict[str, Any], task: Task
-    ):
+    async def _process_agent_task(self, agent: LocalAgent, task: Task):
         """
         Process a task with the agent (background task).
 
@@ -161,11 +168,9 @@ class AgentTaskManager(TaskManager):
             task: The task object to update
         """
         try:
-            # Add message to agent history
-            # TODO: message should from task not agent for scaling
-            agent.history.append(message)
-
             artifacts = []
+            if task.id not in self.task_history:
+                raise ValueError("Task history is not existed")
 
             async def _process_task():
                 # Process with agent
@@ -180,7 +185,7 @@ class AgentTaskManager(TaskManager):
                     response_message,
                     chunk_text,
                     thinking_chunk,
-                ) in agent.process_messages():
+                ) in agent.process_messages(self.task_history[task.id]):
                     # Update current response
                     if response_message:
                         current_response = response_message
@@ -220,7 +225,7 @@ class AgentTaskManager(TaskManager):
 
                         # Send chunk update
                         if chunk_text:
-                            artifact = convert_agent_response_to_a2a(
+                            artifact = convert_agent_response_to_a2a_artifact(
                                 chunk_text,
                                 artifact_id=f"artifact_{task.id}_{len(artifacts)}",
                             )
@@ -245,7 +250,7 @@ class AgentTaskManager(TaskManager):
                         MessageType.Thinking, {"thinking": thinking_data}
                     )
                     if thinking_message:
-                        agent.history.append(thinking_message)
+                        self.task_history[task.id].append(thinking_message)
 
                     # Format assistant message with the response and tool uses
                     assistant_message = agent.format_message(
@@ -258,7 +263,7 @@ class AgentTaskManager(TaskManager):
                         },
                     )
                     if assistant_message:
-                        agent.history.append(assistant_message)
+                        self.task_history[task.id].append(assistant_message)
 
                     # Process each tool use
                     for tool_use in tool_uses:
@@ -273,7 +278,7 @@ class AgentTaskManager(TaskManager):
                                 {"tool_use": tool_use, "tool_result": tool_result},
                             )
                             if tool_result_message:
-                                agent.history.append(tool_result_message)
+                                self.task_history[task.id].append(tool_result_message)
 
                         except Exception as e:
                             error_message = agent.format_message(
@@ -285,14 +290,23 @@ class AgentTaskManager(TaskManager):
                                 },
                             )
                             if error_message:
-                                agent.history.append(error_message)
+                                self.task_history[task.id].append(error_message)
                     await _process_task()
                 return current_response
 
             current_response = await _process_task()
+            if current_response.strip():
+                assistant_message = agent.format_message(
+                    MessageType.Assistant,
+                    {
+                        "message": current_response,
+                    },
+                )
+                if assistant_message:
+                    self.task_history[task.id].append(assistant_message)
 
             # Create artifact from final response
-            artifact = convert_agent_response_to_a2a(
+            artifact = convert_agent_response_to_a2a_artifact(
                 current_response, artifact_id=f"artifact_{task.id}_final"
             )
             artifacts.append(artifact)
@@ -320,7 +334,7 @@ class AgentTaskManager(TaskManager):
                 await queue.put(None)
 
         except Exception as e:
-            print(str(e))
+            logger.error(str(e))
             # Handle errors
             task.status.state = TaskState.failed
             task.status.timestamp = datetime.now().isoformat()
