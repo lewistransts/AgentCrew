@@ -343,12 +343,16 @@ class ChatWindow(QMainWindow, Observer):
         """Stop the current message stream."""
         if self.waiting_for_response:
             self.ui_state_manager.stop_button_stopping_state()
-            self.message_handler.stop_streaming = True
             if self.message_handler.stream_generator:
                 try:
                     asyncio.run(self.message_handler.stream_generator.aclose())
                 except RuntimeError as e:
-                    logger.error(f"Error closing stream generator: {e}")
+                    logger.warning(f"Error closing stream generator: {e}")
+                except Exception as e:
+                    logger.warning(f"Exception closing stream generator: {e}")
+                finally:
+                    self.message_handler.stop_streaming = True
+                    self.message_handler.stream_generator = None
             # Also stop UI streaming
             self.ui_state_manager.set_input_controls_enabled(True)
             if self.current_response_bubble:

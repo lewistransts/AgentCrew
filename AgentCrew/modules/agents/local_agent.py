@@ -427,26 +427,33 @@ class LocalAgent(BaseAgent):
                         ],
                     }
                     final_messages.insert(-1, adaptive_messages)
-        async with await self.llm.stream_assistant_response(final_messages) as stream:
-            async for chunk in stream:
-                # Process the chunk using the LLM service
-                (
-                    assistant_response,
-                    tool_uses,
-                    chunk_input_tokens,
-                    chunk_output_tokens,
-                    chunk_text,
-                    thinking_chunk,
-                ) = self.llm.process_stream_chunk(
-                    chunk, assistant_response, self.tool_uses
-                )
-                if tool_uses:
-                    self.tool_uses = tool_uses
-                if chunk_input_tokens > 0:
-                    self.input_tokens_usage = chunk_input_tokens
-                if chunk_output_tokens > 0:
-                    self.output_tokens_usage = chunk_output_tokens
-                yield (assistant_response, chunk_text, thinking_chunk)
+        try:
+            async with await self.llm.stream_assistant_response(
+                final_messages
+            ) as stream:
+                async for chunk in stream:
+                    # Process the chunk using the LLM service
+                    (
+                        assistant_response,
+                        tool_uses,
+                        chunk_input_tokens,
+                        chunk_output_tokens,
+                        chunk_text,
+                        thinking_chunk,
+                    ) = self.llm.process_stream_chunk(
+                        chunk, assistant_response, self.tool_uses
+                    )
+                    if tool_uses:
+                        self.tool_uses = tool_uses
+                    if chunk_input_tokens > 0:
+                        self.input_tokens_usage = chunk_input_tokens
+                    if chunk_output_tokens > 0:
+                        self.output_tokens_usage = chunk_output_tokens
+                    yield (assistant_response, chunk_text, thinking_chunk)
+        except GeneratorExit as e:
+            logger.warning(f"Stream processing interrupted: {e}")
+        finally:
+            return
 
     def get_process_result(self):
         return (self.tool_uses, self.input_tokens_usage, self.output_tokens_usage)
