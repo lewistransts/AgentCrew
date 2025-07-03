@@ -211,6 +211,31 @@ class AgentsConfigTab(QWidget):
         remote_form_layout.addRow("", self.remote_enabled_checkbox)
 
         remote_agent_layout.addLayout(remote_form_layout)
+
+        # Headers section for remote agents
+        remote_headers_group = QGroupBox("HTTP Headers")
+        remote_headers_layout = QVBoxLayout()
+
+        self.remote_headers_layout = QVBoxLayout()
+        self.remote_header_inputs = []
+
+        # Add Header button
+        remote_headers_btn_layout = QHBoxLayout()
+        self.add_remote_header_btn = QPushButton("Add Header")
+        self.add_remote_header_btn.setStyleSheet(
+            style_provider.get_button_style("primary")
+        )
+        self.add_remote_header_btn.clicked.connect(
+            lambda: self.add_remote_header_field("", "")
+        )
+        remote_headers_btn_layout.addWidget(self.add_remote_header_btn)
+        remote_headers_btn_layout.addStretch()
+
+        self.remote_headers_layout.addLayout(remote_headers_btn_layout)
+        remote_headers_layout.addLayout(self.remote_headers_layout)
+        remote_headers_group.setLayout(remote_headers_layout)
+
+        remote_agent_layout.addWidget(remote_headers_group)
         remote_agent_layout.addStretch()
 
         self.editor_stacked_widget.addWidget(self.local_agent_editor_widget)
@@ -326,6 +351,12 @@ class AgentsConfigTab(QWidget):
             self.remote_name_input.setText(agent_data.get("name", ""))
             self.remote_base_url_input.setText(agent_data.get("base_url", ""))
             self.remote_enabled_checkbox.setChecked(agent_data.get("enabled", True))
+
+            self.clear_remote_header_fields()
+            headers = agent_data.get("headers", {})
+            for key, value in headers.items():
+                self.add_remote_header_field(key, value, mark_dirty_on_add=False)
+
             # Clear local fields
             self.name_input.clear()
             self.description_input.clear()
@@ -386,6 +417,13 @@ class AgentsConfigTab(QWidget):
         self.remote_name_input.setEnabled(enabled)
         self.remote_base_url_input.setEnabled(enabled)
         self.remote_enabled_checkbox.setEnabled(enabled)
+        self.add_remote_header_btn.setEnabled(enabled)
+
+        # Enable/disable remote header fields
+        for header_data in self.remote_header_inputs:
+            header_data["key_input"].setEnabled(enabled)
+            header_data["value_input"].setEnabled(enabled)
+            header_data["remove_btn"].setEnabled(enabled)
 
         if not enabled:
             # Clear all fields when disabling
@@ -400,6 +438,7 @@ class AgentsConfigTab(QWidget):
             self.remote_name_input.clear()
             self.remote_base_url_input.clear()
             self.remote_enabled_checkbox.setChecked(True)
+            self.clear_remote_header_fields()
 
             self.save_btn.setEnabled(False)
             self._is_dirty = False
@@ -434,6 +473,7 @@ class AgentsConfigTab(QWidget):
             "name": "NewRemoteAgent",
             "base_url": "http://localhost:8000",
             "enabled": True,
+            "headers": {},
             "agent_type": "remote",
         }
 
@@ -447,6 +487,67 @@ class AgentsConfigTab(QWidget):
         self.save_btn.setEnabled(True)
         self.remote_name_input.setFocus()
         self.remote_name_input.selectAll()
+
+    def add_remote_header_field(self, key="", value="", mark_dirty_on_add=True):
+        """Add a field for a remote agent HTTP header."""
+        header_layout = QHBoxLayout()
+
+        key_input = QLineEdit()
+        key_input.setText(str(key))
+        key_input.setPlaceholderText("Header Name (e.g., Authorization)")
+        key_input.textChanged.connect(self._on_editor_field_changed)
+
+        value_input = QLineEdit()
+        value_input.setText(str(value))
+        value_input.setPlaceholderText("Header Value (e.g., Bearer token)")
+        value_input.textChanged.connect(self._on_editor_field_changed)
+
+        remove_btn = QPushButton("Remove")
+        remove_btn.setMaximumWidth(80)
+        style_provider = StyleProvider()
+        remove_btn.setStyleSheet(style_provider.get_button_style("red"))
+
+        header_layout.addWidget(key_input)
+        header_layout.addWidget(value_input)
+        header_layout.addWidget(remove_btn)
+
+        # Insert before the add button
+        self.remote_headers_layout.insertLayout(
+            len(self.remote_header_inputs), header_layout
+        )
+
+        header_data = {
+            "layout": header_layout,
+            "key_input": key_input,
+            "value_input": value_input,
+            "remove_btn": remove_btn,
+        }
+        self.remote_header_inputs.append(header_data)
+
+        remove_btn.clicked.connect(lambda: self.remove_remote_header_field(header_data))
+
+        if mark_dirty_on_add:
+            self._on_editor_field_changed()
+        return header_data
+
+    def remove_remote_header_field(self, header_data):
+        """Remove a remote agent header field."""
+        # Remove from layout
+        self.remote_headers_layout.removeItem(header_data["layout"])
+
+        # Delete widgets
+        header_data["key_input"].deleteLater()
+        header_data["value_input"].deleteLater()
+        header_data["remove_btn"].deleteLater()
+
+        # Remove from list
+        self.remote_header_inputs.remove(header_data)
+        self._on_editor_field_changed()
+
+    def clear_remote_header_fields(self):
+        """Clear all remote agent header fields."""
+        while self.remote_header_inputs:
+            self.remove_remote_header_field(self.remote_header_inputs[0])
 
     def remove_agent(self):
         """Remove the selected agent(s)."""
@@ -543,10 +644,18 @@ class AgentsConfigTab(QWidget):
                 )
                 return
 
+            headers = {}
+            for header_data in self.remote_header_inputs:
+                key = header_data["key_input"].text().strip()
+                value = header_data["value_input"].text().strip()
+                if key:
+                    headers[key] = value
+
             updated_agent_data = {
                 "name": name,
                 "base_url": base_url,
                 "enabled": self.remote_enabled_checkbox.isChecked(),
+                "headers": headers,
                 "agent_type": "remote",
             }
             current_item.setText(name)

@@ -1,7 +1,7 @@
 import json
 
 from collections.abc import AsyncGenerator
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 from uuid import uuid4
 
 import httpx
@@ -37,6 +37,7 @@ class A2AClient:
         agent_card: AgentCard,
         url: Optional[str] = None,
         timeout: TimeoutTypes = 60.0,
+        headers: Optional[Dict[str, str]] = None,
     ):
         if agent_card:
             self.url = agent_card.url
@@ -46,6 +47,7 @@ class A2AClient:
         else:
             raise ValueError("Must provide either agent_card or url")
         self.timeout = timeout
+        self.headers = headers or {}
 
     async def send_message(self, payload: MessageSendParams) -> SendMessageResponse:
         """Send a message using the new A2A v0.2 message/send method"""
@@ -58,9 +60,12 @@ class A2AClient:
     ) -> AsyncGenerator[SendStreamingMessageResponse]:
         """Send a streaming message using the new A2A v0.2 message/stream method"""
         request = SendStreamingMessageRequest(id=str(uuid4()), params=payload)
+        # Merge custom headers with default headers
+        request_headers = {"Content-Type": "application/json", **self.headers}
+        
         async with httpx.AsyncClient(timeout=None) as client:
             async with aconnect_sse(
-                client, "POST", self.url, json=request.model_dump()
+                client, "POST", self.url, json=request.model_dump(), headers=request_headers
             ) as event_source:
                 try:
                     async for sse in event_source.aiter_sse():
@@ -73,9 +78,12 @@ class A2AClient:
     async def _send_request(self, request: A2ARequest) -> dict[str, Any]:
         async with httpx.AsyncClient() as client:
             try:
+                # Merge custom headers with default headers
+                request_headers = {"Content-Type": "application/json", **self.headers}
+                
                 # Image generation could take time, adding timeout
                 response = await client.post(
-                    self.url, json=request.root.model_dump(), timeout=self.timeout
+                    self.url, json=request.root.model_dump(), timeout=self.timeout, headers=request_headers
                 )
                 response.raise_for_status()
                 return response.json()

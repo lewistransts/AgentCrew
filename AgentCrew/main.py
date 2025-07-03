@@ -404,7 +404,11 @@ tools = ["memory", "clipboard", "web_search", "code_analysis"]
     for agent_def in agent_definitions:
         if agent_def.get("base_url", ""):
             try:
-                agent = RemoteAgent(agent_def["name"], agent_def.get("base_url"))
+                agent = RemoteAgent(
+                    agent_def["name"], 
+                    agent_def.get("base_url"),
+                    headers=agent_def.get("headers", {})
+                )
             except Exception:
                 print("Error: cannot connect to remote agent, skipping...")
                 continue
