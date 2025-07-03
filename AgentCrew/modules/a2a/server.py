@@ -2,15 +2,18 @@
 A2A protocol server implementation for SwissKnife.
 """
 
+import os
 import json
 import logging
 from typing import Callable, Optional
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
-from starlette.routing import Route, Mount
+from starlette.routing import Route, Mount, BaseRoute
 from starlette.requests import Request
+from starlette.middleware import Middleware
 from sse_starlette.sse import EventSourceResponse
 from pydantic import ValidationError
+from AgentCrew.modules.a2a.common.server import AuthMiddleware
 
 from AgentCrew.modules.agents import AgentManager
 from .registry import AgentRegistry
@@ -48,12 +51,14 @@ class A2AServer:
         host: str = "0.0.0.0",
         port: int = 41241,
         base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
     ):
         logger.info(f"Initializing A2A server with host={host}, port={port}")
         self.agent_manager = agent_manager
         self.host = host
         self.port = port
         self.base_url = base_url or f"http://{host}:{port}"
+        self.api_key = api_key or os.getenv("A2A_SERVER_API_KEY", "Bearer ")
         logger.debug(f"Using base URL: {self.base_url}")
 
         # Create agent registry
@@ -73,7 +78,7 @@ class A2AServer:
             The configured Starlette application
         """
         logger.debug("Creating Starlette application")
-        routes = [
+        routes: list[BaseRoute] = [
             Route("/agents", self._list_agents, methods=["GET"]),
         ]
 
@@ -88,11 +93,16 @@ class A2AServer:
                         self._get_agent_card_factory(agent_name),
                         methods=["GET"],
                     ),
-                    # Single JSON-RPC endpoint
+                    # Single JSON-RPC endpoint with authentication middleware
                     Route(
                         "/",
                         self._process_jsonrpc_request_factory(agent_name),
                         methods=["POST"],
+                        middleware=[
+                            Middleware(
+                                AuthMiddleware, api_key=self.api_key, logger=logger
+                            )
+                        ],
                     ),
                 ],
             )

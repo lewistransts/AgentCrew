@@ -405,9 +405,9 @@ tools = ["memory", "clipboard", "web_search", "code_analysis"]
         if agent_def.get("base_url", ""):
             try:
                 agent = RemoteAgent(
-                    agent_def["name"], 
+                    agent_def["name"],
                     agent_def.get("base_url"),
-                    headers=agent_def.get("headers", {})
+                    headers=agent_def.get("headers", {}),
                 )
             except Exception:
                 print("Error: cannot connect to remote agent, skipping...")
@@ -648,6 +648,7 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
     help="LLM provider to use (claude, groq, openai, google, github_copilot or deepinfra)",
 )
 @click.option("--agent-config", default=None, help="Path to agent configuration file")
+@click.option("--api-key", default=None, help="API key for authentication (optional)")
 @click.option(
     "--mcp-config", default=None, help="Path to the mcp servers configuration file."
 )
@@ -657,7 +658,9 @@ def chat(provider, agent_config, mcp_config, memory_llm, console):
     default=None,
     help="LLM Model use for analyzing and processing memory",
 )
-def a2a_server(host, port, base_url, provider, agent_config, mcp_config, memory_llm):
+def a2a_server(
+    host, port, base_url, provider, agent_config, api_key, mcp_config, memory_llm
+):
     """Start an A2A server exposing all SwissKnife agents"""
     try:
         load_api_keys_from_config()
@@ -698,7 +701,11 @@ def a2a_server(host, port, base_url, provider, agent_config, mcp_config, memory_
         from AgentCrew.modules.a2a.server import A2AServer
 
         server = A2AServer(
-            agent_manager=agent_manager, host=host, port=port, base_url=base_url
+            agent_manager=agent_manager,
+            host=host,
+            port=port,
+            base_url=base_url,
+            api_key=api_key,
         )
 
         click.echo(f"Starting A2A server on {host}:{port}")

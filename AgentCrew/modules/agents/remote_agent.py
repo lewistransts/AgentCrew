@@ -18,7 +18,9 @@ from a2a.types import (
 
 
 class RemoteAgent(BaseAgent):
-    def __init__(self, name: str, agent_url: str, headers: Optional[Dict[str, str]] = None):
+    def __init__(
+        self, name: str, agent_url: str, headers: Optional[Dict[str, str]] = None
+    ):
         self.card_resolver = A2ACardResolver(agent_url)
         self.agent_card = self.card_resolver.get_agent_card()
         self.client = A2AClient(self.agent_card, timeout=600, headers=headers)
@@ -33,6 +35,7 @@ class RemoteAgent(BaseAgent):
         Returns:
             True if activation was successful, False otherwise
         """
+        self.is_active = True
         return True
 
     def deactivate(self) -> bool:
@@ -42,6 +45,7 @@ class RemoteAgent(BaseAgent):
         Returns:
             True if deactivation was successful, False otherwise
         """
+        self.is_active = False
         return True
 
     @property
