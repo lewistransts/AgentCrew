@@ -117,7 +117,7 @@ class A2AServer:
                 return JSONResponse(
                     {"error": f"Agent {agent_name} not found"}, status_code=404
                 )
-            return JSONResponse(agent_card.model_dump(exclude_none=True))
+            return JSONResponse(agent_card.model_dump(exclude_none=True, by_alias=True))
 
         return get_agent_card
 
