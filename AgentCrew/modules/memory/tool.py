@@ -244,23 +244,33 @@ def get_adapt_tool_handler(persistence_service: Any) -> Callable:
 
 
 def adaptive_instruction_prompt():
-    return """Use the 'adapt' tool to store behavioral patterns that improve user experience. Call it when you notice:
+    return """<Adapting_Behaviors>
+  <Purpose>
+    Store behavioral patterns that improve user experience using the 'adapt' tool.
+  </Purpose>
 
-1. **User Preferences**: Recurring requests or communication styles
-2. **Task Patterns**: Specific ways users like information presented
-3. **Context Triggers**: Situations requiring special handling
+  <Trigger_Conditions>
+    <User_Preferences>Recurring requests or communication styles</User_Preferences>
+    <Task_Patterns>Specific ways users like information presented</Task_Patterns>
+    <Context_Triggers>Situations requiring special handling</Context_Triggers>
+  </Trigger_Conditions>
 
-**Format**: Always use "when...do..." structure
-**Examples**:
-- "when user asks about code, provide complete examples with explanations"
-- "when user mentions deadlines, prioritize speed over detailed explanations"
-- "when user shares personal info, acknowledge and reference it in future interactions"
+  <Behavior_Format>
+    <Structure>Always use "when...do..." format</Structure>
+    <Examples>
+      • "when user asks about code, provide complete examples with explanations"
+      • "when user mentions deadlines, prioritize speed over detailed explanations"
+      • "when user shares personal info, acknowledge and reference it in future interactions"
+    </Examples>
+  </Behavior_Format>
 
-**Best Practices**:
-- Use descriptive IDs (e.g., "code_explanation_style", "deadline_response")
-- Be specific about triggers and actions
-- Update existing behaviors rather when behaviors change
-- Focus on actionable, consistent improvements"""
+  <Implementation_Guidelines>
+    • Use descriptive IDs (e.g., "code_explanation_style", "deadline_response")
+    • Be specific about triggers and actions
+    • Update existing behaviors when behaviors change
+    • Focus on actionable, consistent improvements
+  </Implementation_Guidelines>
+</Adapting_Behaviors>"""
 
 
 def register(

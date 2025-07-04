@@ -314,7 +314,7 @@ class MessageBubble(QFrame):
 
         # Start the streaming timer if not active
         if not self.streaming_timer.isActive():
-            self.streaming_timer.start(40)
+            self.streaming_timer.start(60)
 
         # Add characters to queue for smooth rendering
         self.character_queue = chunk_queue

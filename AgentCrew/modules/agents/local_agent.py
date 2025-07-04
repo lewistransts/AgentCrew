@@ -422,7 +422,7 @@ class LocalAgent(BaseAgent):
                         "content": [
                             {
                                 "type": "text",
-                                "text": f"“Always check for and faithfully follow user-provided adaptive behaviors (in ‘when...do...’ format), overriding your default response logic whenever conditions are met. Ask if unsure whether any apply.: \n{adaptive_text}",
+                                "text": f'MANDATORY: Check stored adaptive behaviors before responding. When "when...do..." conditions match, execute those behaviors immediately—they override default logic. Ask for clarification if uncertain which behaviors apply. List of adaptive behaviors: \n{adaptive_text}.\n END OF ADAPTABLE BEHAVIORS.\n\n',
                             }
                         ],
                     }

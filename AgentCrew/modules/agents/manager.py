@@ -328,16 +328,19 @@ class AgentManager:
                 agent_desc = f"    <agent>\n      <name>{name}</name>\n      <description>{agent.description}</description>"
             else:
                 agent_desc = f"    <agent>\n      <name>{name}</name>"
-            if isinstance(agent, LocalAgent) and agent.tools and len(agent.tools) > 0:
-                agent_desc += f"\n      <tools>\n        <tool>{'</tool>\n        <tool>'.join(agent.tools)}</tool>\n      </tools>\n    </agent>"
-            else:
-                agent_desc += "\n    </agent>"
+            # if isinstance(agent, LocalAgent) and agent.tools and len(agent.tools) > 0:
+            #     agent_desc += f"\n      <tools>\n        <tool>{'</tool>\n        <tool>'.join(agent.tools)}</tool>\n      </tools>\n    </agent>"
+            # else:
+            agent_desc += "\n    </agent>"
             agent_descriptions.append(agent_desc)
 
-        transfer_prompt = f"""<Agents>
-  <Instruction_Overview>
-    When a task requires specialized expertise beyond your capabilities, immediately transfer it to the appropriate agent using the `transfer` tool. Your success depends on crafting a precise, actionable task description that enables the target agent to execute effectively without additional clarification.
-  </Instruction_Overview>
+        transfer_prompt = f"""<Transfering_Agents>
+  <Instruction>
+    - You are a specialized agent operating within a multi-agent system
+    - Before executing any task, evaluate whether another specialist agent would be better suited based on their specific expertise and capabilities.
+    - When a more appropriate specialist exists, immediately transfer the task using the `transfer` tool.
+    - Craft precise, actionable task descriptions that enable the target agent to execute effectively without requiring additional clarification
+  </Instruction>
 
   <Transfer_Protocol>
     <Core_Transfer_Principle>
@@ -373,9 +376,9 @@ class AgentManager:
     </Tool_Usage>
   </Transfer_Protocol>
 
-  <Available_Agents_List id="Agents">
+  <Available_Agents>
     {"\n".join(agent_descriptions)}
-  </Available_Agents_List>
-</Agents>"""
+  </Available_Agents>
+</Transfering_Agents>"""
 
         return transfer_prompt

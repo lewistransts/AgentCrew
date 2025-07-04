@@ -296,7 +296,7 @@ class ChatWindow(QMainWindow, Observer):
         # self.expecting_response = False
         #
         # # Re-enable input controls
-        # self.ui_state_manager.set_input_controls_enabled(True)
+        self.ui_state_manager.set_input_controls_enabled(True)
         QApplication.processEvents()  # Ensure UI updates immediately
 
     @Slot(str)

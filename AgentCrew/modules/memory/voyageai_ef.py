@@ -40,7 +40,7 @@ class VoyageEmbeddingFunction(EmbeddingFunction[Documents]):
 
         self.model_name = model_name
 
-        self._provider_client = Client(api_key=self.api_key)
+        self._provider_client = Client(api_key=self.api_key, timeout=60)
 
     def __call__(self, input: Documents) -> Embeddings:
         """
