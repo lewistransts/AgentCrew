@@ -81,12 +81,20 @@ class ServiceManager:
                     f"Missing api_base_url for custom provider: {provider}"
                 )
 
-            return CustomLLMService(
-                base_url=details["api_base_url"],
-                api_key=api_key,
-                provider_name=provider,
-                extra_headers=extra_headers,
-            )
+            if (
+                details.get("api_base_url", "")
+                .rstrip("/")
+                .endswith(".githubcopilot.com")
+            ):
+                # Special case for OpenAI compatible custom providers
+                return GithubCopilotService(api_key=api_key, provider_name=provider)
+            else:
+                return CustomLLMService(
+                    base_url=details["api_base_url"],
+                    api_key=api_key,
+                    provider_name=provider,
+                    extra_headers=extra_headers,
+                )
         elif provider in self.service_classes:
             return self.service_classes[provider]()
         else:
@@ -124,12 +132,20 @@ class ServiceManager:
                 )
 
             try:
-                service_instance = CustomLLMService(
-                    base_url=details["api_base_url"],
-                    api_key=api_key,
-                    provider_name=provider,
-                    extra_headers=extra_headers,
-                )
+                if (
+                    details.get("api_base_url", "")
+                    .rstrip("/")
+                    .endswith(".githubcopilot.com")
+                ):
+                    # Special case for OpenAI compatible custom providers
+                    return GithubCopilotService(api_key=api_key, provider_name=provider)
+                else:
+                    return CustomLLMService(
+                        base_url=details["api_base_url"],
+                        api_key=api_key,
+                        provider_name=provider,
+                        extra_headers=extra_headers,
+                    )
             except Exception as e:
                 raise RuntimeError(
                     f"Failed to initialize custom provider service '{provider}': {str(e)}"

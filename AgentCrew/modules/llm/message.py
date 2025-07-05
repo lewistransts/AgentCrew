@@ -26,12 +26,12 @@ class MessageTransformer:
         """
         if source_provider == "claude":
             return MessageTransformer._standardize_claude_messages(messages, agent)
+        elif source_provider == "openai" or source_provider == "github_copilot":
+            return MessageTransformer._standardize_openai_messages(messages, agent)
         elif source_provider == "google":
             return MessageTransformer._standardize_google_messages(messages, agent)
-        elif source_provider == "groq" or source_provider == "deepinfra":
-            return MessageTransformer._standardize_groq_messages(messages, agent)
         else:
-            return MessageTransformer._standardize_openai_messages(messages, agent)
+            return MessageTransformer._standardize_groq_messages(messages, agent)
 
     @staticmethod
     def convert_messages(
@@ -50,12 +50,12 @@ class MessageTransformer:
 
         if target_provider == "claude":
             return MessageTransformer._convert_to_claude_format(messages)
+        elif target_provider == "openai" or target_provider == "github_copilot":
+            return MessageTransformer._convert_to_openai_format(messages)
         elif target_provider == "google":
             return MessageTransformer._convert_to_google_format(messages)
-        elif target_provider == "groq" or target_provider == "deepinfra":
-            return MessageTransformer._convert_to_groq_format(messages)
         else:
-            return MessageTransformer._convert_to_openai_format(messages)
+            return MessageTransformer._convert_to_groq_format(messages)
 
     @staticmethod
     def _standardize_claude_messages(

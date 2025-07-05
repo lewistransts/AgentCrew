@@ -62,10 +62,14 @@ class A2AClient:
         request = SendStreamingMessageRequest(id=str(uuid4()), params=payload)
         # Merge custom headers with default headers
         request_headers = {"Content-Type": "application/json", **self.headers}
-        
+
         async with httpx.AsyncClient(timeout=None) as client:
             async with aconnect_sse(
-                client, "POST", self.url, json=request.model_dump(), headers=request_headers
+                client,
+                "POST",
+                self.url,
+                json=request.model_dump(),
+                headers=request_headers,
             ) as event_source:
                 try:
                     async for sse in event_source.aiter_sse():
@@ -80,10 +84,13 @@ class A2AClient:
             try:
                 # Merge custom headers with default headers
                 request_headers = {"Content-Type": "application/json", **self.headers}
-                
+
                 # Image generation could take time, adding timeout
                 response = await client.post(
-                    self.url, json=request.root.model_dump(), timeout=self.timeout, headers=request_headers
+                    self.url,
+                    json=request.root.model_dump(),
+                    timeout=self.timeout,
+                    headers=request_headers,
                 )
                 response.raise_for_status()
                 return response.json()

@@ -342,9 +342,9 @@ class ConfigManagement:
             if agent_cfg.get("base_url"):
                 try:
                     agent_manager.agents[agent_cfg["name"]] = RemoteAgent(
-                        agent_cfg["name"], 
+                        agent_cfg["name"],
                         agent_cfg["base_url"],
-                        headers=agent_cfg.get("headers", {})
+                        headers=agent_cfg.get("headers", {}),
                     )
                 except Exception as e:
                     logger.error(str(e))
