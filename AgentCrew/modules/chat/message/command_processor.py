@@ -438,7 +438,7 @@ class CommandProcessor:
             )
 
     def _handle_file_command(self, user_input: str) -> CommandResult:
-        """Handle file command with support for multiple files."""
+        # Remove the command prefix "/file " and strip whitespace
         file_paths_str: str = user_input[6:].strip()
         
         # Handle empty input
@@ -521,16 +521,6 @@ class CommandProcessor:
             message_content: Dict[str, Any] = {"role": "user", "content": [{"type": "text", "text": combined_content}]}
             self.message_handler._messages_append(message_content)
             
-            # Notify about the combined result
-            batch_result: Dict[str, Any] = {
-                "processed_files": processed_files,
-                "failed_files": failed_files,
-                "total_processed": len(processed_files),
-                "total_failed": len(failed_files),
-                "message": self.message_handler.agent.history[-1] if processed_files else None,
-            }
-            self.message_handler._notify("files_batch_processed", batch_result)
-
         # Send summary message
         summary: str
         if processed_files and failed_files:
