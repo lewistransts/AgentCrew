@@ -466,8 +466,6 @@ class CommandProcessor:
 
         # Process each file
         for file_path in file_paths:
-            self.message_handler._notify("file_processing", {"file_path": file_path})
-            
             # Process file with the file handling service
             file_content: Optional[Union[Dict[str, Any], str]] = self.message_handler.file_handler.process_file(file_path)
             
@@ -491,10 +489,8 @@ class CommandProcessor:
                 
                 file_contents.append(content_text)
                 processed_files.append(file_path)
-                self.message_handler._notify(
-                    "file_processed",
-                    {"file_path": file_path, "status": "success"}
-                )
+                # Notify using the correct format that matches ConsoleUI.listen()
+                self.message_handler._notify("file_processed", {"file_path": file_path})
             else:
                 failed_files.append(file_path)
                 self.message_handler._notify(
