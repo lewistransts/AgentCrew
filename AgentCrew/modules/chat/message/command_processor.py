@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Dict, Any, Union
 import os
 
 from AgentCrew.modules.agents.local_agent import LocalAgent
@@ -439,7 +439,7 @@ class CommandProcessor:
 
     def _handle_file_command(self, user_input: str) -> CommandResult:
         """Handle file command with support for multiple files."""
-        file_paths_str = user_input[6:].strip()
+        file_paths_str: str = user_input[6:].strip()
         
         # Handle empty input
         if not file_paths_str:
@@ -447,7 +447,7 @@ class CommandProcessor:
             return CommandResult(handled=True, clear_flag=True)
         
         # Split file paths and expand user paths
-        file_paths = [os.path.expanduser(path.strip()) for path in file_paths_str.split()]
+        file_paths: List[str] = [os.path.expanduser(path.strip()) for path in file_paths_str.split()]
         
         # Remove empty paths
         file_paths = [path for path in file_paths if path]
@@ -460,16 +460,16 @@ class CommandProcessor:
         if self.message_handler.file_handler is None:
             self.message_handler.file_handler = FileHandler()
 
-        processed_files = []
-        failed_files = []
-        file_contents = []
+        processed_files: List[str] = []
+        failed_files: List[str] = []
+        file_contents: List[str] = []
 
         # Process each file
         for file_path in file_paths:
             self.message_handler._notify("file_processing", {"file_path": file_path})
             
             # Process file with the file handling service
-            file_content = self.message_handler.file_handler.process_file(file_path)
+            file_content: Optional[Union[Dict[str, Any], str]] = self.message_handler.file_handler.process_file(file_path)
             
             # Fallback to llm handle
             if not file_content:
@@ -480,14 +480,16 @@ class CommandProcessor:
 
             if file_content:
                 # Extract text content from the result
+                content_text: str
                 if isinstance(file_content, dict) and "text" in file_content:
-                    file_contents.append(file_content["text"])
+                    content_text = file_content["text"]
                 elif isinstance(file_content, str):
-                    file_contents.append(file_content)
+                    content_text = file_content
                 else:
                     # Handle unexpected format
-                    file_contents.append(str(file_content))
-                    
+                    content_text = str(file_content)
+                
+                file_contents.append(content_text)
                 processed_files.append(file_path)
                 self.message_handler._notify(
                     "file_processed",
@@ -503,34 +505,34 @@ class CommandProcessor:
         # Add all successfully processed files to the conversation
         if file_contents:
             # Create a single message with all file contents using XML-style boundaries
+            combined_content: str
             if len(file_contents) == 1:
                 # Single file - wrap in XML tags for consistency
                 file_path = processed_files[0]
                 combined_content = f"<file path='{file_path}'>\n{file_contents[0]}\n</file>"
             else:
                 # Multiple files - use XML-style boundaries for each file
-                combined_parts = []
+                combined_parts: List[str] = []
                 for i, content in enumerate(file_contents):
                     file_path = processed_files[i]
                     combined_parts.append(f"<file path='{file_path}'>\n{content}\n</file>")
                 combined_content = "\n\n".join(combined_parts)
-            self.message_handler._messages_append(
-                {"role": "user", "content": [{"type": "text", "text": combined_content}]}
-            )
+            
+            message_content: Dict[str, Any] = {"role": "user", "content": [{"type": "text", "text": combined_content}]}
+            self.message_handler._messages_append(message_content)
             
             # Notify about the combined result
-            self.message_handler._notify(
-                "files_batch_processed",
-                {
-                    "processed_files": processed_files,
-                    "failed_files": failed_files,
-                    "total_processed": len(processed_files),
-                    "total_failed": len(failed_files),
-                    "message": self.message_handler.agent.history[-1] if processed_files else None,
-                },
-            )
+            batch_result: Dict[str, Any] = {
+                "processed_files": processed_files,
+                "failed_files": failed_files,
+                "total_processed": len(processed_files),
+                "total_failed": len(failed_files),
+                "message": self.message_handler.agent.history[-1] if processed_files else None,
+            }
+            self.message_handler._notify("files_batch_processed", batch_result)
 
         # Send summary message
+        summary: str
         if processed_files and failed_files:
             summary = f"Processed {len(processed_files)} files successfully, {len(failed_files)} failed"
         elif processed_files:
