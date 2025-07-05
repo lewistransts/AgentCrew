@@ -471,12 +471,14 @@ class GroqService(BaseLLMService):
         if isinstance(tool_result, list):
             parsed_tool_result = []
             for res in tool_result:
-                if res.get("type", "text") == "image_url":
-                    if "vision" in ModelRegistry.get_model_capabilities(self.model):
-                        parsed_tool_result.append(res)
-                else:
-                    parsed_tool_result.append(res)
-            tool_result = parsed_tool_result
+                # Skipping vision/image tool results for Groq
+                # if res.get("type", "text") == "image_url":
+                #     if "vision" in ModelRegistry.get_model_capabilities(self.model):
+                #         parsed_tool_result.append(res)
+                # else:
+                if res.get("type", "text") == "text":
+                    parsed_tool_result.append(res.get("text", ""))
+            tool_result = "\n".join(parsed_tool_result) if parsed_tool_result else ""
         message = {
             "role": "tool",
             "tool_call_id": tool_use["id"],

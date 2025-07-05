@@ -26,12 +26,12 @@ class MessageTransformer:
         """
         if source_provider == "claude":
             return MessageTransformer._standardize_claude_messages(messages, agent)
-        elif source_provider == "openai":
-            return MessageTransformer._standardize_openai_messages(messages, agent)
         elif source_provider == "google":
             return MessageTransformer._standardize_google_messages(messages, agent)
-        else:
+        elif source_provider == "groq" or source_provider == "deepinfra":
             return MessageTransformer._standardize_groq_messages(messages, agent)
+        else:
+            return MessageTransformer._standardize_openai_messages(messages, agent)
 
     @staticmethod
     def convert_messages(
@@ -50,12 +50,12 @@ class MessageTransformer:
 
         if target_provider == "claude":
             return MessageTransformer._convert_to_claude_format(messages)
-        elif target_provider == "openai":
-            return MessageTransformer._convert_to_openai_format(messages)
         elif target_provider == "google":
             return MessageTransformer._convert_to_google_format(messages)
-        else:
+        elif target_provider == "groq" or target_provider == "deepinfra":
             return MessageTransformer._convert_to_groq_format(messages)
+        else:
+            return MessageTransformer._convert_to_openai_format(messages)
 
     @staticmethod
     def _standardize_claude_messages(
@@ -645,7 +645,14 @@ class MessageTransformer:
             if "tool_result" in msg:
                 groq_msg["role"] = "tool"
                 groq_msg["tool_call_id"] = msg["tool_result"].get("tool_use_id", "")
-                groq_msg["content"] = msg["tool_result"].get("content", "")
+                if isinstance(msg["tool_result"].get("content", ""), list):
+                    text_content = []
+                    for content in msg["tool_result"]["content"]:
+                        if content.get("type", "text") == "text":
+                            text_content.append(content.get("text", ""))
+                    groq_msg["content"] = "\n".join(text_content)
+                else:
+                    groq_msg["content"] = msg["tool_result"].get("content", "")
 
                 if msg["tool_result"].get("is_error", False):
                     groq_msg["content"] = f"ERROR: {groq_msg['content']}"
