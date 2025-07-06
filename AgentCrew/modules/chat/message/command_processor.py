@@ -458,7 +458,7 @@ class CommandProcessor:
             # Process file with the file handling service
             if self.message_handler.file_handler is None:
                 self.message_handler.file_handler = FileHandler()
-            file_content: Optional[Any] = self.message_handler.file_handler.process_file(file_path)
+            file_content = self.message_handler.file_handler.process_file(file_path)
             
             # Fallback to llm handle
             if not file_content:
@@ -469,11 +469,7 @@ class CommandProcessor:
                 )
 
             if file_content:
-                # Wrap file content with XML tags including file path
-                formatted_content: str = f'<file file_path="{file_path}">\n{file_content}\n</file>'
-                # Format content with proper message structure
-                content_item: Dict[str, str] = {"type": "text", "text": formatted_content}
-                all_file_contents.append(content_item)
+                all_file_contents.append(file_content)
                 processed_files.append(file_path)
                 self.message_handler._notify(
                     "file_processed",
