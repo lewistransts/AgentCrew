@@ -441,8 +441,12 @@ class CommandProcessor:
         """Handle file command with support for multiple files."""
         # Extract file paths from user input (space-separated)
         file_paths_str: str = user_input[6:].strip()
-        file_paths: List[str] = [os.path.expanduser(path.strip()) for path in file_paths_str.split() if path.strip()]
-        
+        file_paths: List[str] = [
+            os.path.expanduser(path.strip())
+            for path in file_paths_str.split()
+            if path.strip()
+        ]
+
         if not file_paths:
             self.message_handler._notify("error", "No file paths provided")
             return CommandResult(handled=True, clear_flag=True)
@@ -459,7 +463,7 @@ class CommandProcessor:
             if self.message_handler.file_handler is None:
                 self.message_handler.file_handler = FileHandler()
             file_content = self.message_handler.file_handler.process_file(file_path)
-            
+
             # Fallback to llm handle
             if not file_content:
                 from AgentCrew.modules.agents.base import MessageType
@@ -490,17 +494,15 @@ class CommandProcessor:
             self.message_handler._messages_append(
                 {"role": "user", "content": all_file_contents}
             )
-            
+
             # Notify about overall processing results
             if failed_files:
                 self.message_handler._notify(
-                    "system_message",
-                    f"Processed {len(processed_files)} files successfully. Failed to process: {', '.join(failed_files)}"
+                    "error", f"Failed to process: {', '.join(failed_files)}"
                 )
-            else:
-                self.message_handler._notify(
-                    "system_message",
-                    f"Successfully processed {len(processed_files)} files: {', '.join(processed_files)}"
-                )
+            self.message_handler._notify(
+                "system_message",
+                f"Successfully processed {len(processed_files)} files: {', '.join(processed_files)}",
+            )
 
         return CommandResult(handled=True, clear_flag=True)
