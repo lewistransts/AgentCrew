@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Dict, Any, Union
 import os
 
 from AgentCrew.modules.agents.local_agent import LocalAgent
@@ -438,39 +438,69 @@ class CommandProcessor:
             )
 
     def _handle_file_command(self, user_input: str) -> CommandResult:
-        """Handle file command."""
-        file_path = user_input[6:].strip()
-        file_path = os.path.expanduser(file_path)
+        """Handle file command with support for multiple files."""
+        # Extract file paths from user input (space-separated)
+        file_paths_str: str = user_input[6:].strip()
+        file_paths: List[str] = [os.path.expanduser(path.strip()) for path in file_paths_str.split() if path.strip()]
+        
+        if not file_paths:
+            self.message_handler._notify("error", "No file paths provided")
+            return CommandResult(handled=True, clear_flag=True)
 
-        self.message_handler._notify("file_processing", {"file_path": file_path})
+        processed_files: List[str] = []
+        failed_files: List[str] = []
+        all_file_contents: List[Dict[str, str]] = []
 
-        # Process file with the file handling service
-        if self.message_handler.file_handler is None:
-            self.message_handler.file_handler = FileHandler()
-        file_content = self.message_handler.file_handler.process_file(file_path)
-        # Fallback to llm handle
-        if not file_content:
-            from AgentCrew.modules.agents.base import MessageType
+        # Process each file
+        for file_path in file_paths:
+            self.message_handler._notify("file_processing", {"file_path": file_path})
 
-            file_content = self.message_handler.agent.format_message(
-                MessageType.FileContent, {"file_uri": file_path}
-            )
+            # Process file with the file handling service
+            if self.message_handler.file_handler is None:
+                self.message_handler.file_handler = FileHandler()
+            file_content = self.message_handler.file_handler.process_file(file_path)
+            
+            # Fallback to llm handle
+            if not file_content:
+                from AgentCrew.modules.agents.base import MessageType
 
-        if file_content:
+                file_content = self.message_handler.agent.format_message(
+                    MessageType.FileContent, {"file_uri": file_path}
+                )
+
+            if file_content:
+                all_file_contents.append(file_content)
+                processed_files.append(file_path)
+                self.message_handler._notify(
+                    "file_processed",
+                    {
+                        "file_path": file_path,
+                        "message": file_content,
+                    },
+                )
+            else:
+                failed_files.append(file_path)
+                self.message_handler._notify(
+                    "error",
+                    f"Failed to process file {file_path} Or Model is not supported",
+                )
+
+        # Add all successfully processed file contents to messages
+        if all_file_contents:
             self.message_handler._messages_append(
-                {"role": "user", "content": [file_content]}
+                {"role": "user", "content": all_file_contents}
             )
-            self.message_handler._notify(
-                "file_processed",
-                {
-                    "file_path": file_path,
-                    "message": self.message_handler.agent.history[-1],
-                },
-            )
-            return CommandResult(handled=True, clear_flag=True)
-        else:
-            self.message_handler._notify(
-                "error",
-                f"Failed to process file {file_path} Or Model is not supported",
-            )
-            return CommandResult(handled=True, clear_flag=True)
+            
+            # Notify about overall processing results
+            if failed_files:
+                self.message_handler._notify(
+                    "system_message",
+                    f"Processed {len(processed_files)} files successfully. Failed to process: {', '.join(failed_files)}"
+                )
+            else:
+                self.message_handler._notify(
+                    "system_message",
+                    f"Successfully processed {len(processed_files)} files: {', '.join(processed_files)}"
+                )
+
+        return CommandResult(handled=True, clear_flag=True)
