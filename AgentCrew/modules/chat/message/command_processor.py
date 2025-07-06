@@ -449,7 +449,7 @@ class CommandProcessor:
 
         processed_files: List[str] = []
         failed_files: List[str] = []
-        all_file_contents: List[Any] = []
+        all_file_contents: List[Dict[str, str]] = []
 
         # Process each file
         for file_path in file_paths:
@@ -469,7 +469,11 @@ class CommandProcessor:
                 )
 
             if file_content:
-                all_file_contents.append(file_content)
+                # Wrap file content with XML tags including file path
+                formatted_content: str = f'<file file_path="{file_path}">\n{file_content}\n</file>'
+                # Format content with proper message structure
+                content_item: Dict[str, str] = {"type": "text", "text": formatted_content}
+                all_file_contents.append(content_item)
                 processed_files.append(file_path)
                 self.message_handler._notify(
                     "file_processed",
