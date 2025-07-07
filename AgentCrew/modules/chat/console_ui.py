@@ -109,7 +109,7 @@ class ConsoleUI(Observer):
             )  # data is the tool use with confirmation ID
         elif event == "tool_denied":
             self.display_tool_denied(data)  # data is the tool use that was denied
-        elif event == "response_completed":
+        elif event == "response_completed" or event == "assistant_message_added":
             # pass
             self.finish_response(data)  # data is the complete response
         elif event == "error":
