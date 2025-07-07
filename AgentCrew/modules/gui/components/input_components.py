@@ -121,7 +121,7 @@ class InputComponents:
         text_to_cursor = text[:cursor_position]
 
         # First check for command completion
-        if text_to_cursor.startswith("/"):
+        if text_to_cursor.startswith("/") and not text_to_cursor.startswith("/file "):
             self.check_for_command_completion()
             return
 

@@ -127,6 +127,8 @@ class ChatCompleter(Completer):
             yield from self.jump_completer.get_completions(document, complete_event)
         elif text.startswith("/mcp"):
             yield from self.mcp_completer.get_completions(document, complete_event)
+        elif text.startswith("/file "):
+            yield from self.file_completer.get_completions(document, complete_event)
         elif text.startswith("/"):
             yield from self.get_command_completions(document)
 
