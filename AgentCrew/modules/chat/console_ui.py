@@ -456,7 +456,10 @@ class ConsoleUI(Observer):
                 ),
                 end="",
             )
-            response = input().lower()
+            try:
+                response = input().lower()
+            except KeyboardInterrupt:
+                response = "no"
 
             if response in ["y", "yes"]:
                 self.message_handler.resolve_tool_confirmation(
