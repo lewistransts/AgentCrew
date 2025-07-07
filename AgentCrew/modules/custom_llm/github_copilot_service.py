@@ -97,7 +97,9 @@ class GithubCopilotService(CustomLLMService):
                 parsed_tool_result = []
                 for res in tool_result:
                     if res.get("type", "text") == "image_url":
-                        if "vision" in ModelRegistry.get_model_capabilities(self.model):
+                        if "vision" in ModelRegistry.get_model_capabilities(
+                            f"{self._provider_name}/{self.model}"
+                        ):
                             parsed_tool_result.append(res)
                     else:
                         parsed_tool_result.append(res)
@@ -170,7 +172,9 @@ class GithubCopilotService(CustomLLMService):
                     )
                     > 0
                 ):
-                    if "vision" in ModelRegistry.get_model_capabilities(self.model):
+                    if "vision" in ModelRegistry.get_model_capabilities(
+                        f"{self._provider_name}/{self.model}"
+                    ):
                         self.extra_headers["Copilot-Vision-Request"] = "true"
 
                 # if self._interaction_id:

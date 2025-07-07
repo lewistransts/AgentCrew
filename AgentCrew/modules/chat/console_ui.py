@@ -1103,7 +1103,16 @@ class ConsoleUI(Observer):
             else:
                 self._last_ctrl_c_time = current_time
                 if self.live:
-                    self.message_handler.stop_streaming = True
+                    if self.message_handler.stream_generator:
+                        try:
+                            asyncio.run(self.message_handler.stream_generator.aclose())
+                        except RuntimeError as e:
+                            logger.warning(f"Error closing stream generator: {e}")
+                        except Exception as e:
+                            logger.warning(f"Exception closing stream generator: {e}")
+                        finally:
+                            self.message_handler.stop_streaming = True
+                            self.message_handler.stream_generator = None
 
                 self.console.print(
                     Text(

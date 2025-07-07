@@ -138,9 +138,11 @@ class ServiceManager:
                     .endswith(".githubcopilot.com")
                 ):
                     # Special case for OpenAI compatible custom providers
-                    return GithubCopilotService(api_key=api_key, provider_name=provider)
+                    service_instance = GithubCopilotService(
+                        api_key=api_key, provider_name=provider
+                    )
                 else:
-                    return CustomLLMService(
+                    service_instance = CustomLLMService(
                         base_url=details["api_base_url"],
                         api_key=api_key,
                         provider_name=provider,

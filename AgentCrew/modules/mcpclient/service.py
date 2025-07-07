@@ -1,5 +1,5 @@
 from AgentCrew.modules import logger
-from typing import Dict, Any, List, Optional, Callable, TextIO, AnyStr
+from typing import Dict, Any, List, Optional, Callable
 from mcp import ClientSession, StdioServerParameters
 from mcp.types import Prompt, ContentBlock, TextContent, ImageContent
 from mcp.client.stdio import stdio_client
@@ -8,46 +8,10 @@ from AgentCrew.modules.tools.registry import ToolRegistry
 from .config import MCPServerConfig
 import asyncio
 import threading
-import tempfile
-from datetime import datetime
-
-
-class MCPLogIO(TextIO):
-    """File-like object compatible with sys.stderr for MCP logging."""
-
-    def __init__(self):
-        self.log_path = (
-            tempfile.gettempdir() + f"/mcp_agentcrew_{datetime.now().timestamp()}.log"
-        )
-        print(f"Routing MCP logs to {self.log_path}")
-        self.file = open(self.log_path, "w+")
-
-    def write(self, data: AnyStr) -> int:
-        """Write data to the log file."""
-        if isinstance(data, bytes):
-            # Convert bytes to string for writing
-            str_data = data.decode("utf-8", errors="replace")
-        else:
-            str_data = str(data)
-        self.file.write(str_data)
-        self.file.flush()  # Ensure data is written immediately
-        return 0
-
-    def flush(self):
-        """Flush the file buffer."""
-        self.file.flush()
-
-    def close(self):
-        """Close the file."""
-        self.file.close()
-
-    def fileno(self):
-        """Return the file descriptor."""
-        return self.file.fileno()
-
+from AgentCrew.modules import FileLogIO
 
 # Initialize the logger
-mcp_log_io = MCPLogIO()
+mcp_log_io = FileLogIO("mcpclient_agentcrew")
 
 
 class MCPService:

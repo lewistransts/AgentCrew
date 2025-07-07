@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple, List, Dict, Any, Union
+from typing import Optional, Tuple, List, Dict
 import os
 
 from AgentCrew.modules.agents.local_agent import LocalAgent

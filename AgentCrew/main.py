@@ -36,11 +36,17 @@ def cli():
 
 
 def cli_prod():
+    from AgentCrew.modules import FileLogIO
+
+    sys.stderr = FileLogIO()
+
+    os.environ["AGENTCREW_LOG_PATH"] = os.path.expanduser("~/.AgentCrew/logs")
     os.environ["MEMORYDB_PATH"] = os.path.expanduser("~/.AgentCrew/memorydb")
     os.environ["MCP_CONFIG_PATH"] = os.path.expanduser("~/.AgentCrew/mcp_servers.json")
     os.environ["SW_AGENTS_CONFIG"] = os.path.expanduser("~/.AgentCrew/agents.toml")
     os.environ["PERSISTENCE_DIR"] = os.path.expanduser("~/.AgentCrew/persistents")
     os.environ["AGENTCREW_CONFIG_PATH"] = os.path.expanduser("~/.AgentCrew/config.json")
+
     check_and_update()
     cli()  # Delegate to main CLI function
 
