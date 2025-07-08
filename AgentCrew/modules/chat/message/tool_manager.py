@@ -2,6 +2,7 @@ from typing import Dict, Any
 import asyncio
 
 from AgentCrew.modules import logger
+from AgentCrew.modules.config import ConfigManagement
 from AgentCrew.modules.llm.message import MessageTransformer
 
 
@@ -62,8 +63,14 @@ class ToolManager:
                 )
             return
 
+        # Check if tool is in persistent auto-approval list
+        config_manager = ConfigManagement()
+        auto_approval_tools = config_manager.get_auto_approval_tools()
+        
         # For all other tools, check if confirmation is needed
-        if not self.yolo_mode and tool_name not in self._auto_approved_tools:
+        if (not self.yolo_mode and 
+            tool_name not in self._auto_approved_tools and 
+            tool_name not in auto_approval_tools):
             # Request confirmation from the user
             confirmation = await self._wait_for_tool_confirmation(tool_use)
             action = confirmation.get("action", "deny")
