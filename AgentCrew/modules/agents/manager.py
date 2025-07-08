@@ -217,6 +217,7 @@ class AgentManager:
             )
 
         source_agent = self.current_agent
+        source_agent_name = source_agent.name if source_agent else None
 
         direct_injected_messages = []
         included_conversations = []
@@ -281,6 +282,10 @@ class AgentManager:
                     direct_injected_messages, self.current_agent.get_provider()
                 )
             )
+            ## injected messages should not be transfered back to source agent
+            if source_agent_name:
+                for i, _ in enumerate(self.current_agent.std_history):
+                    self.current_agent.shared_context_pool[source_agent_name].append(i)
 
         return {"success": True, "transfer": transfer_record}
 
